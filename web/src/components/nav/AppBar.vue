@@ -4,6 +4,7 @@ import type { RouteLocationRaw } from 'vue-router'
 import { ChevronDown } from '@lucide/vue'
 import AccountButton from '@/components/nav/AccountButton.vue'
 import TopBackButton from '@/components/nav/TopBackButton.vue'
+import { useTopBarFrost } from '@/lib/topBar'
 
 // The one top bar, 3.5rem, under the status bar. It's frosted glass (paper):
 // what scrolls under it blurs, and it fades into the page in a short band
@@ -40,6 +41,7 @@ const props = withDefaults(
 )
 
 const frosted = computed(() => props.scrolled ?? props.showTitle)
+useTopBarFrost(frosted)
 
 // The last subtitle, so it can fold away with its words still in it.
 const lastSubtitle = ref(props.subtitle)
@@ -54,35 +56,24 @@ const scrollTop = () => {
 </script>
 
 <template>
-  <!-- The bar holds still through a page change, named only while one runs:
-       a named element's glass only blurs what's inside it. (frosted: see
-       style.css, for the glass's blur during the change.) -->
+  <!-- In the bars' own layer, outside the pages, so it holds still while they
+       slide (lib/pageTransition); its parts cross-fade when they differ.
+       Its frosted glass is one sheet behind it (App, lib/topBar). -->
+  <Teleport to="#chrome-top">
   <nav
+    data-appbar
     aria-label="Page"
-    :class="[
-      'fixed inset-x-chrome-0 top-0 z-30 pt-(--safe-top) [:root:active-view-transition_&]:[view-transition-name:appbar]',
-      frosted && '[view-transition-class:frosted]',
-    ]"
+    class="fixed inset-x-chrome-0 top-0 z-30 pt-(--safe-top)"
   >
-    <!-- Clear at the top of the page, so the paper shows through; frosted
-         once something scrolls under it, as on iOS. Clear means no blur at
-         all, not just unseen, so a page change doesn't pick one up. -->
-    <div
-      :class="[
-        'paper absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] transition-[opacity,backdrop-filter] duration-(--dur-base) [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)]',
-        !frosted && 'opacity-0 [backdrop-filter:none]!',
-      ]"
-      aria-hidden="true"
-    />
     <div :class="['@container mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'appbar-row']">
-      <TopBackButton v-if="back" :fallback="fallback" :exit="exit" :compact="compactBack" />
-      <slot name="leading" />
+      <TopBackButton v-if="back" data-bar-part="back" :fallback="fallback" :exit="exit" :compact="compactBack" />
+      <div v-if="$slots.leading" data-bar-part="leading" class="flex min-w-0 items-center"><slot name="leading" /></div>
       <!-- Or the page's own middle, instead of the small title (Add a competition's progress). -->
-      <slot name="middle">
+      <div v-if="$slots.middle" data-bar-part="middle" class="flex min-w-0 flex-1 items-center"><slot name="middle" /></div>
       <!-- First in the row (no Back, nothing leading), the title lines up
            with the page's text, 1rem in; the row's own 0.75rem suits its
            buttons, whose icons carry their own padding. -->
-      <div class="flex min-w-0 flex-1 first:pl-1">
+      <div v-else data-bar-part="title" class="flex min-w-0 flex-1 first:pl-1">
         <button
           type="button"
           :class="[
@@ -119,13 +110,13 @@ const scrollTop = () => {
           </span>
         </button>
       </div>
-      </slot>
       <!-- Blue, like Back: an action in grey or ink reads as switched off. -->
       <div class="text-primary flex shrink-0 items-center gap-1.5">
-        <slot name="actions" />
+        <div v-if="$slots.actions" data-bar-part="actions" class="flex items-center gap-1.5"><slot name="actions" /></div>
         <!-- On wide screens your account is at the foot of the sidebar. -->
-        <div class="flex lg:hidden"><AccountButton /></div>
+        <div data-bar-part="account" class="flex lg:hidden"><AccountButton /></div>
       </div>
     </div>
   </nav>
+  </Teleport>
 </template>

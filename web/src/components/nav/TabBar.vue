@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Component } from 'vue'
+import { nextTick, useTemplateRef, watch, type Component } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import { tapHaptic } from '@/lib/haptics'
 
@@ -26,7 +26,29 @@ export interface TabItem {
   expanded?: boolean
 }
 
-defineProps<{ items: TabItem[]; label: string; replace?: boolean }>()
+const props = defineProps<{ items: TabItem[]; label: string; replace?: boolean }>()
+
+// The current tab's capsule slides to the new tab, overshooting a little,
+// stretching to fit as it goes (tabs differ in width). Moved, not resized,
+// so the compositor plays it.
+const pill = useTemplateRef<HTMLElement>('pill')
+const capsule = () => pill.value?.querySelector<HTMLElement>('[data-capsule]') ?? null
+watch(
+  () => props.items.findIndex((i) => i.active),
+  async () => {
+    const from = capsule()?.getBoundingClientRect()
+    await nextTick()
+    const el = capsule()
+    if (!from || !el || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const to = el.getBoundingClientRect()
+    if (!to.width || Math.abs(from.left - to.left) < 1) return
+    el.animate(
+      [{ transform: `translateX(${from.left - to.left}px) scaleX(${from.width / to.width})` }, { transform: 'none' }],
+      { duration: 300, easing: getComputedStyle(el).getPropertyValue('--ease-elastic').trim() || 'ease-out' },
+    )
+  },
+  { flush: 'pre' },
+)
 
 function onTap(item: TabItem, e: MouseEvent) {
   tapHaptic()
@@ -35,28 +57,23 @@ function onTap(item: TabItem, e: MouseEvent) {
 </script>
 
 <template>
+  <!-- In the bars' own layer, outside the pages, so it holds still while they
+       slide (lib/pageTransition). Its frosted strip is one sheet behind it
+       (App). It runs 2.5rem past the foot of the screen, which iOS can paint
+       a little below where bottom: 0 lands. -->
+  <Teleport to="#chrome-bottom">
   <nav
     data-tabbar
     data-nav-axis="x"
     :aria-label="label"
-    class="pointer-events-none fixed inset-x-chrome-0 -bottom-10 z-30 px-3 pb-[calc(max(0.5rem,var(--safe-bottom))+2.5rem)] lg:hidden [:root:active-view-transition_&]:[view-transition-name:tabbar-backdrop]"
+    class="pointer-events-none fixed inset-x-chrome-0 -bottom-10 z-30 px-3 pb-[calc(max(0.5rem,var(--safe-bottom))+2.5rem)] lg:hidden"
   >
-    <!-- Frosted glass behind the bar, from its foot up to a third of the way
-         up the pill, where it fades into the page (so it's not a stark band
-         above the buttons). The whole bar runs 2.5rem past the foot of the
-         screen, which iOS can paint a little below where bottom: 0 lands
-         (its page-change snapshot too). The bar holds still through a page change, named
-         only while one runs: a named element's glass (the pill's too) only
-         blurs what's inside it. -->
-    <div
-      class="paper absolute inset-x-0 top-5 bottom-0 -z-10 [mask-image:linear-gradient(to_bottom,transparent,black_0.75rem)]"
-      aria-hidden="true"
-    />
     <div class="mx-auto flex max-w-lg items-center gap-2">
       <slot name="leading" />
       <div
+        ref="pill"
         data-menu-anchor
-        class="glass @container pointer-events-auto grid h-16 min-w-0 flex-1 grid-cols-(--cols) rounded-full p-1 [view-transition-name:tabbar]"
+        class="glass @container pointer-events-auto grid h-16 min-w-0 flex-1 grid-cols-(--cols) rounded-full p-1"
         :style="{ '--cols': `repeat(${items.length}, minmax(0, auto))` }"
       >
         <component
@@ -71,11 +88,10 @@ function onTap(item: TabItem, e: MouseEvent) {
           ]"
           @click="onTap(item, $event)"
         >
-          <!-- The capsule is its own element so the page's view transition
-               slides it from the old tab to the new one (style.css). -->
           <span
             v-if="item.active"
-            class="bg-foreground/[0.07] absolute inset-0 rounded-full [view-transition-name:tabbar-highlight]"
+            data-capsule
+            class="bg-foreground/[0.07] absolute inset-0 rounded-full"
             aria-hidden="true"
           />
           <component :is="item.icon" class="relative size-[1.375rem]" :stroke-width="item.active ? 2.4 : 2" />
@@ -92,4 +108,5 @@ function onTap(item: TabItem, e: MouseEvent) {
       <slot name="trailing" />
     </div>
   </nav>
+  </Teleport>
 </template>

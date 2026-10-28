@@ -8,7 +8,7 @@ withDefaults(defineProps<{ title: string; body?: string | null; when?: string }>
 </script>
 
 <template>
-  <div class="bg-card/95 flex items-start gap-3 rounded-[1.375rem] p-3 text-left shadow-lg ring-1 ring-black/5 backdrop-blur-xl dark:ring-white/10">
+  <div class="bg-card/95 flex items-start gap-3 rounded-[1.375rem] p-3 text-left shadow-lg ring-1 ring-black/5 backdrop-blur-xl dark:ring-white/10 [:root[data-lite]_&]:backdrop-blur-none">
     <span class="bg-primary-fill flex size-9.5 shrink-0 items-center justify-center rounded-[0.625rem]" aria-hidden="true">
       <LogoMark class="size-7 text-white" />
     </span>

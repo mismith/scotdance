@@ -11,8 +11,8 @@ import { dataRef } from '@/firebase'
 //
 // The cache survives component unmounts so:
 //  - Repeat visits to /{section} render synchronously (no skeleton flash).
-//  - Back-navigation from a detail page lands the view-transition on the
-//    real list row instead of an empty-list snapshot.
+//  - Back-navigation from a detail page slides back to the real list row
+//    instead of an empty list.
 
 export interface AggregateRow {
   name?: string
@@ -92,7 +92,7 @@ export function useEntityAggregates(namespace: string): EntityAggregatesEntry {
 /**
  * Inserts (or replaces) a single aggregate in the list cache. Used by detail
  * pages so that on back-nav to the list, at least the focused row is already
- * in the DOM — that's what the view-transition needs to land the morph on.
+ * in the DOM as the list slides back in.
  * Mirrors the way useCompetition seeds useCompetitions' cache.
  */
 export function insertEntityAggregate(

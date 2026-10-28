@@ -45,8 +45,7 @@ const items = computed<TabItem[]>(() => {
     { label: 'Search', icon: Search, to: { name: 'search' }, active: path.startsWith('/search') },
   ]
 })
-// Not while only the menu is open: two selected capsules would share a
-// view-transition name, and the browser would cancel the menu's morph.
+// Not while only the menu is open: it's drawn pressed, not selected.
 const moreActive = computed(() => MORE_PREFIXES.some((p) => route.path.startsWith(p)))
 const moreBadge = computed(() => update.updateAvailable || crisp.unread > 0 || (update.early && crisp.available && !moreSeen.value))
 function openMore(e: MouseEvent) {
@@ -66,12 +65,12 @@ function openMore(e: MouseEvent) {
         :aria-expanded="menu.open"
         :data-current="moreActive ? '' : undefined"
         :class="[
-          'glass press-glass pointer-events-auto relative flex size-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full text-[min(0.6875rem,12px)] leading-none font-semibold [view-transition-name:tabbar-more]',
+          'glass press-glass pointer-events-auto relative flex size-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full text-[min(0.6875rem,12px)] leading-none font-semibold',
           moreActive || menu.open ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
         ]"
         @click="openMore"
       >
-        <span v-if="moreActive" class="bg-foreground/[0.07] absolute inset-1 rounded-full [view-transition-name:tabbar-highlight]" aria-hidden="true" />
+        <span v-if="moreActive" class="bg-foreground/[0.07] absolute inset-1 rounded-full" aria-hidden="true" />
         <CircleEllipsis class="relative size-[1.375rem]" :stroke-width="moreActive ? 2.4 : 2" />
         <span class="relative">More</span>
         <span v-if="moreBadge" class="bg-primary ring-card absolute top-2.5 right-3.5 size-2 rounded-full ring-2" aria-hidden="true" />

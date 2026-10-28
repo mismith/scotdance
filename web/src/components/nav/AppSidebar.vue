@@ -42,7 +42,6 @@ const browse = [
   { label: 'Venues', icon: School, route: 'venues', profile: 'venue.' },
   { label: 'Organisations', icon: Landmark, route: 'organisations', profile: 'organisation.' },
 ]
-const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTransitionClass: 'sidebar' })
 </script>
 
 <template>
@@ -51,13 +50,12 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
        engraved edge. -->
   <aside
     data-nav-axis="y"
-    class="fixed inset-y-0 left-0 z-30 hidden w-(--chrome-left) flex-col bg-[color-mix(in_oklab,var(--background)_40%,transparent)] pt-(--safe-top) pl-(--safe-left) shadow-[inset_-1px_0_0_var(--engrave-lit),inset_-2px_0_0_var(--engrave-cut)] [view-transition-name:sidebar] lg:flex"
+    class="fixed inset-y-0 left-0 z-30 hidden w-(--chrome-left) flex-col bg-[color-mix(in_oklab,var(--background)_40%,transparent)] pt-(--safe-top) pl-(--safe-left) shadow-[inset_-1px_0_0_var(--engrave-lit),inset_-2px_0_0_var(--engrave-cut)] lg:flex"
   >
     <RouterLink
       :to="{ name: 'home' }"
       class="focus-inset mx-3 flex h-14 shrink-0 items-center gap-2.5 rounded-xl px-3"
       aria-label="ScotDance.app, Home"
-      :style="vt('brand')"
     >
       <LogoMark class="text-primary size-6" />
       <span class="text-heading">ScotDance.app</span>
@@ -68,29 +66,29 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
          inside it as they glide (style.css, .sidebar). -->
     <nav
       aria-label="ScotDance.app"
-      class="flex flex-1 flex-col gap-5 overflow-y-auto px-3 pt-2 pb-4 mask-t-from-[calc(100%-0.5rem)] mask-b-from-[calc(100%-1rem)] [view-transition-group:contain] [view-transition-name:sidebar-nav]"
+      class="flex flex-1 flex-col gap-5 overflow-y-auto px-3 pt-2 pb-4 mask-t-from-[calc(100%-0.5rem)] mask-b-from-[calc(100%-1rem)]"
     >
       <ul class="space-y-0.5">
-        <li><SidebarLink :to="{ name: 'home' }" :icon="House" label="Home" :state="state(name === 'home')" vt="sidebar-home" /></li>
+        <li><SidebarLink :to="{ name: 'home' }" :icon="House" label="Home" :state="state(name === 'home')" /></li>
         <li>
-          <SidebarLink :to="{ name: 'competitions' }" :icon="CalendarDays" label="Competitions" :state="state(name === 'competitions', inCompetition)" vt="sidebar-competitions" />
+          <SidebarLink :to="{ name: 'competitions' }" :icon="CalendarDays" label="Competitions" :state="state(name === 'competitions', inCompetition)" />
           <div id="sidebar-competitions" />
         </li>
-        <li><SidebarLink :to="{ name: 'search' }" :icon="Search" label="Search" :state="state(name === 'search')" vt="sidebar-search" /></li>
+        <li><SidebarLink :to="{ name: 'search' }" :icon="Search" label="Search" :state="state(name === 'search')" /></li>
       </ul>
 
       <!-- Inside a competition's Manage its sections lead: the browsing lists
            fold away so Results and Admins stay above the fold on a laptop. -->
       <ul v-if="!inManage" class="space-y-0.5">
         <li v-for="b in browse" :key="b.route">
-          <SidebarLink :to="{ name: b.route }" :icon="b.icon" :label="b.label" :state="state(name === b.route, name.startsWith(b.profile))" :vt="`sidebar-${b.route}`" />
+          <SidebarLink :to="{ name: b.route }" :icon="b.icon" :label="b.label" :state="state(name === b.route, name.startsWith(b.profile))" />
           <div :id="`sidebar-${b.route}`" />
         </li>
       </ul>
 
       <ul class="space-y-0.5">
         <li v-if="!inManage">
-          <SidebarLink :to="{ name: 'competitions.add' }" :icon="SquarePlus" label="Add a competition" :state="state(name === 'competitions.add')" vt="sidebar-add" />
+          <SidebarLink :to="{ name: 'competitions.add' }" :icon="SquarePlus" label="Add a competition" :state="state(name === 'competitions.add')" />
         </li>
         <li v-if="canManage">
           <SidebarLink
@@ -99,25 +97,24 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
             label="Manage"
             :state="state(name === 'manage.competitions', inManage)"
             admin
-            vt="sidebar-manage"
+           
           />
           <div id="sidebar-manage" />
         </li>
         <li v-if="me.isAdmin">
-          <SidebarLink :to="{ name: 'admin' }" :icon="ServerCog" label="System admin" :state="state(name === 'admin', inAdmin)" admin vt="sidebar-admin" />
+          <SidebarLink :to="{ name: 'admin' }" :icon="ServerCog" label="System admin" :state="state(name === 'admin', inAdmin)" admin />
           <div id="sidebar-admin" />
         </li>
       </ul>
 
       <!-- About, Settings and help sink to the bottom, above you. -->
       <ul class="mt-auto space-y-0.5">
-        <li v-if="!inManage"><SidebarLink :to="{ name: 'about' }" :icon="Info" label="About ScotDance.app" :state="state(name === 'about')" vt="sidebar-about" /></li>
-        <li><SidebarLink :to="{ name: 'settings' }" :icon="Settings" label="Settings" :state="state(name === 'settings')" vt="sidebar-settings" /></li>
+        <li v-if="!inManage"><SidebarLink :to="{ name: 'about' }" :icon="Info" label="About ScotDance.app" :state="state(name === 'about')" /></li>
+        <li><SidebarLink :to="{ name: 'settings' }" :icon="Settings" label="Settings" :state="state(name === 'settings')" /></li>
         <li v-if="crisp.available">
           <button
             type="button"
             class="press-row focus-inset text-callout flex min-h-10 w-full items-center gap-3 rounded-xl px-3 py-1.5 text-left font-medium"
-            :style="vt('help')"
             @click="crisp.open()"
           >
             <LifeBuoy class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
@@ -129,7 +126,6 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
           <button
             type="button"
             class="press-row focus-inset text-callout flex min-h-10 w-full items-center gap-3 rounded-xl px-3 py-1.5 text-left font-medium"
-            :style="vt('update')"
             @click="update.openDialog()"
           >
             <ArrowDownToLine class="text-primary size-5 shrink-0" aria-hidden="true" />
@@ -140,7 +136,7 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
     </nav>
 
     <!-- You, at the foot: your Account page (or Sign in). -->
-    <div class="shrink-0 px-3 pb-[max(0.75rem,var(--safe-bottom))]" :style="vt('account')">
+    <div class="shrink-0 px-3 pb-[max(0.75rem,var(--safe-bottom))]">
       <AccountButton variant="row" />
     </div>
   </aside>

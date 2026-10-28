@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref, watch } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import GlobalBottomNav from '@/components/nav/GlobalBottomNav.vue'
+import PageStack from '@/components/nav/PageStack.vue'
+import { topBarFrosted } from '@/lib/topBar'
 import AppSidebar from '@/components/nav/AppSidebar.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import AlertsPrompt from '@/components/AlertsPrompt.vue'
@@ -69,10 +71,27 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
 <template>
   <AppSidebar />
   <div class="flex min-h-dvh flex-col pr-(--chrome-right) pl-(--chrome-left)">
-    <RouterView />
+    <PageStack />
 
     <GlobalBottomNav v-if="showGlobalNav" />
   </div>
+  <!-- The bars' frosted glass, one sheet each behind whichever page's bars
+       are showing, so it doesn't come and go as pages slide. The top one is
+       clear at the top of a page, so the paper shows through, and frosted
+       once something scrolls under it, as on iOS (clear means no blur at
+       all); it runs 1.25rem past the bar, fading out. The tab bar's rises
+       from the foot of the screen to a third of the way up the pill. -->
+  <div
+    :class="[
+      'paper pointer-events-none fixed inset-x-chrome-0 top-0 z-30 h-[calc(var(--safe-top)+4.75rem)] transition-[opacity,backdrop-filter] duration-(--dur-base) [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)]',
+      !topBarFrosted && 'opacity-0 [backdrop-filter:none]!',
+    ]"
+    aria-hidden="true"
+  />
+  <div
+    class="paper pointer-events-none fixed inset-x-chrome-0 -bottom-10 z-30 hidden h-[calc(2.75rem+max(0.5rem,var(--safe-bottom))+2.5rem)] [mask-image:linear-gradient(to_bottom,transparent,black_0.75rem)] lg:hidden! [:root:has(:is([data-tabbar],[data-bar-copy=tabbar]))_&]:block"
+    aria-hidden="true"
+  />
   <SupportLauncher />
   <LoginDialog />
   <AlertBanner />

@@ -113,7 +113,7 @@ function createDancerProfile(dancerId: Ref<string>): UseDancerProfile {
           aggregate.value = agg
           insertEntityAggregate('dancers', id, agg)
           // Record into recentDancers eagerly so back-nav to /dancers has the
-          // row in place for the view-transition. The deferred watcher below
+          // row in place as the list slides back in. The deferred watcher below
           // also calls this on later displayName changes; calling sync here
           // covers the back-before-displayName-settles case.
           const eagerName = agg.name?.trim()

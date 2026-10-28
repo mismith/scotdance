@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, toRef, watch } from 'vue'
-import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { CalendarX, ChevronRight, EyeOff, Hourglass, Pencil } from '@lucide/vue'
 import { useMeStore } from '@/stores/me'
 import AppBar from '@/components/nav/AppBar.vue'
+import PageStack from '@/components/nav/PageStack.vue'
 import ShareButton from '@/components/ShareButton.vue'
 import AdminMark from '@/components/AdminMark.vue'
 import CompetitionBottomNav from '@/components/nav/CompetitionBottomNav.vue'
@@ -101,8 +102,7 @@ const unpublishedNote = computed(() =>
 
 // Each page registers its big in-page title (for the bar's border once it
 // scrolls under). The competition name and date sit in the bar on every page
-// but Overview, whose own big title shrinks into the bar as you leave it
-// (shared view-transition name) or scroll past it.
+// but Overview, where it shows once its own big title scrolls past.
 const { scrolledPast } = provideInfoHeader()
 const mainEl = ref<HTMLElement | null>(null)
 const currentSection = useScrollSection(mainEl)
@@ -217,8 +217,8 @@ usePageTitle(() => [
         :title="hiddenHere.title"
         :description="`This competition doesn’t share ${hiddenHere.what} in ScotDance.app. Check with the organisers.`"
       />
-      <!-- Keyed: an alert can jump to another competition's same page, which must load afresh. -->
-      <RouterView v-else :key="competitionId" />
+      <!-- Each page is keyed by whose it is: an alert can jump to another competition's same page, which must load afresh. -->
+      <PageStack v-else block />
     </main>
 
     <CompetitionBottomNav />

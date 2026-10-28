@@ -869,7 +869,7 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
           v-proximity
           type="button"
           data-nav="back"
-          class="glass press-glass proximity text-primary pointer-events-auto flex size-11 shrink-0 items-center justify-center rounded-full [view-transition-name:nav-back]"
+          class="glass press-glass proximity text-primary pointer-events-auto flex size-11 shrink-0 items-center justify-center rounded-full"
           :aria-label="returning ? 'Back to review' : index > 0 ? 'Back to the previous question' : 'Back to the start'"
           @click="previous"
         >

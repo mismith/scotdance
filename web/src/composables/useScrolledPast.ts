@@ -7,14 +7,9 @@ import {
 } from 'vue'
 import { useIntersectionObserver } from '@vueuse/core'
 
-// True once `target`'s top edge scrolls above the viewport top. Drives the
+// True once `target`'s top edge scrolls under the app bar. Drives the
 // "small title pill fades into the fixed nav once the in-flow large title
 // scrolls past" pattern (iOS Mail / Notes style).
-//
-// threshold:1 + no rootMargin: the pill flips ON the moment the title's
-// top edge crosses y=0 of the viewport. Triggering at the chrome's bottom
-// edge instead would fire while the in-flow title is still partly visible
-// behind the frosted chrome — looks like a duplicate label.
 export function useScrolledPast(
   target: Readonly<Ref<HTMLElement | null>>,
 ): Ref<boolean> {
@@ -23,7 +18,9 @@ export function useScrolledPast(
     target,
     ([entry]) => {
       if (!entry) return
-      scrolledPast.value = entry.intersectionRatio < 1
+      // By its top edge alone: a page sliding in from the side (lib/
+      // pageMotion) has its title partly off screen without being scrolled.
+      scrolledPast.value = entry.boundingClientRect.top < (entry.rootBounds?.top ?? 56)
     },
     // Flip once the title slides under the opaque app bar (3.5rem + notch).
     { threshold: 1, rootMargin: '-56px 0px 0px 0px' },

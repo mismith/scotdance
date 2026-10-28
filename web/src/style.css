@@ -427,8 +427,10 @@ html:not([data-native])::before {
 
 /* Frosted glass for floating chrome, after iOS 26: the page blurs and
    brightens through it, with a lit top edge and a soft shadow. Labels sit
-   on a mostly opaque surface so they stay easy to read. Opaque when the
-   system asks for less transparency. */
+   on a mostly opaque surface so they stay easy to read. Opaque, with no
+   blur to draw, when the system asks for less transparency, and on phones
+   that would struggle to draw it (data-lite, lib/deviceTier); so is every
+   glass below. */
 @utility glass {
   /* The fill inside, the lit rim around it (a gradient border). */
   border: 1px solid transparent;
@@ -444,6 +446,12 @@ html:not([data-native])::before {
   @media (prefers-reduced-transparency: reduce) {
     background: var(--card);
     border-color: var(--glass-line);
+    backdrop-filter: none;
+  }
+  :root[data-lite] & {
+    background: var(--card);
+    border-color: var(--glass-line);
+    backdrop-filter: none;
   }
   @media (forced-colors: active) {
     border-color: CanvasText;
@@ -465,6 +473,11 @@ html:not([data-native])::before {
     0 12px 32px -8px rgb(0 0 0 / 0.45);
   @media (prefers-reduced-transparency: reduce) {
     background: rgb(27 33 40);
+    backdrop-filter: none;
+  }
+  :root[data-lite] & {
+    background: rgb(27 33 40);
+    backdrop-filter: none;
   }
 }
 :root {
@@ -562,6 +575,11 @@ html:not([data-native])::before {
   backdrop-filter: blur(24px) saturate(1.6);
   @media (prefers-reduced-transparency: reduce) {
     background-color: var(--background);
+    backdrop-filter: none;
+  }
+  :root[data-lite] & {
+    background-color: var(--background);
+    backdrop-filter: none;
   }
 }
 @utility surface {
@@ -604,6 +622,11 @@ html:not([data-native])::before {
   backdrop-filter: blur(24px) saturate(1.4);
   @media (prefers-reduced-transparency: reduce) {
     background-color: var(--background);
+    backdrop-filter: none;
+  }
+  :root[data-lite] & {
+    background-color: var(--background);
+    backdrop-filter: none;
   }
 }
 /* Pressed into the paper (date tiles): no fill of its own, just the shade
@@ -943,450 +966,9 @@ html:not([data-native])::before {
   }
 }
 
-/* Shared slide-in/out for any element appearing/disappearing from the left
-   of the floating top chrome (back button, name pill). */
-@keyframes vt-slide-in {
+/* Placeholders that wait a beat before showing (lib/settle lateSkeleton). */
+@keyframes fade-in {
   from {
-    opacity: 0;
-    transform: translateX(-50%);
-  }
-}
-@keyframes vt-slide-out {
-  to {
-    opacity: 0;
-    transform: translateX(-50%);
-  }
-}
-/* The back button only ever changes width (its label), never height: its
-   snapshots stay at natural size, anchored left, clipped to a pill as wide
-   as the moving group. The end slides in or out; the text never stretches
-   or grows taller. The clip leaves room for the shadow. */
-::view-transition-old(nav-back),
-::view-transition-new(nav-back) {
-  @apply h-full object-none object-left;
-  clip-path: inset(-2px -2px -4px round 9999px);
-}
-::view-transition-new(nav-back):only-child {
-  animation-name: vt-slide-in;
-  animation-timing-function: var(--ease-snappy);
-}
-::view-transition-old(nav-back):only-child {
-  animation-name: vt-slide-out;
-  animation-timing-function: var(--ease-snappy);
-}
-
-/* Morph (lib/morph.ts): a trigger grows into the sheet or menu it opens and
-   shrinks back into it on close. Same bg/fg split as the nav pills above:
-   the group paints a surface whose corners and colour go from the trigger's
-   to the target's (set as --morph-* on <html> per morph), and the sheet or
-   menu's picture scales with it on top (never squashed). At the trigger's
-   end the group is an empty ghost over it, and the surface is clear there:
-   the trigger holds still in the page while the surface grows out of it and
-   shrinks back into it. Reduce Motion skips the transition entirely. */
-@keyframes vt-morph-surface {
-  from {
-    border-radius: var(--morph-from-radius);
-    corner-shape: var(--morph-from-corner);
-    background: var(--morph-from-bg);
-  }
-  to {
-    border-radius: var(--morph-to-radius);
-    corner-shape: var(--morph-to-corner);
-    background: var(--morph-to-bg);
-  }
-}
-@keyframes vt-morph-out {
-  to {
-    opacity: 0;
-  }
-}
-@keyframes vt-morph-in {
-  from {
-    opacity: 0;
-  }
-}
-/* Timing (F3): menus and centred cards spring out of their control; a
-   sheet pinned to the bottom edge glides without overshoot; closing is a
-   quick ease back in. */
-::view-transition-group(morph) {
-  animation-name: -ua-view-transition-group-anim-morph, vt-morph-surface;
-  animation-duration: 300ms;
-  animation-timing-function: var(--ease-elastic);
-  overflow: clip;
-}
-:active-view-transition-type(morph-pinned)::view-transition-group(morph) {
-  animation-duration: 320ms;
-  animation-timing-function: var(--ease-snappy);
-}
-:active-view-transition-type(morph-close)::view-transition-group(morph) {
-  animation-duration: 220ms;
-  animation-timing-function: var(--ease-standard);
-}
-:active-view-transition-type(morph)::view-transition-old(root),
-:active-view-transition-type(morph)::view-transition-new(root) {
-  animation-duration: 260ms;
-  animation-timing-function: var(--ease-standard);
-}
-:active-view-transition-type(morph-close)::view-transition-old(root),
-:active-view-transition-type(morph-close)::view-transition-new(root) {
-  animation-duration: 220ms;
-}
-/* The sheet or menu's picture (new when opening, old when closing; the
-   ghost's is empty) grows and shrinks with the surface rather than being
-   uncovered through a growing window. Closing, it's gone early. */
-::view-transition-old(morph),
-::view-transition-new(morph) {
-  @apply size-full object-cover object-top;
-}
-::view-transition-old(morph) {
-  animation: vt-morph-out 80ms var(--ease-exit) both;
-}
-::view-transition-new(morph) {
-  animation: vt-morph-in 150ms 50ms var(--ease-standard) both;
-}
-/* While something morphs, the chrome (tab bar, back pill, titles) stays in
-   the page's picture instead of its own layer, so the backdrop dims it and
-   the growing sheet passes over it (F2). The morphing element (or ghost)
-   keeps its name. */
-:root:active-view-transition-type(morph)
-  :is([class*='view-transition-name'], [style*='view-transition-name']):not([style*='view-transition-name: morph']) {
-  view-transition-name: none !important;
-}
-
-/* Getting around (lib/navMotion picks the way), as Apple does it: pages
-   slide, they don't fade, so nothing flashes through between them.
-   - A deeper page slides in from the right edge over the old one, which
-     drifts a third of the way left and dims a little; Back reverses it.
-   - On phones, a tab bar's tabs (and a page's segmented views) slide past
-     like pages, toward the one you tapped.
-   - On wide screens, the sidebar's peers and segmented views just change, as
-     on a Mac; anything else swaps in place everywhere.
-   The chrome (top bar, tab bar, sidebar) has its own transition names, so it
-   holds still while the page moves under it. */
-@keyframes vt-fade-out {
-  to {
-    opacity: 0;
-  }
-}
-@keyframes vt-fade-in {
-  from {
-    opacity: 0;
-  }
-}
-@keyframes vt-slide {
-  from {
-    translate: var(--vt-from, 0) 0;
-  }
-  to {
-    translate: var(--vt-to, 0) 0;
-  }
-}
-@keyframes vt-dim {
-  to {
-    filter: brightness(0.92);
-  }
-}
-@keyframes vt-undim {
-  from {
-    filter: brightness(0.92);
-  }
-}
-/* Two opaque pages, one over the other: not blended. */
-:active-view-transition-type(forward, back, next, prev)::view-transition-old(root),
-:active-view-transition-type(forward, back, next, prev)::view-transition-new(root) {
-  mix-blend-mode: normal;
-  animation-duration: 440ms;
-  animation-timing-function: var(--ease-push);
-  animation-fill-mode: both;
-}
-:active-view-transition-type(forward)::view-transition-old(root) {
-  --vt-to: -30%;
-  animation-name: vt-slide, vt-dim;
-}
-:active-view-transition-type(forward)::view-transition-new(root) {
-  --vt-from: 100%;
-  animation-name: vt-slide;
-  box-shadow: 0 0 2rem rgb(0 0 0 / 0.16);
-}
-:active-view-transition-type(back)::view-transition-old(root) {
-  --vt-to: 100%;
-  animation-name: vt-slide;
-  box-shadow: 0 0 2rem rgb(0 0 0 / 0.16);
-  z-index: 1;
-}
-:active-view-transition-type(back)::view-transition-new(root) {
-  --vt-from: -30%;
-  animation-name: vt-slide, vt-undim;
-}
-:active-view-transition-type(next)::view-transition-old(root) {
-  --vt-to: -100%;
-}
-:active-view-transition-type(next)::view-transition-new(root) {
-  --vt-from: 100%;
-}
-:active-view-transition-type(prev)::view-transition-old(root) {
-  --vt-to: 100%;
-}
-:active-view-transition-type(prev)::view-transition-new(root) {
-  --vt-from: -100%;
-}
-:active-view-transition-type(next, prev)::view-transition-old(root),
-:active-view-transition-type(next, prev)::view-transition-new(root) {
-  animation-name: vt-slide;
-  animation-duration: 380ms;
-}
-:active-view-transition-type(swap)::view-transition-old(root) {
-  display: none;
-}
-:active-view-transition-type(swap)::view-transition-new(root) {
-  animation: none;
-}
-@media (width >= 64rem) {
-  :active-view-transition-type(next, prev)::view-transition-old(root) {
-    display: none;
-  }
-  :active-view-transition-type(next, prev)::view-transition-new(root) {
-    animation: none;
-  }
-}
-/* A sheet that changes what it asks (sign in, then create an account): the
-   sheet itself (painted by the group, as a morph's surface is) resizes from
-   the top, while its old contents leave before the new arrive, so two forms
-   never sit on top of each other. */
-:root:active-view-transition-type(sheet-step) dialog[open] {
-  view-transition-name: sheet-step;
-}
-::view-transition-group(sheet-step) {
-  animation-duration: var(--dur-base);
-  animation-timing-function: var(--ease-snappy);
-  overflow: clip;
-  background: var(--color-raised);
-  border-radius: 1.75rem 1.75rem 0 0;
-  @media (width >= 48rem) {
-    border-radius: 1.5rem;
-  }
-}
-::view-transition-old(sheet-step),
-::view-transition-new(sheet-step) {
-  @apply object-none object-top;
-}
-::view-transition-old(sheet-step) {
-  animation: vt-fade-out 90ms var(--ease-exit) both;
-}
-::view-transition-new(sheet-step) {
-  animation: vt-fade-in 200ms 70ms var(--ease-standard) both;
-}
-/* A change in place (lib/navMotion swapInPlace): the page's header holds
-   still, live, so its segmented control's thumb slides as usual. */
-:root:active-view-transition-type(in-page) [data-page-head] {
-  view-transition-name: page-head;
-}
-::view-transition-old(page-head) {
-  display: none;
-}
-::view-transition-new(page-head) {
-  animation: none;
-}
-/* The top and tab bars hold still: where they're the same on both pages
-   nothing moves, and what differs (a title, a button) cross-fades in place. */
-::view-transition-group(appbar),
-::view-transition-group(tabbar-backdrop) {
-  animation-duration: 220ms;
-}
-/* A bar's snapshot is taken with nothing behind it, so its glass would go
-   flat and then snap back to frosted; its group blurs the moving pages
-   instead (as paper does), shaped like the glass. The top bar only when the
-   new page's is frosted (AppBar), or it would flash frosted at the top. */
-::view-transition-group(appbar.frosted),
-::view-transition-group(tabbar-backdrop) {
-  backdrop-filter: blur(24px) saturate(1.6);
-}
-::view-transition-group(appbar.frosted) {
-  /* The glass runs 1.25rem past the bar, fading out; the group stops at it. */
-  mask-image: linear-gradient(to bottom, black calc(100% - 0.5rem), transparent);
-}
-::view-transition-group(tabbar-backdrop) {
-  mask-image: linear-gradient(to bottom, transparent 1.25rem, black 2rem);
-}
-/* Labels that change in place (the tab bar entering or leaving a
-   competition, the back pill's text) fade out before the new ones fade in,
-   so two sets of words never sit on top of each other (M14). */
-:active-view-transition-type(enter-competition, leave-competition)::view-transition-old(tabbar) {
-  animation: vt-fade-out 90ms var(--ease-exit) both;
-}
-:active-view-transition-type(enter-competition, leave-competition)::view-transition-new(tabbar) {
-  animation: vt-fade-in 160ms 70ms var(--ease-standard) both;
-}
-::view-transition-old(nav-back):not(:only-child) {
-  animation: vt-fade-out 80ms var(--ease-exit) both;
-}
-::view-transition-new(nav-back):not(:only-child) {
-  animation: vt-fade-in 160ms 70ms var(--ease-standard) both;
-}
-/* Round glass with a name of its own (Back, More): the browser copies its
-   blur onto its transition group, square, at full strength even while the
-   button slides or fades away, and WebKit won't let that be turned off. So
-   it has no blur to copy while a change runs: plain glass (mostly opaque
-   anyway) for those moments. */
-:root:active-view-transition
-  :is([class*='view-transition-name:nav-back'], [class*='view-transition-name:tabbar-more']) {
-  backdrop-filter: none;
-}
-/* …unless the change left it as it was (between a competition's tabs, say):
-   then it just stays put, no fade (router, same-back). */
-:active-view-transition-type(same-back)::view-transition-old(nav-back) {
-  display: none;
-}
-:active-view-transition-type(same-back)::view-transition-new(nav-back) {
-  animation: none;
-}
-
-/* The tab bar pill keeps its place between the app's tabs and a
-   competition's, resizing as the exit button pops in beside it. */
-::view-transition-group(tabbar),
-::view-transition-group(tabbar-exit) {
-  animation-duration: 150ms;
-  animation-timing-function: var(--ease-elastic);
-}
-/* A snapshot is taken with nothing behind it, so the glass would go flat
-   mid-transition; blur the page behind the moving bar instead. */
-::view-transition-group(tabbar),
-::view-transition-group(tabbar-exit) {
-  backdrop-filter: blur(24px) saturate(1.8);
-  border-radius: 9999px;
-}
-/* Chrome copies (and animates) an element's backdrop-filter onto its
-   transition group but not its rounded corners, hence the radius above.
-   While the exit button buds in or out, the group sits still at full size,
-   so its blur moves to the budding image pair instead. */
-:active-view-transition-type(enter-competition)::view-transition-group(tabbar-exit),
-:active-view-transition-type(leave-competition)::view-transition-group(tabbar-exit) {
-  backdrop-filter: none;
-}
-:active-view-transition-type(enter-competition)::view-transition-image-pair(tabbar-exit),
-:active-view-transition-type(leave-competition)::view-transition-image-pair(tabbar-exit) {
-  backdrop-filter: blur(24px) saturate(1.8);
-  clip-path: inset(0 round 9999px);
-}
-::view-transition-old(tabbar),
-::view-transition-new(tabbar) {
-  @apply h-full object-cover object-right;
-}
-/* The current tab's capsule slides to the new tab, overshooting a little.
-   It's the same capsule before and after, so no crossfade: just the new one,
-   stretched to fit as it moves (tab widths differ between the two bars). */
-::view-transition-group(tabbar-highlight) {
-  animation-duration: 300ms;
-  animation-timing-function: var(--ease-elastic);
-}
-::view-transition-old(tabbar-highlight) {
-  display: none;
-}
-::view-transition-new(tabbar-highlight) {
-  @apply size-full;
-  animation: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(tabbar-highlight) {
-    animation-duration: 0s;
-  }
-}
-/* The exit button buds off the pill's edge like a droplet splitting away
-   (macOS Spotlight's buttons do this): it starts squeezed inside the pill,
-   stretches as it pulls free, then settles round. Closing reverses it. */
-@keyframes vt-bud-in {
-  0% {
-    opacity: 0;
-    translate: 2.5rem 0;
-    scale: 0.35 0.55;
-    filter: blur(6px);
-  }
-  55% {
-    opacity: 1;
-    translate: -0.25rem 0;
-    scale: 1.12 0.92;
-    filter: blur(0);
-  }
-  80% {
-    scale: 0.97 1.03;
-  }
-  100% {
-    translate: 0 0;
-    scale: 1 1;
-  }
-}
-@keyframes vt-bud-out {
-  0% {
-    translate: 0 0;
-    scale: 1 1;
-  }
-  40% {
-    scale: 1.1 0.9;
-  }
-  100% {
-    opacity: 0;
-    translate: 2.5rem 0;
-    scale: 0.35 0.55;
-    filter: blur(6px);
-  }
-}
-/* Animate the image pair, not the group: the group is positioned by a
-   transform that scale/translate would multiply (it'd fly in from above).
-   The pair carries the frosted backdrop, so the glass moves with it. */
-:active-view-transition-type(enter-competition)::view-transition-image-pair(tabbar-exit) {
-  animation: vt-bud-in 260ms ease-out both;
-}
-:active-view-transition-type(leave-competition)::view-transition-image-pair(tabbar-exit) {
-  animation: vt-bud-out 180ms ease-in both;
-}
-:active-view-transition-type(enter-competition)::view-transition-new(tabbar-exit),
-:active-view-transition-type(leave-competition)::view-transition-old(tabbar-exit) {
-  animation: none;
-}
-
-/* Wide screens: the sidebar (nav/AppSidebar) stays put through page changes
-   rather than sliding with the page. Its frame, rows and headings are named
-   (class .sidebar), so each row glides to where it now sits while its look
-   cross-fades; a branch that opens unfolds downward, one that closes folds
-   up and away. */
-::view-transition-group(sidebar) {
-  animation: none;
-}
-/* Rows nest in the list's group (nav/AppSidebar), clipped to it, so one
-   scrolled out of sight doesn't show over the account at the foot while it
-   moves. Where groups can't nest, the rows don't glide; the sidebar holds. */
-::view-transition-group-children(sidebar-nav) {
-  overflow: clip;
-}
-@supports not (view-transition-group: contain) {
-  [style*='view-transition-class: sidebar'] {
-    view-transition-name: none !important;
-  }
-}
-::view-transition-group(.sidebar) {
-  animation-duration: var(--dur-base);
-  animation-timing-function: var(--ease-snappy);
-}
-::view-transition-old(.sidebar),
-::view-transition-new(.sidebar) {
-  animation-duration: var(--dur-quick);
-}
-/* (The unfold trails the rows below a touch, so they're always clear of it.) */
-::view-transition-new(.sidebar-branch):only-child {
-  animation: vt-unfold var(--dur-slow) var(--ease-standard) both;
-}
-::view-transition-old(.sidebar-branch):only-child {
-  animation: vt-fold var(--dur-quick) var(--ease-exit) both;
-}
-@keyframes vt-unfold {
-  from {
-    clip-path: inset(0 0 100% 0);
-    opacity: 0;
-  }
-}
-@keyframes vt-fold {
-  to {
-    clip-path: inset(0 0 100% 0);
     opacity: 0;
   }
 }

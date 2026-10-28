@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { RouterLink, useRouter, type RouteLocationRaw } from 'vue-router'
 import { LogIn, LogOut, Settings, UserRound } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import MeAvatar from '@/components/MeAvatar.vue'
+import { useMorph } from '@/lib/morph'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 
@@ -21,18 +21,18 @@ const auth = useAuthStore()
 const me = useMeStore()
 
 // The menu grows out of the button and hangs under it (Dialog anchors it).
-const open = ref(false)
-const show = () => (open.value = true)
+// Picking a page shuts it at once, as More does, so only the page moves.
+const menu = useMorph()
 function go(to: RouteLocationRaw) {
-  open.value = false
+  menu.dismiss()
   void router.push(to)
 }
 async function signOut() {
-  open.value = false
+  menu.hide()
   await auth.signOut()
 }
 function signIn() {
-  open.value = false
+  menu.hide()
   auth.openLogin({ reason: 'account' })
 }
 
@@ -72,9 +72,9 @@ const row =
     aria-label="Sign in and settings"
     title="Sign in"
     aria-haspopup="dialog"
-    :aria-expanded="open"
+    :aria-expanded="menu.open"
     class="press hover:bg-accent text-primary relative flex size-9 items-center justify-center rounded-full after:absolute after:-inset-1"
-    @click="show"
+    @click="menu.show"
   >
     <UserRound class="size-5" />
   </button>
@@ -83,14 +83,14 @@ const row =
     type="button"
     :aria-label="`Signed in as ${me.displayName ?? me.email ?? 'you'}`"
     aria-haspopup="dialog"
-    :aria-expanded="open"
+    :aria-expanded="menu.open"
     class="press hover:ring-accent relative flex size-9 items-center justify-center rounded-full hover:ring-4 after:absolute after:-inset-1"
-    @click="show"
+    @click="menu.show"
   >
     <MeAvatar />
   </button>
 
-  <Dialog v-if="variant === 'icon'" :open="open" variant="dropdown" aria-label="Your account" @close="open = false">
+  <Dialog v-if="variant === 'icon'" :open="menu.open" :morph="menu" variant="dropdown" aria-label="Your account" @close="menu.hide()">
     <nav v-if="!auth.isSignedIn" aria-label="Your account" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
       <div>
         <button type="button" :class="row" @click="signIn">

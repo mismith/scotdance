@@ -103,7 +103,7 @@ const items = computed<TabItem[]>(() =>
         v-tap-feedback
         type="button"
         data-nav="back"
-        class="glass press-glass text-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full [view-transition-name:tabbar-exit]"
+        class="glass press-glass text-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full"
         :aria-label="`Leave this competition, back to ${exit.label}`"
         :title="`Back to ${exit.label}`"
         @click="leave"

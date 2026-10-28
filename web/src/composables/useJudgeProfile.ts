@@ -105,8 +105,8 @@ function createJudgeProfile(judgeId: Ref<string>): UseJudgeProfile {
           const agg = value as JudgeAggregate
           aggregate.value = agg
           // Seed the /judges list cache with this row so back-nav from the
-          // detail page has a real row in the DOM for the view-transition
-          // morph to land on (without paying for a full list fetch).
+          // detail page slides back to a real row, not an empty list
+          // (without paying for a full list fetch).
           insertEntityAggregate('judges', id, agg)
           const eagerName = agg.name?.trim()
           if (eagerName) recent.record(id, eagerName)

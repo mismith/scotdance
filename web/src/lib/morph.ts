@@ -1,5 +1,4 @@
 import { nextTick, reactive, ref, shallowRef } from 'vue'
-import { startViewTransition } from '@/lib/transition'
 
 // Morph: whatever opens something (a button, a row, a tab) grows into it,
 // and it shrinks back into the same place when it closes, the way iOS 26
@@ -9,17 +8,13 @@ import { startViewTransition } from '@/lib/transition'
 //   <button @click="menu.show">…</button>          the trigger is the clicked element
 //   <Dialog :open="menu.open" :morph="menu" @close="menu.hide()">…</Dialog>
 //
-// Only one element at a time carries the `morph` view-transition name: an
-// empty ghost over the trigger at the trigger's end, the target at the
-// other. The trigger itself never does, so it holds still in the page while
-// the surface grows out of it and shrinks back into it.
-// The look lives in style.css under "Morph". Without View Transitions, or
-// with Reduce Motion on, things just open and close.
+// Played on the live dialog: moved and clipped from the trigger's box to its
+// own, and faded in from nothing at the trigger's end (out to nothing, when
+// it closes), so the trigger holds still in the page under it. Only
+// transform, clip and opacity move, so the compositor plays it and the page
+// never freezes. With Reduce Motion on, things just open and close.
 
-export const morphSupported = typeof document !== 'undefined' && 'startViewTransition' in document
 const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches
-
-const NAME = 'morph'
 
 // The control most recently pressed, so a sheet opened indirectly (a store
 // action, after signing in) can still grow out of what was tapped.
@@ -41,7 +36,7 @@ function recentlyPressed(): HTMLElement | null {
 }
 
 // Morphs run one at a time: a new one waits for the last to finish, so a
-// quick reopen can't start while the previous snapshot still holds the name.
+// quick reopen can't start while the previous one is still closing.
 let queue: Promise<void> = Promise.resolve()
 
 function onScreen(el: HTMLElement | null): el is HTMLElement {
@@ -50,59 +45,33 @@ function onScreen(el: HTMLElement | null): el is HTMLElement {
   return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight
 }
 
-const transparent = (c: string) => c === 'rgba(0, 0, 0, 0)' || c === 'transparent'
-
-/** What's painted behind an element: its own background, else the nearest
- *  ancestor's. A text button then grows out of the page it sits on, not out
- *  of a white box. */
-function paintedBackground(el: HTMLElement): string {
-  for (let n: HTMLElement | null = el; n; n = n.parentElement) {
-    const bg = getComputedStyle(n).backgroundColor
-    if (!transparent(bg)) return bg
-  }
-  return 'var(--color-raised)'
-}
-
-/** The shape the morph's surface starts or ends as. */
-function paintSurface(el: HTMLElement, end: 'from' | 'to') {
+/** An element's corners, each capped at what's visible (a pill's computes as 9999px). */
+function radiusOf(el: HTMLElement) {
   const cs = getComputedStyle(el)
-  const root = document.documentElement.style
-  const bg = paintedBackground(el)
-  // A pill's radius computes as 9999px; cap each corner at what's visible so
-  // the surface doesn't balloon through huge radii on the way.
   const r = el.getBoundingClientRect()
   const cap = Math.min(r.width, r.height) / 2
   const corners = [cs.borderTopLeftRadius, cs.borderTopRightRadius, cs.borderBottomRightRadius, cs.borderBottomLeftRadius]
-  root.setProperty(`--morph-${end}-radius`, corners.map((c) => `${Math.min(parseFloat(c) || 0, cap)}px`).join(' '))
-  root.setProperty(`--morph-${end}-bg`, bg)
-  root.setProperty(`--morph-${end}-corner`, cs.getPropertyValue('corner-shape') || 'round')
+  return corners.map((c) => `${Math.min(parseFloat(c) || 0, cap)}px`).join(' ')
 }
 
-/** An empty stand-in pinned over the trigger, carrying the name in its
- *  place: the surface grows out of it from clear and shrinks back into it to
- *  clear. Given the name, the trigger's own picture would ride the surface's
- *  corner out to the sheet's edge and back. */
-function ghostOver(el: HTMLElement, end: 'from' | 'to') {
-  const r = el.getBoundingClientRect()
-  const ghost = document.createElement('div')
-  ghost.setAttribute('aria-hidden', 'true')
-  Object.assign(ghost.style, {
-    position: 'fixed',
-    left: `${r.left}px`,
-    top: `${r.top}px`,
-    width: `${r.width}px`,
-    height: `${r.height}px`,
-    pointerEvents: 'none',
-  })
-  document.body.append(ghost)
-  // A transformed ancestor would shift `fixed`; line it up with what it covers.
-  const g = ghost.getBoundingClientRect()
-  ghost.style.left = `${2 * r.left - g.left}px`
-  ghost.style.top = `${2 * r.top - g.top}px`
-  paintSurface(el, end)
-  document.documentElement.style.setProperty(`--morph-${end}-bg`, 'transparent')
-  ghost.style.viewTransitionName = NAME
-  return ghost
+/**
+ * Where `el` starts when it grows out of `box`: scaled (evenly, so nothing
+ * squashes) to cover the box from its top, and clipped to the box's shape.
+ */
+function grownFrom(el: HTMLElement, box: DOMRect, radius: string): Keyframe {
+  const d = el.getBoundingClientRect()
+  const s = Math.max(box.width / d.width, box.height / d.height)
+  const x = box.left + box.width / 2 - (d.left + (d.width * s) / 2)
+  const y = box.top - d.top
+  // The clip is in the dialog's own (unscaled) space.
+  const w = box.width / s
+  const h = box.height / s
+  const side = (d.width - w) / 2
+  const r = radius
+    .split(' ')
+    .map((c) => `${parseFloat(c) / s}px`)
+    .join(' ')
+  return { transformOrigin: 'top left', transform: `translate(${x}px, ${y}px) scale(${s})`, clipPath: `inset(0 ${side}px ${d.height - h}px ${side}px round ${r})` }
 }
 
 export type Morph = ReturnType<typeof useMorph>
@@ -128,41 +97,49 @@ export function useMorph() {
 
   async function run(next: boolean) {
     if (open.value === next) return
-    const leaving = next ? trigger.value : target.value
-    if (!morphSupported || reduceMotion() || !onScreen(leaving) || slidesInstead()) {
+    const from = trigger.value
+    // Growing out of (or back into) a trigger that's on screen; otherwise
+    // the dialog opens and closes the ordinary way.
+    if (reduceMotion() || !onScreen(from) || slidesInstead()) {
       animated.value = false
       open.value = next
       return
     }
     animated.value = true
-    let ghost = next ? ghostOver(leaving, 'from') : undefined
-    if (!next) {
-      paintSurface(leaving, 'from')
-      leaving.style.viewTransitionName = NAME
-    }
-    // Floating menus and centred cards spring a little; a sheet pinned to the
-    // bottom edge doesn't overshoot it. style.css times each.
-    const kind = target.value?.dataset.morphKind
-    const pinned = kind === 'sheet' && !matchMedia('(min-width: 48rem)').matches
-    const types = [NAME, pinned ? 'morph-pinned' : 'morph-float', next ? 'morph-open' : 'morph-close']
-    const transition = startViewTransition(async () => {
-      ghost?.remove()
-      leaving.style.viewTransitionName = ''
-      open.value = next
+    const box = from.getBoundingClientRect()
+    if (next) {
+      open.value = true
       await nextTick()
-      const arriving = next ? target.value : trigger.value
-      if (!onScreen(arriving)) return
-      if (!next) ghost = ghostOver(arriving, 'to')
-      else {
-        paintSurface(arriving, 'to')
-        arriving.style.viewTransitionName = NAME
-      }
-    }, types)
-    // An interrupted morph (say, a route change mid-way) just ends early.
-    transition.ready.catch(() => {})
-    await transition.finished.catch(() => {})
-    ghost?.remove()
-    for (const el of [trigger.value, target.value]) if (el) el.style.viewTransitionName = ''
+    }
+    const el = target.value
+    if (!onScreen(el)) {
+      open.value = next
+      return
+    }
+    const pinned = el.dataset.morphKind === 'sheet' && !matchMedia('(min-width: 48rem)').matches
+    const css = (n: string) => getComputedStyle(document.documentElement).getPropertyValue(n).trim()
+    // Floating menus and centred cards spring a little; a sheet pinned to the
+    // bottom edge doesn't overshoot it; closing is a quick ease back in.
+    const timing: KeyframeAnimationOptions = next
+      ? { duration: pinned ? 320 : 300, easing: css(pinned ? '--ease-snappy' : '--ease-elastic') || 'ease-out', fill: 'both' }
+      : { duration: 220, easing: css('--ease-standard') || 'ease-in', fill: 'both' }
+    const shut = grownFrom(el, box, radiusOf(from))
+    const opened = { transformOrigin: 'top left', transform: 'none', clipPath: `inset(0 round ${radiusOf(el)})` }
+    // Nothing at the trigger's end: it fades in as it leaves the trigger, and
+    // out just before it gets back.
+    const fade = next
+      ? el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150, easing: 'ease-out', fill: 'both' })
+      : el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, delay: 100, easing: 'ease-in', fill: 'both' })
+    const animations = [el.animate(next ? [shut, opened] : [opened, shut], timing), fade]
+    try {
+      animations.push(el.animate([{ opacity: next ? 0 : 1 }, { opacity: next ? 1 : 0 }], { ...timing, pseudoElement: '::backdrop' }))
+    } catch {
+      // No pseudo-element animations: the backdrop just shows.
+    }
+    await Promise.all(animations.map((a) => a.finished.catch(() => {})))
+    if (!next) open.value = false
+    await nextTick()
+    for (const a of animations) a.cancel()
   }
 
   /** Open, growing out of the clicked element, the one given, or failing

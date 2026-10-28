@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, useId } from 'vue'
+import { computed, ref, useId } from 'vue'
 import { Bell, BellOff, BellRing, History, Smartphone, Sun } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Segmented from '@/components/ui/Segmented.vue'
@@ -13,7 +13,6 @@ import { useAuthStore } from '@/stores/auth'
 import { clearDeviceHistory } from '@/lib/deviceHistory'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { isNative } from '@/lib/native'
-import { startViewTransition } from '@/lib/transition'
 
 // Settings: alerts, appearance and this device. Your account (and how you
 // use ScotDance, and signing out) lives on the Account page; help, the
@@ -42,16 +41,6 @@ const pushHint = computed(() => {
 })
 const pushId = useId()
 const { theme } = useTheme()
-// A new appearance cross-fades in rather than snapping.
-async function setTheme(next: Theme) {
-  if (next === theme.value) return
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return void (theme.value = next)
-  startViewTransition(async () => {
-    theme.value = next
-    await nextTick()
-  }, ['theme'])
-}
-
 const titleEl = ref<HTMLElement | null>(null)
 const scrolledPast = useScrolledPast(titleEl)
 
@@ -169,7 +158,7 @@ async function clearHistory() {
               <template v-else>Automatic follows your device. To make text bigger, zoom in your browser.</template>
             </p>
           </div>
-          <Segmented :model-value="theme" :options="THEMES" label="Appearance" @update:model-value="setTheme" />
+          <Segmented v-model="theme" :options="THEMES" label="Appearance" />
         </div>
       </section>
 

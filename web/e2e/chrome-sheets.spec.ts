@@ -176,21 +176,19 @@ test.describe('with large text (150%)', () => {
 })
 
 test.describe('page changes', () => {
+  // Pages slide live (lib/pageTransition), marking <html data-slide> with
+  // the way they go while they move.
   const countTransitions = async (page: Page) => {
     await page.addInitScript(() => {
-      const w = window as Window & { __vt?: number }
-      const v = window as Window & { __types?: string[][] }
-      w.__vt = 0
-      v.__types = []
-      const start = document.startViewTransition?.bind(document)
-      if (start)
-        document.startViewTransition = ((arg: Parameters<typeof start>[0]) => {
-          w.__vt = (w.__vt ?? 0) + 1
-          v.__types!.push(arg && typeof arg === 'object' ? [...(arg.types ?? [])] : [])
-          return start(arg)
-        }) as typeof document.startViewTransition
+      const v = window as Window & { __slides?: string[] }
+      v.__slides = []
+      new MutationObserver(() => {
+        const way = document.documentElement.dataset.slide
+        if (way) v.__slides!.push(way)
+      }).observe(document, { attributes: true, subtree: true, attributeFilter: ['data-slide'] })
     })
   }
+  const slides = (page: Page) => page.evaluate(() => (window as Window & { __slides?: string[] }).__slides ?? [])
 
   // The first page doesn't animate in, and a tab tapped before it's drawn
   // leaves from there too (the router hasn't arrived yet): wait for its title.
@@ -204,21 +202,18 @@ test.describe('page changes', () => {
     await arrive(page, '/competitions')
     await appTab(page, 'Search').click()
     await expect(page).toHaveURL(/\/search$/)
-    expect(await page.evaluate(() => (window as Window & { __vt?: number }).__vt)).toBeGreaterThan(0)
+    // (On wide screens the sidebar's peers just change, as on a Mac.)
+    if (!hasSidebar(page)) expect((await slides(page)).length).toBeGreaterThan(0)
   })
 
-  test('move toward the tab you tap, along its bar (or down the sidebar), and Back reverses it', async ({ page }) => {
+  test('move toward the tab you tap, along its bar, and Back reverses it (the sidebar\'s just change)', async ({ page }) => {
     await countTransitions(page)
-    const axis = hasSidebar(page) ? 'axis-y' : 'axis-x'
     await arrive(page, '/')
     await appTab(page, 'Search').click()
     await expect(page).toHaveURL(/\/search$/)
     await page.goBack()
     await expect(page).toHaveURL(/\/$/)
-    expect(await page.evaluate(() => (window as Window & { __types?: string[][] }).__types)).toEqual([
-      ['next', axis],
-      ['prev', axis],
-    ])
+    expect(await slides(page)).toEqual(hasSidebar(page) ? [] : ['next', 'prev'])
   })
 
   test('a link in the page goes deeper, from the right; its back button comes back out', async ({ page }) => {
@@ -230,8 +225,7 @@ test.describe('page changes', () => {
       await expect(page).toHaveURL(/\/competitions\/[^/]+\/info$/)
       await page.getByRole('button', { name: /^Back to Competitions/ }).click()
       await expect(page).toHaveURL(/\/competitions$/)
-      const types = await page.evaluate(() => (window as Window & { __types?: string[][] }).__types)
-      expect(types?.map((t) => t.filter((n) => n === 'forward' || n === 'back'))).toEqual([['forward'], ['back']])
+      expect(await slides(page)).toEqual(['forward', 'back'])
     } finally {
       await retry(() => removeCompetition(comp.id))
     }
@@ -246,7 +240,7 @@ test.describe('page changes', () => {
       await expect(page).toHaveURL(/\/search$/)
       await appTab(page, 'Home').click()
       await expect(page).toHaveURL(/\/$/)
-      expect(await page.evaluate(() => (window as Window & { __vt?: number }).__vt)).toBe(0)
+      expect(await slides(page)).toEqual([])
     })
   })
 })

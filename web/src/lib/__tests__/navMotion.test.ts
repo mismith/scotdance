@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { alongMenu, byPath, inverse, types } from '@/lib/navMotion'
+import { alongMenu, byPath, inverse } from '@/lib/navMotion'
 
 const rect = (left: number, top: number) => ({ left, top }) as DOMRect
 
@@ -23,9 +23,5 @@ describe('page motion', () => {
     expect(inverse({ way: 'next', axis: 'y' })).toEqual({ way: 'prev', axis: 'y' })
     expect(inverse({ way: 'forward', axis: 'x' })).toEqual({ way: 'back', axis: 'x' })
     expect(inverse({ way: 'swap', axis: 'x' })).toEqual({ way: 'swap', axis: 'x' })
-  })
-
-  it('names the way and the axis for the stylesheet', () => {
-    expect(types({ way: 'prev', axis: 'y' })).toEqual(['prev', 'axis-y'])
   })
 })

@@ -8,10 +8,9 @@
 //   reverse of how you got here; the browser's Forward replays it.
 // - Anything else (a redirect, moving on after a save): by the paths, deeper
 //   in from the right, up out to the right, otherwise a quick swap in place.
-// style.css plays each one (:active-view-transition-type).
+// lib/pageMotion plays a page change; swapInPlace a change in place.
 
 import { nextTick } from 'vue'
-import { startViewTransition } from '@/lib/transition'
 
 export type Way = 'forward' | 'back' | 'next' | 'prev' | 'swap'
 export interface Motion {
@@ -21,8 +20,6 @@ export interface Motion {
 
 const INVERSE: Record<Way, Way> = { forward: 'back', back: 'forward', next: 'prev', prev: 'next', swap: 'swap' }
 export const inverse = (m: Motion): Motion => ({ ...m, way: INVERSE[m.way] })
-
-export const types = (m: Motion) => [m.way, `axis-${m.axis}`]
 
 const segments = (path: string) => path.split('/').filter(Boolean)
 
@@ -86,24 +83,22 @@ export function fromTap(to: string, from: string): Motion | null {
 }
 
 /**
- * Move a page on in place, as a navigation would (a form going on to its
- * next stage): `update` makes the change. With `holdHead`, the page's header
- * (`data-page-head`: its title and controls) holds still while the rest moves.
+ * Change what a page shows in place (a segmented control's views): the new
+ * view drifts in from the chosen segment's side as it fades in, under the
+ * page's header (`data-page-head`: its title and controls), which holds
+ * still. `order` is the segments, left to right. On wide screens (as on a
+ * Mac) it just changes.
  */
-export function moveInPlace(motion: Motion, update: () => void | Promise<void>, holdHead = false) {
-  if (typeof document === 'undefined' || matchMedia('(prefers-reduced-motion: reduce)').matches) return void update()
-  startViewTransition(async () => {
-    await update()
-    await nextTick()
-  }, [...(holdHead ? ['in-page'] : []), ...types(motion)])
-}
-
-/**
- * Change what a page shows in place (a segmented control's views), with the
- * content moving toward the chosen segment, as tabs do, under a still
- * header. `order` is the segments, left to right.
- */
-export function swapInPlace<T>(order: readonly T[], from: T, to: T, update: () => void) {
+export async function swapInPlace<T>(order: readonly T[], from: T, to: T, update: () => void) {
   if (from === to) return
-  moveInPlace({ way: order.indexOf(to) > order.indexOf(from) ? 'next' : 'prev', axis: 'x' }, update, true)
+  update()
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || matchMedia('(min-width: 64rem)').matches) return
+  await nextTick()
+  const head = document.querySelector('[data-page-head]')
+  const dx = order.indexOf(to) > order.indexOf(from) ? 32 : -32
+  for (let el = head?.nextElementSibling; el; el = el.nextElementSibling)
+    el.animate([{ opacity: 0, transform: `translateX(${dx}px)` }, { opacity: 1, transform: 'none' }], {
+      duration: 280,
+      easing: getComputedStyle(document.documentElement).getPropertyValue('--ease-push').trim() || 'ease-out',
+    })
 }

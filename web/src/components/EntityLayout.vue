@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RouterView } from 'vue-router'
 import AppBar from '@/components/nav/AppBar.vue'
+import PageStack from '@/components/nav/PageStack.vue'
 import SidebarBranch from '@/components/nav/SidebarBranch.vue'
 import Button from '@/components/ui/Button.vue'
 import ShareButton from '@/components/ShareButton.vue'
@@ -56,7 +56,7 @@ const { scrolledPast } = provideInfoHeader()
           {{ scope === 'dancer' ? 'Find a dancer' : `All ${section.label.toLowerCase()}` }}
         </Button>
       </EmptyState>
-      <RouterView v-else />
+      <PageStack v-else block />
     </main>
     <!-- Wide screens: this profile, nested under its list in the sidebar. -->
     <SidebarBranch v-if="displayName" :under="sectionRouteName" :label="displayName" :to="$route.path" current />

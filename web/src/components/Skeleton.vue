@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-foreground/8 relative isolate animate-[vt-fade-in_200ms_150ms_both] overflow-hidden rounded-md"
+    class="bg-foreground/8 relative isolate animate-[fade-in_200ms_150ms_both] overflow-hidden rounded-md"
     aria-hidden="true"
   >
     <div

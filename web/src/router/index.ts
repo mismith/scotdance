@@ -1,16 +1,17 @@
-import { nextTick, type Component } from 'vue'
+import type { Component } from 'vue'
 import {
   createRouter,
   createWebHistory,
   isNavigationFailure,
   NavigationFailureType,
   type RouteRecordRaw,
+  type RouteRecordNormalized,
   type RouteLocationNormalized,
 } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 import { CalendarDays, Gavel, House, Info, Landmark, Music, School, Settings, Users } from '@lucide/vue'
-import { startViewTransition } from '@/lib/transition'
-import { byPath, fromTap, inverse, types, type Motion } from '@/lib/navMotion'
+import { scrollAfterSwap, setNextMotion } from '@/lib/pageTransition'
+import { byPath, fromTap, inverse, type Motion } from '@/lib/navMotion'
 import { trackCompetitionEntry } from '@/lib/competitionExit'
 import { useAuthStore } from '@/stores/auth'
 import { recordBackLabel } from '@/lib/backLabels'
@@ -404,18 +405,28 @@ export const router = createRouter({
   scrollBehavior(to, from, savedPosition) {
     // Override CSS scroll-behavior:smooth — route-change scrolls should be instant
     // (smooth animation gets cancelled by DOM changes from lazy-loaded components)
-    if (savedPosition) return whenTallEnough(savedPosition.top).then(() => ({ ...savedPosition, behavior: 'instant' }))
+    // While pages slide (lib/pageTransition), the arriving one is drawn at the
+    // scroll it lands at, and the window catches up once it's in.
+    if (savedPosition) {
+      return scrollAfterSwap(savedPosition.top)
+        .then(() => whenTallEnough(savedPosition.top))
+        .then(() => ({ ...savedPosition, behavior: 'instant' }))
+    }
     // Query/hash-only nav on the same route (e.g. typing into a filter) must
     // not move scroll — otherwise every keystroke snaps to top.
-    if (from && to.path === from.path) return false
+    if (from && to.path === from.path) return scrollAfterSwap(null).then(() => false)
     // Hash scrolls are handled per-view (e.g. Group.vue#focusHashTarget) so
     // they can wait for async data and apply the chrome offset themselves.
     // Returning false here prevents Vue Router's native scrollIntoView from
     // racing and clobbering the view's manual scroll.
-    if (to.hash) return false
+    if (to.hash) return scrollAfterSwap(null).then(() => false)
     const stored = readScrollPositions()[to.fullPath]
-    if (stored != null) return whenTallEnough(stored).then(() => ({ top: stored, behavior: 'instant' as const }))
-    return { top: 0, behavior: 'instant' }
+    if (stored != null) {
+      return scrollAfterSwap(stored)
+        .then(() => whenTallEnough(stored))
+        .then(() => ({ top: stored, behavior: 'instant' as const }))
+    }
+    return scrollAfterSwap(0).then(() => ({ top: 0, behavior: 'instant' as const }))
   },
 })
 
@@ -495,14 +506,14 @@ router.afterEach((_to, _from, failure) => {
 })
 
 // iOS swipe-back (and any other UA-driven traverse animation) already paints
-// the destination before our guards run. Running our own VT on top would
-// snapshot the already-arrived page and animate it to itself — a one-frame
-// flicker. The Navigation API tells us this happened via hasUAVisualTransition.
-let skipNextViewTransition = false
+// the destination before our guards run. Sliding the pages on top would play
+// the change twice. The Navigation API tells us this happened via
+// hasUAVisualTransition.
+let skipNextSlide = false
 const nav = (window as Window & { navigation?: EventTarget }).navigation
 nav?.addEventListener('navigate', (event) => {
   if ((event as Event & { hasUAVisualTransition?: boolean }).hasUAVisualTransition) {
-    skipNextViewTransition = true
+    skipNextSlide = true
   }
 })
 
@@ -517,13 +528,16 @@ nav?.addEventListener('navigate', (event) => {
 const arrivals = new Map<number, Motion>()
 let lastPosition = Number(history.state?.position ?? 0)
 let pending: Motion | null = null
+// How the pages move for the change being made (null: they just change).
+let slide: Motion | null = null
 router.afterEach((_to, _from, failure) => {
   const position = Number(history.state?.position ?? lastPosition)
   if (!failure && pending && position > lastPosition) arrivals.set(position, pending)
   lastPosition = position
   pending = null
+  setNextMotion(failure ? null : slide)
+  slide = null
 })
-const inComp = (r: RouteLocationNormalized) => r.matched.some((m) => m.meta.ownsBottomNav)
 function motionFor(to: RouteLocationNormalized, from: RouteLocationNormalized): Motion {
   const now = Number(history.state?.position ?? lastPosition)
   if (now !== lastPosition) {
@@ -534,15 +548,14 @@ function motionFor(to: RouteLocationNormalized, from: RouteLocationNormalized): 
   return fromTap(to.path, from.path) ?? byPath(to.path, from.path)
 }
 
-router.beforeResolve(async (to, from) => {
+router.beforeResolve((to, from) => {
+  slide = null
   if (from.matched.length === 0) return
   const motion = (pending = motionFor(to, from))
-  // Skip transition for same-route query-only changes (e.g. typing into a
-  // search input that syncs ?q= to the URL) — the snapshot/replay would
-  // flicker visible text on each keystroke.
+  // A query alone (typing a search that syncs ?q=) stays on the page.
   if (to.name === from.name && to.path === from.path) return
-  if (skipNextViewTransition) {
-    skipNextViewTransition = false
+  if (skipNextSlide) {
+    skipNextSlide = false
     return
   }
   // Reduce Motion: pages just change (as sheets just open, see lib/morph).
@@ -550,28 +563,35 @@ router.beforeResolve(async (to, from) => {
   // In Manage on wide screens, picking from a list beside its detail
   // shouldn't move the window; going to another section still does. On
   // phones each step is a page, so it always animates.
-  if (to.meta.admin && from.meta.admin && to.name === from.name && matchMedia('(min-width: 768px)').matches) return
-  // Crossing into or out of a competition, the tab bar's exit button buds
-  // off the pill or merges back into it (style.css, vt-bud-*).
-  const crossing = inComp(to) && !inComp(from) ? ['enter-competition'] : !inComp(to) && inComp(from) ? ['leave-competition'] : []
-  // The top bar's back button fades out and in when it changes; when a
-  // change leaves it as it was (between a competition's tabs, say), it just
-  // stays (style.css, same-back).
-  const before = barParts()
-  const updated = new Promise<void>((resolve) => (barUpdated = resolve))
-  const transition = startViewTransition(async (vtTypes) => {
-    await updated
-    const after = barParts()
-    if (after.back && after.back === before.back) vtTypes?.add('same-back')
-  }, [...crossing, ...types(motion)])
-  await transition.captured
+  const wide = matchMedia('(min-width: 768px)').matches
+  if (to.meta.admin && from.meta.admin && to.name === from.name && wide) return
+  // A page that changes in place doesn't move; nor, on wide screens (as on a
+  // Mac), do the sidebar's peers.
+  if (motion.way === 'swap') return
+  // A link to a spot on a page scrolls there itself once its data is in.
+  if (to.hash) return
+  if ((motion.way === 'next' || motion.way === 'prev') && matchMedia('(min-width: 64rem)').matches) return
+  slide = motion
 })
-// The top bar's back button, as drawn.
-const barParts = () => ({ back: document.querySelector('[data-bar="back"]')?.outerHTML ?? null })
-// The new page is in once the router's done and Vue has drawn it.
-let barUpdated: (() => void) | null = null
-router.afterEach(async () => {
-  await nextTick()
-  barUpdated?.()
-  barUpdated = null
+
+// A page's code loads the first time it's opened, so each tab's first visit
+// would wait on it before anything moves. Once the app's settled, load the
+// pages people move between (the tabs, a competition's pages) a few at a
+// time while it's idle.
+const WARM = new Set(['home', 'competitions', 'search', 'dancers', 'settings'])
+const warmable = (r: RouteRecordNormalized) =>
+  WARM.has(String(r.name)) || (r.path.startsWith('/competitions/:competitionId') && !/\/(admin|manage|invite)/.test(r.path))
+const idle = () =>
+  new Promise<void>((resolve) =>
+    'requestIdleCallback' in window ? requestIdleCallback(() => resolve(), { timeout: 2000 }) : setTimeout(resolve, 200),
+  )
+router.isReady().then(async () => {
+  await new Promise((resolve) => setTimeout(resolve, 1500))
+  for (const record of router.getRoutes().filter(warmable)) {
+    const load = record.components?.default
+    // Lazy pages are loaders (`() => import(…)`); loaded ones are objects.
+    if (typeof load !== 'function' || load.length) continue
+    await idle()
+    await Promise.resolve((load as () => unknown)()).catch(() => {})
+  }
 })

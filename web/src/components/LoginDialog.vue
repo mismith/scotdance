@@ -4,7 +4,6 @@ import { Check, Eye, EyeOff } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import Dialog from '@/components/Dialog.vue'
 import Button from '@/components/ui/Button.vue'
-import { startViewTransition } from '@/lib/transition'
 
 // Sign-in, asked for at the moment it matters (tapping Favourite) and saying so.
 // Email and password, as in v3, the same in the browser and the apps; phones
@@ -49,7 +48,7 @@ const benefits = computed(() => {
 watch(
   () => auth.loginDialogOpen,
   (open) => {
-    if (open) go('signin', false)
+    if (open) void go('signin', false)
   },
 )
 
@@ -63,19 +62,18 @@ watch(
   },
 )
 
-function go(next: Step, animate = true) {
-  const change = () => {
-    step.value = next
-    errorMessage.value = null
-    infoMessage.value = null
-    passwordVisible.value = false
-  }
-  // The sheet resizes to the new step as its contents cross-fade (style.css).
-  if (!animate || matchMedia('(prefers-reduced-motion: reduce)').matches) return change()
-  startViewTransition(async () => {
-    change()
-    await nextTick()
-  }, ['sheet-step'])
+// What the sheet asks fades in as it changes, so two forms never show at once.
+const headingEl = ref<HTMLElement | null>(null)
+const formEl = ref<HTMLElement | null>(null)
+async function go(next: Step, animate = true) {
+  step.value = next
+  errorMessage.value = null
+  infoMessage.value = null
+  passwordVisible.value = false
+  if (!animate || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  await nextTick()
+  for (const el of [headingEl.value, formEl.value])
+    el?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' })
 }
 
 function friendly(e: unknown): string {
@@ -122,11 +120,11 @@ async function submit() {
 <template>
   <Dialog :open="auth.loginDialogOpen" :morph="auth.loginSheet" variant="sheet" @close="auth.closeLogin()">
     <template #header>
-      <h2 class="text-title">{{ heading }}</h2>
+      <h2 ref="headingEl" class="text-title">{{ heading }}</h2>
     </template>
 
     <!-- Fields first: with the keyboard up, only the top of the sheet shows. -->
-    <form class="space-y-3 p-4 pb-[calc(1.5rem+var(--safe-bottom))]" @submit.prevent="submit">
+    <form ref="formEl" class="space-y-3 p-4 pb-[calc(1.5rem+var(--safe-bottom))]" @submit.prevent="submit">
       <label class="block space-y-1.5">
         <span class="text-callout font-medium">Email address</span>
         <input

@@ -8,7 +8,7 @@ export const settleDelay = (i: number) => ({ animationDelay: `${Math.min(i, 5) *
 
 // Placeholders wait 150ms before showing (as Skeleton does), so a quick
 // load goes straight to the content: for the box around a set of skeletons.
-export const lateSkeleton = 'animate-[vt-fade-in_200ms_150ms_both]'
+export const lateSkeleton = 'animate-[fade-in_200ms_150ms_both]'
 
 // Rows that come and go in place (a group you open, a list you filter as you
 // type): they open and close to their own height and fade, so nothing below

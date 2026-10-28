@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useId, useSlots, watch } from 'vue'
 import { X } from '@lucide/vue'
-import { morphSupported, useMorph, type Morph } from '@/lib/morph'
+import { useMorph, type Morph } from '@/lib/morph'
 
 const props = withDefaults(
   defineProps<{
@@ -102,7 +102,7 @@ function sync(open: boolean) {
   }
 }
 
-// Post-flush, so a morph's snapshot sees the dialog already open or closed.
+// Post-flush, so a morph measures the dialog already open.
 watch(shown, (open) => sync(open), { flush: 'post' })
 
 onMounted(() => {
@@ -113,7 +113,7 @@ onMounted(() => {
 
 // When a morph animates the opening, the dialog's own slide/fade would fight
 // it; with nothing on screen to grow from, it opens the ordinary way.
-const morphing = computed(() => !!morph.value?.animated && morphSupported)
+const morphing = computed(() => !!morph.value?.animated)
 
 // A dropdown hangs under the control that opened it, lined up with the
 // trigger's nearer edge (its right edge for controls on the right of the
@@ -236,7 +236,7 @@ const dragStyle = computed(() =>
         : 'starting:open:opacity-0 starting:open:scale-95',
       // Transition: explicit property list incl. display so transition-discrete
       // can defer display:none until the visible properties finish. A morph
-      // animates it instead (the page cross-fades the backdrop).
+      // animates it (and its backdrop) instead.
       morphing && !settling
         ? 'transition-none'
         : 'ease-snappy duration-[320ms] transition-[opacity,translate,scale,display] transition-discrete backdrop:transition-opacity',

@@ -20,7 +20,7 @@ const props = defineProps<{
 <template>
   <Teleport defer :to="`#sidebar-${props.under}`">
     <!-- The guide line sits under the middle of the parent row's icon. -->
-    <div class="mt-0.5 ml-[1.3125rem] space-y-0.5 border-l-2 pl-2" :style="{ viewTransitionName: `sidebar-branch-${props.under}`, viewTransitionClass: 'sidebar sidebar-branch' }">
+    <div class="mt-0.5 ml-[1.3125rem] space-y-0.5 border-l-2 pl-2">
       <template v-if="props.label">
         <SidebarLink v-if="props.to" :to="props.to" :label="props.label" :state="props.current ? 'current' : 'open'" />
         <p v-else class="text-callout text-foreground px-3 py-1.5 leading-snug font-semibold" :title="props.label">

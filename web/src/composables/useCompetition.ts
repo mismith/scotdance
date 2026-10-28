@@ -345,8 +345,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     resultsRead = false
 
     // Seed from the list cache so Info.vue can render its header on the
-    // first frame (no skeleton phase → no DOM swap → view transitions from
-    // the list don't get skipped by a duplicate `view-transition-name`).
+    // first frame: the page slides in already filled, not as a skeleton.
     const seed = peekCompetition(id)
     if (seed) {
       rawCompetition.value = seed
