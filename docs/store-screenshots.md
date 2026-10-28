@@ -83,6 +83,7 @@ them with `security`:
 | `scotdance-play` | the Google Play service account's JSON key |
 | `scotdance-upload-keystore` | the Android upload keystore, base64 |
 | `scotdance-upload-key` | the upload key's alias (the account) and password |
+| `scotdance-ios-distribution` | the Apple Distribution certificate and its private key, as a `.p12` (no password), base64. The iOS lane makes it the first time and keeps it here |
 
 On a new Mac, from the downloaded files (`-U` replaces an item that's
 there), then delete the downloads:
@@ -97,6 +98,11 @@ security add-generic-password -U -s scotdance-upload-key -a scotdance -w
 The last asks for the keystore's password. Keep a backup of the keystore
 outside the repo: the keychain doesn't sync, and without it Google has to
 reset the upload key.
+
+`scotdance-ios-distribution` needs no setup: without it, `fastlane beta` in
+`ios/App` makes a new distribution certificate with the API key and stores
+it. Losing it only costs a new certificate (revoke the old one in Certificates,
+Identifiers & Profiles once there are three).
 
 - **App Store Connect API key:** App Store Connect › Users and Access ›
   Integrations › App Store Connect API › Team Keys › +, access **App

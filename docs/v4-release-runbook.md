@@ -117,8 +117,11 @@ later; the links don't change. From the main checkout, on `next`:
    (both stores read it; Play takes up to 500 characters): what's changed
    is `git log v<last beta>..`. Commit, and tag the bump `v<version>`.
 4. iPhone: `fastlane beta` in `ios/App`. It archives, uploads and sends the
-   build to Early Access with the notes. Xcode's account signs it, since the
-   API key can't. A new version waits for Beta App Review (usually hours).
+   build to Early Access with the notes. It signs with the distribution
+   certificate from the login keychain and an App Store profile it fetches
+   with the API key, not Xcode's account (a command-line export can't read
+   Xcode's sign-in), so it runs from any terminal. A new version waits for
+   Beta App Review (usually hours).
 5. Android: `fastlane beta` in `android`. It builds the bundle, signs it with
    the upload key and sends it to open testing with the notes. Google
    reviews it; with managed publishing on, it then waits for Publish in
