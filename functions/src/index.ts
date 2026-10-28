@@ -16,6 +16,7 @@ import * as KnownCompetitions from './knownCompetitions';
 import * as Sheets from './sheets';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
+import { getOnFindStrayDancers } from './strayDancers';
 import { getOnChange } from './changed';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
@@ -214,6 +215,12 @@ export const backfillDancerAggregates = adminHttps.onCall(
 export const backfillDancerBackPointers = adminHttps.onCall(
   Dancers.getOnBackfillBackPointers(appConfig.db),
 );
+// System admin › Dancer cleanup: empty and leftover entries in past competitions.
+const onFindStrayDancers = getOnFindStrayDancers(appConfig.db);
+export const findStrayDancers = adminHttps.onCall(async (data, ctx) => {
+  await ensureAdmin(ctx, appConfig.db);
+  return onFindStrayDancers();
+});
 
 const competitionsIndexRef = configDatabase.ref(`/${env}/competitions/{competitionId}`);
 // One trigger per event, composed: Typesense indexing + venue aggregate.

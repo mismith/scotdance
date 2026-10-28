@@ -307,7 +307,7 @@ test('championship points: give, take away, and never to a placed dancer', async
   await expect(tap(page, ds[6].number)).toBeDisabled()
 })
 
-test('"No dancers placed", and the next dance carries on', async ({ page, browser }) => {
+test('"No results", and the next dance carries on', async ({ page, browser }) => {
   const group = freshGroup()
   const reel = comp.dances[3]
   await callBack(
@@ -318,7 +318,7 @@ test('"No dancers placed", and the next dance carries on', async ({ page, browse
   await signIn(page, email)
   await entry(page, group.id, reel.id)
   await openPlaced(page)
-  await page.getByRole('switch', { name: 'No dancers placed' }).click()
+  await page.getByRole('switch', { name: 'No results' }).click()
   await expect.poll(() => stored(`results/${group.id}/${reel.id}`)).toBe(false)
   await closePlaced(page)
   await page.getByRole('link', { name: 'Next: Overall' }).click()
@@ -327,7 +327,7 @@ test('"No dancers placed", and the next dance carries on', async ({ page, browse
   const viewer = await (await browser.newContext()).newPage()
   await viewer.goto(`/competitions/${comp.id}/results/${group.id}`)
   await expect(
-    viewer.locator(`#dance-${reel.id}`).getByText('No placings for this dance.'),
+    viewer.locator(`#dance-${reel.id}`).getByText('No results for this dance.'),
   ).toBeVisible()
 })
 

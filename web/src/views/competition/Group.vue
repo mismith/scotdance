@@ -293,7 +293,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
 
         <div class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
           <div v-if="!s.placings.hasResults" class="text-muted-foreground flex items-start gap-3 px-4 py-4 text-base">
-            <template v-if="s.placings.explicitlyEmpty">No placings for this dance.</template>
+            <template v-if="s.placings.explicitlyEmpty">{{ s.dance.id === OVERALL_ID ? 'No overall for this age group.' : 'No results for this dance.' }}</template>
             <template v-else-if="s.dance.id === OVERALL_ID">
               <Clock class="mt-0.5 size-5 shrink-0" />
               <span>Posted after all the dances are in.</span>

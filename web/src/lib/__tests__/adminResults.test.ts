@@ -111,7 +111,7 @@ describe('v3 parity: what v4 writes', () => {
     expect(serializePlacings({ ...p, reverseFrom: 6 })).toEqual(v3Save(p.entries, 6))
     // Championship off again.
     expect(serializePlacings({ ...p, reverseFrom: null })).toEqual(v3Save(p.entries, null))
-    // "No dancers placed" on, then off.
+    // "No results" on, then off.
     expect(v3Save([], null, false)).toBe(false)
     expect(v3Save([], null, null)).toBeNull()
   })

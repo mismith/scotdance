@@ -391,3 +391,37 @@ test('Submissions: waiting ones first, approved ones folded away, ⌘Enter to ap
     await Promise.all([dbRemove(`competitions:submissions/${waiting}`), dbRemove(`competitions:submissions/${done}`), dbRemove(`users:permissions/${sys.id}`)])
   }
 })
+
+test('Dancer cleanup: lists empty and leftover entries in a past competition, removes them, and Undo puts them back', async ({ page }) => {
+  test.setTimeout(120_000)
+  const comp = await seedCompetition({ dancersPerGroup: 1, startOffset: -10 })
+  const [first] = Object.values(await dbGet<Record<string, { firstName: string; lastName: string; number: string }>>(`competitions:data/${comp.id}/dancers`))
+  const stray = {
+    'stray-noname': { number: 901 },
+    'stray-leftover': { lastName: 'f' },
+    'stray-copy': { firstName: first.firstName, lastName: first.lastName },
+  }
+  for (const [key, d] of Object.entries(stray)) await dbSet(`competitions:data/${comp.id}/dancers/${key}`, d)
+  const sys = await systemAdmin()
+  try {
+    await signIn(page, sys.email)
+    await page.goto('/admin/dancers')
+    const row = page.getByRole('listitem').filter({ hasText: comp.name }).first()
+    await expect(row).toContainText('3 entries, 1 of them copies', { timeout: 90_000 })
+    await expect(row).toContainText(`${first.firstName} ${first.lastName} · No number or age group. Entered as ${first.number}`)
+    await expect(row).toContainText('901No name')
+
+    await row.getByRole('button', { name: 'Remove' }).click()
+    await expect(page.getByRole('listitem').filter({ hasText: comp.name })).toHaveCount(0)
+    await expect.poll(() => dbGet(`competitions:data/${comp.id}/dancers/stray-copy`)).toBeNull()
+    // The real entries stay.
+    expect(Object.keys(await dbGet<Record<string, unknown>>(`competitions:data/${comp.id}/dancers`))).not.toContain('stray-noname')
+
+    await page.getByRole('button', { name: 'Undo' }).click()
+    await expect.poll(() => dbGet(`competitions:data/${comp.id}/dancers/stray-leftover`)).toMatchObject({ lastName: 'f' })
+    await expect(page.getByRole('listitem').filter({ hasText: comp.name }).first()).toContainText('3 entries')
+  } finally {
+    await dbRemove(`users:permissions/${sys.id}`)
+    await removeCompetition(comp.id)
+  }
+})

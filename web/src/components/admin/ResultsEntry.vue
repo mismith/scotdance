@@ -70,6 +70,9 @@ const path = computed(() => `results/${props.groupId}/${props.danceId}`)
 const rawNow = () => m.results.value[props.groupId]?.[props.danceId]
 const placings = computed<Placings>(() => parsePlacings(rawNow()))
 const markedNone = computed(() => rawNow() === false)
+// Said generally: it also covers a dance that didn't run, or an Overall
+// that wasn't given.
+const noneLabel = computed(() => (isCallbacks.value ? 'No callbacks' : isOverall.value ? 'No overall' : 'No results'))
 
 const TABS = [
   { value: 'placings', label: 'Placings' },
@@ -262,9 +265,9 @@ async function pickReverse(n: number) {
   void saveUndoable({ ...parsePlacings(rawNow()), reverseFrom: n }, `Entering from ${n}${getOrdinalSuffix(n)}`)
 }
 
-// --- Nobody placed / no callbacks
+// --- No results / no callbacks
 function setNone(on: boolean) {
-  void save(on ? false : null, on ? (isCallbacks.value ? 'No callbacks' : 'No dancers placed') : 'Cleared “none”')
+  void save(on ? false : null, on ? noneLabel.value : `Cleared “${noneLabel.value}”`)
 }
 // From a dance waiting on callbacks: there wasn't a callback round, so mark
 // the callbacks "none" (as their own switch does) and carry on here.
@@ -370,7 +373,7 @@ watch(strip, (on) => !on && (placedOpen.value = false))
 const stripLabel = computed(() => {
   const n = placings.value.entries.length
   if (n) return isCallbacks.value ? `${n} called back` : `${n} placed`
-  if (markedNone.value) return isCallbacks.value ? 'No callbacks' : 'No dancers placed'
+  if (markedNone.value) return noneLabel.value
   return isCallbacks.value ? 'Nobody called back yet' : 'Nobody placed yet'
 })
 // Toasts rise above the strip.
@@ -413,7 +416,7 @@ watch(() => props.danceId, showCurrent)
       <div class="flex min-h-14 items-center border-t px-4">
         <label class="flex min-h-11 items-center gap-3 font-medium">
           <Switch :model-value="markedNone" :disabled="!canEdit" @update:model-value="setNone" />
-          {{ isCallbacks ? 'No callbacks' : 'No dancers placed' }}
+          {{ noneLabel }}
         </label>
       </div>
     </template>

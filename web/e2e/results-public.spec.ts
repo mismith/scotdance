@@ -72,9 +72,9 @@ test('an age group shows every stored shape the old app wrote', async ({ page })
 
   const s = page.locator(`#dance-${sword}`)
   await expect(s.getByRole('img', { name: /place/ })).toHaveCount(0)
-  await expect(s.getByText('No placings for this dance.')).toHaveCount(0)
+  await expect(s.getByText('No results for this dance.')).toHaveCount(0)
 
-  await expect(page.locator(`#dance-${seann}`).getByText('No placings for this dance.')).toBeVisible()
+  await expect(page.locator(`#dance-${seann}`).getByText('No results for this dance.')).toBeVisible()
 
   const r = page.locator(`#dance-${reel}`)
   const reelRibbons = r.getByRole('img', { name: /place/ })

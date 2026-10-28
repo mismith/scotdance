@@ -104,7 +104,7 @@ export type DanceState = 'done' | 'none' | 'todo'
 
 /** The state in words, for screen readers. */
 export const stateLabel = (state: DanceState, fix = false) =>
-  fix ? 'has a ? to fix' : state === 'done' ? 'entered' : state === 'none' ? 'none placed' : 'not entered yet'
+  fix ? 'has a ? to fix' : state === 'done' ? 'entered' : state === 'none' ? 'no results' : 'not entered yet'
 
 /** done: placings entered; none: marked "none placed"; todo: nothing yet. */
 export function danceState(raw: DancePlacing[] | false | null | undefined): DanceState {
