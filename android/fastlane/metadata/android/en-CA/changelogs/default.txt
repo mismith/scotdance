@@ -1,5 +1,5 @@
 What's new
-- A smoother, more polished look as you move between screens
+- Faster, smoother moves between screens
 - Fixes and improvements
 
 Share your ideas from the More menu.
