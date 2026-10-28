@@ -111,12 +111,19 @@ export function getOnCreate(db: any) {
 /**
  * The organisations an approved submission asked for: those it picked, if
  * they still exist, and new ones, made now with the submitter as their
- * admin. Returns their ids, to list the new competition under.
+ * admin. Picked ones you chose to make them an admin of as you approved it
+ * (`adminOf`) do the same. Returns their ids, to list the new competition under.
  */
 export async function organisationsForSubmission(db: any, submission: any): Promise<string[]> {
   const picked = Object.keys(submission?.organisations || {});
   const exists = await Promise.all(picked.map(async (id) => (await db.child(`organisations/${id}/name`).get()).exists()));
   const ids = picked.filter((_, i) => exists[i]);
+  const submittedBy = submission?.submittedBy;
+  if (submittedBy && submittedBy !== 'admin') {
+    for (const id of ids.filter((id) => submission?.adminOf?.[id] === true)) {
+      await attachUserToOrganisation({ db, userId: submittedBy, organisationId: id });
+    }
+  }
   for (const o of Object.values((submission?.newOrganisations || {}) as Record<string, NewOrganisation>)) {
     if (!text(o?.name, 120)) continue;
     ids.push(await createOrganisation(db, o, submission.approvedBy || 'admin', submission.submittedBy || null));

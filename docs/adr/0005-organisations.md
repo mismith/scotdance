@@ -77,10 +77,13 @@ one component for both (`AdminsPanel`).
   `/newOrganisations` (new). Approval (functions `submissions.ts`) makes the
   new ones with the submitter as admin and lists the competition under all of
   them.
-- Picking one you're **not** an admin of is allowed in Submit: System admin ›
-  Submissions shows "Not one of its admins: check it's theirs to claim", and
-  Murray decides at approval, as he already reviews every submission
-  (confirmed 2026-10-03).
+- Picking one you're **not** an admin of is allowed in Submit: it waits for
+  review, and Murray decides at approval (confirmed 2026-10-03). System admin ›
+  Submissions shows each such organisation with a tick, on by default:
+  approving makes the submitter an admin of the ticked ones (`adminOf` on the
+  submission, which only a system admin can write), since approving says he
+  trusts it's theirs (decided 2026-10-22). Their next submission under it
+  then needs no review for that.
 - **Elsewhere** (Manage › Details, Manage, System admin): the
   `createOrganisation` callable, since people can't grant themselves access.
   Anyone who manages a competition or organisation can call it. System

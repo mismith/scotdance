@@ -336,6 +336,18 @@ describe('a new submission', () => {
     expect(read().autoApproved).toBeUndefined()
     expect(sentTemplates()).toEqual(['competition-submission-approved'])
   })
+
+  it('under organisations they don’t run, makes them an admin of the ones Murray ticked as he approved it', async () => {
+    const { rtdb, submit, change, read } = arrival()
+    rtdb.write({ 'organisations/o1/name': 'RSOBHD Calgary', 'organisations/o2/name': 'Banff Games' })
+    await submit({}, { submittedBy: 'organiser-1', organisations: { o1: true, o2: true } })
+    expect(read().approved).toBeUndefined()
+    await change({ [`${PATH}/s1/approved`]: '2026-10-06T13:00:00.000Z', [`${PATH}/s1/adminOf`]: { o1: true } })
+    expect(rtdb.read(`competitions/${read().competitionId}/organisations`)).toEqual({ o1: true, o2: true })
+    expect(rtdb.read('organisations:permissions/o1/users/organiser-1')).toBe(true)
+    expect(rtdb.read('users:permissions/organiser-1/organisations/o1')).toBe(true)
+    expect(rtdb.read('organisations:permissions/o2/users/organiser-1')).toBeNull()
+  })
 })
 
 describe('from the v4 app', () => {

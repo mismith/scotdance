@@ -59,6 +59,8 @@ interface Submission {
   organisations?: Record<string, boolean>
   /** New ones, made at approval with the submitter as their admin. */
   newOrganisations?: Record<string, { name?: string; shortName?: string | null }>
+  /** Picked ones approving made them an admin of (you choose, as you approve it). */
+  adminOf?: Record<string, boolean>
   /** When it was rejected (cleared if it's approved after all). */
   rejected?: string
   rejectedBy?: string
@@ -193,16 +195,41 @@ watch(
 )
 const theirs = (sub: Submission, oid: string) => !!sub.submittedBy && adminsOf.value[oid]?.[sub.submittedBy] === true
 const orgName = (oid: string) => orgs.byId.value.get(oid)?.name ?? 'A deleted organisation'
+// Ones they picked but don't run: approving makes them an admin of each,
+// unless you untick it (approving says you trust it's theirs).
+const claimable = (sub: Submission) =>
+  sub.submittedBy && sub.submittedBy !== 'admin' && !sub.approved
+    ? Object.keys(sub.organisations ?? {}).filter((oid) => orgs.byId.value.has(oid) && !theirs(sub, oid))
+    : []
+const notClaiming = reactive(new Set<string>())
+const claimKey = (sub: Submission, oid: string) => `${sub.id}/${oid}`
+const claiming = (sub: Submission, oid: string) => !notClaiming.has(claimKey(sub, oid))
+function toggleClaim(sub: Submission, oid: string) {
+  const k = claimKey(sub, oid)
+  if (notClaiming.has(k)) notClaiming.delete(k)
+  else notClaiming.add(k)
+}
+const adminOf = (sub: Submission) => {
+  const ids = claimable(sub).filter((oid) => claiming(sub, oid))
+  return ids.length ? Object.fromEntries(ids.map((oid) => [oid, true])) : null
+}
 function requested(sub: Submission) {
+  const claims = claimable(sub)
   return [
     ...Object.keys(sub.organisations ?? {}).map((oid) => ({
       key: oid,
       org: orgs.byId.value.get(oid) ?? { name: 'A deleted organisation' },
-      note: theirs(sub, oid) ? 'They’re one of its admins' : 'Not one of its admins: check it’s theirs to claim',
+      claim: claims.includes(oid),
+      note: theirs(sub, oid)
+        ? 'They’re one of its admins'
+        : claims.includes(oid) && claiming(sub, oid)
+          ? 'Approving makes them an admin'
+          : 'Not one of its admins',
     })),
     ...Object.entries(sub.newOrganisations ?? {}).map(([k, o]) => ({
       key: k,
       org: { name: o.name ?? 'Untitled', shortName: o.shortName ?? null },
+      claim: false,
       note: sub.approved ? 'Started when approved' : 'New: they’ll be its admin',
     })),
   ]
@@ -307,7 +334,7 @@ async function approve(s: Submission) {
   try {
     // A rejected one can be approved after all (say, once they've answered a
     // question in your reply). What you replied stays with it.
-    await write({ [at(s, 'approved')]: new Date().toISOString(), [at(s, 'rejected')]: null })
+    await write({ [at(s, 'approved')]: new Date().toISOString(), [at(s, 'rejected')]: null, [at(s, 'adminOf')]: adminOf(s) })
     toast('Approved. The competition is being created.')
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
@@ -395,17 +422,22 @@ const approveItems = computed(() =>
     line: [s.competition?.date ? formatLongDate(s.competition.date) : null, s.contact?.email].filter(Boolean).join(' · '),
     // What the server's checks found, and what's checked here (live): the
     // map, and whose organisations they are (said the same way, so once).
+    // (The server's note on one they don't run is said again here with what
+    // approving does about it, so it's left out of the server's.)
     flags: [
       ...new Set([
-        ...(s.review ?? []),
+        ...(s.review ?? []).filter((r) => !Object.keys(s.organisations ?? {}).some((oid) => r === unclaimedNote(oid))),
         ...(onMap(s) ? [] : ['Not on the map yet']),
         ...Object.keys(s.organisations ?? {})
           .filter((oid) => !theirs(s, oid))
-          .map((oid) => `It lists it under ${orgName(oid)}, though they’re not one of its admins`),
+          .map((oid) => (claimable(s).includes(oid) ? `${unclaimedNote(oid)}: approving makes them one` : unclaimedNote(oid))),
       ]),
     ],
   })),
 )
+function unclaimedNote(oid: string) {
+  return `It lists it under ${orgName(oid)}, though they’re not one of its admins`
+}
 function openApproveMany(e: Event) {
   approveIds.value = picked.value.waiting.map((s) => s.id)
   void approvingMany.show(e)
@@ -417,7 +449,7 @@ async function approveMany() {
   approveManyBusy.value = true
   const when = new Date().toISOString()
   try {
-    await write(Object.fromEntries(list.flatMap((s) => [[at(s, 'approved'), when], [at(s, 'rejected'), null]])))
+    await write(Object.fromEntries(list.flatMap((s) => [[at(s, 'approved'), when], [at(s, 'rejected'), null], [at(s, 'adminOf'), adminOf(s)]])))
     void approvingMany.hide()
     doneSelecting()
     toast(list.length === 1 ? 'Approved. The competition is being created.' : `Approved ${list.length}. The competitions are being created.`)
@@ -705,15 +737,26 @@ async function remove(s: Submission) {
         <section v-if="requested(current).length" class="space-y-2">
           <h3 class="text-heading">Organisations</h3>
           <ul class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
-            <li v-for="r in requested(current)" :key="r.key" class="flex min-h-15 items-center gap-3 px-4 py-2">
-              <OrganisationMark :organisation="r.org" />
-              <span class="min-w-0 flex-1">
-                <span class="block truncate text-base font-semibold">{{ r.org.name }}</span>
-                <span class="text-muted-foreground block truncate text-sm">{{ r.note }}</span>
-              </span>
+            <li v-for="r in requested(current)" :key="r.key">
+              <component
+                :is="r.claim ? 'button' : 'div'"
+                :type="r.claim ? 'button' : undefined"
+                :role="r.claim ? 'checkbox' : undefined"
+                :aria-checked="r.claim ? claiming(current, r.key) : undefined"
+                :disabled="r.claim && !canEdit ? true : undefined"
+                :class="['flex min-h-15 w-full items-center gap-3 px-4 py-2 text-left', r.claim && 'press-row focus-inset']"
+                @click="r.claim && toggleClaim(current, r.key)"
+              >
+                <OrganisationMark :organisation="r.org" />
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-base font-semibold">{{ r.org.name }}</span>
+                  <span class="text-muted-foreground block truncate text-sm">{{ r.note }}</span>
+                </span>
+                <Checkbox v-if="r.claim" :checked="claiming(current, r.key)" />
+              </component>
             </li>
           </ul>
-          <p v-if="!current.approved" class="text-muted-foreground text-sm">Approving lists the competition under these, and starts the new ones with the submitter as their admin.</p>
+          <p v-if="!current.approved" class="text-muted-foreground text-sm">Approving lists the competition under these, and makes the submitter an admin of the new ones and any ticked.</p>
         </section>
 
         <section v-if="!current.approved" class="space-y-3">

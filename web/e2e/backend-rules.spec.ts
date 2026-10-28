@@ -139,6 +139,7 @@ test('a parent can save their own things and nothing else', async () => {
   await refused('submit one already rejected (out of the queue)', as(parent, 'PUT', `competitions:submissions/${uid('rules-sub')}`, { competition: { name: 'x' }, rejected: new Date().toISOString() }))
   await refused('submit one with a reply to email', as(parent, 'PUT', `competitions:submissions/${uid('rules-sub')}`, { competition: { name: 'x' }, rejection: { reply: 'Hello' } }))
   await refused('submit one saying a reply went out', as(parent, 'PUT', `competitions:submissions/${uid('rules-sub')}`, { competition: { name: 'x' }, replied: new Date().toISOString() }))
+  await refused('submit one making them an admin of an organisation', as(parent, 'PUT', `competitions:submissions/${uid('rules-sub')}`, { competition: { name: 'x' }, adminOf: { someOrg: true } }))
   await refused('reject their own submission', as(parent, 'PATCH', `competitions:submissions/${submission}`, { rejected: new Date().toISOString() }))
   await refused('signed out, submit', as(null, 'PUT', `competitions:submissions/${uid('rules-sub')}`, { competition: { name: 'x' } }))
   await refused('grant themselves a competition', as(parent, 'PUT', `users:permissions/${me}/competitions/${pub}`, true))

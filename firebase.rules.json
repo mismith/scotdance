@@ -163,7 +163,7 @@
       "competitions:submissions": {
         ".indexOn": ["submittedBy", "receivedAt", "competition/date", "linkedTo"], // the flood check; what else is submitted for the same day; the ones to link with it once approved
         "$competitionId": {
-          ".write": "auth !== null && !data.exists() && !newData.child('approved').exists() && !newData.child('rejected').exists() && !newData.child('rejection').exists() && !newData.child('replied').exists() && !newData.child('replyFailed').exists() && !newData.child('autoApproved').exists() && !newData.child('review').exists()", // is AUTHED and CREATING and NOT approving or rejecting (or saying a reply went out, or that it needs no review)
+          ".write": "auth !== null && !data.exists() && !newData.child('approved').exists() && !newData.child('rejected').exists() && !newData.child('rejection').exists() && !newData.child('replied').exists() && !newData.child('replyFailed').exists() && !newData.child('autoApproved').exists() && !newData.child('review').exists() && !newData.child('adminOf').exists()", // is AUTHED and CREATING and NOT approving or rejecting (or saying a reply went out, that it needs no review, or which organisations it makes them an admin of)
           ".validate": "data.exists() || (newData.child('competition/name').isString() && !newData.child('competition/name').val().matches(/^ *$/) && newData.child('competition/date').isString() && newData.child('competition/date').val().matches(/^\\d{4}-\\d{2}-\\d{2}$/) && newData.child('competition/location').isString() && !newData.child('competition/location').val().matches(/^ *$/))" // a NEW one has a NAME, a DATE (YYYY-MM-DD) and a TOWN or CITY; edits to one already sent (System admin) aren't held to it
         }
       },
