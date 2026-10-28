@@ -192,22 +192,25 @@ export interface DiffPart {
 }
 
 /**
- * How `text` differs from `reference`, word by word (exactly: case and
- * punctuation count). A word swapped for another shows only as different,
+ * How `text` differs from `reference`, word by word (case counts, but not
+ * brackets or commas around a word). A word swapped for another shows only as different,
  * so `missing` is left for words with nothing in their place.
  */
 export function wordDiff(text: string | null | undefined, reference: string | null | undefined): DiffPart[] {
   const a = (text ?? '').split(/\s+/).filter(Boolean)
   const b = (reference ?? '').split(/\s+/).filter(Boolean)
+  // Brackets and commas around a word don't make it another word.
+  const bare = (w: string) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '') || w
+  const same = (x: string, y: string) => bare(x) === bare(y)
   const lcs = Array.from({ length: a.length + 1 }, () => Array<number>(b.length + 1).fill(0))
   for (let i = a.length - 1; i >= 0; i--) {
-    for (let j = b.length - 1; j >= 0; j--) lcs[i][j] = a[i] === b[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1])
+    for (let j = b.length - 1; j >= 0; j--) lcs[i][j] = same(a[i], b[j]) ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1])
   }
   const parts: DiffPart[] = []
   let i = 0
   let j = 0
   while (i < a.length || j < b.length) {
-    if (i < a.length && j < b.length && a[i] === b[j]) {
+    if (i < a.length && j < b.length && same(a[i], b[j])) {
       parts.push({ text: a[i++], kind: 'same' })
       j++
     } else if (j >= b.length || (i < a.length && lcs[i + 1][j] >= lcs[i][j + 1])) parts.push({ text: a[i++], kind: 'diff' })
@@ -251,11 +254,38 @@ export interface Merge {
 }
 
 /**
- * Merge a group into `keep`: every competition at one of its venues
- * (unlisted ones too, by name and town, so listing one later doesn't bring
- * a merged venue back) takes `fields`, which keep the kept venue's name and
- * town. A competition that shares its venue from a linked main one is left
- * to it: the link copies the main one's over.
+ * Followers of any of `from` follow `to` instead (named `name`, as the app
+ * keeps a favourite's name).
+ */
+export function moveFollowers(favorites: Favorites, from: Set<string>, to: string, name: string | null): Merge {
+  const after: Record<string, unknown> = {}
+  const before: Record<string, unknown> = {}
+  let followers = 0
+  for (const [uid, f] of Object.entries(favorites)) {
+    const follows = f?.venues ?? {}
+    const theirs = Object.keys(follows).filter((id) => id !== to && from.has(id) && follows[id])
+    if (!theirs.length) continue
+    followers += 1
+    for (const id of theirs) {
+      after[`users:favorites/${uid}/venues/${id}`] = null
+      before[`users:favorites/${uid}/venues/${id}`] = follows[id]
+    }
+    if (!follows[to]) {
+      after[`users:favorites/${uid}/venues/${to}`] = name ?? true
+      before[`users:favorites/${uid}/venues/${to}`] = null
+    }
+  }
+  return { after, before, competitions: 0, followers }
+}
+
+/**
+ * Merge a group: every competition at one of its venues (unlisted ones too,
+ * by name and town, so listing one later doesn't bring a merged venue back)
+ * takes `fields`. Their name and town make the venue they join: `keep`, one
+ * of the group's, whose followers the others' join; or, when they make a new
+ * one (`keep` null), there's no id to move followers to until the triggers
+ * make it (`moveFollowers` then). A competition that shares its venue from a
+ * linked main one is left to it: the link copies the main one's over.
  */
 export function mergeVenues({
   keep,
@@ -265,8 +295,9 @@ export function mergeVenues({
   synced,
   favorites,
   spaces = {},
+  space: everywhere = null,
 }: {
-  keep: Venue
+  keep: Venue | null
   group: Venue[]
   fields: VenueFields
   comps: Record<string, CompetitionRecord>
@@ -275,8 +306,10 @@ export function mergeVenues({
   favorites: Favorites
   /** The space each venue's competitions keep (by venue id), when they don't have one. */
   spaces?: Record<string, string>
+  /** The space every competition in the group gets, in place of `spaces` and any it has. */
+  space?: string | null
 }): Merge {
-  if (venueKey(fields.venue, fields.locality, fields.location) !== keep.key) throw new Error('Those fields would make another venue.')
+  if (keep && venueKey(fields.venue, fields.locality, fields.location) !== keep.key) throw new Error('Those fields would make another venue.')
   const after: Record<string, unknown> = {}
   const before: Record<string, unknown> = {}
   const ids = new Set(group.map((v) => v.id))
@@ -287,7 +320,7 @@ export function mergeVenues({
     if (!(typeof c.venueId === 'string' && ids.has(c.venueId)) && !keys.has(venueKey(c.venue, c.locality, c.location))) continue
     let changed = false
     const venueId = typeof c.venueId === 'string' && ids.has(c.venueId) ? c.venueId : group.find((v) => v.key === venueKey(c.venue, c.locality, c.location))?.id
-    const space = !c.space && venueId ? spaces[venueId] : undefined
+    const space = everywhere ?? (!c.space && venueId ? spaces[venueId] : undefined)
     for (const [f, now] of [...VENUE_FIELDS.map((f) => [f, fields[f] ?? null] as const), ...(space ? [['space', space] as const] : [])]) {
       const was = c[f] ?? null
       if (was === now) continue
@@ -297,22 +330,8 @@ export function mergeVenues({
     }
     if (changed) competitions += 1
   }
-  let followers = 0
-  for (const [uid, f] of Object.entries(favorites)) {
-    const follows = f?.venues ?? {}
-    const theirs = Object.keys(follows).filter((id) => id !== keep.id && ids.has(id) && follows[id])
-    if (!theirs.length) continue
-    followers += 1
-    for (const id of theirs) {
-      after[`users:favorites/${uid}/venues/${id}`] = null
-      before[`users:favorites/${uid}/venues/${id}`] = follows[id]
-    }
-    if (!follows[keep.id]) {
-      after[`users:favorites/${uid}/venues/${keep.id}`] = fields.venue ?? true
-      before[`users:favorites/${uid}/venues/${keep.id}`] = null
-    }
-  }
-  return { after, before, competitions, followers }
+  const moved = keep ? moveFollowers(favorites, ids, keep.id, fields.venue) : { after: {}, before: {}, followers: 0 }
+  return { after: { ...after, ...moved.after }, before: { ...before, ...moved.before }, competitions, followers: moved.followers }
 }
 
 const pairPath = (a: string, b: string) => (a < b ? `venues:distinct/${a}/${b}` : `venues:distinct/${b}/${a}`)

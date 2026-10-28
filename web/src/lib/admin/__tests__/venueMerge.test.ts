@@ -10,6 +10,7 @@ const {
   keepApart,
   leaveSeparate,
   mergeVenues,
+  moveFollowers,
   namesAlike,
   spaceFrom,
   separated,
@@ -198,10 +199,10 @@ describe('leaving venues separate', () => {
 describe('wordDiff', () => {
   const marks = (a: string, b: string) => wordDiff(a, b).map((p) => (p.kind === 'same' ? p.text : `${p.kind === 'diff' ? '[' : '<'}${p.text}${p.kind === 'diff' ? ']' : '>'}`)).join(' ')
 
-  it('marks the words that differ, case and punctuation included', () => {
+  it('marks the words that differ, case included but not brackets or commas', () => {
     expect(marks('Regina Performing Arts Center', 'Regina Performing Arts Centre')).toBe('Regina Performing Arts [Center]')
-    expect(marks('1077 Angus St.', '1077 Angus St')).toBe('1077 Angus [St.]')
-    expect(marks('150 Canada St, Moncton, NB E1C 0V2', '150 Canada St')).toBe('150 Canada [St, Moncton, NB E1C 0V2]')
+    expect(marks('Lakehead University (Bora Laskin Building)', 'Bora Laskin Building')).toBe('[Lakehead University] (Bora Laskin Building)')
+    expect(marks('150 Canada St, Moncton, NB E1C 0V2', '150 Canada St')).toBe('150 Canada St, [Moncton, NB E1C 0V2]')
     expect(marks('1077 Angus St', '1077 Angus St')).toBe('1077 Angus St')
   })
 
@@ -234,5 +235,34 @@ describe('spaces', () => {
     expect(m.before['competitions/c10/space']).toBeNull()
     expect(m.after).not.toHaveProperty('competitions/c11/space')
     expect(m.after).not.toHaveProperty('competitions/c1/space')
+  })
+})
+
+describe('merging into a new name', () => {
+  const group = [byId('V1'), byId('V2'), byId('V3')]
+  const fields = { ...canonicalFields(byId('V1'), GOOGLE), venue: 'Beaumont Community Hall' }
+  const favorites = { a: { venues: { V2: 'Beaumont Community Center' } } }
+
+  it('changes every competition and leaves followers until the new venue is made', () => {
+    const m = mergeVenues({ keep: null, group, fields, comps, synced: new Set(), favorites })
+    expect(m.after['competitions/c1/venue']).toBe('Beaumont Community Hall')
+    expect(m.after['competitions/c3/venue']).toBe('Beaumont Community Hall')
+    expect(Object.keys(m.after).some((p) => p.startsWith('users:favorites'))).toBe(false)
+  })
+
+  it('then moves them to it', () => {
+    const m = moveFollowers(favorites, new Set(group.map((v) => v.id)), 'VNEW', 'Beaumont Community Hall')
+    expect(m.after).toEqual({ 'users:favorites/a/venues/V2': null, 'users:favorites/a/venues/VNEW': 'Beaumont Community Hall' })
+    expect(m.followers).toBe(1)
+  })
+})
+
+describe('a space for the whole group', () => {
+  it('goes on every competition, over any it has', () => {
+    const group = [byId('V1'), byId('V2'), byId('V3')]
+    const all = { ...comps, c1: { ...comps.c1, space: 'Gym' } }
+    const m = mergeVenues({ keep: byId('V1'), group, fields: byId('V1').fields, comps: all, synced: new Set(), favorites: {}, space: 'Under the Canopy' })
+    for (const c of ['c1', 'c2', 'c3', 'c4', 'c5']) expect(m.after[`competitions/${c}/space`], c).toBe('Under the Canopy')
+    expect(m.before['competitions/c1/space']).toBe('Gym')
   })
 })

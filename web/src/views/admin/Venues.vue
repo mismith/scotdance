@@ -2,12 +2,13 @@
 import { computed, onScopeDispose, reactive, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { onValue } from 'firebase/database'
-import { Check, ChevronDown, MapPinCheck, X } from '@lucide/vue'
+import { ChevronDown, MapPinCheck, X } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import DiffText from '@/components/admin/DiffText.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
+import FormInput from '@/components/admin/FormInput.vue'
 import { dataRef } from '@/firebase'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError, write } from '@/lib/admin/write'
@@ -16,30 +17,31 @@ import {
   defaultKeeper,
   duplicateGroups,
   googleFits,
-  keepApart,
   leaveSeparate,
   mergeVenues,
+  moveFollowers,
   separated,
+  spaceFrom,
   tierOf,
   venuesFrom,
   type CompetitionRecord,
   type Distinct,
   type Favorites,
-  type Tier,
   type Venue,
 } from '@/lib/admin/venueMerge'
+import { venueKey, venueTown } from '@/lib/entityIndex'
 import { formatShortDate } from '@/lib/format'
-import { townLine } from '@/lib/knownVenues'
 import { fetchVenueSuggestions, placesAvailable, resolveVenue, type VenueFields } from '@/lib/maps'
 
 // Venues that look like one place, typed more than one way (see
-// lib/admin/venueMerge), sorted by how sure that is. Each group is looked up
-// on Google once (kept in venues:google) and shown against Google's version,
-// the words that differ marked. The venue named as Google names it is kept by
-// default, and merging gives every competition in the group its name with
-// Google's address and pin. "Leave separate" keeps a group apart until it's
-// brought back from the list at the bottom; ✕ takes one venue out of its
-// group. Each says so in a toast with Undo.
+// lib/admin/venueMerge), in one list to read down. Each group says plainly
+// what merging does: "After merging", what all its competitions will say
+// (Google's name, address and pin when Google knows the place: each group is
+// looked up once, kept in venues:google), which Edit changes; and "Now", each
+// way it's entered, with the space one keeps when its name says more than
+// the venue's. Merge does exactly that. "Not the same place" leaves a group
+// separate until it's brought back from the list at the bottom. Each says so
+// in a toast with Undo.
 
 const comps = ref<Record<string, CompetitionRecord> | null>(null)
 const synced = ref(new Set<string>())
@@ -124,40 +126,94 @@ watch(
   { immediate: true },
 )
 
-// The one to keep in each group: as Google names it (else the most used),
-// unless another's chosen.
-const chosen = reactive(new Set<string>())
-const keeper = (g: Venue[]) => g.find((v) => chosen.has(v.id)) ?? defaultKeeper(g, googleFor(g))
-function choose(g: Venue[], v: Venue) {
-  g.forEach((o) => chosen.delete(o.id))
-  chosen.add(v.id)
+// What each group becomes: Google's version under the name it's best known
+// by (see canonicalFields), or what's typed in after Edit.
+interface Edit { venue: string; space: string; address: string; location: string }
+const groupKey = (g: Venue[]) => g.map((v) => v.id).join()
+const edits = reactive<Record<string, Edit>>({})
+const editing = reactive(new Set<string>())
+const suggested = (g: Venue[]) => canonicalFields(defaultKeeper(g, googleFor(g)), googleFor(g))
+function after(g: Venue[]): VenueFields {
+  const base = suggested(g)
+  const e = edits[groupKey(g)]
+  if (!e) return base
+  const location = e.location.trim() || null
+  // A town typed in is the town the venue goes by.
+  const town = location?.split(',')[0].trim() || null
+  const sameTown = venueTown(base.locality, base.location) === venueTown(town, location)
+  return { ...base, venue: e.venue.trim() || base.venue, address: e.address.trim() || null, location, locality: sameTown ? base.locality : town }
 }
-const result = (g: Venue[]) => canonicalFields(keeper(g), googleFor(g))
-// What each venue is compared with: Google's version, else what it becomes.
-const reference = (g: Venue[]) => {
-  const f = googleFor(g) ?? result(g)
-  return { venue: f.venue ?? result(g).venue, address: f.address, town: townLine(f.locality, f.region) }
+/** The venue of the group the merged competitions join, or null when their name or town makes a new one. */
+const keepOf = (g: Venue[]) => {
+  const f = after(g)
+  const key = venueKey(f.venue, f.locality, f.location)
+  return g.find((v) => v.key === key) ?? null
 }
+const edited = (g: Venue[]) => !!edits[groupKey(g)]
+function startEdit(g: Venue[]) {
+  const f = after(g)
+  edits[groupKey(g)] = { venue: f.venue ?? '', space: '', address: f.address ?? '', location: f.location ?? '' }
+  editing.add(groupKey(g))
+}
+function resetEdit(g: Venue[]) {
+  delete edits[groupKey(g)]
+  editing.delete(groupKey(g))
+}
+const addressLine = (f: { address?: string | null; location?: string | null }) => [f.address, f.location].filter(Boolean).join(', ')
+// Names entered for it other than the one it'll have, to use instead.
+const otherNames = (g: Venue[]) => [...new Set(g.map((v) => v.fields.venue).filter((n): n is string => !!n && n !== after(g).venue))]
 
-const TIERS: Array<{ tier: Tier; title: string; blurb: string }> = [
-  { tier: 'name', title: 'Same name, written differently', blurb: 'Spelling, a word more or less, or no town. Check the list, then merge them all at once.' },
-  { tier: 'spot', title: 'Same spot, different names', blurb: 'A school and the hall in it, or two places at one address: check each one.' },
-  { tier: 'near', title: 'Close by', blurb: 'Pins up to 150 m apart, often different buildings.' },
-]
-const tiers = computed(() =>
-  TIERS.map((t) => ({ ...t, groups: (groups.value ?? []).filter((g) => tierOf(g) === t.tier) })).filter((t) => t.groups.length),
-)
+// The space a venue's name adds to what it'll be called ("…School – Assembly
+// Hall": Assembly Hall), kept unless it's dropped.
+const noSpace = reactive(new Set<string>())
+// The space typed in under Edit, for every competition in the group.
+const groupSpace = (g: Venue[]) => edits[groupKey(g)]?.space.trim() || null
+const spaceOf = (g: Venue[], v: Venue) => (groupSpace(g) ? null : spaceFrom(v.fields.venue, after(g).venue))
+const spacesFor = (g: Venue[]) =>
+  Object.fromEntries(g.map((v) => [v.id, spaceOf(g, v)] as const).filter(([id, sp]) => sp && !noSpace.has(id))) as Record<string, string>
+const toggleSpace = (id: string) => (noSpace.has(id) ? noSpace.delete(id) : noSpace.add(id))
+const noTown = (v: Venue) => !venueTown(v.fields.locality, v.fields.location)
+
+// Ready ones (one name written differently) merge all at once; the rest are
+// for a look, the same spot first.
+const readyGroups = computed(() => (groups.value ?? []).filter((g) => tierOf(g) === 'name'))
+const toLook = computed(() => {
+  const rest = (groups.value ?? []).filter((g) => tierOf(g) !== 'name')
+  return [...rest.filter((g) => tierOf(g) === 'spot'), ...rest.filter((g) => tierOf(g) === 'near')]
+})
 
 const competitions = (n: number) => (n === 1 ? '1 competition' : `${n} competitions`)
+const count = (g: Venue[]) => g.reduce((n, v) => n + v.competitionIds.length, 0)
 const open = reactive(new Set<string>())
 const toggle = (id: string) => (open.has(id) ? open.delete(id) : open.add(id))
+const competitionsOf = (v: Venue) => v.competitionIds.map((id) => ({ id, c: comps.value?.[id] }))
 
 const busy = ref<string | null>(null)
 const ready = computed(() => canEdit.value && !!favorites.value && !busy.value)
 
 function planFor(g: Venue[]) {
-  const keep = keeper(g)
-  return { keep, drop: g.filter((v) => v.id !== keep.id), ...mergeVenues({ keep, group: g, fields: result(g), comps: comps.value!, synced: synced.value, favorites: favorites.value! }) }
+  const keep = keepOf(g)
+  const fields = after(g)
+  return {
+    g,
+    fields,
+    keep,
+    drop: g.filter((v) => v.id !== keep?.id),
+    ...mergeVenues({ keep, group: g, fields, comps: comps.value!, synced: synced.value, favorites: favorites.value!, spaces: spacesFor(g), space: groupSpace(g) }),
+  }
+}
+// Merged into a new name: once the triggers have made its venue, its
+// followers follow it.
+function followOnceMade(plan: ReturnType<typeof planFor>) {
+  const key = venueKey(plan.fields.venue, plan.fields.locality, plan.fields.location)
+  const off = onValue(dataRef(`venues:index/${key}`), (s) => {
+    const id = (s.val() as { id?: string } | null)?.id
+    if (!id) return
+    off()
+    const moved = moveFollowers(favorites.value ?? {}, new Set(plan.g.map((v) => v.id)), id, plan.fields.venue)
+    if (Object.keys(moved.after).length) void write(moved.after).catch((e) => toast(friendlyError(e), { tone: 'error' }))
+  })
+  setTimeout(off, 120_000)
 }
 async function run(key: string, list: Venue[][], message: string) {
   busy.value = key
@@ -168,6 +224,8 @@ async function run(key: string, list: Venue[][], message: string) {
     const dropped = plans.flatMap((p) => p.drop)
     await write(after)
     dropped.forEach((v) => gone.add(v.id))
+    plans.filter((p) => !p.keep).forEach(followOnceMade)
+    list.forEach(resetEdit)
     toast(message, {
       action: {
         label: 'Undo',
@@ -183,15 +241,16 @@ async function run(key: string, list: Venue[][], message: string) {
     busy.value = null
   }
 }
-const merge = (g: Venue[]) => run(g[0].id, [g], `Merged into ${result(g).venue}`)
-async function mergeAll(t: { tier: Tier; groups: Venue[][] }) {
-  const n = t.groups.reduce((sum, g) => sum + g.reduce((s, v) => s + v.competitionIds.length, 0), 0)
+const merge = (g: Venue[]) => run(g[0].id, [g], `${competitions(count(g))} now at ${after(g).venue}`)
+async function mergeAll() {
+  const list = readyGroups.value
+  const n = list.reduce((sum, g) => sum + count(g), 0)
   const ok = await confirm({
-    title: `Merge all ${t.groups.length}?`,
-    message: `Their ${competitions(n)} each take the name, address and map position their group shows.`,
+    title: `Merge all ${list.length}?`,
+    message: `Their ${competitions(n)} each change to what’s under After merging.`,
     confirmLabel: 'Merge all',
   })
-  if (ok) await run(t.tier, t.groups, `Merged all ${t.groups.length}`)
+  if (ok) await run('all', list, `Merged all ${list.length}`)
 }
 
 async function mark(paths: Record<string, true | null>, message: string) {
@@ -203,8 +262,7 @@ async function mark(paths: Record<string, true | null>, message: string) {
     toast(friendlyError(e), { tone: 'error' })
   }
 }
-const apart = (v: Venue, g: Venue[]) => mark(keepApart(v.id, g), `${v.fields.venue} taken out`)
-const separate = (g: Venue[]) => mark(leaveSeparate(g), `${g[0].fields.venue} left separate`)
+const separate = (g: Venue[]) => mark(leaveSeparate(g), `${after(g).venue} left separate`)
 const bringBack = (s: { venues: Venue[]; paths: string[] }) =>
   mark(Object.fromEntries(s.paths.map((p) => [p, null])), `${s.venues[0].fields.venue} brought back`)
 const showSeparate = ref(false)
@@ -215,103 +273,112 @@ const showSeparate = ref(false)
     <SectionHeader
       title="Venues"
       :count="groups?.length || null"
-      description="Venues that look like one place, typed in more than one way, each against Google’s version with the differences marked. Merging gives all their competitions the chosen name with Google’s address and map position (or the chosen one’s, when Google doesn’t know the place), and anyone’s favourite of them moves to the venue kept."
+      description="Places entered more than one way. Merging changes all their competitions to what’s under After merging, and anyone following one follows the merged venue."
     />
 
     <div v-if="!groups" class="space-y-4" aria-busy="true">
       <Skeleton v-for="i in 3" :key="i" class="h-44 w-full rounded-2xl!" />
     </div>
-    <EmptyState v-else-if="!groups.length" :icon="MapPinCheck" title="No duplicate venues" description="Venues that look like one place show up here." />
+    <EmptyState v-else-if="!groups.length" :icon="MapPinCheck" title="No duplicate venues" description="Places entered more than one way show up here." />
 
-    <section v-for="t in tiers" :key="t.tier" class="space-y-4">
-      <div class="flex flex-wrap items-end gap-3">
-        <div class="min-w-0 flex-1">
-          <h2 class="text-heading">{{ t.title }} <span class="text-muted-foreground font-medium tabular-nums">{{ t.groups.length }}</span></h2>
-          <p class="text-muted-foreground text-sm">{{ t.blurb }}</p>
-        </div>
-        <Button
-          v-if="t.tier === 'name'"
-          variant="primary"
-          :busy="busy === t.tier"
-          :disabled="!ready || !t.groups.every(asked)"
-          @click="mergeAll(t)"
-        >
-          Merge all
-        </Button>
+    <section v-for="list in [{ key: 'ready', title: 'Ready to merge', groups: readyGroups }, { key: 'look', title: 'Take a look', groups: toLook }].filter((l) => l.groups.length)" :key="list.key" class="space-y-3">
+      <div class="flex items-center gap-3">
+        <h2 class="text-heading min-w-0 flex-1">{{ list.title }} <span class="text-muted-foreground font-medium tabular-nums">{{ list.groups.length }}</span></h2>
+        <Button v-if="list.key === 'ready'" variant="tonal" size="sm" :busy="busy === 'all'" :disabled="!ready || !list.groups.every(asked)" @click="mergeAll()">Merge all</Button>
       </div>
 
-      <ul class="space-y-4">
-        <li v-for="g in t.groups" :key="g.map((v) => v.id).join()" class="surface overflow-hidden rounded-2xl">
-          <div class="space-y-0.5 border-b px-4 py-3">
-            <p class="text-muted-foreground text-sm font-medium">
-              {{
-                googleFor(g)
-                  ? 'On Google'
-                  : looked(g) || !placesAvailable
-                    ? 'Not on Google: merging uses the chosen one'
-                    : unreached
-                      ? 'Couldn’t check Google just now: merging uses the chosen one'
-                      : 'Checking Google…'
-              }}
-            </p>
-            <p class="text-base font-semibold">{{ reference(g).venue }}</p>
-            <p class="text-muted-foreground text-sm">{{ [reference(g).address ?? 'No address', reference(g).town ?? 'No town'].join(' · ') }}</p>
-          </div>
-          <ul role="radiogroup" :aria-label="`Which name to keep for ${g[0].fields.venue}`" class="divide-y">
-            <li v-for="v in g" :key="v.id" :class="keeper(g).id === v.id && 'bg-blue-paper'">
-              <div class="flex items-center">
+      <ul class="surface divide-y rounded-2xl">
+        <li v-for="g in list.groups" :key="groupKey(g)" class="space-y-3 py-4 pr-3 pl-4">
+          <!-- What every competition in it will say. -->
+          <div>
+            <div class="flex items-center gap-2">
+              <p class="text-muted-foreground min-w-0 flex-1 text-sm font-medium">After merging</p>
+              <button v-if="!editing.has(groupKey(g))" type="button" class="press-row focus-inset text-primary -my-1 rounded-full px-2 py-1 text-sm font-semibold" @click="startEdit(g)">Edit</button>
+            </div>
+            <template v-if="!editing.has(groupKey(g))">
+              <p class="text-base font-semibold">{{ after(g).venue }}</p>
+              <p v-if="groupSpace(g)" class="text-sm font-medium">Space: {{ groupSpace(g) }}</p>
+              <p class="text-muted-foreground text-sm">
+                {{ addressLine(after(g)) || 'No address' }}
+                <!-- Where it comes from, when it isn't just how it's entered. -->
+                <span v-if="edited(g)" class="bg-next text-next-foreground ml-1 rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap">Edited</span>
+                <span v-else-if="googleFor(g)" class="bg-blue-paper text-primary ml-1 rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap">Google</span>
+                <span v-else-if="!asked(g)" class="ml-1 rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap shadow-[inset_0_0_0_1px_var(--border)]">Checking Google…</span>
+              </p>
+            </template>
+            <div v-else class="mt-2 space-y-3">
+              <FormInput v-model="edits[groupKey(g)].venue" label="Name" />
+              <div v-if="otherNames(g).length" class="-mt-1 flex flex-wrap gap-1.5">
                 <button
+                  v-for="n in otherNames(g)"
+                  :key="n"
                   type="button"
-                  role="radio"
-                  :aria-checked="keeper(g).id === v.id"
-                  class="press-row focus-inset flex min-h-14 min-w-0 flex-1 items-center gap-3 pt-2.5 pb-1 pl-4 text-left"
-                  @click="choose(g, v)"
+                  class="press focus-inset rounded-full px-2.5 py-1 text-left text-xs font-semibold shadow-[inset_0_0_0_1px_var(--border)]"
+                  @click="edits[groupKey(g)].venue = n"
                 >
-                  <span class="min-w-0 flex-1">
-                    <DiffText class="block text-base font-semibold" :text="v.fields.venue" :reference="reference(g).venue" empty="No name" />
-                    <span class="text-muted-foreground block text-sm">
-                      <DiffText :text="v.fields.address" :reference="reference(g).address" empty="No address" /> ·
-                      <DiffText :text="townLine(v.fields.locality, v.fields.region)" :reference="reference(g).town" empty="No town" />
-                    </span>
-                  </span>
-                  <Check v-if="keeper(g).id === v.id" class="text-primary size-5 shrink-0" stroke-width="2.6" aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  class="press-row focus-inset text-muted-foreground mx-1 grid size-11 shrink-0 place-items-center rounded-full"
-                  :aria-label="`${v.fields.venue}: not the same place`"
-                  title="Not the same place"
-                  :disabled="!canEdit"
-                  @click="apart(v, g)"
-                >
-                  <X class="size-5" aria-hidden="true" />
+                  Use “{{ n }}”
                 </button>
               </div>
-              <button
-                type="button"
-                class="press-row focus-inset text-primary mb-1.5 ml-2 inline-flex min-h-9 items-center gap-1 rounded-full px-2 text-sm font-medium"
-                :aria-expanded="open.has(v.id)"
-                @click="toggle(v.id)"
-              >
-                {{ competitions(v.competitionIds.length) }}
-                <ChevronDown :class="['size-4 transition-transform', open.has(v.id) && 'rotate-180']" aria-hidden="true" />
-              </button>
-              <ul v-if="open.has(v.id)" class="space-y-0.5 px-2 pb-2">
-                <li v-for="cid in v.competitionIds" :key="cid">
-                  <RouterLink :to="{ name: 'competition.info', params: { competitionId: cid } }" class="press-row focus-inset block rounded-xl px-2 py-1.5">
-                    <span class="block text-sm font-medium">{{ comps?.[cid]?.name || 'Untitled competition' }}</span>
-                    <span class="text-muted-foreground block text-sm">
-                      {{ formatShortDate(comps?.[cid]?.date) || 'No date' }} ·
-                      <DiffText :text="comps?.[cid]?.address" :reference="reference(g).address" empty="No address" />
+              <FormInput v-model="edits[groupKey(g)].space" label="Space (optional)" placeholder="e.g. Main Hall" hint="Given to every competition here." />
+              <FormInput v-model="edits[groupKey(g)].address" label="Address" />
+              <FormInput v-model="edits[groupKey(g)].location" label="Town or city" />
+              <div class="flex justify-end gap-2">
+                <Button variant="plain" size="sm" @click="resetEdit(g)">{{ googleFor(g) ? 'Back to Google’s' : 'Back to how it was' }}</Button>
+                <Button size="sm" @click="editing.delete(groupKey(g))">Done</Button>
+              </div>
+            </div>
+          </div>
+
+          <!-- How it's entered today. -->
+          <div>
+            <p class="text-muted-foreground text-sm font-medium">Now · {{ competitions(count(g)) }}</p>
+            <ul class="mt-1 -ml-2">
+              <li v-for="v in g" :key="v.id">
+                <button
+                  type="button"
+                  class="press-row focus-inset flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left text-sm"
+                  :aria-expanded="open.has(v.id)"
+                  @click="toggle(v.id)"
+                >
+                  <span class="text-muted-foreground w-7 shrink-0 tabular-nums">{{ v.competitionIds.length }} ×</span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block"><DiffText :text="v.fields.venue" :reference="after(g).venue" empty="No name" /></span>
+                    <span class="text-muted-foreground block">
+                      <DiffText :text="v.fields.address" :reference="after(g).address" empty="No address" :carets="false" /> ·
+                      <template v-if="noTown(v)"><mark class="bg-next text-next-foreground rounded px-0.5">no town</mark></template>
+                      <DiffText v-else :text="v.fields.location" :reference="after(g).location" empty="No town" :carets="false" />
                     </span>
-                  </RouterLink>
-                </li>
-              </ul>
-            </li>
-          </ul>
-          <div class="flex flex-wrap justify-end gap-2 border-t px-4 py-3">
-            <Button :disabled="!canEdit" @click="separate(g)">Leave separate</Button>
-            <Button variant="primary" :busy="busy === g[0].id" :disabled="!ready" @click="merge(g)">Merge</Button>
+                  </span>
+                  <ChevronDown :class="['text-muted-foreground mt-0.5 size-4 shrink-0 transition-transform', open.has(v.id) && 'rotate-180']" aria-hidden="true" />
+                </button>
+                <!-- The rest of its name, kept as these competitions' space. -->
+                <p v-if="spaceOf(g, v)" class="ml-11 flex items-center gap-1 text-sm">
+                  <template v-if="!noSpace.has(v.id)">
+                    <span>→ Space: <span class="font-semibold">{{ spaceOf(g, v) }}</span></span>
+                    <button type="button" class="press-row focus-inset text-muted-foreground grid size-9 place-items-center rounded-full" :aria-label="`Don’t keep ${spaceOf(g, v)} as their space`" @click="toggleSpace(v.id)">
+                      <X class="size-4" aria-hidden="true" />
+                    </button>
+                  </template>
+                  <template v-else>
+                    <span class="text-muted-foreground">→ No space</span>
+                    <button type="button" class="press-row focus-inset text-primary rounded-full px-2 py-1 font-semibold" @click="toggleSpace(v.id)">Keep “{{ spaceOf(g, v) }}”</button>
+                  </template>
+                </p>
+                <ul v-if="open.has(v.id)" class="mb-1 ml-9">
+                  <li v-for="{ id, c } in competitionsOf(v)" :key="id">
+                    <RouterLink :to="{ name: 'competition.info', params: { competitionId: id } }" class="press-row focus-inset flex items-baseline gap-2 rounded-lg px-2 py-1 text-sm">
+                      <span class="text-muted-foreground shrink-0 tabular-nums">{{ formatShortDate(c?.date) || 'No date' }}</span>
+                      <span class="min-w-0 truncate">{{ c?.name || 'Untitled competition' }}</span>
+                    </RouterLink>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+
+          <div class="flex items-center justify-between gap-2">
+            <Button variant="plain" size="sm" class="-ml-3.5" :disabled="!canEdit" @click="separate(g)">Not the same place</Button>
+            <Button variant="tonal" size="sm" :busy="busy === g[0].id" :disabled="!ready || editing.has(groupKey(g))" @click="merge(g)">Merge</Button>
           </div>
         </li>
       </ul>
