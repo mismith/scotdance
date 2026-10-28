@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { ChevronDown, ChevronRight, CircleCheck, Download, EyeOff, Plus, Trophy } from '@lucide/vue'
+import { ChevronDown, ChevronRight, CircleCheck, ClipboardList, Download, EyeOff, Plus, Trophy } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
 import MasterDetail from '@/components/admin/MasterDetail.vue'
 import ResultStatus from '@/components/admin/ResultStatus.vue'
@@ -17,6 +17,7 @@ import { useSplit } from '@/composables/admin/useWide'
 import { canEdit } from '@/lib/admin/write'
 import { CALLBACKS, OVERALL, danceState, dancingNow, needsFixing, parsePlacings, placeAt, resultRows, scheduleTurns, stateLabel } from '@/lib/admin/results'
 import { competitionPhase } from '@/lib/dancerDay'
+import { sheetPages } from '@/lib/sheets'
 
 const route = useRoute()
 const m = useManagedCompetition()
@@ -55,6 +56,9 @@ const live = computed(() =>
 )
 const stateOf = (groupId: string, danceId: string) => danceState(m.results.value[groupId]?.[danceId])
 const hasPlaceholder = (groupId: string, danceId: string) => needsFixing(m.results.value[groupId]?.[danceId], m.points.value[groupId]?.[danceId]?.combined)
+// Which dances have a judges' sheet, so organisers can see what's still to add.
+const hasSheet = (groupId: string, danceId: string) => sheetPages(m.sheets.value, groupId, danceId).length > 0
+const sheetsIn = (g: MGroup) => danceRows(g).filter((d) => hasSheet(g.id, d.id)).length
 
 // Which age groups are open, remembered on this device. The first (or the
 // one being entered) opens by default.
@@ -180,7 +184,9 @@ function exportCsv() {
                     Dancing now
                   </span>
                 </span>
-                <span class="text-muted-foreground block text-sm">{{ m.groupDancers(g.id).length }} dancers · {{ progress(g).done }} of {{ progress(g).total }} entered</span>
+                <span class="text-muted-foreground block text-sm">
+                  {{ m.groupDancers(g.id).length }} dancers · {{ progress(g).done }} of {{ progress(g).total }} entered{{ sheetsIn(g) ? ` · ${sheetsIn(g)} judges’ ${sheetsIn(g) === 1 ? 'sheet' : 'sheets'}` : '' }}
+                </span>
                 <span class="mt-1.5 mb-0.5 block h-[3px] overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)]" aria-hidden="true">
                   <span
                     class="bg-primary-fill block h-full rounded-full transition-[width] duration-(--dur-slow) ease-standard"
@@ -197,7 +203,7 @@ function exportCsv() {
                   :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: g.id, danceId: d.id } }"
                   :replace="split"
                   :aria-current="groupId === g.id && danceId === d.id ? 'true' : undefined"
-                  :aria-label="`${d.label}, ${stateLabel(stateOf(g.id, d.id), hasPlaceholder(g.id, d.id))}`"
+                  :aria-label="`${d.label}, ${stateLabel(stateOf(g.id, d.id), hasPlaceholder(g.id, d.id))}${hasSheet(g.id, d.id) ? ', judges’ sheet added' : ''}`"
                   :class="[
                     'press-row focus-inset flex min-h-13 items-center gap-3 py-1.5 pr-3 pl-6',
                     groupId === g.id && danceId === d.id ? 'bg-blue-paper' : hasPlaceholder(g.id, d.id) && 'bg-next/40',
@@ -206,6 +212,7 @@ function exportCsv() {
                 >
                   <ResultStatus :state="stateOf(g.id, d.id)" :fix="hasPlaceholder(g.id, d.id)" />
                   <span class="text-callout min-w-0 flex-1 truncate font-medium">{{ d.label }}</span>
+                  <ClipboardList v-if="hasSheet(g.id, d.id)" class="text-muted-foreground size-4.5 shrink-0" aria-hidden="true" />
                   <Trophy v-if="d.id === OVERALL" class="text-muted-foreground size-4.5 shrink-0" />
                   <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
                 </RouterLink>

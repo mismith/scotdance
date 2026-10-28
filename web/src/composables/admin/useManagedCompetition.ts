@@ -26,6 +26,7 @@ import {
   type Competition,
   type DrawsTree,
   type PointsTree,
+  type SheetsTree,
   type ResultsTree,
   type Schedule,
 } from '@/types/competition'
@@ -81,6 +82,7 @@ export interface RawData {
   schedule?: Schedule | false
   results?: ResultsTree | false
   points?: PointsTree
+  sheets?: SheetsTree
   draws?: DrawsTree
   invites?: Record<string, RawInvite>
 }
@@ -238,6 +240,7 @@ export function createManagedCompetition(competitionId: Ref<string>) {
   const results = computed<ResultsTree>(() => (raw.value.results && typeof raw.value.results === 'object' ? raw.value.results : {}))
   const resultsHidden = computed(() => raw.value.results === false)
   const points = computed<PointsTree>(() => raw.value.points ?? {})
+  const sheets = computed<SheetsTree>(() => (raw.value.sheets && typeof raw.value.sheets === 'object' ? raw.value.sheets : {}))
   const draws = computed<DrawsTree>(() => raw.value.draws ?? {})
   const invites = computed(() => entries(raw.value.invites))
 
@@ -325,6 +328,7 @@ export function createManagedCompetition(competitionId: Ref<string>) {
     results,
     resultsHidden,
     points,
+    sheets,
     draws,
     invites,
     groupDancers,

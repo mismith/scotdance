@@ -271,6 +271,7 @@ async function remove(ids: string[], swiped = false) {
   for (const id of ids) updates[`${props.spec.path}/${id}`] = null
   try {
     const change = await m.writeData(updates, `Deleted ${what}`)
+    if (impact.lasting && Object.keys(impact.lasting).length) await m.writeData(impact.lasting, null)
     if (itemId.value && ids.includes(itemId.value)) await leaveFor(listRoute.value)
     selecting.value = false
     selected.clear()

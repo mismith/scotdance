@@ -16,11 +16,13 @@ import {
   fetchDancers,
   fetchResults,
   fetchSchedule,
+  fetchSheets,
   fetchStaff,
   forgetCompetition,
   watchDancers,
   watchResults,
   watchSchedule,
+  watchSheets,
   watchStaff,
 } from '@/lib/competitionData'
 import { competitionSpan } from '@/lib/dancerDay'
@@ -37,6 +39,7 @@ import {
   type PointsTree,
   type ResultsTree,
   type Schedule,
+  type SheetsTree,
   type StaffMember,
 } from '@/types/competition'
 import { days as scheduleDays } from '@/lib/schedule'
@@ -63,6 +66,9 @@ interface CompetitionContext {
   loadResults: () => Promise<void>
   /** The organiser hid results (Manage). null until results have loaded. */
   resultsHidden: Ref<boolean | null>
+  /** Judges' sheets, by age group and dance (lib/sheets). */
+  sheets: Ref<SheetsTree>
+  loadSheets: () => Promise<void>
   schedule: Ref<Schedule | null>
   platforms: Ref<Platform[]>
   draws: Ref<DrawsTree>
@@ -128,6 +134,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
   const results = ref<ResultsTree>({})
   const points = ref<PointsTree>({})
   const resultsHidden = ref<boolean | null>(null)
+  const sheets = ref<SheetsTree>({})
   const schedule = ref<Schedule | null>(null)
   const scheduleHidden = ref<boolean | null>(null)
   const platforms = ref<Platform[]>([])
@@ -308,7 +315,17 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
       scheduleHidden.value = null
     },
   )
-  const sections = [staffSection, dancersSection, resultsSection, scheduleSection]
+  // Its reads never fail (lib/competitionData): without sheets, results show as before.
+  const sheetsSection = section(
+    'sheets',
+    fetchSheets,
+    (id, cb) => watchSheets(id, cb),
+    (v) => (sheets.value = v),
+    () => {
+      sheets.value = {}
+    },
+  )
+  const sections = [staffSection, dancersSection, resultsSection, scheduleSection, sheetsSection]
 
   watch(isLive, (live) => {
     if (!live) liveResultsAt.value = null
@@ -400,6 +417,8 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     points,
     loadResults: resultsSection.load,
     resultsHidden,
+    sheets,
+    loadSheets: sheetsSection.load,
     schedule,
     platforms,
     draws,

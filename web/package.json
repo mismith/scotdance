@@ -49,6 +49,7 @@
     "firebase": "^12.19.0",
     "fuse.js": "^7.5.0",
     "maplibre-gl": "^6.11.2",
+    "pdfjs-dist": "^6.4.299",
     "pinia": "^4.0.3",
     "read-excel-file": "^9.3.10",
     "supercluster": "^9.1.0",

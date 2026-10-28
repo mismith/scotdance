@@ -13,7 +13,8 @@ const props = withDefaults(
      * middle.
      */
     variant?: 'center' | 'sheet' | 'dropdown'
-    size?: 'sm' | 'md'
+    /** lg: wide on bigger screens, for pictures (the judges' sheet viewer). */
+    size?: 'sm' | 'md' | 'lg'
     closable?: boolean
     /**
      * Everything grows out of the control that opened it and shrinks back
@@ -279,7 +280,7 @@ const dragStyle = computed(() =>
       'border-0 p-0 text-inherit outline-none',
       variant === 'dropdown' ? 'frosted-paper menu-edge [&:popover-open]:block' : 'frosted-paper',
       // Width by size prop.
-      variant !== 'dropdown' && (size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md'),
+      variant !== 'dropdown' && (size === 'sm' ? 'w-full md:max-w-sm' : size === 'lg' ? 'w-full md:max-w-2xl' : 'w-full md:max-w-md'),
       variant === 'dropdown' &&
         'fixed top-[calc(var(--chrome-top)+0.25rem)] bottom-auto left-auto right-[calc(var(--chrome-right)+0.75rem)] m-0 w-72 max-w-[calc(100vw-1.5rem)] max-h-[calc(100svh-var(--chrome-top)-1rem)] origin-top-right overflow-y-auto rounded-[1.375rem] p-1.5',
       // Layout per variant.

@@ -38,6 +38,11 @@ export interface DeleteImpact {
   updates?: Record<string, unknown>
   /** Plain-language consequences, shown in the confirmation. */
   warnings?: string[]
+  /**
+   * Paths deleted for good alongside it: written after the delete and kept
+   * out of Undo (judges' sheets, whose files are deleted with them).
+   */
+  lasting?: Record<string, unknown>
 }
 
 export interface CollectionSpec<T extends CollectionItem = CollectionItem> {

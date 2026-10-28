@@ -10,6 +10,7 @@ import HelpTip from '@/components/admin/HelpTip.vue'
 import NumberTile from '@/components/admin/NumberTile.vue'
 import PlacedList from '@/components/admin/PlacedList.vue'
 import ResultStatus from '@/components/admin/ResultStatus.vue'
+import SheetField from '@/components/admin/SheetField.vue'
 import Button from '@/components/ui/Button.vue'
 import Segmented from '@/components/ui/Segmented.vue'
 import Switch from '@/components/ui/Switch.vue'
@@ -593,6 +594,16 @@ watch(() => props.danceId, showCurrent)
             </div>
           </Transition>
         </div>
+
+        <!-- The judges' sheet (dances and overall) -->
+        <SheetField
+          v-if="!isCallbacks && tab === 'placings'"
+          :key="`${groupId}/${danceId}`"
+          :group-id="groupId"
+          :dance-id="danceId"
+          :title="danceName"
+          :subtitle="group.label"
+        />
       </section>
 
       <!-- The placed order (on phones, in the strip's sheet) -->

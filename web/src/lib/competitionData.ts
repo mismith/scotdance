@@ -18,6 +18,7 @@ import {
   type PointsTree,
   type ResultsTree,
   type Schedule,
+  type SheetsTree,
   type StaffMember,
 } from '@/types/competition'
 
@@ -42,6 +43,7 @@ type Section =
   | 'platforms'
   | 'draws'
   | 'staff'
+  | 'sheets'
 
 const sectionRef = (id: string, section: Section) =>
   dbRef(database, `${NAMESPACE}/competitions:data/${id}/${section}`)
@@ -168,6 +170,8 @@ function toScheduleBundle(scheduleVal: unknown, platformsVal: unknown, drawsVal:
 
 const toStaff = (val: unknown) => snapshotToArray<StaffMember>(val as Record<string, StaffMember> | null).sort(byDragOrder)
 
+const toSheets = (val: unknown) => (val && typeof val === 'object' ? val : {}) as SheetsTree
+
 // --- One-off reads, cached per session.
 
 const caches = {
@@ -177,6 +181,7 @@ const caches = {
   results: new Map<string, Promise<ResultsBundle>>(),
   schedule: new Map<string, Promise<ScheduleBundle>>(),
   staff: new Map<string, Promise<StaffMember[]>>(),
+  sheets: new Map<string, Promise<SheetsTree>>(),
 }
 
 // Anything read while offline may be a saved copy: fetch afresh next time.
@@ -243,6 +248,19 @@ export function fetchStaff(id: string): Promise<StaffMember[]> {
   })
 }
 
+// Judges' sheets are extras: a page that can't read them (rules not out yet,
+// or offline with no saved copy) shows the results without them, never an
+// error. A failed read isn't kept, so the next visit tries again.
+export function fetchSheets(id: string): Promise<SheetsTree> {
+  return cached(caches.sheets, id, async () => {
+    const [s] = await readAll(id, sections(id, ['sheets']))
+    return toSheets(s)
+  }).catch((e) => {
+    console.warn('[sheets] not read', e)
+    return {}
+  })
+}
+
 // --- Streams, for competition day.
 
 type OnError = (e: Error) => void
@@ -301,6 +319,21 @@ export function watchSchedule(id: string, cb: (b: ScheduleBundle) => void, onErr
     caches.schedule.set(id, Promise.resolve(b))
     cb(b)
   }, onError)
+}
+
+export function watchSheets(id: string, cb: (sheets: SheetsTree) => void) {
+  return watchParts(
+    sections(id, ['sheets']),
+    ([s]) => {
+      const sheets = toSheets(s)
+      caches.sheets.set(id, Promise.resolve(sheets))
+      cb(sheets)
+    },
+    (e) => {
+      console.warn('[sheets] not streamed', e)
+      cb({})
+    },
+  )
 }
 
 export function watchStaff(id: string, cb: (staff: StaffMember[]) => void, onError?: OnError) {

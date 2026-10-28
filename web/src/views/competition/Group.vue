@@ -15,6 +15,9 @@ import { usePageTitle } from '@/composables/usePageTitle'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
+import JudgesSheetRow from '@/components/JudgesSheetRow.vue'
+import SheetViewer from '@/components/SheetViewer.vue'
+import { sheetPages } from '@/lib/sheets'
 import { useMorph } from '@/lib/morph'
 import {
   findGroupDancers,
@@ -39,12 +42,14 @@ const {
   dances,
   results,
   points,
+  sheets,
   schedule,
   platforms,
   staff,
   loadDancers,
   loadResults,
   loadSchedule,
+  loadSheets,
   loadStaff,
   resultsHidden,
 } = useCompetition()
@@ -52,7 +57,7 @@ const { dayFor } = useCompetitionDays()
 const following = useFollowing()
 const isFresh = useFreshPlacings()
 
-onMounted(() => Promise.all([loadDancers(), loadResults(), loadSchedule(), loadStaff()]))
+onMounted(() => Promise.all([loadDancers(), loadResults(), loadSchedule(), loadStaff(), loadSheets()]))
 
 const groupId = computed(() => String(route.params.groupId ?? ''))
 const group = computed(() => groups.value.find((g) => g.id === groupId.value) ?? null)
@@ -136,8 +141,22 @@ const sections = computed(() =>
     placings: getDanceResults(groupId.value, dance.id, dancers.value, results.value),
     pointed: findPointedDancers(points.value, groupId.value, dance.id, dancers.value),
     state: stateByDance.value.get(dance.id) ?? null,
+    sheet: sheetPages(sheets.value, groupId.value, dance.id),
   })),
 )
+
+// The judges' sheet open in the viewer: which dance's, so it follows any
+// page the organiser adds or takes off while it's open.
+const viewingId = ref<string | null>(null)
+const viewing = computed(() => sections.value.find((s) => s.dance.id === viewingId.value) ?? null)
+const viewerOpen = ref(false)
+function openSheet(danceId: string) {
+  viewingId.value = danceId
+  viewerOpen.value = true
+}
+watch(viewing, (s) => {
+  if (viewerOpen.value && !s?.sheet.length) viewerOpen.value = false
+})
 
 // The trophy sponsor: a person under the competition's staff (tap for their
 // details), or a typed name on older competitions.
@@ -344,9 +363,18 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
               {{ s.pointed.map((d) => `${d.number ?? ''} ${d.fullName}`.trim()).join(', ') }}
             </p>
           </div>
+
+          <JudgesSheetRow v-if="s.sheet.length" :pages="s.sheet.length" @open="openSheet(s.dance.id)" />
         </div>
       </section>
     </template>
+    <SheetViewer
+      :open="viewerOpen"
+      :title="viewing ? viewing.dance.fullName || viewing.dance.name || '' : ''"
+      :subtitle="group?.fullName || group?.name"
+      :pages="viewing?.sheet ?? []"
+      @close="viewerOpen = false"
+    />
     <StaffDialog :member="sponsorOpen ? sponsor.member : null" :morph="sponsorSheet" @close="sponsorSheet.hide().then(() => (sponsorOpen = false))" />
   </article>
 </template>

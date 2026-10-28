@@ -165,6 +165,24 @@ export type PointsTree = Record<string, Record<string, Record<string, string[]>>
 // draws[groupId][danceId] = string[] of dancer numbers in draw order.
 export type DrawsTree = Record<string, Record<string, string[] | undefined>>
 
+/**
+ * One page of a dance's judges' sheet (how each judge placed the dancers): a
+ * picture shrunk on the organiser's device, or a page of their PDF.
+ */
+export interface SheetPage {
+  id: string
+  url: string
+  /** Where the file is kept in Storage (under the data namespace), so taking the page off deletes it. */
+  path: string
+  /** The picture's size in pixels, so it's laid out before it loads. */
+  width: number
+  height: number
+  _order?: number
+}
+
+// sheets[groupId][danceId][pageId] = SheetPage (without its id).
+export type SheetsTree = Record<string, Record<string, Record<string, Omit<SheetPage, 'id'>> | undefined> | undefined>
+
 export interface Platform {
   id: string
   name?: string

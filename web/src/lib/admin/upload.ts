@@ -8,8 +8,8 @@ if (useEmulators) connectStorageEmulator(storage, window.location.hostname || 'l
 storage.maxUploadRetryTime = 2 * 60 * 1000
 const bucketRef = (path: string) => storageRef(storage, `${NAMESPACE}/${path}`)
 
-// Uploads for Manage: competition images, judge photos and linked files, and
-// organisations' logos and files.
+// Uploads for Manage: competition images, judge photos and linked files,
+// judges' sheets, and organisations' logos and files.
 // The storage rules cap images at 244 KB and links at 976 KB, so photos
 // are shrunk on the device first (people pick 4 MB phone pictures). Names
 // get the competition and a timestamp, so two competitions' "logo.png"
@@ -74,9 +74,13 @@ export async function shrinkImage(file: File, limit = IMAGE_LIMIT): Promise<Blob
 /** Whose file it is: a competition's (the default) or an organisation's. */
 export type UploadOwner = 'competitions' | 'organisations'
 
+const extension = (blob: Blob) => (blob.type === 'application/pdf' ? 'pdf' : (blob.type.split('/')[1] ?? 'bin').replace('jpeg', 'jpg'))
+
 async function put(folder: UploadFolder, ownerId: string, name: string, blob: Blob, owner: UploadOwner = 'competitions'): Promise<string> {
-  const ext = blob.type === 'application/pdf' ? 'pdf' : (blob.type.split('/')[1] ?? 'bin').replace('jpeg', 'jpg')
-  const path = `${owner}/${folder}/${ownerId}-${Date.now()}-${slug(name)}.${ext}`
+  return send(`${owner}/${folder}/${ownerId}-${Date.now()}-${slug(name)}.${extension(blob)}`, blob)
+}
+
+async function send(path: string, blob: Blob): Promise<string> {
   const ref = bucketRef(path)
   try {
     // Every upload gets a new name, so devices can keep a file for good.
@@ -106,4 +110,14 @@ export async function uploadLinkFile(file: File, ownerId: string, owner: UploadO
   if (file.type !== 'application/pdf') throw new Error('Choose a PDF or an image.')
   if (file.size > LINK_LIMIT) throw new Error('That PDF is over 950 KB. Try exporting a smaller one.')
   return put('links', ownerId, file.name, file, owner)
+}
+
+/**
+ * Upload a page of a judges' sheet (already made small: lib/admin/sheetImage).
+ * Each competition's sheets share a folder, so deleting a competition can
+ * clear them all; `path` is what the function deletes when the page goes.
+ */
+export async function uploadSheetPage(blob: Blob, competitionId: string): Promise<{ url: string; path: string }> {
+  const path = `competitions/sheets/${competitionId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension(blob)}`
+  return { url: await send(path, blob), path }
 }

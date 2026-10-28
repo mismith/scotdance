@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getDatabase } from 'firebase-admin/database';
+import { getStorage } from 'firebase-admin/storage';
 import { app as functionsApp } from 'firebase-functions/v1';
 import Invites from './invites';
 import Submissions from './submissions';
@@ -12,6 +13,7 @@ import * as Organisations from './organisations';
 import * as Notifications from './notifications';
 import * as Links from './links';
 import * as KnownCompetitions from './knownCompetitions';
+import * as Sheets from './sheets';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
 import { getOnChange } from './changed';
@@ -32,12 +34,14 @@ function databaseURL() {
   if (isEmulator()) return `http://${process.env.FIREBASE_DATABASE_EMULATOR_HOST}/?ns=scotdance`;
   return 'https://scotdance.firebaseio.com';
 }
-const app = initializeApp({ databaseURL: databaseURL() }, 'app');
+// The bucket holds organisers' uploads (judges' sheets are deleted from here).
+const app = initializeApp({ databaseURL: databaseURL(), storageBucket: 'firebase-scotdance.appspot.com' }, 'app');
 if (isEmulator()) {
   functionsApp.setEmulatedAdminApp(app);
 }
 
 const env = isEmulator() ? 'development' : 'production';
+const bucket = () => getStorage(app).bucket();
 const appConfig = {
   db: getDatabase(app).ref(env),
   database: database(),
@@ -75,6 +79,9 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
   .onDelete(async (before, ctx) => {
     const { db } = appConfig;
     const { competitionId } = ctx.params;
+    // its judges' sheets' files (the rest of its data goes with the delete)
+    await Sheets.deleteCompetitionSheets(env, bucket, competitionId)
+      .catch((e) => console.error(`[sheets] ${competitionId}'s files not deleted`, e));
     // out of its link, if it's in one (the others keep what they have)
     await Links.takeOut(db, competitionId);
     // remove lingering permissions links between competitions and users
@@ -138,6 +145,9 @@ export const competitionListedChanged = listedDatabase.ref(`/${env}/competitions
   if (change.after.val() === true) await ref.set(true);
   else await ref.remove();
 });
+// Judges' sheets: a page's file goes when its page does (sheets.ts).
+export const competitionSheetsChanged = database().ref(`/${env}/competitions:data/{competitionId}/sheets/{groupId}`)
+  .onWrite(Sheets.getOnGroupSheetsWritten(env, bucket));
 // When each competition last changed, for the copies the app keeps (see
 // changed.ts). Data is stamped entry by entry, so each event carries one
 // dancer or one dance's results, never a whole section.

@@ -30,6 +30,14 @@ service firebase.storage {
                        && request.resource.size < 244 * 4 * 1024
                        && request.resource.contentType.matches('application/pdf|image/.*');
         }
+        // Judges' sheets (ADR 0013): pages shrunk on the organiser's device,
+        // a folder per competition. Functions delete them with their page.
+        match /sheets/{competitionId}/{fileName} {
+          allow get;
+          allow create: if request.auth != null
+                       && request.resource.size < 400 * 1024
+                       && request.resource.contentType.matches('image/(webp|jpeg)');
+        }
       }
       match /organisations {
       	match /info/{fileName} {

@@ -137,6 +137,25 @@
           "draws": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
           "results": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
           "points": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          // Judges' sheets (ADR 0013): pictures in Storage, each page saying where its file is, so functions can delete it with the page.
+          "sheets": {
+            ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true", // is PUBLISHED
+            "$groupId": {
+              ".validate": "newData.hasChildren()",
+              "$danceId": {
+                ".validate": "newData.hasChildren()",
+                "$pageId": {
+                  ".validate": "newData.hasChildren(['url', 'path', 'width', 'height'])",
+                  "url": { ".validate": "newData.isString() && (newData.val().beginsWith('https://firebasestorage.googleapis.com/v0/b/firebase-scotdance.appspot.com/o/') || ($environment === 'development' && newData.val().beginsWith('http://')))" }, // the app's own bucket (the emulator's, locally, wherever it's reached from): never someone else's server
+                  "path": { ".validate": "newData.isString() && newData.val().beginsWith('competitions/sheets/' + $competitionId + '/') && !newData.val().contains('..')" }, // a file in THIS competition's folder
+                  "width": { ".validate": "newData.isNumber() && newData.val() > 0" },
+                  "height": { ".validate": "newData.isNumber() && newData.val() > 0" },
+                  "_order": { ".validate": "newData.isNumber()" },
+                  "$other": { ".validate": false }
+                }
+              }
+            }
+          },
           "staff": {
             // Judges and sponsors show once a competition is listed; a private one keeps them private.
             ".read": "root.child($environment).child('competitions').child($competitionId).child('listed').val() === true || root.child($environment).child('competitions').child($competitionId).child('published').val() === true", // is LISTED || PUBLISHED

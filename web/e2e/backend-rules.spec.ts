@@ -190,6 +190,33 @@ test('an organiser can change their competitions and nothing else', async () => 
   await refused('write a profile (aggregate)', as(org, 'PATCH', '', { 'dancers/-Agg/name': 'x' }))
 })
 
+test('judges’ sheets: organisers add pages whose files are in their own folder; everyone reads a published one’s', async () => {
+  const at = (c: string, page = 'p1', dance = 'd1') => `competitions:data/${c}/sheets/g1/${dance}/${page}`
+  const page = (c: string, extra: Record<string, unknown> = {}) => ({
+    url: 'https://firebasestorage.googleapis.com/v0/b/firebase-scotdance.appspot.com/o/x',
+    path: `competitions/sheets/${c}/1-a.webp`,
+    width: 1500,
+    height: 2000,
+    _order: 1,
+    ...extra,
+  })
+  await allowed('add a page', as(org, 'PATCH', '', { [at(pub)]: page(pub) }))
+  await allowed('add one to a private competition', as(org, 'PATCH', '', { [at(priv)]: page(priv) }))
+  await allowed('a parent reading a published competition’s sheets', as(parent, 'GET', `competitions:data/${pub}/sheets`))
+  await allowed('reading them signed out', as(null, 'GET', `competitions:data/${pub}/sheets`))
+  await refused('a parent reading a private competition’s sheets', as(parent, 'GET', `competitions:data/${priv}/sheets`))
+  // Functions delete a page's file with it, so it may only name a file of its own.
+  await refused('a page whose file is in another competition’s folder', as(org, 'PATCH', '', { [at(pub, 'p2')]: page(pub, { path: `competitions/sheets/${priv}/1-a.webp` }) }))
+  await refused('a page whose file is anywhere else', as(org, 'PATCH', '', { [at(pub, 'p2')]: page(pub, { path: 'competitions/info/logo.png' }) }))
+  await refused('a page whose file climbs out of its folder', as(org, 'PATCH', '', { [at(pub, 'p2')]: page(pub, { path: `competitions/sheets/${pub}/../${priv}/1-a.webp` }) }))
+  await refused('a page without its size', as(org, 'PATCH', '', { [at(pub, 'p2')]: { url: page(pub).url, path: page(pub).path } }))
+  await refused('a page with a field pages don’t have', as(org, 'PATCH', '', { [at(pub, 'p2')]: page(pub, { judge: 'A' }) }))
+  await refused('a page whose picture is on someone else’s server', as(org, 'PATCH', '', { [at(pub, 'p2')]: page(pub, { url: 'https://example.com/sheet.webp' }) }))
+  await refused('a dance’s sheet that isn’t pages', as(org, 'PATCH', '', { [`competitions:data/${pub}/sheets/g1/d2`]: 'x' }))
+  await refused('a parent adding a page', as(parent, 'PATCH', '', { [at(pub, 'p3')]: page(pub) }))
+  await allowed('delete a page', as(org, 'PATCH', '', { [at(pub)]: null }))
+})
+
 test('invites: only an organiser makes them; anyone with the link accepts an open one, once', async () => {
   const invite = (id: string) => `competitions:data/${pub}/invites/${id}`
   await dbSet(invite('real'), { created: new Date().toISOString(), payload: { email: 'parent@example.test' } })

@@ -11,6 +11,7 @@ import { canEdit, friendlyError } from '@/lib/admin/write'
 import type { CollectionSpec } from '@/lib/admin/collection'
 import { forEachScheduleDance } from '@/lib/admin/scheduleTree'
 import { idList } from '@/lib/schedule'
+import { sheetsGoForGood } from '@/lib/sheets'
 
 const m = useManagedCompetition()
 
@@ -83,6 +84,7 @@ const spec: CollectionSpec<MGroup> = {
   importFirst: true,
   impact: (ids) => {
     const updates: Record<string, unknown> = {}
+    const lasting: Record<string, unknown> = {}
     const warnings: string[] = []
     let dancers = 0
     let hasResults = false
@@ -94,6 +96,8 @@ const spec: CollectionSpec<MGroup> = {
         hasResults = true
       }
       if (m.points.value[id]) updates[`points/${id}`] = null
+      // Its judges' sheets, for good (their files go with them: functions/src/sheets.ts).
+      if (m.sheets.value[id]) lasting[`sheets/${id}`] = null
       if (m.draws.value[id]) updates[`draws/${id}`] = null
     }
     // And off the platforms they're on in the schedule.
@@ -111,7 +115,8 @@ const spec: CollectionSpec<MGroup> = {
     if (dancers) warnings.push(`${dancers} ${dancers === 1 ? 'dancer is' : 'dancers are'} in ${them} and will need another age group.`)
     if (hasResults) warnings.push(`${ids.length === 1 ? 'Its' : 'Their'} results and draws will be deleted too.`)
     if (scheduled) warnings.push(`Also removes ${them} from the schedule.`)
-    return { updates, warnings }
+    if (Object.keys(lasting).length) warnings.push(sheetsGoForGood(ids.length))
+    return { updates, warnings, lasting }
   },
   emptyHint: 'Add the age groups dancing at this competition, or import them with your dancers.',
 }
