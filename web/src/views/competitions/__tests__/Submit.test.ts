@@ -539,6 +539,20 @@ describe('Add a competition', () => {
     expect(x.find('[data-slide] [role=checkbox][aria-checked=true]').text()).toContain(
       'Cowal Gathering',
     )
+
+    // Unless the name says it's a new one: yours is offered, not ticked.
+    x.unmount()
+    localStorage.clear()
+    const y = await begin()
+    await cont(y)
+    await pickDay(y, 5)
+    await cont(y)
+    await field(y).setValue('Alberta Highland Dance Society Championships')
+    await cont(y)
+    expect(y.findAll('[data-slide] [role=checkbox][aria-checked=true]')).toHaveLength(0)
+    expect(y.find('[data-slide] [role=checkbox]').text()).toContain('Cowal Gathering')
+    expect(y.find('[aria-label="Suggested organisations"]').text()).toContain('Alberta Highland Dance Society')
+    y.unmount()
   })
 
   it('asks for the tick before sending, bringing it into view, and a double tap sends it once', async () => {

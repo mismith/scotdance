@@ -198,9 +198,9 @@ const fromNames = computed(() => organisationsInNames(all.value, o.organisations
 const allFromNames = ref(false)
 const shownFromNames = computed(() => (allFromNames.value ? fromNames.value : fromNames.value.slice(0, 4)))
 const startingFrom = useMorph()
-const draft = reactive({ name: '', shortName: '', location: '', competitionIds: [] as string[], busy: false, error: null as string | null })
+const draft = reactive({ name: '', shortName: '', location: '', website: '', competitionIds: [] as string[], busy: false, error: null as string | null })
 function startFrom(n: NewOrganisation, e: Event) {
-  Object.assign(draft, { name: n.name, shortName: n.shortName ?? '', location: n.location ?? '', competitionIds: n.competitions.map((c) => c.id), error: null })
+  Object.assign(draft, { name: n.name, shortName: n.shortName ?? '', location: n.location ?? '', website: '', competitionIds: n.competitions.map((c) => c.id), error: null })
   startingFrom.show(e)
 }
 async function startDraft() {
@@ -210,7 +210,9 @@ async function startDraft() {
   try {
     const shortName = draft.shortName.trim()
     const id = await createOrganisation({ name, shortName, join: false })
-    if (draft.location.trim()) await write({ [`organisations/${id}/location`]: draft.location.trim() })
+    const extra = { location: draft.location.trim(), website: draft.website.trim() }
+    const fields = Object.entries(extra).filter(([, v]) => v)
+    if (fields.length) await write(Object.fromEntries(fields.map(([k, v]) => [`organisations/${id}/${k}`, v])))
     startingFrom.dismiss()
     await tag(id, draft.competitionIds, true, organisationLabel({ name, shortName }))
   } catch (e) {
@@ -465,6 +467,7 @@ const CHIP = 'inline-flex h-8 max-w-full items-center gap-1.5 rounded-full pr-3 
         <FormInput v-model="draft.name" label="Name" required hint="Its full name, if you know it. You can change it later." />
         <FormInput v-model="draft.shortName" label="Short name" placeholder="e.g. FHDA" />
         <FormInput v-model="draft.location" label="Based in" placeholder="e.g. Calgary, AB" />
+        <FormInput v-model="draft.website" label="Website" kind="url" inputmode="url" placeholder="e.g. example.com" />
         <p v-if="draft.error" class="text-destructive text-sm font-medium" role="alert">{{ draft.error }}</p>
         <Button type="submit" variant="primary" size="lg" block :busy="draft.busy" :disabled="!canEdit">Start and add to {{ competitionsLabel(draft.competitionIds.length) }}</Button>
       </form>

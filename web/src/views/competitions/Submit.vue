@@ -166,20 +166,18 @@ function toggleOrg(row: { key: string; org: unknown; checked: boolean }) {
 }
 
 // The first time there: ticked already when the name says which, or when
-// you run just the one.
+// you run just the one (unless the name says it's a new one: then it's
+// theirs to start, and yours would likely be the wrong one).
 function offerOrgs() {
   if (hosts.offered) return
   hosts.offered = true
   if (hosts.ids.length || hosts.fresh.length) return
+  if (mentioned.value.length) return mentioned.value.forEach(addHost)
+  if (organisationSuggestions(form.name, orgs.organisations.value).fresh.length) return
   const mine = orgs.organisations.value.filter((o) =>
     me.managedOrganisationIds.includes(o.id),
   )
-  for (const org of mentioned.value.length
-    ? mentioned.value
-    : mine.length === 1
-      ? mine
-      : [])
-    addHost(org)
+  if (mine.length === 1) addHost(mine[0])
 }
 
 // --- The slides
