@@ -57,6 +57,7 @@ const creating = ref(false)
 const newName = ref('')
 const newShort = ref('')
 const newLocation = ref('')
+const newWebsite = ref('')
 const nameEl = ref<HTMLInputElement | null>(null)
 async function startCreate() {
   creating.value = true
@@ -73,7 +74,12 @@ function create() {
     creating.value = false
     return
   }
-  emit('create', { name, shortName: newShort.value.trim(), ...(newLocation.value.trim() ? { location: newLocation.value.trim() } : {}) })
+  emit('create', {
+    name,
+    shortName: newShort.value.trim(),
+    ...(newLocation.value.trim() ? { location: newLocation.value.trim() } : {}),
+    ...(newWebsite.value.trim() ? { website: newWebsite.value.trim() } : {}),
+  })
   void props.morph.hide()
 }
 function pick(org: OrganisationListItem) {
@@ -89,6 +95,7 @@ watch(
     newName.value = ''
     newShort.value = ''
     newLocation.value = ''
+    newWebsite.value = ''
     if (props.prefill) {
       creating.value = true
       newName.value = props.prefill.name
@@ -122,6 +129,10 @@ const ROW = 'press-row focus-inset flex min-h-15 w-full items-center gap-3 px-4 
         <span class="text-callout block font-medium">Based in</span>
         <input v-model="newLocation" type="text" class="field h-12 w-full rounded-xl px-3 text-base" />
         <span class="text-muted-foreground block text-sm">Check where the organisation is based. It may differ from the competition.</span>
+      </label>
+      <label class="block space-y-1.5">
+        <span class="text-callout block font-medium">Website</span>
+        <input v-model="newWebsite" type="url" inputmode="url" autocomplete="url" placeholder="e.g. example.com" class="field h-12 w-full rounded-xl px-3 text-base" />
       </label>
       <p class="text-muted-foreground text-sm">{{ createHint }}</p>
       <slot name="create-options" />

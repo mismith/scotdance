@@ -80,9 +80,9 @@ const { byOrganisation } = useOrganisationCompetitions()
 const myOrgs = computed(() => me.managedOrganisationIds.flatMap((id) => orgs.byId.value.get(id) ?? []))
 const comingUp = (id: string) => (byOrganisation.value.get(id) ?? []).filter((c) => competitionPhase(c.date) !== 'after').length
 const startingOrg = useMorph()
-async function startOrg({ name, shortName }: { name: string; shortName: string }) {
+async function startOrg({ name, shortName, website }: { name: string; shortName: string; website?: string }) {
   try {
-    const id = await createOrganisation({ name, shortName })
+    const id = await createOrganisation({ name, shortName, website })
     toast(`Started ${name}. Add its logo and competitions.`)
     await router.push({ name: 'organisation.manage', params: { organisationId: id } })
   } catch (e) {

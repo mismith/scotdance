@@ -15,7 +15,7 @@ function setup() {
   const create = (data: object, uid = 'owner') => getOnCreate(db.ref())(data, { auth: { uid } })
   return { db, create }
 }
-const draft = { name: 'BCHDA', shortName: 'BCHDA', location: 'Vancouver, BC', competitionId: 'c1', join: false }
+const draft = { name: 'BCHDA', shortName: 'BCHDA', location: 'Vancouver, BC', website: ' bchda.ca ', competitionId: 'c1', join: false }
 
 describe('creating an organisation from a managed competition', () => {
   it('creates, links and grants the verified submitter in one write', async () => {
@@ -23,7 +23,7 @@ describe('creating an organisation from a managed competition', () => {
     const before = db.writes
     const { organisationId: id } = await create({ ...draft, grantSubmitter: true })
     expect(db.writes - before).toBe(1)
-    expect(db.read(`organisations/${id}`)).toMatchObject({ name: 'BCHDA', location: 'Vancouver, BC', createdBy: 'owner' })
+    expect(db.read(`organisations/${id}`)).toMatchObject({ name: 'BCHDA', location: 'Vancouver, BC', website: 'bchda.ca', createdBy: 'owner' })
     expect(db.read(`competitions/c1/organisations/${id}`)).toBe(true)
     expect(db.read(`users:permissions/organiser/organisations/${id}`)).toBe(true)
     expect(db.read(`organisations:permissions/${id}/users/organiser`)).toBe(true)

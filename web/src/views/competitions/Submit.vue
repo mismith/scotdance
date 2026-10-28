@@ -551,7 +551,7 @@ async function send() {
           newOrganisations: Object.fromEntries(
             hosts.fresh.map((o) => [
               newKey(),
-              { name: o.name, shortName: o.shortName || null, ...(o.location ? { location: o.location } : {}) },
+              { name: o.name, shortName: o.shortName || null, ...(o.location ? { location: o.location } : {}), ...(o.website ? { website: o.website } : {}) },
             ]),
           ),
         }),

@@ -5,6 +5,7 @@ export interface OrganisationDraft {
   name: string
   shortName: string
   location?: string
+  website?: string
 }
 
 // Whole phrases only: BCHDA must not match CHDA. Punctuation and accents

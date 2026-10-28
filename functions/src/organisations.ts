@@ -35,14 +35,16 @@ export interface NewOrganisation {
   name?: string
   shortName?: string
   location?: string
+  website?: string
 }
 
 /** Makes an organisation. Whoever it's made for becomes its admin. */
-export async function createOrganisation(db: any, { name, shortName, location }: NewOrganisation, createdBy: string, adminId: string | null = createdBy, competitionId?: string) {
+export async function createOrganisation(db: any, { name, shortName, location, website }: NewOrganisation, createdBy: string, adminId: string | null = createdBy, competitionId?: string) {
   const record = {
     name: text(name, 120),
     shortName: text(shortName, 24) || null,
     location: text(location, 120) || null,
+    website: text(website, 300) || null,
     created: new Date().toISOString(),
     createdBy,
   };

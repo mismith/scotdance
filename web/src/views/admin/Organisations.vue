@@ -68,9 +68,9 @@ const shownOrgs = computed(() => {
 })
 
 const starting = useMorph()
-async function start({ name, shortName }: { name: string; shortName: string }) {
+async function start({ name, shortName, website }: { name: string; shortName: string; website?: string }) {
   try {
-    const id = await createOrganisation({ name, shortName, join: false })
+    const id = await createOrganisation({ name, shortName, website, join: false })
     toast(`Started ${name}`)
     await router.push({ name: 'organisation.manage', params: { organisationId: id } })
   } catch (e) {
@@ -209,10 +209,7 @@ async function startDraft() {
   draft.busy = true
   try {
     const shortName = draft.shortName.trim()
-    const id = await createOrganisation({ name, shortName, join: false })
-    const extra = { location: draft.location.trim(), website: draft.website.trim() }
-    const fields = Object.entries(extra).filter(([, v]) => v)
-    if (fields.length) await write(Object.fromEntries(fields.map(([k, v]) => [`organisations/${id}/${k}`, v])))
+    const id = await createOrganisation({ name, shortName, location: draft.location.trim(), website: draft.website.trim(), join: false })
     startingFrom.dismiss()
     await tag(id, draft.competitionIds, true, organisationLabel({ name, shortName }))
   } catch (e) {
