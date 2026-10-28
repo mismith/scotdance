@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useId, useSlots, watch } from 'vue'
+import { computed, onDeactivated, onMounted, ref, useId, useSlots, watch } from 'vue'
 import { X } from '@lucide/vue'
 import { useMorph, type Morph } from '@/lib/morph'
 
@@ -75,16 +75,32 @@ function slide(el: HTMLDialogElement, up: boolean) {
   return el.animate(frames, { ...options, direction: up ? 'normal' : 'reverse' })
 }
 
+// A menu (dropdown) opens as a popover, not a modal: a modal makes the rest
+// of the page inert, which restyles the whole page as it opens (a stall a
+// menu shouldn't have). It still sits over everything, and a tap outside or
+// Escape still closes it (below).
+const popover = computed(() => props.variant === 'dropdown')
+const isOpen = (el: HTMLDialogElement) => (popover.value ? el.matches(':popover-open') : el.open)
+function show(el: HTMLDialogElement) {
+  if (popover.value) el.showPopover()
+  else el.showModal()
+}
+function hide(el: HTMLDialogElement) {
+  if (!isOpen(el)) return
+  if (popover.value) el.hidePopover()
+  else el.close()
+}
+
 function sync(open: boolean) {
   const el = dialogRef.value
   if (!el) return
-  if (open && !el.open) {
-    el.showModal()
+  if (open && !isOpen(el)) {
+    show(el)
     if (slides()) slide(el, true)
     // Inside something hidden (a phone's list pane while an item is open), a
     // modal dialog can't be seen yet blocks every tap: close it again.
     if (!el.getClientRects().length) {
-      el.close()
+      hide(el)
       if (import.meta.env.DEV) console.warn('A dialog opened inside a hidden element, so it was closed:', el)
       emit('close')
       return
@@ -93,13 +109,65 @@ function sync(open: boolean) {
     // draws a focus ring on that button the moment a sheet or menu opens.
     el.focus({ preventScroll: true })
   }
-  else if (!open && el.open) {
-    if (!slides()) return el.close()
+  else if (!open && isOpen(el)) {
+    if (!slides()) return hide(el)
     slide(el, false).finished.then(
-      () => !shown.value && el.close(),
-      () => !shown.value && el.close(),
+      () => !shown.value && hide(el),
+      () => !shown.value && hide(el),
     )
   }
+}
+
+// A menu's tap outside: it closes as the finger lands, as an iOS menu does,
+// and the tap goes no further (the page under it isn't tapped too).
+let swallowClick = false
+function onOutsidePointerDown(e: PointerEvent) {
+  swallowClick = false
+  const el = dialogRef.value
+  if (!el || !shown.value || el.contains(e.target as Node)) return
+  swallowClick = true
+  emit('close')
+}
+function onOutsideClick(e: MouseEvent) {
+  if (!swallowClick) return
+  swallowClick = false
+  e.preventDefault()
+  e.stopPropagation()
+}
+watch(
+  () => popover.value && shown.value,
+  (listening, _, onCleanup) => {
+    if (!listening) return
+    document.addEventListener('pointerdown', onOutsidePointerDown, true)
+    document.addEventListener('click', onOutsideClick, true)
+    onCleanup(() => {
+      document.removeEventListener('pointerdown', onOutsidePointerDown, true)
+      document.removeEventListener('click', onOutsideClick, true)
+    })
+  },
+)
+// Its page put away (kept alive, PageStack) while it's open: close it, so it
+// isn't left half-open for when the page comes back.
+onDeactivated(() => {
+  const el = dialogRef.value
+  if (!el || !isOpen(el)) return
+  hide(el)
+  emit('close')
+})
+// Escape, or keyboard focus moving out of the menu, closes it too.
+function onKeydown(e: KeyboardEvent) {
+  if (popover.value && e.key === 'Escape') {
+    e.preventDefault()
+    emit('close')
+  }
+}
+function onFocusOut(e: FocusEvent) {
+  const to = e.relatedTarget as Node | null
+  if (popover.value && shown.value && to && !dialogRef.value?.contains(to)) emit('close')
+}
+// A popover says it's closed with `toggle`, a modal with `close`.
+function onToggle(e: Event) {
+  if ((e as ToggleEvent).newState === 'closed') emit('closed')
 }
 
 // Post-flush, so a morph measures the dialog already open.
@@ -199,6 +267,7 @@ const dragStyle = computed(() =>
   <dialog
     ref="dialogRef"
     tabindex="-1"
+    :popover="popover ? 'manual' : undefined"
     :inert="!shown || !open"
     :data-morph-kind="variant === 'sheet' ? 'sheet' : 'float'"
     :aria-labelledby="slots.header && !$attrs['aria-label'] ? headerId : undefined"
@@ -208,7 +277,7 @@ const dragStyle = computed(() =>
       // (see sync), so it draws no ring of its own. Each variant sets its own
       // max size: a general max-h/max-w-full here would win over theirs.
       'border-0 p-0 text-inherit outline-none',
-      variant === 'dropdown' ? 'frosted-paper menu-edge' : 'frosted-paper',
+      variant === 'dropdown' ? 'frosted-paper menu-edge [&:popover-open]:block' : 'frosted-paper',
       // Width by size prop.
       variant !== 'dropdown' && (size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md'),
       variant === 'dropdown' &&
@@ -249,6 +318,9 @@ const dragStyle = computed(() =>
     @click="onBackdropClick"
     @cancel.prevent="emit('close')"
     @close="emit('closed')"
+    @toggle="onToggle"
+    @keydown="onKeydown"
+    @focusout="onFocusOut"
   >
     <div
       v-if="variant === 'sheet'"
@@ -298,9 +370,10 @@ const dragStyle = computed(() =>
 </template>
 
 <style>
-/* Lock background scroll while any native <dialog> is open. showModal()
-   handles focus trap + inertness, but not scroll — this fills the gap. */
-html:has(dialog[open]) {
+/* Lock background scroll while any native <dialog> is open (a menu opens as
+   a popover). showModal() handles focus trap + inertness, but not scroll —
+   this fills the gap. */
+html:has(dialog:is([open], :popover-open)) {
   overflow: hidden;
 }
 </style>

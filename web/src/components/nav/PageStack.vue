@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import type { Component as PageComponent } from 'vue'
-import { RouterView, type RouteLocationNormalizedLoaded } from 'vue-router'
+import { computed, defineComponent, h, nextTick, provide, shallowReactive, type Component as PageComponent, type PropType } from 'vue'
+import { RouterView, routeLocationKey, routerViewLocationKey, type RouteLocationNormalizedLoaded } from 'vue-router'
 import { beginSwap, endSwapOf, takeMotion } from '@/lib/pageTransition'
 import { crossfadeBars, slide } from '@/lib/pageMotion'
+import { lite } from '@/lib/deviceTier'
 
 // A RouterView whose pages slide (lib/pageTransition). The app's pages use
 // it, and so do layouts whose pages change under a bar that stays (a
@@ -19,6 +20,36 @@ function frameKey(route: RouteLocationNormalizedLoaded, component: PageComponent
     String(route.params[name] ?? ''),
   )
 }
+
+// Pages you've left are kept as they were (the last few), so going back to
+// one shows it at once instead of building it again. Not Manage and the
+// system admin's pages, nor Add a competition: forms start afresh.
+const KEPT = 8
+const kept = (route: RouteLocationNormalizedLoaded) =>
+  route.name !== 'competitions.add' && !route.matched.some((r) => r.meta.admin)
+// A page sees the route it's showing, not wherever the app has gone since:
+// as it slides out, and while it's kept, it stays as it was.
+const ROUTE_KEYS = ['path', 'name', 'params', 'query', 'hash', 'fullPath', 'matched', 'meta', 'redirectedFrom'] as const
+const frame = (name: string) =>
+  defineComponent({
+    name,
+    props: {
+      block: Boolean,
+      location: { type: Object as PropType<RouteLocationNormalizedLoaded>, required: true },
+    },
+    setup(props, { slots }) {
+      const shown = {} as RouteLocationNormalizedLoaded
+      for (const key of ROUTE_KEYS) Object.defineProperty(shown, key, { get: () => props.location[key], enumerable: true })
+      provide(routeLocationKey, shallowReactive(shown))
+      provide(routerViewLocationKey, computed(() => props.location))
+      return () =>
+        h('div', { class: !props.block && 'flex flex-1 flex-col' }, [
+          h('div', { class: !props.block && 'flex flex-1 flex-col' }, slots.default?.()),
+        ])
+    },
+  })
+const KeptFrame = frame('KeptFrame')
+const Frame = frame('Frame')
 
 let leaving: { el: HTMLElement; done: () => void; docTop: number } | null = null
 let motion: ReturnType<typeof takeMotion> = null
@@ -57,9 +88,14 @@ async function onEnter(el: Element, done: () => void) {
     for (const a of animations) a.cancel()
     release(frame)
     if (top != null) scrollTo({ top, behavior: 'instant' })
+    // Put back as it was before it's kept, for when it's shown again.
+    release(old.el)
     old.done()
     done()
   })
+  // A page shown again brings its bars back as it's put in (usePageShowing).
+  await nextTick()
+  if (swap.ended) return
   animations.push(...crossfadeBars())
   top = await swap.top
   // A newer change cut in while the router answered: it's already landed.
@@ -67,12 +103,13 @@ async function onEnter(el: Element, done: () => void) {
   pin(frame, box, old.docTop - (top ?? 0), top ?? 0)
   // Each page waits where it starts (the new one off to the side) until the
   // new one's drawn: started while the phone is still drawing it, the
-  // slide's first frames would be skipped.
+  // slide's first frames would be skipped. A frame is enough on most phones;
+  // a low-end Android one takes two.
   const moves = slide(m, old.el, frame)
   for (const a of moves) a.pause()
   animations.push(...moves)
   await nextFrame()
-  await nextFrame()
+  if (lite) await nextFrame()
   if (swap.ended) return
   for (const a of moves) a.play()
   await Promise.all(animations.map((a) => a.finished.catch(() => {})))
@@ -119,15 +156,17 @@ function release(frame: HTMLElement) {
 <template>
   <RouterView v-slot="{ Component, route }">
     <Transition :css="false" @leave="onLeave" @enter="onEnter">
-      <div
-        v-if="Component"
-        :key="frameKey(route, Component.type as PageComponent)"
-        :class="!block && 'flex flex-1 flex-col'"
-      >
-        <div :class="!block && 'flex flex-1 flex-col'">
+      <KeepAlive include="KeptFrame" :max="KEPT">
+        <component
+          :is="kept(route) ? KeptFrame : Frame"
+          v-if="Component"
+          :key="frameKey(route, Component.type as PageComponent)"
+          :block="block"
+          :location="route"
+        >
           <component :is="Component" />
-        </div>
-      </div>
+        </component>
+      </KeepAlive>
     </Transition>
   </RouterView>
 </template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import AppBar from '@/components/nav/AppBar.vue'
 import PageStack from '@/components/nav/PageStack.vue'
 import SidebarBranch from '@/components/nav/SidebarBranch.vue'
@@ -9,6 +10,8 @@ import EmptyState from '@/components/EmptyState.vue'
 import { sectionMeta } from '@/lib/sectionMeta'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { provideInfoHeader } from '@/composables/useScrolledPast'
+
+const route = useRoute()
 
 // Shared shell for profile pages (dancer, judge, piper, venue, organisation): the bar,
 // the page (each profile's Info), and a way on when the link is stale. On
@@ -59,6 +62,6 @@ const { scrolledPast } = provideInfoHeader()
       <PageStack v-else block />
     </main>
     <!-- Wide screens: this profile, nested under its list in the sidebar. -->
-    <SidebarBranch v-if="displayName" :under="sectionRouteName" :label="displayName" :to="$route.path" current />
+    <SidebarBranch v-if="displayName" :under="sectionRouteName" :label="displayName" :to="route.path" current />
   </div>
 </template>

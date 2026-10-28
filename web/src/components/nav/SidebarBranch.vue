@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { RouteLocationRaw } from 'vue-router'
 import SidebarLink from '@/components/nav/SidebarLink.vue'
+import { usePageShowing } from '@/composables/usePageShowing'
 
 // A page's place in the sidebar (wide screens): nested under its parent's
 // row in nav/AppSidebar (the `sidebar-<under>` slot), on one guide line from
@@ -15,10 +16,12 @@ const props = defineProps<{
   to?: RouteLocationRaw
   current?: boolean
 }>()
+// Kept alive out of sight (PageStack), a page's branch folds away with it.
+const showing = usePageShowing()
 </script>
 
 <template>
-  <Teleport defer :to="`#sidebar-${props.under}`">
+  <Teleport v-if="showing" defer :to="`#sidebar-${props.under}`">
     <!-- The guide line sits under the middle of the parent row's icon. -->
     <div class="mt-0.5 ml-[1.3125rem] space-y-0.5 border-l-2 pl-2">
       <template v-if="props.label">

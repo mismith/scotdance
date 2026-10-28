@@ -2,6 +2,7 @@
 import { nextTick, useTemplateRef, watch, type Component } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import { tapHaptic } from '@/lib/haptics'
+import { usePageShowing } from '@/composables/usePageShowing'
 
 // The floating tab bar, after iOS 26: a frosted pill above the home
 // indicator, always labelled, the current tab sitting in a soft capsule.
@@ -27,6 +28,8 @@ export interface TabItem {
 }
 
 const props = defineProps<{ items: TabItem[]; label: string; replace?: boolean }>()
+// Kept alive out of sight (PageStack), a page's bar leaves with it.
+const showing = usePageShowing()
 
 // The current tab's capsule slides to the new tab, overshooting a little,
 // stretching to fit as it goes (tabs differ in width). Moved, not resized,
@@ -61,7 +64,7 @@ function onTap(item: TabItem, e: MouseEvent) {
        slide (lib/pageTransition). Its frosted strip is one sheet behind it
        (App). It runs 2.5rem past the foot of the screen, which iOS can paint
        a little below where bottom: 0 lands. -->
-  <Teleport to="#chrome-bottom">
+  <Teleport v-if="showing" to="#chrome-bottom">
   <nav
     data-tabbar
     data-nav-axis="x"

@@ -5,6 +5,7 @@ import { ChevronDown } from '@lucide/vue'
 import AccountButton from '@/components/nav/AccountButton.vue'
 import TopBackButton from '@/components/nav/TopBackButton.vue'
 import { useTopBarFrost } from '@/lib/topBar'
+import { usePageShowing } from '@/composables/usePageShowing'
 
 // The one top bar, 3.5rem, under the status bar. It's frosted glass (paper):
 // what scrolls under it blurs, and it fades into the page in a short band
@@ -39,6 +40,8 @@ const props = withDefaults(
   }>(),
   { title: null, subtitle: null, showTitle: false, scrolled: undefined, wide: false, back: true, fallback: undefined, exit: null, compactBack: false, titleMenu: null },
 )
+// Kept alive out of sight (PageStack), a page's bar leaves with it.
+const showing = usePageShowing()
 
 const frosted = computed(() => props.scrolled ?? props.showTitle)
 useTopBarFrost(frosted)
@@ -59,7 +62,7 @@ const scrollTop = () => {
   <!-- In the bars' own layer, outside the pages, so it holds still while they
        slide (lib/pageTransition); its parts cross-fade when they differ.
        Its frosted glass is one sheet behind it (App, lib/topBar). -->
-  <Teleport to="#chrome-top">
+  <Teleport v-if="showing" to="#chrome-top">
   <nav
     data-appbar
     aria-label="Page"

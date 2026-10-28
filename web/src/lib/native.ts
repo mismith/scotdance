@@ -124,7 +124,7 @@ export function setupNative(router: Router) {
   // Android back button: close an open sheet or menu first, then go back,
   // and from the first screen put the app away (like other Android apps).
   if (platform === 'android') void app?.addListener('backButton', ({ canGoBack }) => {
-    const dialog = [...document.querySelectorAll('dialog[open]')].at(-1)
+    const dialog = [...document.querySelectorAll('dialog:is([open], :popover-open)')].at(-1)
     if (dialog) dialog.dispatchEvent(new Event('cancel', { cancelable: true }))
     else if (canGoBack) history.back()
     else void app.minimizeApp()
