@@ -140,7 +140,7 @@ test('callbacks, then placings with a tie, reach the public page live', async ({
     .toEqual([ds[0].id, ds[2].id, ds[3].id])
 })
 
-test('Championship can be switched on before anyone is placed', async ({
+test('Lowest place first can be switched on before anyone is placed', async ({
   page,
   browser,
 }) => {
@@ -160,7 +160,7 @@ test('Championship can be switched on before anyone is placed', async ({
 
   await signIn(page, email)
   await entry(page, group.id, sword.id)
-  const championship = page.getByRole('switch', { name: 'Championship' })
+  const championship = page.getByRole('switch', { name: 'Lowest place first' })
   const places = page.getByRole('group', { name: 'How many places?' })
   // It asks first, and isn't on until a number is chosen.
   await championship.click()
@@ -207,7 +207,7 @@ test('Championship can be switched on before anyone is placed', async ({
   await expect(group6.getByRole('img', { name: '1st place, tied' })).toHaveCount(2)
   await expect(group6.getByRole('img', { name: /(^|: )3rd place$/ })).toBeVisible()
 
-  // Taking everyone out keeps Championship on.
+  // Taking everyone out keeps Lowest place first on.
   for (const d of announced)
     await page
       .getByRole('button', { name: `Take out ${d.firstName} ${d.lastName}` })
@@ -661,4 +661,45 @@ test('hiding the Results tab asks first, can be undone, and Show brings it back'
   await expect(await hide()).toBeEnabled()
   await expect.poll(() => stored('results')).toBeNull()
   await put(`competitions:data/${comp.id}/results`, before)
+})
+
+test('a championship that ran as a regular competition says so on its results', async ({
+  page,
+  browser,
+}) => {
+  test.slow()
+  const group = freshGroup()
+  const ds = dancersOf(group.id)
+  await callBack(group.id, ds.map((d) => d.id))
+  const switchIn = (p: Page) => p.getByRole('switch', { name: 'Not run as a championship' })
+
+  // Only offered where a name says it's a championship.
+  await signIn(page, email)
+  await entry(page, group.id, 'callbacks')
+  await expect(page.getByRole('heading', { name: 'Callbacks' })).toBeVisible()
+  await expect(switchIn(page)).toHaveCount(0)
+  await put(`competitions:data/${comp.id}/groups/${group.id}/name`, `Pre-Championship ${group.name}`)
+  await expect(switchIn(page)).toBeVisible()
+
+  // On the day, in Results entry.
+  await switchIn(page).click()
+  await expect.poll(() => stored(`groups/${group.id}/notChampionship`)).toBe(true)
+
+  const viewer = await (await browser.newContext()).newPage()
+  await viewer.goto(`/competitions/${comp.id}/results`)
+  await expect(viewer.locator(`a[href$="/results/${group.id}"]`)).toContainText('Not run as a championship')
+  await viewer.goto(`/competitions/${comp.id}/results/${group.id}`)
+  await expect(viewer.getByRole('note').filter({ hasText: 'Not run as a championship.' })).toBeVisible()
+  await viewer.goto(`/competitions/${comp.id}/dancers/${ds[0].id}`)
+  await expect(viewer.getByText('Not run as a championship')).toBeVisible()
+
+  // And in Age groups, where it can be switched off again.
+  await page.goto(`/competitions/${comp.id}/manage/groups/${group.id}`)
+  await expect(switchIn(page)).toHaveAttribute('aria-checked', 'true')
+  await switchIn(page).click()
+  await expect.poll(() => stored(`groups/${group.id}/notChampionship`)).toBeNull()
+  await viewer.reload()
+  await expect(viewer.getByRole('note')).toHaveCount(0)
+
+  await put(`competitions:data/${comp.id}/groups/${group.id}/name`, group.name)
 })

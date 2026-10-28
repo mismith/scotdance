@@ -10,6 +10,7 @@ import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import type { CollectionSpec } from '@/lib/admin/collection'
 import { forEachScheduleDance } from '@/lib/admin/scheduleTree'
+import { isChampionshipName } from '@/types/competition'
 import { idList } from '@/lib/schedule'
 import { sheetsGoForGood } from '@/lib/sheets'
 
@@ -162,6 +163,14 @@ const items = computed(() => m.groups.value)
   <CollectionEditor :spec="spec" :items="items">
     <template #list-intro><ImportTip /></template>
     <template #detail-extra="{ item }">
+      <!-- Also in Results entry, where organisers are on the day. -->
+      <SwitchField
+        v-if="isChampionshipName(item.category?.name, item.name)"
+        :model-value="!!item.notChampionship"
+        label="Not run as a championship"
+        description="Too few dancers turned up for a championship, so it ran as a regular competition. Its results say so."
+        :save="(on) => m.writeData({ [`groups/${item.id}/notChampionship`]: on || null }, on ? `Marked ${item.label} not run as a championship` : `Marked ${item.label} a championship again`)"
+      />
       <section class="space-y-3">
         <div class="flex flex-wrap items-end justify-between gap-2">
           <div>

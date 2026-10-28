@@ -85,8 +85,14 @@ export interface Group {
   trophy?: string
   /** Who sponsors it: a staff member's id, or (older competitions) a name. */
   sponsor?: string
+  /** A championship class that ran as a regular competition: too few dancers turned up. */
+  notChampionship?: boolean
   _order?: number
 }
+
+/** A Championship, Pre-Championship or Premiership class, going by its names (not plain "Premier"). */
+export const isChampionshipName = (...names: Array<string | null | undefined>) =>
+  names.some((n) => /\b(pre[- ]?)?championships?\b|\bpremiership\b/i.test(n ?? ''))
 
 export interface EnrichedGroup extends Group {
   fullName: string

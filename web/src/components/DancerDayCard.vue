@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ChevronRight, Hourglass } from '@lucide/vue'
+import { ChevronRight, CircleSlash, Hourglass } from '@lucide/vue'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import DanceStatusChip from '@/components/DanceStatusChip.vue'
@@ -208,6 +208,10 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
       <div v-for="d in shown" :key="d.dancer.id">
         <p v-if="multi" class="text-muted-foreground px-4 pt-3 pb-1 text-footnote font-semibold">
           {{ d.group?.fullName }}
+        </p>
+        <p v-if="d.group?.notChampionship" class="text-muted-foreground flex items-center gap-1 px-4 pt-2 pb-1 text-sm">
+          <CircleSlash class="size-3.5 shrink-0" aria-hidden="true" />
+          Not run as a championship
         </p>
         <ul v-if="d.dances.length" class="rows-engraved [--inset:1rem] [--inset-end:1rem]">
           <li v-if="d.calledBack != null" :class="[ROW, rowSize]">

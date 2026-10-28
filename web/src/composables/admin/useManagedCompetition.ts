@@ -37,7 +37,7 @@ import {
 // field nobody touched.
 
 export interface RawCategory { name?: string; _order?: number }
-export interface RawGroup { name?: string; categoryId?: string; sponsor?: string; trophy?: string; _order?: number }
+export interface RawGroup { name?: string; categoryId?: string; sponsor?: string; trophy?: string; notChampionship?: boolean; _order?: number }
 export interface RawDance { name?: string; shortName?: string; steps?: string | number; groupIds?: Record<string, boolean>; _order?: number }
 export interface RawDancer {
   number?: string | number

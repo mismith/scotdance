@@ -5,7 +5,7 @@ import ResultsMark from '@/components/ResultsMark.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import { RouterLink } from 'vue-router'
-import { AlertTriangle, ChevronRight, Trophy } from '@lucide/vue'
+import { AlertTriangle, ChevronRight, CircleSlash, Trophy } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import { useCompetitionLive } from '@/composables/useCompetitionLive'
@@ -196,6 +196,10 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
                 <span v-if="r.mine.length" class="dancer-sash" aria-hidden="true" />
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-base font-semibold">{{ r.title }}</span>
+                  <span v-if="r.group.notChampionship" class="text-muted-foreground mt-0.5 flex items-center gap-1 text-sm">
+                    <CircleSlash class="size-3.5 shrink-0" aria-hidden="true" />
+                    Not run as a championship
+                  </span>
                   <!-- Said in words: a bare warning sign reads as "something's wrong with the results". -->
                   <span v-if="r.unknown" class="text-muted-foreground mt-0.5 flex items-center gap-1 text-sm">
                     <AlertTriangle class="size-3.5 shrink-0" aria-hidden="true" />

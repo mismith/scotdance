@@ -21,7 +21,7 @@ import { canEdit, friendlyError } from '@/lib/admin/write'
 import { competitionPhase } from '@/lib/dancerDay'
 import { selectionHaptic, tapHaptic } from '@/lib/haptics'
 import { getOrdinalSuffix } from '@/lib/results'
-import { isPrimaryCategory } from '@/types/competition'
+import { isChampionshipName, isPrimaryCategory } from '@/types/competition'
 import {
   CALLBACKS,
   OVERALL,
@@ -49,8 +49,8 @@ import {
 // switch on Tie where two share a place. Callbacks come first; each dance
 // then lists only the dancers called back. A "?" stands in for a dancer whose
 // number was missed, so entry can carry on and be fixed later. Taking a
-// dancer out, moving one, replacing a "?" and changing Championship each
-// offer Undo.
+// dancer out, moving one, replacing a "?" and changing Lowest place first
+// each offer Undo.
 
 const props = defineProps<{ groupId: string; danceId: string }>()
 
@@ -66,6 +66,13 @@ const kind = computed(() => (isCallbacks.value ? 'callbacks' : isOverall.value ?
 const danceName = computed(() => (isCallbacks.value ? 'Callbacks' : isOverall.value ? 'Overall' : (m.dancesById.value.get(props.danceId)?.label ?? 'Dance')))
 
 const path = computed(() => `results/${props.groupId}/${props.danceId}`)
+
+// A championship class that ran as a regular competition (too few dancers
+// turned up): its results say so.
+function setNotChampionship(on: boolean) {
+  const label = group.value?.label ?? 'this age group'
+  m.writeData({ [`groups/${props.groupId}/notChampionship`]: on || null }, on ? `Marked ${label} not run as a championship` : `Marked ${label} a championship again`).catch((e) => toast(friendlyError(e), { tone: 'error' }))
+}
 // Always build on the latest stored value: another device may have changed it.
 const rawNow = () => m.results.value[props.groupId]?.[props.danceId]
 const placings = computed<Placings>(() => parsePlacings(rawNow()))
@@ -233,7 +240,8 @@ function tapPlaceholder(e: Event) {
   else place(id, e)
 }
 
-// --- Championship: entered from the lowest place up to 1st. Switching it on
+// --- Lowest place first: placings go in from the lowest place up to 1st, as
+// a championship announces them. Switching it on
 // first asks how many places; it reads on once that's saved.
 const PLACES = [3, 4, 5, 6, 7, 8]
 const championship = computed(() => !!placings.value.reverseFrom)
@@ -256,7 +264,7 @@ async function toggleChampionship() {
   }
   pickingReverse.value = false
   if (!(await renumberOk(null))) return
-  void saveUndoable({ ...parsePlacings(rawNow()), reverseFrom: null }, 'Championship off')
+  void saveUndoable({ ...parsePlacings(rawNow()), reverseFrom: null }, 'Lowest place first off')
 }
 async function pickReverse(n: number) {
   selectionHaptic()
@@ -466,6 +474,15 @@ watch(() => props.danceId, showCurrent)
           {{ r.label }}
         </RouterLink>
       </nav>
+      <div v-if="isChampionshipName(group.category?.name, group.name)" class="flex min-h-11 items-center gap-2">
+        <label class="flex min-h-11 items-center gap-3 font-medium">
+          <Switch :model-value="!!group.notChampionship" :disabled="!canEdit" @update:model-value="setNotChampionship" />
+          Not run as a championship
+        </label>
+        <HelpTip label="About not running as a championship">
+          Switch it on when too few dancers turned up for a championship, so it ran as a regular competition. Its results say so.
+        </HelpTip>
+      </div>
     </header>
 
     <div class="md:grid md:min-h-0 md:flex-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
@@ -549,15 +566,15 @@ watch(() => props.danceId, showCurrent)
           </EmptyState>
         </div>
 
-        <!-- Championship (dances only) -->
+        <!-- Lowest place first (dances only) -->
         <div v-if="isDance && tab === 'placings'" class="border-t px-4 py-2">
           <div class="flex min-h-12 flex-wrap items-center gap-x-2">
             <label class="flex min-h-11 items-center gap-3 font-medium">
               <Switch :model-value="championship" :disabled="!canEdit" @update:model-value="toggleChampionship" />
-              Championship
+              Lowest place first
             </label>
-            <HelpTip label="About championship mode">
-              <strong>Championship</strong> mode enters results in reverse order (e.g. 6th, 5th, …, 1st), as is traditional for championship announcements.
+            <HelpTip label="About lowest place first">
+              For placings announced from the lowest place up to 1st, as at a championship (e.g. 6th, 5th, …, 1st).
             </HelpTip>
             <Button
               v-if="placings.reverseFrom"

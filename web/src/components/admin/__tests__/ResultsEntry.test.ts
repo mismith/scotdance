@@ -19,10 +19,10 @@ vi.mock('@/stores/auth', () => ({ useAuthStore: () => ({ uid: 'u1' }) }))
 vi.mock('@/stores/me', () => ({ useMeStore: () => ({ hasCompetitionPerm: () => true }) }))
 
 // Results entry's guards, over a fake database: a quick second tap is the
-// same tap, a take-out (or move, or "?" replaced, or Championship changed)
-// can be undone, Championship asks before renumbering anyone placed, and a
-// dance waiting on callbacks can say there wasn't a callback round. None of
-// it changes what's stored for the same taps.
+// same tap, a take-out (or move, or "?" replaced, or Lowest place first
+// changed) can be undone, Lowest place first asks before renumbering anyone
+// placed, and a dance waiting on callbacks can say there wasn't a callback
+// round. None of it changes what's stored for the same taps.
 
 const DATA = `${NS}/competitions:data/c1`
 
@@ -191,9 +191,9 @@ describe('Undo', () => {
   })
 })
 
-describe('Championship', () => {
+describe('Lowest place first', () => {
   const championshipSwitch = (t: ReturnType<typeof setup>) =>
-    t.w.findAll('[role="switch"]').find((x) => x.element.closest('label')?.textContent?.includes('Championship'))!
+    t.w.findAll('[role="switch"]').find((x) => x.element.closest('label')?.textContent?.includes('Lowest place first'))!
 
   it('is the switch it was: on asks how many places, and saves at once with nobody placed yet', async () => {
     const t = setup(sample())
@@ -237,7 +237,7 @@ describe('Championship', () => {
     confirmRequest.value!.resolve(true)
     await flushPromises()
     expect(t.stored()).toEqual(['d1', 'd2'])
-    expect(t.lastToast()?.message).toBe('Championship off')
+    expect(t.lastToast()?.message).toBe('Lowest place first off')
   })
 })
 

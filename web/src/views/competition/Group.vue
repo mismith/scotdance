@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { Award, ChevronDown, Clock, Hourglass, Trophy } from '@lucide/vue'
+import { Award, ChevronDown, CircleSlash, Clock, Hourglass, Trophy } from '@lucide/vue'
 import { rowsMove } from '@/lib/settle'
 import EmptyState from '@/components/EmptyState.vue'
 import MyDancerLine from '@/components/MyDancerLine.vue'
@@ -203,6 +203,10 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
         </p>
         <div v-if="followedHere.length" class="space-y-1 pt-1">
           <MyDancerLine v-for="d in followedHere" :key="d.id" :color="colorOf(d)" :name="d.fullName" :details="[`#${d.number}`]" />
+        </div>
+        <div v-if="group.notChampionship" class="glass mt-3 flex gap-3 rounded-[1.375rem] p-4" role="note">
+          <CircleSlash class="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
+          <p class="text-callout"><span class="font-semibold">Not run as a championship.</span> Too few dancers turned up for a championship, so it ran as a regular competition.</p>
         </div>
       </header>
 
