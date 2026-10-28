@@ -1,8 +1,11 @@
 // When the tab bar swaps between the app's tabs and a competition's (3 tabs
 // and More ↔ Back and 4 tabs), each side keeps its frame and just narrows or
 // widens in place from its outer edge, rubber-banding a little past where
-// it lands, while what's on it pops: the old icons shrink away, the new pop
-// in, the tabs one after another from the edge that holds still. The two
+// it lands, while what's on it swipes across, the way the gap between the
+// sides moves (so into a competition swipes left, back out right): each
+// frame's moving edge pushes the old icons ahead of it as they fade, and
+// drags the new in behind it till they reach their places, so no icon is
+// ever outside its frame. The two
 // sides sit close, so a growing one's overshoot takes up part of the gap
 // between them and squashes the round one beside it for the rest.
 //
@@ -11,14 +14,21 @@
 // plays it and the page drawing underneath can't make it stutter: while it
 // runs, each frame is drawn from three plain pieces (two round ends that
 // slide, a middle that stretches), solid, so nothing under the bar shows
-// through them unblurred. The real glass fades over to them at the start and
-// back at the end.
+// through them unblurred. They're solid from the first frame to the last:
+// the old glass fades off them at the start and the new fades over them at
+// the end, so the page never shows through mid-fade.
 
 const DURATION = 440
 // The frames' spring: how bouncy, and how soon it settles (so the bounce is
 // over before the real glass fades back in).
 const ZETA = 0.7
 const SPEED = 6
+// The icons: how long till the last has popped in (ms), how far inside a
+// frame's moving edge they keep, and how far they're pushed or dragged by it
+// as they fade (px).
+const ICONS = 500
+const INSET = 4
+const FADE = 28
 // How much of a growing side's overshoot the gap between the sides takes up
 // before the round one beside it starts to squash (px).
 const GIVE = 4
@@ -94,7 +104,27 @@ export function morphTabBar(copy: HTMLElement, bar: HTMLElement): Animation[] | 
   const out: Animation[] = []
   const cleanups: (() => void)[] = []
 
-  // The pieces' layer, faded in over the old glass and out under the new.
+  // How far along the sweep something at `x` is (0–1): from the side the gap
+  // moves away from, toward the side it moves to.
+  const leftward = now[0].right < was[0].right
+  const along = (el: Element) => {
+    const k = el.getBoundingClientRect()
+    const u = (k.left + k.width / 2 - nav.left) / nav.width
+    return Math.min(Math.max(leftward ? 1 - u : u, 0), 1)
+  }
+  const clamp = (x: number) => Math.min(Math.max(x, 0), 1)
+  // Keyframes for an icon over its whole run, from what it looks like `ms` in.
+  const icon = (el: Element, at: (ms: number) => { x: number; o: number; s: number }) =>
+    el.animate(
+      Array.from({ length: 55 }, (_, i) => {
+        const { x, o, s } = at((i / 54) * ICONS)
+        return { opacity: o, transform: `translateX(${x}px) scale(${s})`, offset: i / 54 }
+      }),
+      { duration: ICONS, easing: 'linear', fill: 'both' },
+    )
+
+  // The pieces' layer: solid throughout, gone only once the new glass is
+  // fully over it.
   const layer = div(bar, {
     left: '0',
     top: `${now[0].top - nav.top}px`,
@@ -104,15 +134,7 @@ export function morphTabBar(copy: HTMLElement, bar: HTMLElement): Animation[] | 
     filter: 'drop-shadow(0 8px 14px rgb(16 24 40 / 0.2))',
   })
   out.push(
-    layer.animate(
-      [
-        { opacity: 0 },
-        { opacity: 1, offset: at(120) },
-        { opacity: 1, offset: 0.75 },
-        { opacity: 0 },
-      ],
-      timing,
-    ),
+    layer.animate([{ opacity: 1 }, { opacity: 1, offset: 0.86 }, { opacity: 0 }], timing),
   )
   const edge = '1px solid var(--glass-line)'
   const fill = {
@@ -178,69 +200,87 @@ export function morphTabBar(copy: HTMLElement, bar: HTMLElement): Animation[] | 
       ),
     )
 
-    // The new side's own glass, cleared while the pieces stand in for it;
-    // a copy of it fades back in over them at the end.
-    const glass = div(
-      bar,
-      {
-        left: `${b.left - nav.left}px`,
-        top: `${b.top - nav.top}px`,
-        width: `${b.width}px`,
-        height: `${b.height}px`,
-        borderRadius: '9999px',
-        zIndex: '-1',
-      },
-      'glass',
-    )
-    out.push(
-      glass.animate(
-        [{ opacity: 0 }, { opacity: 0, offset: 0.75 }, { opacity: 1 }],
-        timing,
-      ),
-    )
-    for (const p of CLEAR)
-      side.style.setProperty(p, p === 'border-color' ? 'transparent' : 'none')
+    // Glass over the pieces where each side was and where it lands: the old
+    // fades off them at the start, the new over them at the end (the
+    // sides' own glass is cleared meanwhile, the old copy's for good).
+    const glass = (r: DOMRect, keyframes: Keyframe[]) => {
+      const el = div(
+        bar,
+        {
+          left: `${r.left - nav.left}px`,
+          top: `${r.top - nav.top}px`,
+          width: `${r.width}px`,
+          height: `${r.height}px`,
+          borderRadius: '9999px',
+          zIndex: '-1',
+        },
+        'glass',
+      )
+      out.push(el.animate(keyframes, timing))
+      return el
+    }
+    const fromGlass = glass(a, [
+      { opacity: 1 },
+      { opacity: 0, offset: at(70) },
+      { opacity: 0 },
+    ])
+    const toGlass = glass(b, [
+      { opacity: 0 },
+      { opacity: 0, offset: 0.72 },
+      { opacity: 1, offset: 0.86 },
+      { opacity: 1 },
+    ])
+    for (const el of [side, olds[i]])
+      for (const p of CLEAR)
+        el.style.setProperty(p, p === 'border-color' ? 'transparent' : 'none')
     cleanups.push(() => {
-      glass.remove()
+      fromGlass.remove()
+      toGlass.remove()
       for (const p of CLEAR) side.style.removeProperty(p)
     })
 
-    // The old side fades off the pieces as they take over.
-    out.push(
-      olds[i].animate(
-        [{ opacity: 1 }, { opacity: 0, offset: at(120) }, { opacity: 0 }],
-        timing,
-      ),
-    )
-    for (const kid of olds[i].children)
-      out.push(
-        kid.animate(
-          [
-            { opacity: 1, transform: 'none' },
-            { opacity: 0, transform: 'scale(0.5)' },
-          ],
-          { duration: 110, easing: 'cubic-bezier(0.4, 0, 1, 1)', fill: 'both' },
-        ),
-      )
+    // Where the frame's moving edge is `ms` in, and how far it pushes (or
+    // drags back) an icon at `k` to keep it inside.
+    const edgeAt = (ms: number) => {
+      const p = ms >= DURATION ? 1 : spring(ms / DURATION, ZETA, SPEED)
+      const w = width(p) * squash(p)
+      return anchor === 'left' ? outer + w : outer - w
+    }
+    const shove = (k: DOMRect, ms: number) =>
+      anchor === 'left'
+        ? Math.min(edgeAt(ms) - INSET - (k.right - nav.left), 0)
+        : Math.max(edgeAt(ms) + INSET - (k.left - nav.left), 0)
 
-    // The new pop in: on a side that grows, from the still edge outward as
-    // the frame reaches them; on one that shrinks, as it lands.
+    // The old fade as the edge pushes them, or along the sweep if it never
+    // reaches them.
+    for (const kid of olds[i].children) {
+      const k = kid.getBoundingClientRect()
+      const start = 100 * along(kid)
+      out.push(
+        icon(kid, (ms) => {
+          const x = shove(k, ms)
+          const o = Math.min(clamp(1 - (ms - start) / 80), clamp(1 - Math.abs(x) / FADE))
+          return { x, o, s: lerp(0.6, 1, o) }
+        }),
+      )
+    }
+    // The new: one behind the edge to start with is dragged in by it, coming
+    // clear as it nears its place; one already inside pops in along the
+    // sweep, overshooting a little as the frames do.
     for (const kid of side.children) {
       const k = kid.getBoundingClientRect()
-      const reach =
-        anchor === 'left'
-          ? k.left + k.width / 2 - b.left
-          : b.right - (k.left + k.width / 2)
-      const delay = growing ? 30 + 150 * (reach / b.width) : 110
+      const start = 90 + 140 * along(kid)
+      const dragged = shove(k, 0) !== 0
       out.push(
-        kid.animate(
-          springing((p) => ({ transform: `scale(${lerp(0.4, 1, p)})` }), 0.55, 20),
-          { duration: 360, delay, easing: 'linear', fill: 'backwards' },
-        ),
-        kid.animate([{ opacity: 0 }, { opacity: 1 }], {
-          duration: 90,
-          delay,
-          fill: 'backwards',
+        icon(kid, (ms) => {
+          if (dragged) {
+            const x = shove(k, ms)
+            // Not over the old one it replaces, which goes first.
+            const o = Math.min(clamp(1 - Math.abs(x) / FADE), clamp((ms - 30) / 70))
+            return { x, o, s: lerp(0.6, 1, o) }
+          }
+          const t = ms - start
+          return { x: 0, o: clamp(t / 90), s: lerp(0.5, 1, spring(clamp(t / 260), 0.55)) }
         }),
       )
     }
