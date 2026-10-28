@@ -120,12 +120,12 @@ export const companionsOf = (color: DancerColor): [Hex, Hex] => (isHex(color) ? 
  */
 export const PRESETS = [
   { id: 'fling', name: 'Fling', sett: 'P40 K16 S16 K2 T2' },
-  { id: 'sword', name: 'Sword', sett: 'S16 K2 S2 K2 S2 K16 P40 T2' },
-  { id: 'reel', name: 'Reel', sett: 'P16 K16' },
+  { id: 'sword', name: 'Sword', sett: 'S16 W2 S2 W2 S2 W16 P40 T2' },
+  { id: 'reel', name: 'Reel', sett: 'P16 W16' },
   { id: 'jig', name: 'Jig', sett: 'P16 S6 W2 S6' },
   { id: 'hornpipe', name: 'Hornpipe', sett: 'K40 S6 K6 P16 K2 T2' },
   { id: 'lilt', name: 'Lilt', sett: 'W40 P6 W6 S16 W2 T2' },
-  { id: 'flora', name: 'Flora', sett: 'P40 S6 K16 T2 K2 W2 K2 S16 P6 K2 P2 W2' },
+  { id: 'flora', name: 'Flora', sett: 'P40 S6 W16 T2 W2 K2 W2 S16 P6 W2 P2 K2' },
   { id: 'strathspey', name: 'Strathspey', sett: 'P40 S2 P6 S2 P16 S40' },
   { id: 'seann', name: 'Seann Triubhas', sett: 'K6 S16 P40 S16 T2' },
 ] as const

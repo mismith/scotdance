@@ -79,10 +79,10 @@ describe('setts', () => {
   })
 
   it('knows a preset however its colours are lettered, until it’s changed', () => {
-    expect(presetOf({ color: 'dancer-2', sett: 'A16 K16', colors: { A: '#1d6a48' } })?.name).toBe('Reel')
-    expect(presetOf(weavePreset('P16 K16', '#123456'))?.name).toBe('Reel')
-    expect(presetOf({ color: 'dancer-2', sett: 'P16 K16 T2', colors: { P: '#1d6a48', T: '#e8c000' } })).toBeNull()
-    expect(presetOf({ color: 'dancer-2', sett: 'P16 K16', colors: { P: '#b0102c' } })).toBeNull()
+    expect(presetOf({ color: 'dancer-2', sett: 'A16 W16', colors: { A: '#1d6a48' } })?.name).toBe('Reel')
+    expect(presetOf(weavePreset('P16 W16', '#123456'))?.name).toBe('Reel')
+    expect(presetOf({ color: 'dancer-2', sett: 'P16 W16 T2', colors: { P: '#1d6a48', T: '#e8c000' } })).toBeNull()
+    expect(presetOf({ color: 'dancer-2', sett: 'P16 W16', colors: { P: '#b0102c' } })).toBeNull()
   })
 })
 
