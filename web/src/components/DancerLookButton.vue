@@ -10,8 +10,8 @@ import { useMorph } from '@/lib/morph'
 
 // The thing that wears a followed dancer's look (their avatar on their page,
 // their number card on a competition's) is where it's chosen: a palette
-// badge says so, a tap opens the picker (under it on wide screens, a sheet on
-// phones, like the loom it leads to), and Customise opens the loom. For
+// badge says so, a tap opens the picker (centred under it on wide screens, a
+// sheet on phones, like the loom it leads to), and Customise opens the loom. For
 // anyone you don't follow it's just the avatar or card.
 const props = withDefaults(
   defineProps<{
@@ -56,6 +56,7 @@ function pickerClosed() {
       :aria-label="`${label ? `${label}. ` : ''}Choose ${first}’s look`"
       aria-haspopup="dialog"
       :aria-expanded="menu.open"
+      data-menu-anchor="center"
       :class="['press relative inline-flex', shape === 'round' ? 'rounded-full' : 'rounded-2xl']"
       @click="menu.show(badge)"
     >

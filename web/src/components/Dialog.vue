@@ -9,8 +9,9 @@ const props = withDefaults(
     /**
      * sheet: slides up on phones (a centred card on wider screens).
      * dropdown: a small panel anchored to whatever opened it (or to its
-     * `[data-menu-anchor]` ancestor, e.g. the tab bar). center: a card in the
-     * middle.
+     * `[data-menu-anchor]` ancestor, e.g. the tab bar, or centred under a
+     * `[data-menu-anchor="center"]` one, e.g. a dancer's avatar). center: a
+     * card in the middle.
      */
     variant?: 'center' | 'sheet' | 'dropdown'
     /** lg: wide on bigger screens, for pictures (the judges' sheet viewer). */
@@ -190,30 +191,37 @@ const morphing = computed(() => !!morph.value?.animated)
 // screen, with more room above, it opens upward instead; either way it's no
 // taller than the room it has, and scrolls past that. A trigger inside a
 // `[data-menu-anchor]` (the tab bar's pill) still lines up with itself, but
-// clears that whole bar: above it on phones, below it on desktop.
+// clears that whole bar: above it on phones, below it on desktop. Under a
+// `[data-menu-anchor="center"]` (a dancer's avatar, whose palette badge opens
+// the picker) it's centred instead.
 const anchor = computed<Record<string, string> | undefined>(() => {
   const trigger = morph.value?.trigger
   if (props.variant !== 'dropdown' || !shown.value || !trigger?.isConnected) return undefined
   const r = trigger.getBoundingClientRect()
-  const bar = (trigger.closest('[data-menu-anchor]') ?? trigger).getBoundingClientRect()
+  const anchorEl = trigger.closest<HTMLElement>('[data-menu-anchor]')
+  const bar = (anchorEl ?? trigger).getBoundingClientRect()
+  const centred = anchorEl?.dataset.menuAnchor === 'center'
   // The panel is w-72 (18rem, so larger with bigger text), at most the
   // window less a 12px margin each side.
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
   const width = Math.min(18 * rem, innerWidth - 24)
   const leftSide = r.left + r.width / 2 < innerWidth / 2
-  const want = leftSide ? r.left : r.right - width
+  const want = centred ? bar.left + (bar.width - width) / 2 : leftSide ? r.left : r.right - width
   const left = Math.min(Math.max(12, want), innerWidth - width - 12)
-  const below = innerHeight - bar.bottom - 18
-  const above = bar.top - 18
+  // Clear the trigger too, where it pokes out of its anchor (a badge).
+  const top = Math.min(bar.top, r.top)
+  const bottom = Math.max(bar.bottom, r.bottom)
+  const below = innerHeight - bottom - 18
+  const above = top - 18
   const up = below < 320 && above > below
   return {
     ...(up
-      ? { top: 'auto', bottom: `${Math.round(innerHeight - bar.top + 6)}px` }
-      : { top: `${Math.round(bar.bottom + 6)}px`, bottom: 'auto' }),
+      ? { top: 'auto', bottom: `${Math.round(innerHeight - top + 6)}px` }
+      : { top: `${Math.round(bottom + 6)}px`, bottom: 'auto' }),
     left: `${Math.round(left)}px`,
     right: 'auto',
     maxHeight: `${Math.round(up ? above : below)}px`,
-    transformOrigin: `${leftSide ? 'left' : 'right'} ${up ? 'bottom' : 'top'}`,
+    transformOrigin: `${centred ? 'center' : leftSide ? 'left' : 'right'} ${up ? 'bottom' : 'top'}`,
   }
 })
 
