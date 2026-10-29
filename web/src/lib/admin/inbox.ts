@@ -1,3 +1,5 @@
+import { push, serverTimestamp, set } from 'firebase/database'
+import { dataRef } from '@/firebase'
 import { formatRelative } from '@/lib/format'
 
 // What the organiser's other ScotDance tools (Splits first) sent them, at
@@ -44,4 +46,15 @@ export function sentAgo(sentAt: number, now = Date.now()): string {
   if (minutes < 60) return relativeTime.format(-minutes, 'minute')
   if (minutes < 24 * 60) return relativeTime.format(-Math.floor(minutes / 60), 'hour')
   return formatRelative(sentAt)
+}
+
+/** Drops a list into the organiser's own inbox (field by field: the rules turn away anything extra), and returns its id. */
+export async function sendToInbox(
+  uid: string,
+  item: Pick<InboxItem, 'kind' | 'source' | 'name' | 'text'> & { competitionId: string },
+): Promise<string> {
+  const itemRef = push(dataRef(`users:inbox/${uid}`))
+  const { kind, source, name, text, competitionId } = item
+  await set(itemRef, { kind, source, name, text, competitionId, sentAt: serverTimestamp() })
+  return itemRef.key!
 }

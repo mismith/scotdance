@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>Send to ScotDance.app</title>
+    <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
+
+    <!-- Organisers' other tools (Splits) open this page in a full-window
+         iframe to hand their work to ScotDance.app (src/connect, ADR 0015).
+         Same theme as the app (same storage key), set before the first paint;
+         see-through when embedded, so only its sheet shows over the tool. -->
+    <script>
+      try {
+        const t = localStorage.getItem('theme')
+        if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches))
+          document.documentElement.classList.add('dark')
+      } catch {}
+      // Glass can't blur the tool's page through an iframe: solid, as on lite devices.
+      if (window.parent !== window) {
+        document.documentElement.classList.add('embedded')
+        document.documentElement.dataset.lite = ''
+      }
+    </script>
+    <style>
+      :where(html) { background: #f5f3ee; color-scheme: light; }
+      :where(html.dark) { background: #0c0f13; color-scheme: dark; }
+      html.embedded, html.embedded body { background: transparent !important; }
+      html.embedded::before { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/connect/main.ts"></script>
+  </body>
+</html>

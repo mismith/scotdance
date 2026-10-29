@@ -25,6 +25,11 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      // The app, and the page organisers' other tools open to send it their work (src/connect).
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        connect: fileURLToPath(new URL('./connect.html', import.meta.url)),
+      },
       treeshake: {
         moduleSideEffects(id) {
           // firebase-js-sdk doesn't declare `sideEffects: false`, blocking elision of
