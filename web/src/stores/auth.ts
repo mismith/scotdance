@@ -182,6 +182,7 @@ export const useAuthStore = defineStore('auth', () => {
       [`users:alertsOff/${uid}`]: null,
       [`users:dancerColors/${uid}`]: null,
       [`users:tokens/${uid}`]: null,
+      [`users:inbox/${uid}`]: null,
       [`users:permissions/${uid}`]: null,
     })
     await deleteUser(u)

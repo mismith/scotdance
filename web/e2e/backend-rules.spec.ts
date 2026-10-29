@@ -58,6 +58,7 @@ test.afterAll(async () => {
     await dbRemove(`users:favorites/${who.uid}`)
     await dbRemove(`users:alertsOff/${who.uid}`)
     await dbRemove(`users:dancerColors/${who.uid}`)
+    await dbRemove(`users:inbox/${who.uid}`)
   }
 })
 
@@ -178,6 +179,33 @@ test('a favourite dancer’s alerts are yours alone to turn off and on', async (
   expect(await dbGet(off)).toBeNull()
 })
 
+// What an organiser's other tools (Splits) send them, for Import dancers to pick up.
+test('your tools’ inbox is yours alone, and holds lists of dancers', async () => {
+  const me = org.uid
+  const at = (id: string, who = me) => `users:inbox/${who}/${id}`
+  const list = (extra: Record<string, unknown> = {}) => ({ kind: 'dancers', source: 'Splits', name: 'splits.csv', text: '100,Ava,Reid,Calgary', sentAt: { '.sv': 'timestamp' }, ...extra })
+  await allowed('a tool sends a list (as Splits writes it)', as(org, 'PUT', at('-In1'), list({ competitionId: pub })))
+  await allowed('one without a competition', as(org, 'PUT', at('-In2'), list()))
+  await allowed('read your own inbox', as(org, 'GET', `users:inbox/${me}`))
+  expect(typeof (await dbGet(`${at('-In1')}/sentAt`))).toBe('number')
+  await refused('someone else reading it', as(stranger, 'GET', `users:inbox/${me}`))
+  await refused('someone else reading one list', as(stranger, 'GET', at('-In1')))
+  await refused('signed out, read it', as(null, 'GET', `users:inbox/${me}`))
+  await refused('someone else sending you a list', as(stranger, 'PUT', at('-In3'), list()))
+  await refused('someone else removing one', as(stranger, 'DELETE', at('-In1')))
+  await refused('a kind that isn’t dancers', as(org, 'PUT', at('-In3'), list({ kind: 'results' })))
+  await refused('a list with no text', as(org, 'PUT', at('-In3'), list({ text: null })))
+  await refused('text that isn’t text', as(org, 'PUT', at('-In3'), list({ text: 3 })))
+  await refused('text over a megabyte', as(org, 'PUT', at('-In3'), list({ text: 'x'.repeat(1_000_001) })))
+  await refused('a name that isn’t text', as(org, 'PUT', at('-In3'), list({ name: 3 })))
+  await refused('no source', as(org, 'PUT', at('-In3'), list({ source: null })))
+  await refused('a sent at that isn’t a time', as(org, 'PUT', at('-In3'), list({ sentAt: 'now' })))
+  await refused('a competition that isn’t an id', as(org, 'PUT', at('-In3'), list({ competitionId: true })))
+  await refused('anything else in a list', as(org, 'PUT', at('-In3'), list({ note: 'hi' })))
+  await allowed('dismiss one (or import it)', as(org, 'PATCH', '', { [at('-In1')]: null }))
+  await allowed('undo a dismiss (its old sent at)', as(org, 'PUT', at('-In1'), list({ sentAt: 1 })))
+})
+
 test('an organiser can change their competitions and nothing else', async () => {
   await allowed('a detail (writeInfo)', as(org, 'PATCH', '', { [`competitions/${pub}/name`]: 'Rules renamed' }))
   await allowed('a venue pick (several fields at once)', as(org, 'PATCH', '', { [`competitions/${pub}/venue`]: 'Rules Hall', [`competitions/${pub}/locality`]: 'Calgary', [`competitions/${pub}/lat`]: 51, [`competitions/${pub}/lng`]: -114 }))
@@ -264,11 +292,20 @@ test('deleting an account can wipe its data in one write', async () => {
   await as(who, 'PUT', `users:favorites/${who.uid}/dancers/-Agg1`, 'X')
   await as(who, 'PUT', `users:dancerColors/${who.uid}/-Agg1`, 'dancer-2')
   await as(who, 'PUT', `users:alertsOff/${who.uid}/dancers/-Agg1`, true)
+  await as(who, 'PUT', `users:inbox/${who.uid}/-In1`, { kind: 'dancers', source: 'Splits', name: 'a.csv', text: '1,A,B', sentAt: 1 })
   await dbSet(`users:permissions/${who.uid}/competitions/${pub}`, true)
   await allowed(
     'the deleteAccount multi-path wipe',
-    as(who, 'PATCH', '', { [`users/${who.uid}`]: null, [`users:favorites/${who.uid}`]: null, [`users:alertsOff/${who.uid}`]: null, [`users:dancerColors/${who.uid}`]: null, [`users:permissions/${who.uid}`]: null }),
+    as(who, 'PATCH', '', {
+      [`users/${who.uid}`]: null,
+      [`users:favorites/${who.uid}`]: null,
+      [`users:alertsOff/${who.uid}`]: null,
+      [`users:dancerColors/${who.uid}`]: null,
+      [`users:inbox/${who.uid}`]: null,
+      [`users:permissions/${who.uid}`]: null,
+    }),
   )
   expect(await dbGet(`users:dancerColors/${who.uid}`)).toBeNull()
+  expect(await dbGet(`users:inbox/${who.uid}`)).toBeNull()
   expect(await dbGet(`users:alertsOff/${who.uid}`)).toBeNull()
 })

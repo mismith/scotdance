@@ -238,6 +238,24 @@
           }
         }
       },
+      "users:inbox": {
+        "$userId": {
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
+          ".write": "auth !== null && auth.uid === $userId", // is SELF
+          // What their other ScotDance tools sent them (Splits: a list of
+          // dancers), for Import dancers to pick up with its usual preview.
+          "$itemId": {
+            ".validate": "newData.hasChildren(['kind', 'source', 'name', 'text', 'sentAt'])",
+            "kind": { ".validate": "newData.val() === 'dancers'" },
+            "source": { ".validate": "newData.isString()" },
+            "name": { ".validate": "newData.isString()" },
+            "text": { ".validate": "newData.isString() && newData.val().length <= 1000000" },
+            "competitionId": { ".validate": "newData.isString()" },
+            "sentAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        }
+      },
       "users:permissions": {
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF
