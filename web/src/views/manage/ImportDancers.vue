@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useMediaQuery } from '@vueuse/core'
-import { ChevronDown, ClipboardPaste, Download, FileSpreadsheet, RotateCcw } from '@lucide/vue'
+import { useRoute, useRouter } from 'vue-router'
+import { until, useIntervalFn, useMediaQuery, useNow } from '@vueuse/core'
+import { onValue } from 'firebase/database'
+import { ChevronDown, ClipboardPaste, Download, FileSpreadsheet, Inbox, RotateCcw } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import Checkbox from '@/components/ui/Checkbox.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
@@ -10,7 +11,10 @@ import NumberTile from '@/components/admin/NumberTile.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { toast } from '@/lib/admin/feedback'
 import { goUp } from '@/lib/back'
-import { canEdit, friendlyError } from '@/lib/admin/write'
+import { canEdit, friendlyError, write } from '@/lib/admin/write'
+import { inboxFor, sentAgo, type InboxItem } from '@/lib/admin/inbox'
+import { dataRef } from '@/firebase'
+import { useAuthStore } from '@/stores/auth'
 import {
   decodeText,
   gridFromSheet,
@@ -29,6 +33,8 @@ import {
 
 const m = useManagedCompetition()
 const router = useRouter()
+const route = useRoute()
+const auth = useAuthStore()
 
 // --- Step 1: where the list comes from
 const sheets = ref<Array<{ sheet: string; grid: Grid }>>([])
@@ -69,6 +75,50 @@ function usePasted() {
   sheetIndex.value = 0
   sourceName.value = 'Pasted cells'
 }
+
+// What the organiser's other tools sent them (Splits first), read like pasted cells.
+const inboxTree = ref<unknown>(null)
+const inboxLoaded = ref(false)
+watch(
+  () => auth.uid,
+  (uid, _, onCleanup) => {
+    inboxTree.value = null
+    inboxLoaded.value = false
+    if (!uid) return
+    const done = (val: unknown) => ((inboxTree.value = val), (inboxLoaded.value = true))
+    onCleanup(onValue(dataRef(`users:inbox/${uid}`), (snap) => done(snap.val()), () => done(null)))
+  },
+  { immediate: true },
+)
+const inbox = computed(() => inboxFor(inboxTree.value, m.competitionId.value))
+const now = useNow({ scheduler: (cb) => useIntervalFn(cb, 30_000) })
+/** The inbox item in the preview, removed once it's imported. */
+const fromItem = ref<string | null>(null)
+function openItem(item: InboxItem) {
+  sheets.value = [{ sheet: item.name, grid: gridFromText(item.text) }]
+  sheetIndex.value = 0
+  sourceName.value = item.name
+  fromItem.value = item.id
+}
+const itemPath = (id: string) => `users:inbox/${auth.uid}/${id}`
+async function dismissItem({ id, ...item }: InboxItem) {
+  try {
+    await write({ [itemPath(id)]: null })
+    toast(`Dismissed ${item.name}`, { action: { label: 'Undo', run: () => write({ [itemPath(id)]: item }) } })
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  }
+}
+// Arriving from a tool's link (?inbox=<itemId>): straight to its preview.
+const linked = route.query.inbox
+if (typeof linked === 'string' && linked) {
+  void until(inboxLoaded).toBe(true).then(() => {
+    const item = inboxFor(inboxTree.value).find((i) => i.id === linked)
+    if (item) openItem(item)
+    else toast('That list isn’t in your inbox. It may have been imported already, or sent to another account.')
+  })
+}
+
 // A file held over the drop zone lifts it.
 const over = ref(false)
 function onDrop(e: DragEvent) {
@@ -78,6 +128,7 @@ function onDrop(e: DragEvent) {
 }
 function startOver() {
   sheets.value = []
+  fromItem.value = null
   pasted.value = ''
   readError.value = null
   filter.value = 'all'
@@ -184,6 +235,8 @@ async function doImport() {
   try {
     const change = await m.writeData(updates, message)
     toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
+    // Imported: it's done with in the inbox.
+    if (fromItem.value) void write({ [itemPath(fromItem.value)]: null }).catch(() => {})
     // Back to the list: a step back if that's where they came from, so it isn't in history twice.
     goUp(router, { name: 'manage.dancers', params: { competitionId: m.competitionId.value } })
   } catch (e) {
@@ -203,6 +256,22 @@ async function doImport() {
 
     <!-- Step 1 -->
     <template v-if="!sheets.length">
+      <section
+        v-for="item in inbox"
+        :key="item.id"
+        class="surface flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl py-3 pr-3 pl-4"
+      >
+        <Inbox class="text-primary size-6 shrink-0" />
+        <div class="min-w-48 flex-1">
+          <h2 class="text-heading">From {{ item.source }}</h2>
+          <p class="text-muted-foreground text-sm break-words">{{ item.name }}, sent {{ sentAgo(item.sentAt, now.getTime()) }}</p>
+        </div>
+        <div class="ml-auto flex gap-2">
+          <Button variant="plain" :disabled="!canEdit" @click="dismissItem(item)">Dismiss</Button>
+          <Button variant="primary" @click="openItem(item)">Use it</Button>
+        </div>
+      </section>
+
       <section
         :class="[
           'space-y-4 rounded-2xl border-2 border-dashed p-6 text-center transition-[scale,background-color,border-color] duration-(--dur-base) ease-snappy motion-reduce:transition-colors',
