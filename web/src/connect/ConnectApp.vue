@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { get } from 'firebase/database'
+import { httpsCallable } from 'firebase/functions'
 import { Check, ChevronRight, LoaderCircle } from '@lucide/vue'
-import { dataRef } from '@/firebase'
+import { dataRef, functions } from '@/firebase'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import { sendToInbox } from '@/lib/admin/inbox'
@@ -14,11 +15,15 @@ import EmptyState from '@/components/EmptyState.vue'
 import LogoMark from '@/components/LogoMark.vue'
 import LoginForm, { type LoginStep } from '@/components/LoginForm.vue'
 import Button from '@/components/ui/Button.vue'
-import { CHANNEL, isAllowedOrigin, isFromTool, readItem, type ToTool, type ToolItem } from './protocol'
+import { CHANNEL, TOOLS, audienceFor, isAllowedOrigin, isFromTool, readItem, type Audience, type ToTool, type ToolItem } from './protocol'
 
-// Sign in (if this browser isn't already), tap the competition, and the list
-// is in its Import dancers, open in a new tab. One sheet over the tool, the
-// app's own: the tool draws none of it (protocol.ts, ADR 0015).
+// Two jobs, one sheet over the tool, the app's own: the tool draws none of it
+// (protocol.ts, ADR 0015).
+// - send: sign in (if this browser isn't already), tap the competition, and
+//   the list is in its Import dancers, open in a new tab.
+// - signIn: "Sign in with ScotDance.app" for a tool on another project
+//   (Challenge): sign in, or continue as whoever is, and the tool gets a
+//   short-lived pass saying who you are (functions/src/toolPass.ts).
 
 const auth = useAuthStore()
 const me = useMeStore()
@@ -29,6 +34,9 @@ const dev = import.meta.env.DEV || import.meta.env.MODE === 'emulator'
 // The tool that opened us, once it has handed over its list.
 const toolOrigin = ref<string | null>(null)
 const item = ref<ToolItem | null>(null)
+const mode = ref<'send' | 'signIn' | null>(null)
+const audience = ref<Audience | null>(null)
+const toolName = computed(() => (audience.value ? TOOLS[audience.value].name : null))
 const unreadable = ref(false)
 const open = ref(false)
 
@@ -41,8 +49,14 @@ function onMessage(e: MessageEvent) {
   if (e.source !== window.parent || toolOrigin.value || !isAllowedOrigin(e.origin, { dev })) return
   if (!isFromTool(e.data)) return
   toolOrigin.value = e.origin
-  item.value = readItem(e.data.item)
-  unreadable.value = !item.value
+  mode.value = e.data.type
+  if (e.data.type === 'signIn') {
+    audience.value = audienceFor(e.data.audience, e.origin, { dev })
+    unreadable.value = !audience.value
+  } else {
+    item.value = readItem(e.data.item)
+    unreadable.value = !item.value
+  }
   open.value = true
 }
 
@@ -120,13 +134,14 @@ const lists = computed(() =>
   ].filter((l) => l.rows.length),
 )
 
-type Step = 'loading' | 'signin' | 'pick' | 'none' | 'sent' | 'unreadable'
+type Step = 'loading' | 'signin' | 'continue' | 'pick' | 'none' | 'sent' | 'unreadable'
 const sent = ref<{ name: string; url: string; tabOpened: boolean } | null>(null)
 const step = computed<Step>(() => {
   if (unreadable.value) return 'unreadable'
   if (sent.value) return 'sent'
   if (!auth.authReady) return 'loading'
   if (!auth.isSignedIn) return 'signin'
+  if (audience.value) return 'continue'
   if (!competitions.value) return 'loading'
   return competitions.value.length ? 'pick' : 'none'
 })
@@ -136,13 +151,15 @@ const title = computed(() => {
     case 'signin':
       if (loginStep.value === 'register') return 'Create an account'
       if (loginStep.value === 'forgot') return 'Reset your password'
-      return 'Sign in to ScotDance.app'
+      return audience.value ? 'Sign in with ScotDance.app' : 'Sign in to ScotDance.app'
+    case 'continue':
+      return `Continue to ${toolName.value}?`
     case 'pick':
       return 'Which competition?'
     case 'sent':
       return `Sent to ${sent.value?.name}`
     case 'unreadable':
-      return 'This list didn’t come through'
+      return mode.value === 'signIn' ? 'This didn’t come through' : 'This list didn’t come through'
     default:
       return 'Send to ScotDance.app'
   }
@@ -171,6 +188,36 @@ async function send(c: Option) {
 }
 
 const addUrl = `${location.origin}/competitions/add`
+
+// For a tool: who you are, as a pass it can check (never this site's own
+// sign-in). Right after signing in here it carries on by itself; someone
+// already signed in taps Continue, so a tool never learns who you are unasked.
+const passing = ref(false)
+const passError = ref<string | null>(null)
+async function continueToTool() {
+  if (!audience.value || !auth.user || passing.value) return
+  passing.value = true
+  passError.value = null
+  try {
+    const toolPass = httpsCallable<{ audience: Audience }, { pass: string }>(functions, 'toolPass')
+    const { data } = await toolPass({ audience: audience.value })
+    tell({
+      type: 'signedIn',
+      pass: data.pass,
+      uid: auth.user.uid,
+      email: auth.user.email ?? null,
+      name: me.displayName ?? auth.user.displayName ?? null,
+    })
+    open.value = false
+  } catch {
+    passError.value = 'That didn’t work. Check your connection and try again.'
+  } finally {
+    passing.value = false
+  }
+}
+watch(step, (now, before) => {
+  if (before === 'signin' && now === 'continue') void continueToTool()
+})
 </script>
 
 <template>
@@ -190,7 +237,10 @@ const addUrl = `${location.origin}/competitions/add`
         </span>
         <div class="min-w-0">
           <h2 class="text-title">{{ title }}</h2>
-          <p v-if="summary && step !== 'sent' && step !== 'unreadable'" class="text-muted-foreground truncate text-sm">
+          <p v-if="toolName && step !== 'unreadable'" class="text-muted-foreground text-sm">
+            {{ toolName }} gets your name and email address, nothing else.
+          </p>
+          <p v-else-if="summary && step !== 'sent' && step !== 'unreadable'" class="text-muted-foreground truncate text-sm">
             {{ summary }}
           </p>
         </div>
@@ -203,6 +253,16 @@ const addUrl = `${location.origin}/competitions/add`
       </div>
 
       <LoginForm v-else-if="step === 'signin'" v-model:step="loginStep" />
+
+      <div v-else-if="step === 'continue'" class="space-y-3">
+        <Button variant="primary" size="lg" block :busy="passing" @click="continueToTool">
+          Continue as {{ me.displayName || me.email }}
+        </Button>
+        <p v-if="passError" class="text-destructive text-callout font-medium" role="alert">{{ passError }}</p>
+        <button type="button" class="text-primary press-row text-callout block h-11 w-full rounded-full font-semibold" @click="auth.signOut()">
+          Use another account
+        </button>
+      </div>
 
       <div v-else-if="step === 'pick'" class="space-y-5">
         <section v-for="list in lists" :key="list.label" class="space-y-1.5">
@@ -268,7 +328,11 @@ const addUrl = `${location.origin}/competitions/add`
 
       <div v-else-if="step === 'unreadable'" class="space-y-4">
         <p class="text-base">
-          Try sending it again. If it still doesn’t come through, download the file and import it in ScotDance.app.
+          {{
+            mode === 'signIn'
+              ? 'Try again from the tool you came from.'
+              : 'Try sending it again. If it still doesn’t come through, download the file and import it in ScotDance.app.'
+          }}
         </p>
         <Button variant="primary" size="lg" block @click="open = false">Close</Button>
       </div>

@@ -20,7 +20,8 @@ import { getOnFindStrayDancers } from './strayDancers';
 import { getOnChange } from './changed';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
-import { runtimeConfig, geocodingApiKey } from './utility/config';
+import { runtimeConfig, geocodingApiKey, toolPassSecret } from './utility/config';
+import { getOnToolPass } from './toolPass';
 import { database, https } from './utility/triggers';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onTaskDispatched } from 'firebase-functions/v2/tasks';
@@ -104,6 +105,9 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
 // and triggers that keep the others in step with the primary's staff and
 // details.
 export const linkCompetitions = https().onCall(Links.getOnLink(appConfig.db));
+
+// "Sign in with ScotDance.app" for its tools on other projects (Challenge; toolPass.ts, ADR 0015).
+export const toolPass = https({ secrets: [toolPassSecret] }).onCall(getOnToolPass(() => toolPassSecret.value()));
 export const competitionStaffSync = database().ref(`/${env}/competitions:data/{competitionId}/staff/{staffId}`)
   .onWrite(Links.getOnStaffWritten(appConfig.db));
 export const competitionDetailsSync = database().ref(`/${env}/competitions/{competitionId}`)

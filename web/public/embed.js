@@ -2,14 +2,19 @@
  * ScotDance.app for organisers' other tools (ADR 0015).
  *
  *   <script src="https://scotdance.app/embed.js"></script>
- *   const result = await ScotDance.send({ source: 'Splits', name: 'entries.csv', text: csv })
+ *   const sent = await ScotDance.send({ source: 'Splits', name: 'entries.csv', text: csv })
  *   // → { sent: true, competitionId, competitionName, url } or { sent: false }
  *
+ *   const me = await ScotDance.signIn({ audience: 'challenge' })
+ *   // → { signedIn: true, pass, uid, email, name } or { signedIn: false }
+ *
  * Opens ScotDance.app's own sheet over the page (connect.html, in a
- * full-window iframe): sign in if this browser isn't already, pick the
- * competition, and the list waits in its Import dancers. Only ScotDance.app's
- * own sites may embed it. The messages are in src/connect/protocol.ts; keep
- * the two in step.
+ * full-window iframe). send: sign in if this browser isn't already, pick the
+ * competition, and the list waits in its Import dancers. signIn: sign in, or
+ * continue as whoever is, and get a short-lived pass that the tool's own
+ * function checks (functions/src/toolPass.ts). Only ScotDance.app's own sites
+ * may embed it. The messages are in src/connect/protocol.ts; keep the two in
+ * step.
  */
 ;(() => {
   if (window.ScotDance) return
@@ -69,13 +74,21 @@
   let active = null
 
   function send(item) {
+    return open({ type: 'send', item: { kind: 'dancers', ...item } }, { sent: false })
+  }
+
+  function signIn(options) {
+    return open({ type: 'signIn', audience: options && options.audience }, { signedIn: false })
+  }
+
+  function open(request, unfinished) {
     if (active) return active.promise
     let resolve
     const promise = new Promise((r) => (resolve = r))
     const opener = document.activeElement
     const root = document.documentElement
     const overflow = root.style.overflow
-    let result = { sent: false }
+    let result = unfinished
     let timer
 
     const host = document.createElement('scotdance-connect')
@@ -117,7 +130,7 @@
       const data = e.data
       if (!data || data.channel !== CHANNEL) return
       if (data.type === 'hello') {
-        iframe.contentWindow.postMessage({ channel: CHANNEL, type: 'send', item: { kind: 'dancers', ...item } }, ORIGIN)
+        iframe.contentWindow.postMessage({ channel: CHANNEL, ...request }, ORIGIN)
       } else if (data.type === 'ready') {
         clearTimeout(timer)
         // The same colour scheme as the page inside, or the browser paints it opaque.
@@ -127,6 +140,8 @@
         iframe.focus()
       } else if (data.type === 'sent') {
         result = { sent: true, competitionId: data.competitionId, competitionName: data.competitionName, url: data.url }
+      } else if (data.type === 'signedIn') {
+        result = { signedIn: true, pass: data.pass, uid: data.uid, email: data.email, name: data.name }
       } else if (data.type === 'closed') {
         finish()
       }
@@ -159,5 +174,5 @@
     return promise
   }
 
-  window.ScotDance = { send, origin: ORIGIN }
+  window.ScotDance = { send, signIn, origin: ORIGIN }
 })()

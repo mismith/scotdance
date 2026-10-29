@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CHANNEL, isAllowedOrigin, isFromTool, readItem } from '../protocol'
+import { CHANNEL, audienceFor, isAllowedOrigin, isFromTool, readItem } from '../protocol'
 
 describe('isAllowedOrigin', () => {
   it('takes ScotDance.app and its subdomains, over https only', () => {
@@ -46,7 +46,28 @@ describe('readItem', () => {
 describe('isFromTool', () => {
   it('only reads messages on our channel', () => {
     expect(isFromTool({ channel: CHANNEL, type: 'send', item: {} })).toBe(true)
+    expect(isFromTool({ channel: CHANNEL, type: 'signIn', audience: 'challenge' })).toBe(true)
+    expect(isFromTool({ channel: CHANNEL, type: 'delete' })).toBe(false)
     expect(isFromTool({ channel: 'other', type: 'send' })).toBe(false)
     expect(isFromTool('send')).toBe(false)
+  })
+})
+
+describe('audienceFor', () => {
+  it('gives a tool’s pass to its own site only', () => {
+    expect(audienceFor('challenge', 'https://challenge.scotdance.app')).toBe('challenge')
+    expect(audienceFor('challenge', 'https://splits.scotdance.app')).toBeNull()
+    expect(audienceFor('challenge', 'https://scotdance.app')).toBeNull()
+    expect(audienceFor('challenge', 'https://challenge.scotdance.app.evil.com')).toBeNull()
+  })
+
+  it('knows only its tools', () => {
+    expect(audienceFor('toString', 'https://challenge.scotdance.app')).toBeNull()
+    expect(audienceFor(undefined, 'https://challenge.scotdance.app')).toBeNull()
+  })
+
+  it('takes a local site while developing', () => {
+    expect(audienceFor('challenge', 'http://localhost:5173')).toBeNull()
+    expect(audienceFor('challenge', 'http://localhost:5173', { dev: true })).toBe('challenge')
   })
 })

@@ -4,10 +4,12 @@
 // iframe, which signs in, asks which competition, and drops the item into
 // the organiser's inbox for Import dancers. They talk with postMessage:
 //
-//   connect → tool   hello                      (loaded: send me the item)
-//   tool → connect   send { item }
+//   connect → tool   hello                      (loaded: what's wanted?)
+//   tool → connect   send { item }              (ScotDance.send: a list for Import dancers)
+//                 or signIn { audience }        (ScotDance.signIn: who you are, for that tool)
 //   connect → tool   ready { scheme }           (showing; match its colour scheme)
 //   connect → tool   sent { competitionId, competitionName, url }
+//                 or signedIn { pass, uid, email, name }  (pass: functions/src/toolPass.ts)
 //   connect → tool   closed                     (gone: take the iframe away)
 //
 // public/embed.js speaks the same messages; keep the two in step.
@@ -52,14 +54,38 @@ export function readItem(value: unknown): ToolItem | null {
   return { kind: 'dancers', source: (v.source as string).trim(), name: (v.name as string).trim(), text: v.text }
 }
 
-export type FromTool = { channel: typeof CHANNEL; type: 'send'; item: unknown }
+/**
+ * Tools that may ask who you are, each from its own site only: a pass for
+ * Challenge goes to challenge.scotdance.app and nowhere else (or a local
+ * site while developing).
+ */
+export const TOOLS = {
+  challenge: { name: 'Challenge', hostname: 'challenge.scotdance.app' },
+} as const
+export type Audience = keyof typeof TOOLS
+
+export function audienceFor(value: unknown, origin: string, { dev = false } = {}): Audience | null {
+  if (typeof value !== 'string' || !Object.hasOwn(TOOLS, value)) return null
+  const audience = value as Audience
+  if (!isAllowedOrigin(origin, { dev })) return null
+  const { hostname, protocol } = new URL(origin)
+  if (protocol === 'https:' && hostname === TOOLS[audience].hostname) return audience
+  return dev && protocol === 'http:' ? audience : null
+}
+
+export type FromTool =
+  | { channel: typeof CHANNEL; type: 'send'; item: unknown }
+  | { channel: typeof CHANNEL; type: 'signIn'; audience: unknown }
 
 export type ToTool =
   | { type: 'hello' }
   | { type: 'ready'; scheme: 'light' | 'dark' }
   | { type: 'sent'; competitionId: string; competitionName: string; url: string }
+  | { type: 'signedIn'; pass: string; uid: string; email: string | null; name: string | null }
   | { type: 'closed' }
 
 export function isFromTool(data: unknown): data is FromTool {
-  return !!data && typeof data === 'object' && (data as FromTool).channel === CHANNEL && (data as FromTool).type === 'send'
+  if (!data || typeof data !== 'object' || (data as FromTool).channel !== CHANNEL) return false
+  const type = (data as FromTool).type
+  return type === 'send' || type === 'signIn'
 }

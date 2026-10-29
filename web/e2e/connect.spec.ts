@@ -17,7 +17,10 @@ const TOOL = 'http://localhost:5299'
 test.use({ launchOptions: { args: ['--disable-features=LocalNetworkAccessChecks'] } })
 const CSV = 'Beginner 7 Years & Under\n101,Ava,Ross,"Calgary, AB"\n102,Ben,Hall,"Banff, AB"\n'
 
-async function openTool(page: Page, baseURL: string) {
+const SEND = `ScotDance.send({ source: 'Splits', name: 'entries.csv', text: ${JSON.stringify(CSV)} })`
+const SIGN_IN = `ScotDance.signIn({ audience: 'challenge' })`
+
+async function openTool(page: Page, baseURL: string, call = SEND) {
   await page.route(`${TOOL}/**`, (route) =>
     route.fulfill({
       contentType: 'text/html',
@@ -25,7 +28,7 @@ async function openTool(page: Page, baseURL: string) {
         <script src="${baseURL}/embed.js"></script>
         <script>
           document.getElementById('send').onclick = async () => {
-            window.result = await ScotDance.send({ source: 'Splits', name: 'entries.csv', text: ${JSON.stringify(CSV)} })
+            window.result = await ${call}
           }
         </script>`,
     }),
@@ -127,3 +130,58 @@ test('opened on its own, it points to the tools', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Go to ScotDance.app' })).toHaveAttribute('href', '/')
 })
 
+
+// Sign in with ScotDance.app, for a tool on another project (Challenge). The
+// pass itself is unit-tested (functionsToolPass.test.ts); here the functions
+// emulator isn't needed, so its answer is stood in for.
+async function standInToolPass(page: Page) {
+  const asked: unknown[] = []
+  await page.route('**/toolPass', async (route) => {
+    const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' }
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors })
+    asked.push(route.request().postDataJSON())
+    await route.fulfill({ headers: cors, contentType: 'application/json', body: JSON.stringify({ result: { pass: 'test-pass' } }) })
+  })
+  return asked
+}
+
+test('Sign in with ScotDance.app hands Challenge a pass, and only your name and email', async ({ page, baseURL }) => {
+  const email = `${uid('dancer')}@example.test`
+  const me = await ensureUser(email)
+  const asked = await standInToolPass(page)
+  await openTool(page, baseURL!, SIGN_IN)
+
+  const s = sheet(page)
+  await expect(s.getByRole('heading', { name: 'Sign in with ScotDance.app' })).toBeVisible()
+  await expect(s.getByText('Challenge gets your name and email address, nothing else.')).toBeVisible()
+  await s.getByRole('textbox', { name: 'Email address' }).fill(email)
+  await s.getByLabel('Password', { exact: true }).fill('password')
+  await s.getByLabel('Password', { exact: true }).press('Enter')
+
+  // Signing in here is the yes: it carries on by itself
+  await expect(page.locator('scotdance-connect')).toHaveCount(0)
+  expect(asked).toEqual([{ data: { audience: 'challenge' } }])
+  await expect.poll(() => result(page)).toEqual({ signedIn: true, pass: 'test-pass', uid: me, email, name: null })
+})
+
+test('already signed in, a tool learns who you are only when you tap Continue', async ({ page, baseURL }) => {
+  const email = `${uid('dancer')}@example.test`
+  await ensureUser(email)
+  await signIn(page, email)
+  const asked = await standInToolPass(page)
+  await openTool(page, baseURL!, SIGN_IN)
+
+  const s = sheet(page)
+  await expect(s.getByRole('heading', { name: 'Continue to Challenge?' })).toBeVisible()
+  expect(asked).toEqual([])
+  await s.getByRole('button', { name: `Continue as ${email}` }).click()
+  await expect(page.locator('scotdance-connect')).toHaveCount(0)
+  await expect.poll(() => result(page)).toMatchObject({ signedIn: true, pass: 'test-pass', email })
+})
+
+test('closing Sign in with ScotDance.app tells the tool nothing', async ({ page, baseURL }) => {
+  await openTool(page, baseURL!, SIGN_IN)
+  await expect(sheet(page).getByRole('heading', { name: 'Sign in with ScotDance.app' })).toBeVisible()
+  await sheet(page).getByRole('button', { name: 'Close' }).click()
+  await expect.poll(() => result(page)).toEqual({ signedIn: false })
+})

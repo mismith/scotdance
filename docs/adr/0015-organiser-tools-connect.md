@@ -63,6 +63,21 @@ backdrop at once, a spinner only after 400 ms, and crossfades to the app's
 own backdrop when the sheet is ready; after 20 s it offers Try again. Glass
 is solid there (`data-lite`): an iframe can't blur the page under it.
 
+### 6. Sign in with ScotDance.app, for tools on other projects
+
+Challenge keeps its own Firebase project, and has to save and edit entries
+as you there, so a frame that does the work (decision 3) isn't enough: it
+needs to know who you are. `ScotDance.signIn({ audience: 'challenge' })`
+opens the same sheet: sign in, or "Continue as …" for whoever already is
+(a tap, so no tool learns who you are unasked). The page then calls
+`toolPass`, which returns a pass: a JWT (HS256, `TOOL_PASS_SECRET`) with
+`aud` the tool, `sub` your uid, your email and name, good for 120 s. The
+page hands it only to that tool's own site (`TOOLS` in protocol.ts:
+Challenge's pass goes to challenge.scotdance.app alone). The tool's
+function checks it with its copy of the secret and signs you in there with
+a custom token of its own. Not this project's ID token: a tool with a bug
+can't act as you on ScotDance.app.
+
 ## Consequences
 
 - A brand or sign-in change ships once, with the app; every tool has it.
@@ -71,3 +86,6 @@ is solid there (`data-lite`): an iframe can't blur the page under it.
 - The embed lives where organisers sign in: `scotdance.app` once v4 is
   there (until then `next.scotdance.app`, and tools point at that).
 - Safari's own password AutoFill inside the iframe is untested on devices.
+- `TOOL_PASS_SECRET` lives in both projects (`firebase functions:secrets:set`);
+  changing it means setting both. Adding a tool: an `AUDIENCES` entry
+  (functions) and a `TOOLS` entry (protocol.ts) with its site.
