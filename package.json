@@ -53,7 +53,7 @@
     "compare-versions": "^3.6.0",
     "deep-property": "^1.1.0",
     "fast-html-parser": "^1.0.1",
-    "firebase": "^10.11.0",
+    "firebase": "^13.1.0",
     "fuse.js": "^7.0.0",
     "handsontable": "^11.1.0",
     "lodash.debounce": "^4.0.8",
