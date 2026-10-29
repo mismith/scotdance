@@ -1,9 +1,10 @@
 import type { Component } from 'vue'
-import { CalendarClock, Gavel, Info, Layers, Music, ShieldCheck, SquareStack, Trophy, Users, UsersRound } from '@lucide/vue'
+import { CalendarClock, Gavel, Info, Layers, Music, Printer, ShieldCheck, SquareStack, Trophy, Users, UsersRound } from '@lucide/vue'
 
 // The Manage sections, in the order a competition comes together: each step
 // builds on the ones before it (age groups need categories, the schedule
-// needs age groups and platforms, results need dancers). Admins sits apart.
+// needs age groups and platforms, results need dancers). Print (paper made
+// from all of that) and Admins sit apart.
 
 export interface ManageSection {
   id: string
@@ -27,6 +28,10 @@ export const MANAGE_STEPS: ManageSection[] = [
   { id: 'results', route: 'manage.results', title: 'Results', icon: Trophy, blurb: 'Callbacks, placings and championship points' },
 ]
 
+export const PRINT_SECTION: ManageSection = { id: 'print', route: 'manage.print', title: 'Print', icon: Printer, blurb: 'Program and platform sheets' }
 export const ADMINS_SECTION: ManageSection = { id: 'admins', route: 'manage.admins', title: 'Admins', icon: ShieldCheck, blurb: 'Invite people to help manage' }
 
-export const ALL_SECTIONS = [...MANAGE_STEPS, ADMINS_SECTION]
+/** Apart from the steps, in this order. */
+export const OTHER_SECTIONS = [PRINT_SECTION, ADMINS_SECTION]
+
+export const ALL_SECTIONS = [...MANAGE_STEPS, ...OTHER_SECTIONS]

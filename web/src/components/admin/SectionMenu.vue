@@ -1,13 +1,15 @@
 <script setup lang="ts">
+import type { Component } from 'vue'
 import { Ellipsis } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import { useMorph } from '@/lib/morph'
 
 // A section's ⋯ menu, top right of its header, for what's rarely needed
 // there. It grows out of its button and hangs under it; items get `row` for
-// their look and call `close` when chosen.
+// their look and call `close` when chosen. A menu of settings can show a
+// cog instead of ⋯.
 
-defineProps<{ label: string }>()
+const { icon = Ellipsis } = defineProps<{ label: string; icon?: Component }>()
 
 // The one menu anatomy: inset rounded rows, medium labels, muted icons.
 const ROW =
@@ -26,7 +28,7 @@ const close = () => void menu.hide()
     class="press text-muted-foreground hover:text-foreground flex size-11 shrink-0 items-center justify-center rounded-full"
     @click="menu.show($event)"
   >
-    <Ellipsis class="size-5" />
+    <component :is="icon" class="size-5" />
   </button>
   <Dialog :open="menu.open" :morph="menu" variant="dropdown" :aria-label="label" @close="close">
     <nav :aria-label="label">

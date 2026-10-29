@@ -2,7 +2,7 @@
 import { RouterLink, useRoute } from 'vue-router'
 import { Check, ChevronRight, LayoutDashboard, TriangleAlert } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
-import { ADMINS_SECTION, MANAGE_STEPS } from '@/lib/admin/sections'
+import { MANAGE_STEPS, OTHER_SECTIONS } from '@/lib/admin/sections'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { useSetup } from '@/composables/admin/useSetup'
 
@@ -110,30 +110,32 @@ const to = (routeName: string) => ({ name: routeName, params: { competitionId: m
       </li>
     </ol>
 
-    <div :class="!props.compact && '-mx-4'">
-      <RouterLink
-        :to="to(ADMINS_SECTION.route)"
-        :aria-current="isActive(ADMINS_SECTION.route) ? 'page' : undefined"
-        :class="[
-          'press-row focus-inset flex items-center gap-3',
-          props.compact ? 'min-h-11 rounded-xl px-2' : 'min-h-16 px-4 py-2.5',
-          isActive(ADMINS_SECTION.route) && 'bg-blue-paper',
-        ]"
-      >
-        <span :class="['text-muted-foreground flex shrink-0 items-center justify-center', props.compact ? 'size-7' : 'size-8']">
-          <component :is="ADMINS_SECTION.icon" class="size-5" />
-        </span>
-        <template v-if="props.compact">
-          <span :class="['text-callout min-w-0 flex-1 truncate', isActive(ADMINS_SECTION.route) ? 'text-primary font-semibold' : 'font-medium']">{{ ADMINS_SECTION.title }}</span>
-        </template>
-        <template v-else>
-          <span class="min-w-0 flex-1">
-            <span class="block text-base font-semibold">{{ ADMINS_SECTION.title }}</span>
-            <span class="text-muted-foreground block truncate text-sm">{{ ADMINS_SECTION.blurb }}</span>
+    <ul :class="!props.compact && '-mx-4'">
+      <li v-for="o in OTHER_SECTIONS" :key="o.id">
+        <RouterLink
+          :to="to(o.route)"
+          :aria-current="isActive(o.route) ? 'page' : undefined"
+          :class="[
+            'press-row focus-inset flex items-center gap-3',
+            props.compact ? 'min-h-11 rounded-xl px-2' : 'min-h-16 px-4 py-2.5',
+            isActive(o.route) && 'bg-blue-paper',
+          ]"
+        >
+          <span :class="['text-muted-foreground flex shrink-0 items-center justify-center', props.compact ? 'size-7' : 'size-8']">
+            <component :is="o.icon" class="size-5" />
           </span>
-          <ChevronRight class="text-muted-foreground size-5 shrink-0" />
-        </template>
-      </RouterLink>
-    </div>
+          <template v-if="props.compact">
+            <span :class="['text-callout min-w-0 flex-1 truncate', isActive(o.route) ? 'text-primary font-semibold' : 'font-medium']">{{ o.title }}</span>
+          </template>
+          <template v-else>
+            <span class="min-w-0 flex-1">
+              <span class="block text-base font-semibold">{{ o.title }}</span>
+              <span class="text-muted-foreground block truncate text-sm">{{ o.blurb }}</span>
+            </span>
+            <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+          </template>
+        </RouterLink>
+      </li>
+    </ul>
   </nav>
 </template>

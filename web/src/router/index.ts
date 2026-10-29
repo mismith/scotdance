@@ -255,6 +255,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'platforms/:itemId?', name: 'manage.platforms', component: () => import('@/views/manage/Platforms.vue') },
       { path: 'staff/:itemId?', name: 'manage.staff', component: () => import('@/views/manage/Staff.vue') },
       { path: 'admins', name: 'manage.admins', component: () => import('@/views/manage/Admins.vue') },
+      { path: 'print/:doc?', name: 'manage.print', component: () => import('@/views/manage/Print.vue') },
     ],
   },
   // Links from the old app's emails and bookmarks.

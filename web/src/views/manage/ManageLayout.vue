@@ -71,8 +71,8 @@ const up = computed<ManageBack>(() => {
     return { to: { name: parent, params: { competitionId: cid, itemId } }, label: parentSection?.title ?? 'Back' }
   }
   // On a phone an item fills the screen: Back returns to its list. (A
-  // schedule's day is a tab, not a level.)
-  const deep = Object.entries(route.params).some(([k, v]) => k !== 'competitionId' && k !== 'dayId' && v)
+  // schedule's day and Print's document are tabs, not levels.)
+  const deep = Object.entries(route.params).some(([k, v]) => k !== 'competitionId' && k !== 'dayId' && k !== 'doc' && v)
   if (!split.value && deep && section.value) {
     return { to: { name: section.value.route, params: { competitionId: cid } }, label: section.value.title }
   }

@@ -981,3 +981,14 @@ html:not([data-native])::before {
   background-size: 100% 2px;
   background-repeat: no-repeat;
 }
+
+/* Manage › Print: only its pages go to paper. They're put straight in <body>
+   while printing (Print.vue), so everything else can be left out. */
+@media print {
+  body:has(> [data-print-root]) {
+    background: white;
+  }
+  body:has(> [data-print-root]) > :not([data-print-root]) {
+    display: none !important;
+  }
+}

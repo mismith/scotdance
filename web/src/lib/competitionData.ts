@@ -109,9 +109,9 @@ export interface ScheduleBundle {
   hidden: boolean
 }
 
-// --- Raw section values → what the screens use.
+// --- Raw section values → what the screens use (and what Manage › Print lays out).
 
-function toDancersBundle(dancersVal: unknown, groupsVal: unknown, categoriesVal: unknown): DancersBundle {
+export function toDancersBundle(dancersVal: unknown, groupsVal: unknown, categoriesVal: unknown): DancersBundle {
   const rawDancers = snapshotToArray<Dancer>(dancersVal as Record<string, Dancer> | null)
   const rawGroups = snapshotToArray<Group>(groupsVal as Record<string, Group> | null)
   const rawCategories = snapshotToArray<Category>(categoriesVal as Record<string, Category> | null)
@@ -151,7 +151,7 @@ function toResults(resultsVal: unknown, pointsVal: unknown) {
   }
 }
 
-function toResultsBundle(dancesVal: unknown, resultsVal: unknown, pointsVal: unknown): ResultsBundle {
+export function toResultsBundle(dancesVal: unknown, resultsVal: unknown, pointsVal: unknown): ResultsBundle {
   const dances = snapshotToArray<Dance>(dancesVal as Record<string, Dance> | null)
     .map<EnrichedDance>((d) => ({ ...d, fullName: danceFullName(d) }))
     .sort(byDragOrder)
@@ -159,7 +159,7 @@ function toResultsBundle(dancesVal: unknown, resultsVal: unknown, pointsVal: unk
 }
 
 // RTDB stores `false` for admin-disabled sections and `null` for never-created.
-function toScheduleBundle(scheduleVal: unknown, platformsVal: unknown, drawsVal: unknown): ScheduleBundle {
+export function toScheduleBundle(scheduleVal: unknown, platformsVal: unknown, drawsVal: unknown): ScheduleBundle {
   return {
     schedule: scheduleVal && typeof scheduleVal === 'object' ? (scheduleVal as Schedule) : null,
     platforms: snapshotToArray<Platform>(platformsVal as Record<string, Platform> | null).sort(byDragOrder),
@@ -168,7 +168,7 @@ function toScheduleBundle(scheduleVal: unknown, platformsVal: unknown, drawsVal:
   }
 }
 
-const toStaff = (val: unknown) => snapshotToArray<StaffMember>(val as Record<string, StaffMember> | null).sort(byDragOrder)
+export const toStaff = (val: unknown) => snapshotToArray<StaffMember>(val as Record<string, StaffMember> | null).sort(byDragOrder)
 
 const toSheets = (val: unknown) => (val && typeof val === 'object' ? val : {}) as SheetsTree
 
