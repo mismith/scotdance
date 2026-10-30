@@ -14,10 +14,11 @@ end
 
 # Signing for the store, without Xcode's account (a command-line export can't
 # read Xcode's sign-in) or Apple's cloud signing (the API key, App Manager,
-# can't use it): the distribution certificate's .p12 sits in the login
+# can't use it): the distribution certificate's private key sits in the login
 # keychain (base64), and goes into a throwaway keychain with a random password
-# for the build, so nothing asks to be let in. The first run makes the
-# certificate and keeps it. Yields the App Store profile's name.
+# for the build, with the certificates from the portal, so nothing asks to be
+# let in. The first run makes the certificate and keeps its key. Yields the
+# App Store profile's name.
 DISTRIBUTION = "scotdance-ios-distribution"
 SIGNING_KEYCHAIN = "scotdance-signing"
 
@@ -39,6 +40,13 @@ def with_store_signing
     p12 = File.join(dir, "distribution.p12")
     File.binwrite(p12, Base64.decode64(stored))
     import_certificate(certificate_path: p12, certificate_password: "", keychain_path: path, keychain_password: password, log_output: false)
+    # The key alone isn't an identity: add the certificates (public) beside it
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.from(hash: lane_context[SharedValues::APP_STORE_CONNECT_API_KEY])
+    Spaceship::ConnectAPI::Certificate.all(filter: { certificateType: "DISTRIBUTION" }).select(&:valid?).each do |certificate|
+      cer = File.join(dir, "#{certificate.id}.cer")
+      File.binwrite(cer, Base64.decode64(certificate.certificate_content))
+      import_certificate(certificate_path: cer, keychain_path: path, keychain_password: password, log_output: false)
+    end
   end
   get_provisioning_profile(output_path: dir, skip_install: false)
   yield lane_context[SharedValues::SIGH_NAME]
