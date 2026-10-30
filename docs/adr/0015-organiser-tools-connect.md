@@ -78,6 +78,15 @@ function checks it with its copy of the secret and signs you in there with
 a custom token of its own. Not this project's ID token: a tool with a bug
 can't act as you on ScotDance.app.
 
+### 7. The button looks the same on every tool
+
+The one thing a tool draws, its "Send to ScotDance.app" or "Sign in with
+ScotDance.app" button, is always ScotDance.app blue, whatever the tool's own
+theme: `#1a6fd0` fill, white bold label, normal letter-spacing, and Scott
+(the mark in `web/public/img/favicon.svg`) at 16px before the label. Splits'
+Send button is the reference (`ExportSettingsDialog.vue` and
+`ScotDanceMark.vue` in scotdance-splits); Challenge follows it.
+
 ## Consequences
 
 - A brand or sign-in change ships once, with the app; every tool has it.
