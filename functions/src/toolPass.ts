@@ -45,19 +45,28 @@ interface Context {
   auth: { uid: string; token: { email?: string; name?: string; firebase?: { sign_in_provider?: string } } } | null;
 }
 
-/** toolPass({ audience }): a pass for that tool, for whoever is signed in. */
-export function getOnToolPass(secret: () => string) {
+interface Db {
+  child(path: string): { get(): Promise<{ val(): unknown }> };
+}
+
+/**
+ * toolPass({ audience }): a pass for that tool, for whoever is signed in.
+ * Their name as the app shows it ("Continue as …"): their record's, then their sign-in's.
+ */
+export function getOnToolPass(secret: () => string, db: Db) {
   return async (data: { audience?: unknown } | undefined, ctx: Context) => {
     const auth = ctx.auth;
     if (!auth?.uid || auth.token.firebase?.sign_in_provider === 'anonymous') {
       throw new HttpsError('unauthenticated', 'Sign in to ScotDance.app first.');
     }
     if (!isAudience(data?.audience)) throw new HttpsError('invalid-argument', 'Unknown tool.');
+    const recorded = (await db.child(`users/${auth.uid}/displayName`).get()).val();
+    const name = (typeof recorded === 'string' && recorded.trim()) || auth.token.name || null;
     return {
       pass: signPass(secret(), {
         uid: auth.uid,
         email: auth.token.email ?? null,
-        name: auth.token.name ?? null,
+        name,
         audience: data.audience,
       }),
     };

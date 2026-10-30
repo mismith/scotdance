@@ -107,7 +107,7 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
 export const linkCompetitions = https().onCall(Links.getOnLink(appConfig.db));
 
 // "Sign in with ScotDance.app" for its tools on other projects (Challenge; toolPass.ts, ADR 0015).
-export const toolPass = https({ secrets: [toolPassSecret] }).onCall(getOnToolPass(() => toolPassSecret.value()));
+export const toolPass = https({ secrets: [toolPassSecret] }).onCall(getOnToolPass(() => toolPassSecret.value(), appConfig.db));
 export const competitionStaffSync = database().ref(`/${env}/competitions:data/{competitionId}/staff/{staffId}`)
   .onWrite(Links.getOnStaffWritten(appConfig.db));
 export const competitionDetailsSync = database().ref(`/${env}/competitions/{competitionId}`)

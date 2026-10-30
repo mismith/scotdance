@@ -25,12 +25,27 @@ describe('signPass', () => {
 })
 
 describe('toolPass', () => {
-  const call = getOnToolPass(() => SECRET)
-  const auth = (provider = 'password') => ({ uid: 'u1', token: { email: 'a@b.c', firebase: { sign_in_provider: provider } } })
+  // A stand-in database holding u1's record name, if any
+  const db = (displayName?: unknown) => ({
+    child: (path: string) => ({ get: async () => ({ val: () => (path === 'users/u1/displayName' ? (displayName ?? null) : null) }) }),
+  })
+  const call = getOnToolPass(() => SECRET, db())
+  const auth = (provider = 'password', name?: string) => ({
+    uid: 'u1',
+    token: { email: 'a@b.c', name, firebase: { sign_in_provider: provider } },
+  })
+  const nameIn = async (on: ReturnType<typeof getOnToolPass>, who = auth()) =>
+    decode((await on({ audience: 'challenge' }, { auth: who })).pass.split('.')[1]!).name
 
   it('passes for a known tool, to someone signed in', async () => {
     const { pass } = await call({ audience: 'challenge' }, { auth: auth() })
     expect(decode(pass.split('.')[1]!)).toMatchObject({ sub: 'u1', aud: 'challenge', email: 'a@b.c', name: null })
+  })
+
+  it('names you as the app does: your record, then your sign-in, else no name', async () => {
+    expect(await nameIn(getOnToolPass(() => SECRET, db('Ann Ross')), auth('password', 'Old'))).toBe('Ann Ross')
+    expect(await nameIn(getOnToolPass(() => SECRET, db('  ')), auth('password', 'Ann'))).toBe('Ann')
+    expect(await nameIn(getOnToolPass(() => SECRET, db()))).toBeNull()
   })
 
   it('turns away the signed out, the anonymous and unknown tools', async () => {
