@@ -1,5 +1,5 @@
 What's new
-- Faster, smoother moves between screens
+- Print programs and platform sheets from Manage
 - Fixes and improvements
 
 Share your ideas from the More menu.
