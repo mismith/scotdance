@@ -21,4 +21,12 @@ export default defineConfigWithVueTs(
       'vue/no-undef-components': ['error', { ignorePatterns: ['^Router(Link|View)$'] }],
     },
   },
+  {
+    // CommonJS preloads (NODE_OPTIONS=--require) can only require().
+    name: 'app/commonjs',
+    files: ['**/*.cjs'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
 );
