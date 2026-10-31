@@ -15,19 +15,19 @@
     "deploy": "firebase deploy --only hosting:production,functions,database,storage && git push origin HEAD:main --tags"
   },
   "dependencies": {
-    "@capacitor-firebase/messaging": "^8.5.2",
-    "@capacitor/android": "^8.5.2",
+    "@capacitor-firebase/messaging": "^8.6.0",
+    "@capacitor/android": "^8.6.0",
     "@capacitor/app": "^8.1.2",
-    "@capacitor/core": "^8.5.2",
+    "@capacitor/core": "^8.6.0",
     "@capacitor/device": "^8.0.3",
     "@capacitor/haptics": "^8.0.2",
-    "@capacitor/ios": "^8.5.2",
+    "@capacitor/ios": "^8.6.0",
     "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/text-zoom": "^8.0.1"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.5.2",
-    "firebase-tools": "^15.32.1"
+    "@capacitor/cli": "^8.6.0",
+    "firebase-tools": "^15.34.2"
   },
   "engines": {
     "node": ">=24"
