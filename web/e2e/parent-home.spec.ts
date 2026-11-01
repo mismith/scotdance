@@ -401,7 +401,7 @@ test('closing the sign-in sheet drops the follow it was opened for', async ({ pa
     await page.getByRole('complementary').getByRole('button', { name: 'Sign in', exact: true }).click()
   } else {
     await page.getByRole('navigation').getByRole('button', { name: 'Sign in and settings' }).click()
-    await page.locator('dialog[open]').getByRole('button', { name: 'Sign in', exact: true }).click()
+    await page.getByRole('dialog', { name: 'Your account' }).getByRole('button', { name: 'Sign in', exact: true }).click()
   }
   await signInFromSheet(page, email)
   await expect(page.getByRole('button', { name: `Favourite ${person.name}`, pressed: false })).toBeVisible()
