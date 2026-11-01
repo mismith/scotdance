@@ -53,6 +53,12 @@ export default defineConfig({
       },
     },
   },
+  // Imported only when they're needed (a Word download, a spreadsheet or a
+  // PDF of judges' sheets), so the dev server's first look misses them. Found
+  // later, re-optimising can reload the page mid-use (or mid-test).
+  optimizeDeps: {
+    include: ['docx', 'read-excel-file/browser', 'pdfjs-dist/legacy/build/pdf.mjs'],
+  },
   server: {
     host: true,
   },
