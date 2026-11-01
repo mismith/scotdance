@@ -9,9 +9,11 @@ import { removeCompetition, seedCompetition } from './support/seed'
 
 /** Finish signing in on a sheet that's already open. */
 async function signInOnSheet(page: Page, email: string) {
-  await page.getByRole('textbox', { name: 'Email address' }).fill(email)
-  await page.locator('input[name=password]').fill('password')
-  await page.locator('input[name=password]').press('Enter')
+  // The open sheet's: one just closed is still on the page, inert, while it slides away.
+  const sheet = page.locator('dialog[open]')
+  await sheet.getByRole('textbox', { name: 'Email address' }).fill(email)
+  await sheet.locator('input[name=password]').fill('password')
+  await sheet.locator('input[name=password]').press('Enter')
   await page.locator('dialog[open]').waitFor({ state: 'detached' })
 }
 
