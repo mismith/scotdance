@@ -87,14 +87,23 @@ function slide(el: HTMLDialogElement, up: boolean) {
 // Escape still closes it (below).
 const popover = computed(() => props.variant === 'dropdown')
 const isOpen = (el: HTMLDialogElement) => (popover.value ? el.matches(':popover-open') : el.open)
+// A modal hands focus back to whatever had it when it opened; a manual
+// popover doesn't, so a menu does it itself (when focus was still in it).
+let focusedBefore: Element | null = null
 function show(el: HTMLDialogElement) {
-  if (popover.value) el.showPopover()
+  if (popover.value) {
+    focusedBefore = document.activeElement
+    el.showPopover()
+  }
   else el.showModal()
 }
 function hide(el: HTMLDialogElement) {
   if (!isOpen(el)) return
-  if (popover.value) el.hidePopover()
-  else el.close()
+  if (!popover.value) return el.close()
+  const hadFocus = el.contains(document.activeElement)
+  el.hidePopover()
+  if (hadFocus && focusedBefore instanceof HTMLElement && focusedBefore.isConnected) focusedBefore.focus({ preventScroll: true })
+  focusedBefore = null
 }
 
 function sync(open: boolean) {
