@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { ArrowDownToLine, CalendarDays, ClipboardList, Gavel, House, Info, Landmark, LifeBuoy, Music, School, Search, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
+import { ArrowDownToLine, CalendarDays, ClipboardList, ExternalLink, Gavel, House, Info, Landmark, LifeBuoy, Music, School, Search, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
 import LogoMark from '@/components/LogoMark.vue'
 import AccountButton from '@/components/nav/AccountButton.vue'
 import SidebarLink from '@/components/nav/SidebarLink.vue'
@@ -107,9 +107,21 @@ const browse = [
         </li>
       </ul>
 
-      <!-- About, Settings and help sink to the bottom, above you. -->
+      <!-- About, the Toolkit, Settings and help sink to the bottom, above you. -->
       <ul class="mt-auto space-y-0.5">
         <li v-if="!inManage"><SidebarLink :to="{ name: 'about' }" :icon="Info" label="About ScotDance.app" :state="state(name === 'about')" /></li>
+        <li>
+          <a
+            href="https://toolkit.scotdance.app"
+            target="_blank"
+            rel="noopener"
+            class="press-row focus-inset text-callout flex min-h-10 items-center gap-3 rounded-xl px-3 py-1.5 font-medium"
+          >
+            <img src="/img/toolkit.png" alt="" class="size-5 shrink-0 rounded-md" />
+            <span class="line-clamp-2 min-w-0 flex-1 leading-snug">ScotDance Toolkit</span>
+            <ExternalLink class="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+          </a>
+        </li>
         <li><SidebarLink :to="{ name: 'settings' }" :icon="Settings" label="Settings" :state="state(name === 'settings')" /></li>
         <li v-if="crisp.available">
           <button
