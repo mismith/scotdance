@@ -193,7 +193,9 @@ test('a submitted competition, once approved, is the organiser’s to manage', a
     await page.goto('/manage')
     await page.getByRole('main').getByRole('link', { name: new RegExp(name) }).click()
     await expect(page.getByRole('heading', { name })).toBeVisible()
-    await expect(page.getByText('Unlisted: hidden from public listings.')).toBeVisible()
+    // On its page, not the list it slides in over (where its row says so too).
+    const home = page.getByRole('main').filter({ has: page.getByRole('heading', { name }) })
+    await expect(home.getByText('Unlisted: hidden from public listings.')).toBeVisible()
   } finally {
     await admin.context().close()
     if (competitionId) await removeCompetition(competitionId)
