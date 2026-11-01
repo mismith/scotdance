@@ -208,6 +208,6 @@ test('a plain account sees neither in More', async ({ page }) => {
   await signIn(page, email)
   await page.goto('/')
   const { menu, role } = await moreItems(page)
-  await expect(menu.getByRole(role, { name: hasSidebar(page) ? 'About ScotDance.app' : 'About', exact: true })).toBeVisible()
+  await expect(menu.getByRole(role, { name: 'About', exact: true })).toBeVisible()
   await expect(menu.getByRole(role, { name: /^(Manage|System admin)$/ })).toHaveCount(0)
 })

@@ -109,7 +109,7 @@ const browse = [
 
       <!-- About, the Toolkit, Settings and help sink to the bottom, above you. -->
       <ul class="mt-auto space-y-0.5">
-        <li v-if="!inManage"><SidebarLink :to="{ name: 'about' }" :icon="Info" label="About ScotDance.app" :state="state(name === 'about')" /></li>
+        <li v-if="!inManage"><SidebarLink :to="{ name: 'about' }" :icon="Info" label="About" :state="state(name === 'about')" /></li>
         <li>
           <a
             href="https://toolkit.scotdance.app"

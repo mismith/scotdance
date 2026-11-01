@@ -118,7 +118,7 @@ test('on wide screens the More menu’s items are links in the sidebar, with no 
     ['Pipers', /\/pipers$/],
     ['Venues', /\/venues$/],
     ['Add a competition', /\/competitions\/add$/],
-    ['About ScotDance.app', /\/about$/],
+    ['About', /\/about$/],
   ] as const) {
     await appNav(page).getByRole('link', { name, exact: true }).click()
     await expect(page).toHaveURL(path)
@@ -167,7 +167,7 @@ test.describe('with large text (150%)', () => {
     expect(box.x).toBeGreaterThanOrEqual(0)
     expect(box.x + box.width).toBeLessThanOrEqual(viewport.width)
     expect(box.y + box.height).toBeLessThanOrEqual(viewport.height)
-    for (const name of ['Dancers', 'Judges', 'Add a competition', 'About ScotDance.app']) {
+    for (const name of ['Dancers', 'Judges', 'Add a competition', 'About']) {
       const item = appNav(page).getByRole('link', { name, exact: true })
       await item.scrollIntoViewIfNeeded()
       await expect(item).toBeInViewport()
