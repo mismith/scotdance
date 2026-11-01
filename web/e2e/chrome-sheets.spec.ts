@@ -149,7 +149,7 @@ test.describe('with large text (150%)', () => {
     expect(box.y).toBeGreaterThanOrEqual(0)
     expect(box.x).toBeGreaterThanOrEqual(0)
     expect(box.x + box.width).toBeLessThanOrEqual(viewport.width)
-    for (const name of ['Dancers', 'Judges', 'Add a competition', 'About ScotDance.app']) {
+    for (const name of ['Dancers', 'Judges', 'Add a competition', 'About']) {
       const item = menu.getByRole('button', { name, exact: true })
       await item.scrollIntoViewIfNeeded()
       await expect(item).toBeInViewport()

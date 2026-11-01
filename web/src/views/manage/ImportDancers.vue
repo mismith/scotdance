@@ -294,6 +294,16 @@ async function doImport() {
         <p v-if="readError" class="text-destructive text-sm font-medium">{{ readError }}</p>
       </section>
 
+      <!-- Where entries from other systems get ready (the Toolkit's Splits), unless a list from it is already waiting above. -->
+      <section v-if="inboxLoaded && !inbox.length" class="bg-muted flex items-center gap-3 rounded-2xl px-4 py-3.5">
+        <img src="/img/toolkit.png" alt="" class="size-8 shrink-0 rounded-lg" />
+        <p class="text-muted-foreground min-w-0 flex-1 text-sm">
+          Entries from Eventry or HD Comps? The
+          <a href="https://toolkit.scotdance.app/#splits" target="_blank" rel="noopener" class="text-primary font-semibold">ScotDance Toolkit</a>
+          has free tools to get them ready to send here.
+        </p>
+      </section>
+
       <section class="space-y-3">
         <h2 class="text-heading">Or paste from a spreadsheet</h2>
         <p class="text-muted-foreground text-sm">Select the cells in Excel or Google Sheets, copy, and paste them here.</p>

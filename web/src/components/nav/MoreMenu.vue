@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
-import { ArrowDownToLine, ClipboardList, Gavel, Info, Landmark, LifeBuoy, Music, School, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
+import { ArrowDownToLine, ClipboardList, ExternalLink, Gavel, Info, Landmark, LifeBuoy, Music, School, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
 import AdminMark from '@/components/AdminMark.vue'
 import Dialog from '@/components/Dialog.vue'
 import { useCrisp } from '@/composables/useCrisp'
@@ -11,8 +11,9 @@ import { useRoles } from '@/composables/useRoles'
 import type { Morph } from '@/lib/morph'
 
 // The More tab's menu: grows out of the tab, one tap to the people lists,
-// submitting a competition, About, and (for organisers) Manage. Your account
-// and Settings are in the account menu at the top right of every page.
+// submitting a competition, About and the ScotDance Toolkit (in a new tab),
+// and (for organisers) Manage. Your account and Settings are in the account
+// menu at the top right of every page.
 const props = defineProps<{ menu: Morph }>()
 
 const router = useRouter()
@@ -67,8 +68,13 @@ const row =
           <ArrowDownToLine class="text-primary! size-5" /> Update available
         </button>
         <button type="button" :class="row" :data-current="here({ name: 'about' })" @click="go({ name: 'about' })">
-          <Info class="size-5" /> About ScotDance.app
+          <Info class="size-5" /> About
         </button>
+        <a href="https://toolkit.scotdance.app" target="_blank" rel="noopener" :class="row" @click="menu.dismiss()">
+          <img src="/img/toolkit.png" alt="" class="size-5 shrink-0 rounded-md" />
+          <span class="flex-1">ScotDance Toolkit</span>
+          <ExternalLink class="size-4!" aria-hidden="true" />
+        </a>
         <button type="button" :class="row" :data-current="here({ name: 'settings' })" @click="go({ name: 'settings' })">
           <Settings class="size-5" /> Settings
         </button>
