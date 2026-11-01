@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onActivated, onDeactivated, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 import { ChevronRight, Landmark, LogIn, Plus, ShieldCheck } from '@lucide/vue'
@@ -43,10 +43,16 @@ onMounted(async () => {
   authReady.value = true
 })
 
-// Read afresh each visit: a competition just created, approved or deleted
-// must show (or not) here straight away.
+// Read afresh each visit, coming back to the page kept as it was too: a
+// competition just created, approved or deleted must show (or not) here
+// straight away.
 const { competitions, loading, reload } = useCompetitions(ref(true))
 void reload()
+let away = false
+onDeactivated(() => (away = true))
+onActivated(() => {
+  if (away) void reload()
+})
 
 const mine = computed<CompetitionListItem[]>(() =>
   competitions.value.filter((c) => me.hasCompetitionPerm(c.id)).sort((a, b) => String(b.date ?? '').localeCompare(String(a.date ?? ''))),
