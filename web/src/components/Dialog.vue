@@ -54,6 +54,10 @@ watch(
 const shown = computed(() => (ownsMorph.value ? own.open : props.open))
 // (While closing, the dialog stays on screen for its morph but takes no more
 // taps: inert as soon as `open` turns false. A quick double tap can't act twice.)
+// A menu asked to close is on its way out, though its morph may still be
+// shrinking it: the next tap (say, on the confirm its item just opened) goes
+// where it lands, instead of closing the menu all over again.
+const leaving = computed(() => !props.open || !!morph.value?.closing)
 
 // A sheet on a phone slides up from the bottom edge, and back down to close,
 // when no morph carries it. Driven by script: WebKit skips the CSS entry and
@@ -137,7 +141,7 @@ function onOutsideClick(e: MouseEvent) {
   e.stopPropagation()
 }
 watch(
-  () => popover.value && shown.value,
+  () => popover.value && shown.value && !leaving.value,
   (listening, _, onCleanup) => {
     if (!listening) return
     document.addEventListener('pointerdown', onOutsidePointerDown, true)

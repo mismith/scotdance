@@ -83,8 +83,12 @@ export function useMorph() {
   const animated = ref(false)
   const trigger = shallowRef<HTMLElement | null>(null)
   const target = shallowRef<HTMLElement | null>(null)
+  // Asked to close (and not to open again since): while it shrinks away it's
+  // still `open`, but it's on its way out and takes no more taps.
+  const closing = ref(false)
 
   function set(next: boolean) {
+    closing.value = !next
     queue = queue.then(() => run(next))
     return queue
   }
@@ -152,11 +156,12 @@ export function useMorph() {
   const hide = () => set(false)
   /** Close at once, e.g. when a menu item navigates away (like iOS menus). */
   const dismiss = () => {
+    closing.value = false
     open.value = false
   }
   const toggle = (from?: Event | HTMLElement | null) => (open.value ? hide() : show(from))
   /** For the component that renders the opened thing (Dialog does this). */
   const setTarget = (el: HTMLElement | null) => (target.value = el)
 
-  return reactive({ open, animated, trigger, show, hide, dismiss, toggle, setTarget })
+  return reactive({ open, closing, animated, trigger, show, hide, dismiss, toggle, setTarget })
 }
