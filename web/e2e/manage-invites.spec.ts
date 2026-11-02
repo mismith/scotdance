@@ -12,9 +12,11 @@ test.skip(({ isMobile }) => isMobile, 'server flows: one layout is enough')
 const OFFSET = Number(process.env.E2E_EMULATOR_PORT_OFFSET ?? 0)
 
 async function signInOnSheet(page: Page, email: string) {
-  await page.getByRole('textbox', { name: 'Email address' }).fill(email)
-  await page.locator('input[name=password]').fill('password')
-  await page.locator('input[name=password]').press('Enter')
+  // The open sheet's: one just closed is still on the page, inert, while it slides away.
+  const sheet = page.locator('dialog[open]')
+  await sheet.getByRole('textbox', { name: 'Email address' }).fill(email)
+  await sheet.locator('input[name=password]').fill('password')
+  await sheet.locator('input[name=password]').press('Enter')
   await page.locator('dialog[open]').waitFor({ state: 'detached' })
 }
 
@@ -193,7 +195,9 @@ test('a submitted competition, once approved, is the organiser’s to manage', a
     await page.goto('/manage')
     await page.getByRole('main').getByRole('link', { name: new RegExp(name) }).click()
     await expect(page.getByRole('heading', { name })).toBeVisible()
-    await expect(page.getByText('Unlisted: hidden from public listings.')).toBeVisible()
+    // On its page, not the list it slides in over (where its row says so too).
+    const home = page.getByRole('main').filter({ has: page.getByRole('heading', { name }) })
+    await expect(home.getByText('Unlisted: hidden from public listings.')).toBeVisible()
   } finally {
     await admin.context().close()
     if (competitionId) await removeCompetition(competitionId)

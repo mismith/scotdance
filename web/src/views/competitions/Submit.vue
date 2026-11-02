@@ -257,6 +257,9 @@ function go(to: Slide | null) {
 // question does. Not on All good?: its message box is optional.
 function settled() {
   if (!at.value) return introEl.value?.title?.focus()
+  // Tapped on before it finished sliding in (Send, which points at the tick
+  // box): leave focus, and the scroll, where that put them.
+  if (slideEl.value?.contains(document.activeElement)) return
   const box =
     at.value !== 'review' &&
     document.querySelector<HTMLElement>('[data-slide] :is(input[type=text], input:not([type]), [role=combobox])')

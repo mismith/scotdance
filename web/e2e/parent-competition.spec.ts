@@ -75,7 +75,8 @@ test('Directions offers the map apps and copies the address; the map opens full 
   await menu.getByRole('button', { name: 'Copy address' }).click()
   await expect(menu.getByRole('button', { name: 'Address copied' })).toBeVisible()
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('Spruce Meadows, 18011 Spruce Meadows Way SW, Calgary, AB')
-  await expect(page.locator('dialog[open]')).toHaveCount(0)
+  // It closes itself a moment later (a tap while it's open would only close it).
+  await expect(menu).toBeHidden()
 
   await page.getByRole('button', { name: 'Show the map' }).click()
   const sheet = page.locator('dialog[open]')

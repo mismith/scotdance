@@ -260,15 +260,24 @@ test('invites: only an organiser makes them; anyone with the link accepts an ope
   await refused('a stranger creates an invite', as(stranger, 'PUT', forged, { created: new Date().toISOString(), payload: { email: 'stranger@example.test' } }))
   await refused('a stranger accepts an invite that doesn’t exist', as(stranger, 'PATCH', '', { [`${forged}/accepted`]: new Date().toISOString() }))
 
-  await dbSet(invite('cancel'), { created: new Date().toISOString(), payload: { email: 'x@example.test' } })
-  await allowed('the organiser cancels', as(org, 'PATCH', '', { [`${invite('cancel')}/cancelled`]: new Date().toISOString() }))
-  await refused('accepting a cancelled invite', as(parent, 'PATCH', '', { [`${invite('cancel')}/accepted`]: new Date().toISOString() }))
-  await allowed('the organiser undoes the cancel', as(org, 'PATCH', '', { [`${invite('cancel')}/cancelled`]: null }))
-  await allowed('accepting it again once it’s open', as(parent, 'PATCH', '', { [`${invite('cancel')}/accepted`]: new Date().toISOString() }))
+  // Someone else's invite, cancelled. (Not the parent's: the invite they
+  // accepted makes them an organiser here as soon as the functions get to it,
+  // and an organiser may write anything in the competition.)
+  const other = await account(`${uid('rules-invitee')}@example.test`)
+  try {
+    await dbSet(invite('cancel'), { created: new Date().toISOString(), payload: { email: 'x@example.test' } })
+    await allowed('the organiser cancels', as(org, 'PATCH', '', { [`${invite('cancel')}/cancelled`]: new Date().toISOString() }))
+    await refused('accepting a cancelled invite', as(other, 'PATCH', '', { [`${invite('cancel')}/accepted`]: new Date().toISOString() }))
+    await allowed('the organiser undoes the cancel', as(org, 'PATCH', '', { [`${invite('cancel')}/cancelled`]: null }))
+    await allowed('accepting it again once it’s open', as(other, 'PATCH', '', { [`${invite('cancel')}/accepted`]: new Date().toISOString() }))
 
-  // The functions turn the accepted invite into access (and only for the invitee).
-  await expect.poll(() => dbGet(`users:permissions/${parent.uid}/competitions/${pub}`), { timeout: 30_000 }).toBe(true)
-  expect(await dbGet(`users:permissions/${stranger.uid}/competitions/${priv}`)).toBeNull()
+    // The functions turn the accepted invites into access (and only for the invitee).
+    for (const who of [parent, other])
+      await expect.poll(() => dbGet(`users:permissions/${who.uid}/competitions/${pub}`), { timeout: 30_000 }).toBe(true)
+    expect(await dbGet(`users:permissions/${stranger.uid}/competitions/${priv}`)).toBeNull()
+  } finally {
+    await dbRemove(`users:permissions/${other.uid}`)
+  }
 })
 
 test('known competitions: read when signed in, written only by functions, and how their reads went for system admins only', async () => {

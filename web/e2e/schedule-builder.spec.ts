@@ -166,9 +166,9 @@ const event = (page: Page, name: string) =>
     })
 const confirmDialog = (page: Page) => page.locator('dialog[open]')
 
-/** The menu has shrunk back into its button: the page takes taps again. */
+/** The menu has shrunk back into its button (menus are popovers, sheets modal) and no page is sliding. */
 const settled = (page: Page) =>
-  page.waitForFunction(() => !document.querySelector('dialog[open]') && !document.documentElement.matches(':active-view-transition'))
+  page.waitForFunction(() => !document.querySelector('dialog[open], dialog:popover-open') && !document.documentElement.dataset.slide)
 
 async function addSession(page: Page, name: string, custom = false) {
   await page.getByRole('button', { name: 'Add session' }).click()

@@ -95,10 +95,13 @@ export async function fakeNative(page: Page, platform: 'ios' | 'android' = 'ios'
 
 export const sheet = (page: Page) => page.locator('dialog[open]')
 
-/** Fill in the open sign-in sheet and submit. */
+/**
+ * Fill in the open sign-in sheet and submit. (In the open one: a sheet just
+ * closed is still on the page, inert, while it slides away.)
+ */
 export async function submitPassword(page: Page, email: string, password = 'password') {
-  await page.getByRole('textbox', { name: 'Email address' }).fill(email)
-  const field = page.locator('dialog[open] input[name=password]')
+  await sheet(page).getByRole('textbox', { name: 'Email address' }).fill(email)
+  const field = sheet(page).locator('input[name=password]')
   await field.fill(password)
   await field.press('Enter')
 }

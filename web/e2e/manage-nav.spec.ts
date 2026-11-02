@@ -145,7 +145,13 @@ test('Manage is up to date after creating and deleting one', async ({ page }, in
   const id = await ensureUser(email)
   await grantSystemAdmin(id)
   const name = `E2E New ${uid('c').slice(-6)}`
-  const listed = () => page.getByRole('main').getByRole('link', { name: new RegExp(name) })
+  // Manage's own list: while pages slide, the one being left (its Details,
+  // which links to the public page by name) is on screen too.
+  const listed = () =>
+    page
+      .getByRole('main')
+      .filter({ has: page.getByRole('heading', { level: 1, name: 'Manage', exact: true }) })
+      .getByRole('link', { name: new RegExp(name) })
   let created: string | null = null
   try {
     await signIn(page, email)

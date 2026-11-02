@@ -54,6 +54,10 @@ watch(
 const shown = computed(() => (ownsMorph.value ? own.open : props.open))
 // (While closing, the dialog stays on screen for its morph but takes no more
 // taps: inert as soon as `open` turns false. A quick double tap can't act twice.)
+// A menu asked to close is on its way out, though its morph may still be
+// shrinking it: the next tap (say, on the confirm its item just opened) goes
+// where it lands, instead of closing the menu all over again.
+const leaving = computed(() => !props.open || !!morph.value?.closing)
 
 // A sheet on a phone slides up from the bottom edge, and back down to close,
 // when no morph carries it. Driven by script: WebKit skips the CSS entry and
@@ -83,14 +87,23 @@ function slide(el: HTMLDialogElement, up: boolean) {
 // Escape still closes it (below).
 const popover = computed(() => props.variant === 'dropdown')
 const isOpen = (el: HTMLDialogElement) => (popover.value ? el.matches(':popover-open') : el.open)
+// A modal hands focus back to whatever had it when it opened; a manual
+// popover doesn't, so a menu does it itself (when focus was still in it).
+let focusedBefore: Element | null = null
 function show(el: HTMLDialogElement) {
-  if (popover.value) el.showPopover()
+  if (popover.value) {
+    focusedBefore = document.activeElement
+    el.showPopover()
+  }
   else el.showModal()
 }
 function hide(el: HTMLDialogElement) {
   if (!isOpen(el)) return
-  if (popover.value) el.hidePopover()
-  else el.close()
+  if (!popover.value) return el.close()
+  const hadFocus = el.contains(document.activeElement)
+  el.hidePopover()
+  if (hadFocus && focusedBefore instanceof HTMLElement && focusedBefore.isConnected) focusedBefore.focus({ preventScroll: true })
+  focusedBefore = null
 }
 
 function sync(open: boolean) {
@@ -137,7 +150,7 @@ function onOutsideClick(e: MouseEvent) {
   e.stopPropagation()
 }
 watch(
-  () => popover.value && shown.value,
+  () => popover.value && shown.value && !leaving.value,
   (listening, _, onCleanup) => {
     if (!listening) return
     document.addEventListener('pointerdown', onOutsidePointerDown, true)

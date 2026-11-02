@@ -172,8 +172,9 @@ test.describe('families and organisers', () => {
     await page.goto(`/competitions/${ids[1]}/schedule`)
     const title = page.getByRole('button', { name: /Switch competition/ })
     await title.click()
-    const menu = page.locator('dialog[open]')
-    await expect(menu.getByRole('heading', { name: /^3 competitions, / }).or(menu.getByText(/^3 competitions, /).first())).toBeVisible()
+    // A menu on wide screens (a popover, so not dialog[open]), a sheet on phones.
+    const menu = page.getByRole('dialog', { name: /^3 competitions, / })
+    await expect(menu).toBeVisible()
     await expect(menu.getByRole('radio', { name: new RegExp(names[1]) })).toHaveAttribute('aria-checked', 'true')
     await expect(menu.getByRole('radio', { name: new RegExp(names[2]) })).toContainText('Another venue: Riverside Arena')
     await menu.getByRole('radio', { name: new RegExp(names[2]) }).click()

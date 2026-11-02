@@ -70,7 +70,9 @@ function pick(i: number) {
   inputEl.value?.focus()
 }
 
+// Typing stays in the field, but Escape goes on to the menu, which closes.
 function onKeydown(e: KeyboardEvent) {
+  if (e.key !== 'Escape') e.stopPropagation()
   if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key) || e.isComposing) return
   e.preventDefault()
   if (e.key === 'Enter') pick(highlight.value)
@@ -91,7 +93,7 @@ const row = 'press-row flex min-h-11 w-full items-center gap-2 rounded-xl px-3 p
       :placeholder="placeholder"
       :aria-label="placeholder"
       class="field h-11 w-full rounded-xl px-3 text-base"
-      @keydown.stop="onKeydown"
+      @keydown="onKeydown"
     />
     <div class="mt-1.5 max-h-64 overflow-y-auto" role="listbox" :aria-label="placeholder">
       <button
