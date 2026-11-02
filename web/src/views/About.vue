@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import LogoMark from '@/components/LogoMark.vue'
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { ChevronDown, SquarePlus, Star, Users } from '@lucide/vue'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import { useCrisp } from '@/composables/useCrisp'
+import { useUpdate } from '@/composables/useUpdate'
 import { platform } from '@/lib/native'
 import { version } from '../../package.json'
 import { smooth } from '@/lib/motion'
@@ -15,6 +16,15 @@ import { smooth } from '@/lib/motion'
 // their #faq-… links so older shared links still land on the right answer.
 const crisp = useCrisp()
 const isWeb = platform === 'web'
+const update = useUpdate()
+
+// While this site is ahead of the stores' version (next.scotdance.app before launch), the buttons
+// get people the beta rather than the old app; at launch /versions catches up and they switch back.
+const storeLinks = computed(() =>
+  update.early
+    ? { ios: 'https://testflight.apple.com/join/t4AQhrKj', android: 'https://play.google.com/apps/testing/info.mismith.scotdance' }
+    : { ios: 'https://apps.apple.com/us/app/scotdance/id1386475626', android: 'https://play.google.com/store/apps/details?id=info.mismith.scotdance' },
+)
 const year = new Date().getFullYear()
 const platformLabel = platform === 'ios' ? 'iOS' : platform === 'android' ? 'Android' : 'Web'
 
@@ -156,12 +166,14 @@ watch(() => route.hash, applyHash)
 
       <section v-if="isWeb" class="space-y-3">
         <h2 class="text-section">Get the app</h2>
-        <p class="text-muted-foreground text-callout">Install it on your phone, or just bookmark it in any browser.</p>
+        <p class="text-muted-foreground text-callout">
+          {{ update.early ? 'Get the new app early on your phone' : 'Install it on your phone' }}, or just bookmark it in any browser.
+        </p>
         <div class="flex flex-wrap gap-3">
-          <a href="https://apps.apple.com/us/app/scotdance/id1386475626" target="_blank" rel="noopener" aria-label="Download on the App Store" class="press rounded-lg">
+          <a :href="storeLinks.ios" target="_blank" rel="noopener" aria-label="Download on the App Store" class="press rounded-lg">
             <img src="/img/app-store.svg" alt="Download on the App Store" class="h-12" />
           </a>
-          <a href="https://play.google.com/store/apps/details?id=info.mismith.scotdance" target="_blank" rel="noopener" aria-label="Get it on Google Play" class="press rounded-lg">
+          <a :href="storeLinks.android" target="_blank" rel="noopener" aria-label="Get it on Google Play" class="press rounded-lg">
             <img src="/img/play-store.svg" alt="Get it on Google Play" class="h-12" />
           </a>
         </div>
