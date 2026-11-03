@@ -317,7 +317,13 @@ test('what’s new is news only to people whose old favourites came over', async
   const fresh = await freshParent()
   await dbSet(`users:favorites/${fresh.uid}/dancers/${person.id}`, person.name)
   const banner = page.getByRole('group', { name: 'What’s new' })
-  const where = page.getByRole('status').filter({ hasText: 'What’s new is in' })
+  // The note's text, not its live region: that has no height of its own (the
+  // note inside is fixed), so it never counts as visible.
+  const where = page.getByRole('status').getByText('What’s new is in')
+  // Unopened, and offered as if this were the first launch since the copy
+  // (it stops after three, and each reload counts).
+  const unsee = () =>
+    page.evaluate(() => ['whats-new:seen', 'home:whatsNew:launches'].forEach((k) => localStorage.removeItem(k)))
 
   // Not on competition day: a day with nothing on. The banner opens the
   // reel, and once it's closed, says where it lives now.
@@ -335,14 +341,14 @@ test('what’s new is news only to people whose old favourites came over', async
   await expect(banner).toHaveCount(0)
 
   // Its ×, without opening it, still says where it is.
-  await page.evaluate(() => localStorage.removeItem('whats-new:seen'))
+  await unsee()
   await page.reload()
   await banner.getByRole('button', { name: 'Dismiss' }).click()
   await expect(banner).toHaveCount(0)
   await expect(where).toBeVisible()
 
   await signOut(page)
-  await page.evaluate(() => localStorage.removeItem('whats-new:seen'))
+  await unsee()
   await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, fresh.email)
   await page.goto('/?now=2031-02-01')
