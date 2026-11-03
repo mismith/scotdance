@@ -140,7 +140,7 @@ async function openLate(name: string) {
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-base font-semibold">{{ g.name }}</span>
                 <span class="text-muted-foreground block truncate text-sm">
-                  {{ [g.location, `${g.competitionIds.length} competition${g.competitionIds.length === 1 ? '' : 's'}`].filter(Boolean).join(' · ') }}
+                  {{ [g.location, `${g.competitions} competition${g.competitions === 1 ? '' : 's'}`].filter(Boolean).join(' · ') }}
                 </span>
               </span>
               <LoaderCircle v-if="opening === g.name" class="text-muted-foreground size-5 shrink-0 animate-spin" aria-hidden="true" />

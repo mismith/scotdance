@@ -42,6 +42,8 @@ interface RawHit<D> {
 interface RawGroupedHit<D> {
   group_key?: string[]
   hits?: RawHit<D>[]
+  /** Every entry under this name: `hits` is only a sample of them. */
+  found?: number
 }
 
 interface RawSearchResult<D> {
@@ -79,7 +81,8 @@ export interface SearchCompetitionHit {
 export interface SearchPersonGroup {
   name: string
   initials: string
-  competitionIds: string[]
+  /** How many competitions they're in, across every spelling of their name. */
+  competitions: number
   location?: string
   image?: string
 }
@@ -157,11 +160,11 @@ function mapPeople(
   for (const g of raw) {
     const name = g.group_key?.[0] ?? ''
     const docs = (g.hits ?? []).map((h) => h.document).filter((d): d is RawPersonDoc => !!d)
-    const ids = docs.map((d) => d.$competitionId).filter((id): id is string => !!id)
+    const competitions = g.found ?? new Set(docs.map((d) => d.$competitionId).filter(Boolean)).size
     const key = normalizeEntityName(name) || name
     const same = byPerson.get(key)
     if (same) {
-      same.competitionIds = Array.from(new Set([...same.competitionIds, ...ids]))
+      same.competitions += competitions
       same.location ??= docs.find((d) => d.location)?.location
       same.image ??= docs.find((d) => d.image)?.image
       continue
@@ -169,7 +172,7 @@ function mapPeople(
     byPerson.set(key, {
       name,
       initials: initialsOf(name),
-      competitionIds: Array.from(new Set(ids)),
+      competitions,
       location: docs.find((d) => d.location)?.location,
       image: docs.find((d) => d.image)?.image,
     })

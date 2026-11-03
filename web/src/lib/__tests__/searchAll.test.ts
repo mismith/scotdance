@@ -56,7 +56,7 @@ describe('searchAll', () => {
     const out = await searchAll({ q: 'isla mac' })
     expect(out.dancers).toEqual({
       total: 12,
-      groups: [{ name: 'Isla MacDonald', initials: 'IM', competitionIds: ['c1', 'c2'], location: 'Calgary, AB', image: undefined }],
+      groups: [{ name: 'Isla MacDonald', initials: 'IM', competitions: 2, location: 'Calgary, AB', image: undefined }],
     })
   })
 
@@ -73,10 +73,24 @@ describe('searchAll', () => {
     })
     const out = await searchAll({ q: 'isla or genevieve' })
     expect(out.dancers.total).toBe(2)
-    expect(out.dancers.groups.map((g) => [g.name, g.competitionIds, g.location])).toEqual([
-      ['Isla MacDonald', ['c1', 'c2'], 'Glasgow'],
-      ['Geneviève Blais', ['c3'], undefined],
+    expect(out.dancers.groups.map((g) => [g.name, g.competitions, g.location])).toEqual([
+      ['Isla MacDonald', 2, 'Glasgow'],
+      ['Geneviève Blais', 1, undefined],
     ])
+  })
+
+  it('counts every competition a person is in, not just the sampled entries', async () => {
+    respond = () => ({
+      dancers: {
+        found: 2,
+        grouped_hits: [
+          { group_key: ['Isla MacDonald'], found: 31, hits: [person('Isla MacDonald', 'c1'), person('Isla MacDonald', 'c2')] },
+          { group_key: ['ISLA MACDONALD'], found: 9, hits: [person('ISLA MACDONALD', 'c3')] },
+        ],
+      },
+    })
+    const out = await searchAll({ q: 'isla macdonald' })
+    expect(out.dancers.groups.map((g) => g.competitions)).toEqual([40])
   })
 
   it('lists competitions with a readable place, skipping hits without an id', async () => {
