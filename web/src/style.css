@@ -67,6 +67,7 @@
   --ease-elastic: linear(0, 0.059, 0.193, 0.354, 0.513, 0.653, 0.768, 0.856, 0.921, 0.965, 0.993, 1.009, 1.017, 1.02, 1.019, 1.017, 1.014, 1.01, 1.007, 1.005, 1);
   --animate-pop: pop 320ms var(--ease-standard);
   --animate-medal: medal 900ms var(--ease-standard);
+  --animate-float: float 3.6s ease-in-out infinite;
 }
 
 /* Light is the default: dark text on light reads better for older eyes and
@@ -963,6 +964,13 @@ html:not([data-native])::before {
   }
   100% {
     transform: scale(1);
+  }
+}
+
+/* Something floating a little above the page (What's new's pictures). */
+@keyframes float {
+  50% {
+    translate: 0 -7px;
   }
 }
 

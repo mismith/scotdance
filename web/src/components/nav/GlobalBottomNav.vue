@@ -9,6 +9,7 @@ import MoreMenu from '@/components/nav/MoreMenu.vue'
 import { useMorph } from '@/lib/morph'
 import { useCrisp } from '@/composables/useCrisp'
 import { useUpdate } from '@/composables/useUpdate'
+import { useWhatsNew } from '@/composables/useWhatsNew'
 
 // Home · Competitions · Search, and More on its own beside them (it opens a
 // menu rather than a page). Always visible outside a competition, always
@@ -17,6 +18,7 @@ import { useUpdate } from '@/composables/useUpdate'
 const route = useRoute()
 const update = useUpdate()
 const crisp = useCrisp()
+const whatsNew = useWhatsNew()
 
 const menu = useMorph()
 
@@ -27,6 +29,7 @@ watch(
   () => menu.open,
   (open) => {
     if (open && update.early) moreSeen.value = true
+    if (open) whatsNew.found()
   },
 )
 
@@ -47,7 +50,9 @@ const items = computed<TabItem[]>(() => {
 })
 // Not while only the menu is open: it's drawn pressed, not selected.
 const moreActive = computed(() => MORE_PREFIXES.some((p) => route.path.startsWith(p)))
-const moreBadge = computed(() => update.updateAvailable || crisp.unread > 0 || (update.early && crisp.available && !moreSeen.value))
+const moreBadge = computed(
+  () => update.updateAvailable || crisp.unread > 0 || (update.early && crisp.available && !moreSeen.value) || whatsNew.hint,
+)
 function openMore(e: MouseEvent) {
   tapHaptic()
   menu.toggle(e)

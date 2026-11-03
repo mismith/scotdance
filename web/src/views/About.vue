@@ -2,12 +2,13 @@
 import LogoMark from '@/components/LogoMark.vue'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { ChevronDown, SquarePlus, Star, Users } from '@lucide/vue'
+import { ChevronDown, Sparkles, SquarePlus, Star, Users } from '@lucide/vue'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import { useCrisp } from '@/composables/useCrisp'
 import { useUpdate } from '@/composables/useUpdate'
+import { useWhatsNew } from '@/composables/useWhatsNew'
 import { platform } from '@/lib/native'
 import { version } from '../../package.json'
 import { smooth } from '@/lib/motion'
@@ -15,6 +16,7 @@ import { smooth } from '@/lib/motion'
 // About ScotDance, organised by who it's for: families, then organisers. The common questions keep
 // their #faq-… links so older shared links still land on the right answer.
 const crisp = useCrisp()
+const whatsNew = useWhatsNew()
 const isWeb = platform === 'web'
 const update = useUpdate()
 
@@ -117,12 +119,21 @@ watch(() => route.hash, applyHash)
         <p class="mt-2 text-base font-medium">
           Browse competitions, favourite your dancers, and see results as they happen. Free, anywhere in the world.
         </p>
-        <RouterLink
-          :to="{ name: 'home' }"
-          class="bg-primary-foreground text-primary-fill press mt-4 inline-flex h-12 items-center gap-2 rounded-full px-5 text-base font-semibold"
-        >
-          <Users class="size-5" /> Go to your dancers
-        </RouterLink>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <RouterLink
+            :to="{ name: 'home' }"
+            class="bg-primary-foreground text-primary-fill press inline-flex h-12 items-center gap-2 rounded-full px-5 text-base font-semibold"
+          >
+            <Users class="size-5" /> Go to your dancers
+          </RouterLink>
+          <button
+            type="button"
+            class="press inline-flex h-12 items-center gap-2 rounded-full bg-white/15 px-5 text-base font-semibold"
+            @click="whatsNew.show()"
+          >
+            <Sparkles class="size-5" /> What’s new
+          </button>
+        </div>
       </header>
 
       <section class="space-y-3">

@@ -3,7 +3,7 @@ import { connected } from '@/lib/offline'
 import LogoMark from '@/components/LogoMark.vue'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { useIntervalFn, useLocalStorage } from '@vueuse/core'
+import { useIntervalFn } from '@vueuse/core'
 import { ChevronRight, Search, Sparkles, X } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
@@ -16,6 +16,7 @@ import Skeleton from '@/components/Skeleton.vue'
 import { useDancerCards, type DancerCard } from '@/composables/useDancerCards'
 import { useFollowing } from '@/composables/useFollowing'
 import { useOldFavourites } from '@/composables/useOldFavourites'
+import { useWhatsNew } from '@/composables/useWhatsNew'
 import { useRecentDancers } from '@/composables/useRecentDancers'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
@@ -258,13 +259,13 @@ function cardLine(card: DancerCard) {
   return `Next: ${f.competition.name}${f.competition.date ? ` · ${formatShortDate(f.competition.date)}` : ''}`
 }
 
-// The new look, for people who used the old app: only when their old
+// What's new, for people who used the old app: only when their old
 // favourites were carried over, never on competition day, and only for
 // their first few visits.
-const whatsNewDismissed = useLocalStorage('home:whatsNew:v4', false)
+const whatsNew = useWhatsNew()
 const oldFavourites = useOldFavourites()
 const showWhatsNew = computed(
-  () => !whatsNewDismissed.value && oldFavourites.copied && oldFavourites.launches <= 3 && !todays.value.length,
+  () => whatsNew.unseen && oldFavourites.copied && oldFavourites.launches <= 3 && !todays.value.length,
 )
 
 const { freshKey: liveFresh } = useLiveAlertState()
@@ -295,17 +296,25 @@ const { freshKey: liveFresh } = useLiveAlertState()
           <div v-if="showWhatsNew" class="grid mb-0!">
             <!-- Padded so the clip that folds it away doesn't cut its shadow. -->
             <div class="-mx-4 min-h-0 overflow-hidden px-4 pt-1">
-              <div class="glass relative mb-5 flex gap-3 rounded-[1.375rem] p-4 pr-12" role="note">
-                <Sparkles class="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
-                <p class="text-callout">
-                  <span class="font-semibold">ScotDance.app has a new look.</span> Your favourite dancers now appear here,
-                  with their day at a glance. Competitions work the way they always have.
-                </p>
+              <div class="relative mb-5" role="group" aria-label="What’s new">
                 <button
                   type="button"
-                  class="press absolute top-1.5 right-1.5 flex size-11 items-center justify-center rounded-full"
+                  class="press bg-primary-fill flex w-full items-center gap-3 rounded-[1.375rem] p-3 pr-12 text-left text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_0.5rem_1.5rem_-0.75rem_rgb(0_60_120/0.55)]"
+                  @click="whatsNew.show(true)"
+                >
+                  <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/15" aria-hidden="true">
+                    <Sparkles class="size-6" />
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block text-base font-bold">Welcome to the new ScotDance.app</span>
+                    <span class="flex items-center gap-0.5 text-sm opacity-85">See what’s new <ChevronRight class="size-4" /></span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  class="press absolute top-1/2 right-1 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-white/85"
                   aria-label="Dismiss"
-                  @click="whatsNewDismissed = true"
+                  @click="whatsNew.dismiss()"
                 >
                   <X class="size-5" />
                 </button>

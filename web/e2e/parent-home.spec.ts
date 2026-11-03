@@ -310,31 +310,44 @@ test('old favourites from the previous app: named ones follow the person, nothin
   expect(await dbGet(`users:favorites/${parentId}/dancers`)).toEqual(old)
 })
 
-test('the new look is news only to people whose old favourites came over', async ({ page }) => {
+test('what’s new is news only to people whose old favourites came over', async ({ page }) => {
   const person = await follow(9)
   const returning = await freshParent()
   await dbSet(`users:favorites/${returning.uid}`, { dancers: { [entry(9).id]: person.name } })
   const fresh = await freshParent()
   await dbSet(`users:favorites/${fresh.uid}/dancers/${person.id}`, person.name)
-  const note = page.getByRole('note').filter({ hasText: 'ScotDance.app has a new look.' })
+  const banner = page.getByRole('group', { name: 'What’s new' })
+  const where = page.getByRole('status').filter({ hasText: 'What’s new is in' })
 
-  // Not on competition day: a day with nothing on.
+  // Not on competition day: a day with nothing on. The banner opens the
+  // reel, and once it's closed, says where it lives now.
   await signInFromHome(page, returning.email)
   await page.goto('/?now=2031-02-01')
-  await expect(note).toBeVisible()
-  await note.getByRole('button', { name: 'Dismiss' }).click()
-  await expect(note).toHaveCount(0)
+  await banner.getByRole('button', { name: /Welcome to the new ScotDance\.app/ }).click()
+  const reel = page.getByRole('dialog', { name: 'What’s new' })
+  await expect(reel.getByText('Dancer profiles')).toBeVisible()
+  await reel.getByRole('button', { name: 'Close' }).click()
+  await expect(reel).toBeHidden()
+  await expect(where).toBeVisible()
+  await expect(banner).toHaveCount(0)
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Your dancers' })).toBeVisible()
-  await expect(note).toHaveCount(0)
+  await expect(banner).toHaveCount(0)
+
+  // Its ×, without opening it, still says where it is.
+  await page.evaluate(() => localStorage.removeItem('whats-new:seen'))
+  await page.reload()
+  await banner.getByRole('button', { name: 'Dismiss' }).click()
+  await expect(banner).toHaveCount(0)
+  await expect(where).toBeVisible()
 
   await signOut(page)
-  await page.evaluate(() => localStorage.removeItem('home:whatsNew:v4'))
+  await page.evaluate(() => localStorage.removeItem('whats-new:seen'))
   await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, fresh.email)
   await page.goto('/?now=2031-02-01')
   await expect(page.getByRole('heading', { name: 'Your dancers' })).toBeVisible()
-  await expect(note).toHaveCount(0)
+  await expect(banner).toHaveCount(0)
   await page.goto('/?now=')
 })
 
