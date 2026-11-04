@@ -8,6 +8,7 @@ import {
   filterUpcoming,
   findFirstSeen,
   findLastSeen,
+  latestName,
   latestNonNull,
 } from '@/lib/appearanceStats'
 import type { Competition } from '@/types/competition'
@@ -65,5 +66,12 @@ describe('appearance stats', () => {
   it('takes the first real value', () => {
     expect(latestNonNull([{ v: '' }, { v: null }, { v: 'Calgary' }, { v: 'Edmonton' }], (x) => x.v)).toBe('Calgary')
     expect(latestNonNull([], () => 'x')).toBeNull()
+  })
+
+  it('takes both halves of the name from one appearance', () => {
+    const app = (firstName: string | null, lastName: string | null) => ({ raw: { firstName, lastName } })
+    expect(latestName([app('Adelyn Dalgleish', null), app('Adelyn', 'Dalgleish')])).toBe('Adelyn Dalgleish')
+    expect(latestName([app('', ''), app('Mary', 'Jane Smith'), app('Mary Jane', 'Smith')])).toBe('Mary Jane Smith')
+    expect(latestName([app(null, null)])).toBe('')
   })
 })

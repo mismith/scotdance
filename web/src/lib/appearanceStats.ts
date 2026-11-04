@@ -66,6 +66,20 @@ export function latestNonNull<A, T>(
   return null
 }
 
+/**
+ * "First Last" from the newest appearance with a name. Both halves come from
+ * one appearance: "Emma Smith" + nothing in one competition and "Emma" +
+ * "Smith" in another mustn't make "Emma Smith Smith". Mirrors personDisplay
+ * in functions/src/utility/entityConfigs.ts.
+ */
+export function latestName<A extends { raw: { firstName?: string | null; lastName?: string | null } }>(
+  list: A[],
+): string {
+  const full = (a: A) => `${a.raw.firstName ?? ''} ${a.raw.lastName ?? ''}`.trim()
+  const named = list.find(full)
+  return named ? full(named) : ''
+}
+
 export function countTotalComps(list: AppearanceLike[]): number {
   const ids = new Set<string>()
   for (const a of list) {

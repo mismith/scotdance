@@ -20,6 +20,7 @@ import {
   filterUpcoming,
   findFirstSeen,
   findLastSeen,
+  latestName,
   latestNonNull,
 } from '@/lib/appearanceStats'
 import { insertEntityAggregate } from '@/composables/useEntityAggregates'
@@ -153,13 +154,9 @@ function createJudgeProfile(judgeId: Ref<string>): UseJudgeProfile {
   const upcoming = computed(() => filterUpcoming(appearances.value))
   const past = computed(() => filterPast(appearances.value))
 
-  const displayName = computed(() => {
-    const apps = appearances.value
-    const fn = latestNonNull(apps, (a) => a.raw.firstName) ?? ''
-    const ln = latestNonNull(apps, (a) => a.raw.lastName) ?? ''
-    const composed = `${fn} ${ln}`.trim()
-    return composed || aggregate.value?.name?.trim() || 'Judge'
-  })
+  const displayName = computed(
+    () => latestName(appearances.value) || aggregate.value?.name?.trim() || 'Judge',
+  )
 
   const image = computed(() => latestNonNull(appearances.value, (a) => a.raw.image))
   const bio = computed(() => latestNonNull(appearances.value, (a) => a.raw.bio))

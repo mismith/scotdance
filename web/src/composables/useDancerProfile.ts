@@ -20,6 +20,7 @@ import {
   filterUpcoming,
   findFirstSeen,
   findLastSeen,
+  latestName,
   latestNonNull,
 } from '@/lib/appearanceStats'
 import { useRecentDancers } from '@/composables/useRecentDancers'
@@ -160,13 +161,9 @@ function createDancerProfile(dancerId: Ref<string>): UseDancerProfile {
   const upcoming = computed(() => filterUpcoming(appearances.value))
   const past = computed(() => filterPast(appearances.value))
 
-  const displayName = computed(() => {
-    const apps = appearances.value
-    const fn = latestNonNull(apps, (a) => a.raw.firstName) ?? ''
-    const ln = latestNonNull(apps, (a) => a.raw.lastName) ?? ''
-    const composed = `${fn} ${ln}`.trim()
-    return composed || aggregate.value?.name?.trim() || 'Dancer'
-  })
+  const displayName = computed(
+    () => latestName(appearances.value) || aggregate.value?.name?.trim() || 'Dancer',
+  )
 
   const image = computed(() => latestNonNull(appearances.value, (a) => a.raw.image))
   const location = computed(() => latestNonNull(appearances.value, (a) => a.raw.location))
