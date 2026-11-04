@@ -88,10 +88,11 @@ const label = computed(() => {
     </span>
     <!-- Where there's a pointer, hovering names the dance (on touch, a tap
          opens their day, which lists every dance). Below, clear of the Tie
-         tag, with a tick pointing back up at it. -->
+         tag, with a tick pointing back up at it: the top half of a turned
+         square, so it carries the bubble's hairline edge onto the dark page. -->
     <span
       v-if="dance"
-      class="hud pointer-events-none invisible absolute top-full left-1/2 z-20 mt-3.5 -translate-x-1/2 rounded-xl px-3 py-2 text-sm leading-tight font-semibold tracking-normal whitespace-nowrap group-hover/medal:visible before:absolute before:bottom-full before:left-1/2 before:h-1.5 before:w-3 before:-translate-x-1/2 before:bg-[rgb(27_33_40/0.92)] before:[clip-path:polygon(50%_0,100%_100%,0_100%)] before:content-['']"
+      class="hud pointer-events-none invisible absolute top-full left-1/2 z-20 mt-3.5 -translate-x-1/2 rounded-xl px-3 py-2 text-sm leading-tight font-semibold tracking-normal whitespace-nowrap group-hover/medal:visible before:absolute before:-top-1.25 before:left-1/2 before:size-2.5 before:-translate-x-1/2 before:rotate-45 before:rounded-tl-[2px] before:border-t-[0.5px] before:border-l-[0.5px] before:border-white/20 before:bg-[rgb(27_33_40/0.92)] before:[clip-path:polygon(0_0,100%_0,0_100%)] before:content-['']"
       aria-hidden="true"
     >
       {{ label }}
