@@ -7,7 +7,7 @@ import { danceFullName } from '@/types/competition'
 import type { CollectionSpec } from '@/lib/admin/collection'
 import { forEachScheduleDance } from '@/lib/admin/scheduleTree'
 import { sheetsGoForGood } from '@/lib/sheets'
-import { STANDARD_DANCES } from '@/lib/standardDances'
+import { STANDARD_DANCES, tidySteps } from '@/lib/standardDances'
 
 const m = useManagedCompetition()
 
@@ -24,7 +24,15 @@ const spec: CollectionSpec<MDance> = {
   sortable: true,
   fields: [
     { key: 'name', label: 'Name', kind: 'text', required: true, placeholder: 'e.g. Highland Fling' },
-    { key: 'steps', label: 'Steps', kind: 'text', half: true, placeholder: 'e.g. 4 or 2+1', hint: 'Shown after the name: “Highland Fling (4)”.' },
+    {
+      key: 'steps',
+      label: 'Steps',
+      kind: 'text',
+      half: true,
+      placeholder: 'e.g. 4 or 2+1',
+      hint: 'Shown after the name: “Highland Fling (4)”.',
+      tidy: tidySteps,
+    },
     { key: 'shortName', label: 'Short name', kind: 'text', half: true, placeholder: 'e.g. Fling', hint: 'For tight spaces.' },
   ],
   title: (d) => d.label,

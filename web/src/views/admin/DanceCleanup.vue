@@ -13,9 +13,12 @@ import { confirm, toast } from '@/lib/admin/feedback'
 import { fieldsOf, tidyDance, type DanceFields, type Tidied } from '@/lib/admin/danceCleanup'
 import { canEdit, friendlyError, write } from '@/lib/admin/write'
 import { formatShortDate } from '@/lib/format'
+import { standardDance } from '@/lib/standardDances'
+import { danceFullName } from '@/types/competition'
 
 // Standard dances typed another way across competitions ("FLING", "S.T",
-// "Half Hullachan"), grouped by the dance they are, each with exactly what
+// "Half Hullachan"), and steps written another way ("3 & 1", "4 steps") on
+// any dance, grouped by the dance they are, each with exactly what
 // Standardise saves (lib/admin/danceCleanup). Any can be unticked to leave
 // as is. Standardise saves the ticked ones of a dance, or all of them, and
 // says so in a toast with Undo. Read here, not by a function: one small
@@ -71,10 +74,14 @@ const kept = reactive(new Set<string>())
 const toggleKept = (key: string) => (kept.has(key) ? kept.delete(key) : kept.add(key))
 const ticked = (list: Fix[]) => list.filter((f) => !kept.has(fixKey(f)))
 
-// By the dance they'll be, the most to tidy first; newest competitions first in each.
+// By the dance they'll be (a standard name kept with its own apostrophe goes
+// with its dance), the most to tidy first; newest competitions first in each.
 const groups = computed(() => {
   const by = new Map<string, Fix[]>()
-  for (const f of fixes.value ?? []) by.set(f.to.name, [...(by.get(f.to.name) ?? []), f])
+  for (const f of fixes.value ?? []) {
+    const dance = standardDance(f.to.name)?.dance.name ?? f.to.name
+    by.set(dance, [...(by.get(dance) ?? []), f])
+  }
   return [...by]
     .map(([name, list]) => ({
       name,
@@ -87,10 +94,10 @@ const total = computed(() => fixes.value?.length ?? 0)
 const dances = (n: number) => (n === 1 ? '1 dance' : `${n} dances`)
 const competitions = (n: number) => (n === 1 ? '1 competition' : `${n} competitions`)
 const competitionCount = (list: Fix[]) => new Set(list.map((f) => f.competitionId)).size
-/** The ways a dance is typed, most used first. */
+/** The ways a dance is typed, with its steps, most used first. */
 function typed(list: Fix[]) {
   const counts = new Map<string, number>()
-  for (const f of list) counts.set(f.now.name, (counts.get(f.now.name) ?? 0) + 1)
+  for (const f of list) counts.set(danceFullName(f.now), (counts.get(danceFullName(f.now)) ?? 0) + 1)
   return [...counts].sort((a, b) => b[1] - a[1]).map(([name]) => name)
 }
 
@@ -178,14 +185,15 @@ async function standardiseAll() {
       v-else-if="!total && !error"
       :icon="ListChecks"
       title="Nothing to clean up"
-      description="Standard dances typed another way, like FLING or S.T, show up here."
+      description="Standard dances typed another way, like FLING or S.T, and steps like 3 & 1 show up here."
     />
 
     <section v-else class="space-y-3">
       <div class="flex items-start gap-3">
         <p class="text-muted-foreground min-w-0 flex-1 text-sm">
-          Standard dances typed another way. Standardise saves each as Add common dances has it, with steps in the name moved to Steps. Untick any to leave as
-          is. Events of their own, like Trophy Fling, aren’t listed.
+          Standard dances typed another way, and steps written another way, like 3 &amp; 1 or 4 steps. Standardise saves each as Add common dances has it: the
+          standard name, steps in the name moved to Steps, and steps as 3+1 or 4. Untick any to leave as is. Events of their own, like Trophy Fling, keep their
+          names.
         </p>
         <Button variant="tonal" size="sm" :busy="busy === 'all'" :disabled="!canEdit || !!busy" @click="standardiseAll()">Standardise all</Button>
       </div>

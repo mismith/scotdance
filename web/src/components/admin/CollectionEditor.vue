@@ -292,10 +292,15 @@ function saveField(item: T, key: string, value: string | null) {
 // mid-edit) must land on its own item, not whatever is open by then. If that
 // item has gone (deleted on another device), the edit goes too: saving it
 // would bring back a stub with only that field.
-const saverFor = (item: T, key: string) => async (v: string | null) => {
+const saverFor = (item: T, f: FieldSpec) => async (v: string | null) => {
   if (!props.items.some((i) => i.id === item.id)) return
-  await saveField(item, key, v)
+  await saveField(item, f.key, v && f.tidy ? f.tidy(v) : v)
 }
+// A field that tidies what's typed saves it as the line under the box says,
+// once it's changed: what's saved already stays as it is until then.
+const tidied = (f: FieldSpec, v: string) => (f.tidy ? f.tidy(v) : v.trim())
+const noteFor = (f: FieldSpec, saved?: string | null) =>
+  f.tidy ? (v: string) => (v.trim() && v.trim() !== (saved ?? '').trim() && tidied(f, v) !== v.trim() ? `Saved as ${tidied(f, v)}` : null) : undefined
 const validatorFor = (item: T, f: FieldSpec) => (f.validate ? (v: string) => f.validate!(v, item.id, item as unknown as Record<string, unknown>) : undefined)
 const stringValue = (item: T, key: string) => {
   const v = (item as unknown as Record<string, unknown>)[key]
@@ -360,7 +365,7 @@ async function submitDraft(another: boolean) {
   const id = m.newKey()
   const record: Record<string, unknown> = {}
   for (const f of props.spec.fields) {
-    const v = (draft[f.key] ?? '').trim()
+    const v = tidied(f, draft[f.key] ?? '')
     if (v) record[f.key] = v
   }
   if (props.spec.sortable) record._order = nextOrder()
@@ -370,7 +375,7 @@ async function submitDraft(another: boolean) {
   const own = `${props.spec.path}/${id}/`
   if (props.spec.onChange) {
     for (const f of props.spec.fields) {
-      const v = (draft[f.key] ?? '').trim()
+      const v = tidied(f, draft[f.key] ?? '')
       if (!v) continue
       for (const [path, value] of Object.entries(props.spec.onChange({ ...(record as object), id, label: '' } as unknown as T, f.key, v))) {
         if (path.startsWith(own)) {
@@ -665,7 +670,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
               :label="f.label"
               :kind="f.kind === 'select' ? 'select' : f.kind === 'textarea' ? 'textarea' : f.kind === 'url' ? 'url' : 'text'"
               :options="f.options?.()"
-              :hint="f.hint"
+              :hint="noteFor(f)?.(draft[f.key] ?? '') || f.hint"
               :error="draftErrors[f.key]"
               :required="f.required"
               :placeholder="f.placeholder"
@@ -710,7 +715,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
               :hint="f.hint"
               :required="f.required"
               :placeholder="f.placeholder"
-              :save="saverFor(current, f.key)"
+              :save="saverFor(current, f)"
             />
             <ImageField
               v-else-if="f.kind === 'image'"
@@ -720,7 +725,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
               :folder="f.storage ?? 'staff'"
               :competition-id="m.competitionId.value"
               shape="round"
-              :save="saverFor(current, f.key)"
+              :save="saverFor(current, f)"
             />
             <TextField
               v-else
@@ -733,7 +738,8 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
               :type="f.kind === 'url' ? 'url' : 'text'"
               :inputmode="f.inputmode"
               :validate="validatorFor(current, f)"
-              :save="saverFor(current, f.key)"
+              :note="noteFor(f, stringValue(current, f.key))"
+              :save="saverFor(current, f)"
             />
           </div>
         </div>

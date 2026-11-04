@@ -128,14 +128,31 @@ for (const names of [(d: StandardDance) => [d.name], (d: StandardDance) => d.aka
 /** Steps written into a name: "Fling (4)", "Sword (2&1)", "S.T (3&1)". */
 const STEPS_IN_NAME = /\s*\((\d+(?:\s*[&+]\s*\d+)?)\)\s*$/
 
+// A count of steps (or parts), or two joined by & or +, bracketed or not:
+// "4 steps", "(4)", "3 & 1", "2+4 parts". Anything else ("4X", "Intro & 8
+// Bars", "4 and 5") says something more, so it stays as typed.
+const STEPS = /^\(?\s*(\d+)\s*(?:[&+]\s*(\d+)\s*)?(?:steps?|parts?)?\s*\)?$/i
+
+/**
+ * Steps as Add common dances writes them: "4", "3+1". "3 & 1", "3&1",
+ * "4 steps", "(4)" and "8 parts" are other ways of writing the same; anything
+ * else is kept as typed (trimmed).
+ */
+export function tidySteps(steps: unknown): string {
+  const raw = typeof steps === 'string' || typeof steps === 'number' ? String(steps).trim() : ''
+  const m = raw.match(STEPS)
+  return m ? (m[2] ? `${m[1]}+${m[2]}` : m[1]!) : raw
+}
+
 /**
  * The standard dance a name is, with any steps it carries ("Fling (4)" is the
- * Highland Fling in 4 steps), or null for anything else.
+ * Highland Fling in 4 steps, "S.T (3&1)" the Seann Truibhas in 3+1), or null
+ * for anything else.
  */
 export function standardDance(name: unknown): { dance: StandardDance; steps?: string } | null {
   const raw = typeof name === 'string' ? name.trim() : ''
   if (!raw) return null
   const steps = raw.match(STEPS_IN_NAME)?.[1]
   const dance = BY_KEY.get(key(steps ? raw.replace(STEPS_IN_NAME, '') : raw))
-  return dance ? { dance, ...(steps ? { steps } : {}) } : null
+  return dance ? { dance, ...(steps ? { steps: tidySteps(steps) } : {}) } : null
 }

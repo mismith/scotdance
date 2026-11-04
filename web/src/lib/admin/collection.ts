@@ -23,6 +23,8 @@ export interface FieldSpec {
   half?: boolean
   /** Storage folder for images (Firebase Storage rules allow these). */
   storage?: 'staff' | 'info' | 'links'
+  /** How it's saved ("3 & 1" as 3+1), said under the box while it differs from what's typed. */
+  tidy?: (value: string) => string
   /** `values`: the rest of the form (or the saved item), e.g. to check a number within its age group. */
   validate?: (value: string, itemId: string | null, values: Record<string, unknown>) => string | null
 }

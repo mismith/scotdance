@@ -66,11 +66,17 @@ export function useAutosave(o: AutosaveOptions) {
     }
     status.value = 'saving'
     saving = value
+    const before = asText(o.value())
     try {
       await o.save(value)
-      // Never touch the box here: they may still be typing (a space or a new
-      // line, or more words on a slow connection), and it saves next.
-      if (draft.value === value) dirty.value = false
+      // Never touch the box while they may still be typing (a space or a new
+      // line, or more words on a slow connection): it saves next. With
+      // nothing typed since, it shows what was saved, when that's tidier
+      // than what was typed ("3 & 1" saved as 3+1, as its note said).
+      if (draft.value === value) {
+        dirty.value = false
+        if (asText(o.value()) !== before) draft.value = asText(o.value())
+      }
       if (saving === value) {
         status.value = 'saved'
         clearTimeout(savedTimer)
