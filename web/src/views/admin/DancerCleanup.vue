@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, reactive, ref, type Ref } from 'vue'
+import { computed, onScopeDispose, reactive, ref, type Ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { get } from 'firebase/database'
+import { get, onValue } from 'firebase/database'
 import { httpsCallable } from 'firebase/functions'
 import { ChevronDown, UserCheck } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
@@ -22,6 +22,8 @@ import { formatShortDate } from '@/lib/format'
 // - Competitions that put each dancer's whole name in First name (functions/
 //   src/combinedNames). Split divides them the way import divides a combined
 //   name column, shown first.
+//   One whose names are right as typed (choreography titles, say) can be
+//   left as is, which keeps it out of the list until it's brought back.
 // Both have Undo, which puts back what was there; profiles update themselves.
 
 // As findStrayDancers and findCombinedNames return them.
@@ -64,7 +66,24 @@ void load('findCombinedNames', combined)
 
 const count = (list: Competition<unknown>[] | null) => list?.reduce((n, c) => n + c.dancers.length, 0) ?? 0
 const strayTotal = computed(() => count(stray.value))
-const combinedTotal = computed(() => count(combined.value))
+// Competitions whose names are right as typed, by id.
+const asTyped = ref<Record<string, true>>({})
+onScopeDispose(onValue(dataRef('dancers:namesAsTyped'), (s) => (asTyped.value = s.val() ?? {})))
+const waiting = computed(() => combined.value?.filter((c) => !asTyped.value[c.id]) ?? [])
+const leftAsIs = computed(() => combined.value?.filter((c) => asTyped.value[c.id]) ?? [])
+const showLeft = ref(false)
+async function leaveAsIs(c: CombinedCompetition, on: boolean) {
+  const path = `dancers:namesAsTyped/${c.id}`
+  try {
+    await write({ [path]: on || null })
+    toast(`${c.name || 'Untitled competition'} ${on ? 'left as is' : 'brought back'}`, {
+      action: { label: 'Undo', run: () => write({ [path]: on ? null : true }).catch((e) => toast(friendlyError(e), { tone: 'error' })) },
+    })
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  }
+}
+const combinedTotal = computed(() => count(waiting.value))
 const loading = computed(() => !stray.value || !combined.value)
 
 const entries = (n: number) => (n === 1 ? '1 entry' : `${n} entries`)
@@ -173,7 +192,7 @@ async function removeAll() {
 }
 
 async function splitAll() {
-  const comps = combined.value ?? []
+  const comps = waiting.value
   const ok = await confirm({
     title: `Split all ${names(splitCount(comps))}?`,
     message: `In ${competitions(comps.length)}. The first word stays the first name; the rest moves to Last name.`,
@@ -185,7 +204,7 @@ async function splitAll() {
 
 <template>
   <div class="max-w-3xl space-y-10 p-4 pb-[calc(3rem+var(--safe-bottom))]">
-    <SectionHeader title="Dancer cleanup" :count="strayTotal + combinedTotal || null" />
+    <SectionHeader title="Dancers" :count="strayTotal + combinedTotal || null" />
 
     <p v-if="error" class="text-destructive text-sm font-medium" role="alert">{{ error }}</p>
 
@@ -200,7 +219,7 @@ async function splitAll() {
     />
 
     <template v-else>
-      <section v-if="combined?.length" class="space-y-3">
+      <section v-if="waiting.length" class="space-y-3">
         <div class="flex items-start gap-3">
           <div class="min-w-0 flex-1">
             <h2 class="text-heading">
@@ -212,7 +231,7 @@ async function splitAll() {
         </div>
 
         <ul class="surface divide-y rounded-2xl">
-          <li v-for="c in combined" :key="c.id" class="space-y-2 py-4 pr-3 pl-4">
+          <li v-for="c in waiting" :key="c.id" class="space-y-2 py-4 pr-3 pl-4">
             <div class="flex items-start gap-3">
               <RouterLink :to="{ name: 'manage.dancers', params: { competitionId: c.id } }" class="focus-inset min-w-0 flex-1 rounded-lg">
                 <span class="block text-base font-semibold">{{ c.name || 'Untitled competition' }}</span>
@@ -220,6 +239,7 @@ async function splitAll() {
                   [formatShortDate(c.date), names(c.dancers.length), toSplit(c).length < c.dancers.length && `${c.dancers.length - toSplit(c).length} left as is`].filter(Boolean).join(' · ')
                 }}</span>
               </RouterLink>
+              <Button size="sm" variant="plain" :disabled="!canEdit || !!busy" @click="leaveAsIs(c, true)">Leave as is</Button>
               <Button size="sm" variant="tonal" :busy="busy === c.id" :disabled="!canEdit || !!busy || !toSplit(c).length" @click="split([c], c.id)">Split</Button>
             </div>
 
@@ -327,5 +347,26 @@ async function splitAll() {
         </ul>
       </section>
     </template>
+
+    <section v-if="!loading && leftAsIs.length" class="space-y-3">
+      <button
+        type="button"
+        class="press-row focus-inset -mx-2 flex items-center gap-1 rounded-xl px-2 py-1 text-left"
+        :aria-expanded="showLeft"
+        @click="showLeft = !showLeft"
+      >
+        <h2 class="text-heading">Names left as is <span class="text-muted-foreground font-medium tabular-nums">{{ leftAsIs.length }}</span></h2>
+        <ChevronDown :class="['text-muted-foreground size-5 transition-transform', showLeft && 'rotate-180']" aria-hidden="true" />
+      </button>
+      <ul v-if="showLeft" class="surface divide-y rounded-2xl">
+        <li v-for="c in leftAsIs" :key="c.id" class="flex items-center gap-3 py-2 pr-2 pl-4">
+          <span class="min-w-0 flex-1">
+            <span class="block text-base font-medium">{{ c.name || 'Untitled competition' }}</span>
+            <span class="text-muted-foreground block text-sm">{{ [formatShortDate(c.date), names(c.dancers.length)].filter(Boolean).join(' · ') }}</span>
+          </span>
+          <Button :disabled="!canEdit" @click="leaveAsIs(c, false)">Bring back</Button>
+        </li>
+      </ul>
+    </section>
   </div>
 </template>
