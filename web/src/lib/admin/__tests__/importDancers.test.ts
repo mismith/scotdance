@@ -4,12 +4,14 @@ import {
   gridFromSheet,
   gridFromText,
   guessColumns,
+  hasWholeNames,
   parseGrid,
   parseTable,
   pickSheet,
   planImport,
   planUpdates,
   splitGroupTitle,
+  splitWholeNames,
   type ExistingCategory,
   type ExistingDancer,
   type ExistingGroup,
@@ -194,6 +196,36 @@ describe('parseGrid: program layout', () => {
       ['Isla', 'new', []],
       ['Ava', 'error', ['No number']],
     ])
+  })
+})
+
+describe('hasWholeNames + splitWholeNames', () => {
+  // Number, full name, an empty column, location: read as a program with no last names.
+  const program = () =>
+    parseGrid([
+      ['Novice 10 & Under 12 Years'],
+      ['501', 'Kirsty Mackenzie', '', 'Calgary, AB'],
+      ['502', 'Smith, Mary Ann', '', 'Edmonton'],
+      ['503', 'Eilidh Campbell', '', ''],
+      ['504', 'Lily Siecker & Grace Thompson', '', ''],
+      ['505', 'Cher', '', ''],
+    ])!
+
+  it('spots whole names read into First name and splits them, leaving pairs', () => {
+    const { dancers } = program()
+    expect(hasWholeNames(dancers)).toBe(true)
+    expect(splitWholeNames(dancers).map((d) => [d.firstName, d.lastName, d.location])).toEqual([
+      ['Kirsty', 'Mackenzie', 'Calgary, AB'],
+      ['Mary Ann', 'Smith', 'Edmonton'],
+      ['Eilidh', 'Campbell', ''],
+      ['Lily Siecker & Grace Thompson', '', ''],
+      ['Cher', '', ''],
+    ])
+  })
+
+  it('leaves a list with last names, whatever its double first names', () => {
+    const r = parseGrid([['Primary'], ['101', 'Mary Jane', ''], ['102', 'Anna Rose', ''], ['103', 'Ella Grace', ''], ['104', 'Isla', 'Ross']])!
+    expect(hasWholeNames(r.dancers)).toBe(false)
   })
 })
 

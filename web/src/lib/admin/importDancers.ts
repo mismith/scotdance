@@ -102,12 +102,34 @@ function looksLikeProgram(grid: Grid): boolean {
 }
 
 /** "Mary Ann Smith" → first word, then the rest (fix odd ones after import). "Smith, Mary Ann" too. */
-function splitFullName(name: string) {
+export function splitFullName(name: string) {
   const comma = name.indexOf(',')
   if (comma > 0) return { firstName: name.slice(comma + 1).trim(), lastName: name.slice(0, comma).trim() }
   const parts = name.split(' ')
   const firstName = parts.shift() ?? ''
   return { firstName, lastName: parts.join(' ') }
+}
+
+/** "Lily Siecker & Grace Thompson": two dancers, not one name to split. */
+const isPair = (name: string) => /&|\band\b|\+/i.test(name)
+
+/**
+ * Whole names read into First name, with no last names anywhere: a sheet
+ * with one name column that didn't look like one (number, name, an empty
+ * column, location), or a First name column typed in full. Most names, not
+ * all: one "Mary Jane" with no last name is just a name. The same rule as
+ * System admin › Dancer cleanup (functions/src/combinedNames).
+ */
+export function hasWholeNames(dancers: ImportedDancer[]): boolean {
+  const named = dancers.filter((d) => (d.firstName.trim() || d.lastName.trim()) && !isPair(d.firstName))
+  if (named.some((d) => d.lastName.trim())) return false
+  const whole = named.filter((d) => /[ ,]/.test(d.firstName.trim()))
+  return whole.length >= 3 && whole.length >= named.length * 0.6
+}
+
+/** Each whole name split as a combined name column is; pairs left as they are. */
+export function splitWholeNames(dancers: ImportedDancer[]): ImportedDancer[] {
+  return dancers.map((d) => (!d.lastName.trim() && !isPair(d.firstName) ? { ...d, ...splitFullName(d.firstName.trim()) } : d))
 }
 
 function parseProgram(grid: Grid): ImportedDancer[] {

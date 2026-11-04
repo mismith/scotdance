@@ -20,12 +20,15 @@ import {
   gridFromSheet,
   gridFromText,
   guessColumns,
+  hasWholeNames,
   headerRowOf,
   parseGrid,
   parseTable,
   pickSheet,
   planImport,
   planUpdates,
+  splitFullName,
+  splitWholeNames,
   type Grid,
   type RowStatus,
   type TableField,
@@ -141,11 +144,20 @@ const grid = computed(() => sheets.value[sheetIndex.value]?.grid ?? [])
 const columnOverrides = ref<Record<TableField, number> | null>(null)
 // Columns chosen for one sheet don't fit another.
 watch(sheetIndex, () => (columnOverrides.value = null))
-const parsed = computed(() => {
+const read = computed(() => {
   const base = parseGrid(grid.value)
   if (!base || base.layout === 'program' || !columnOverrides.value) return base
   return { ...base, columns: columnOverrides.value, dancers: parseTable(grid.value, headerRowOf(grid.value), columnOverrides.value) }
 })
+// Whole names in First name are split unless unticked (a sheet of
+// choreography titles, say), with one shown so it's clear what changes.
+const wholeNames = computed(() => !!read.value && hasWholeNames(read.value.dancers))
+const splitNames = ref(true)
+const wholeNameExample = computed(() => {
+  const name = read.value?.dancers.find((d) => /[ ,]/.test(d.firstName.trim()))?.firstName.trim() ?? ''
+  return { name, ...splitFullName(name) }
+})
+const parsed = computed(() => (read.value && wholeNames.value && splitNames.value ? { ...read.value, dancers: splitWholeNames(read.value.dancers) } : read.value))
 const columns = computed(() => columnOverrides.value ?? parsed.value?.columns ?? null)
 function setColumn(field: TableField, index: number) {
   const base = columns.value ?? guessColumns(parsed.value?.headers ?? [])
@@ -416,6 +428,23 @@ async function doImport() {
             <li v-if="plan.newCategories.length">New categories: {{ plan.newCategories.join(', ') }}</li>
             <li v-if="plan.newGroups.length">New age groups: {{ plan.newGroups.map((g) => `${g.category} ${g.group}`.trim()).join(', ') }}</li>
           </ul>
+          <button
+            v-if="wholeNames"
+            type="button"
+            role="checkbox"
+            :aria-checked="splitNames"
+            class="press-row focus-inset -mx-4 flex w-[calc(100%+2rem)] items-start gap-3 p-4 text-left"
+            @click="splitNames = !splitNames"
+          >
+            <Checkbox :checked="splitNames" class="mt-0.5" />
+            <span>
+              <span class="block text-base font-medium">Split whole names into first and last name</span>
+              <span class="text-muted-foreground block text-sm">
+                Each name is all in one column. The first word becomes the first name and the rest the last name: “{{ wholeNameExample.name }}” becomes first name
+                “{{ wholeNameExample.firstName }}”, last name “{{ wholeNameExample.lastName }}”.
+              </span>
+            </span>
+          </button>
           <p v-if="plan.counts.error" class="text-destructive text-sm font-medium">
             {{ plan.counts.error }} {{ plan.counts.error === 1 ? 'row needs' : 'rows need' }} fixing and will be skipped. Fix them in the file and import again, or add them by hand afterwards.
           </p>
