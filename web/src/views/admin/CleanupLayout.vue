@@ -11,6 +11,7 @@ const CHECKS = [
   { value: 'admin.venues', label: 'Venues' },
   { value: 'admin.dancers', label: 'Dancers' },
   { value: 'admin.dances', label: 'Dances' },
+  { value: 'admin.capitals', label: 'Capitals' },
 ] as const
 const current = computed(() => CHECKS.find((c) => c.value === route.name)?.value ?? 'admin.venues')
 </script>

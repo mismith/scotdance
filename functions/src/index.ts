@@ -18,6 +18,7 @@ import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
 import { getOnFindStrayDancers } from './strayDancers';
 import { getOnFindCombinedNames } from './combinedNames';
+import { getOnFindCapitals } from './capitals';
 import { getOnChange } from './changed';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
@@ -231,6 +232,12 @@ const onFindCombinedNames = getOnFindCombinedNames(appConfig.db);
 export const findCombinedNames = adminHttps.onCall(async (data, ctx) => {
   await ensureAdmin(ctx, appConfig.db);
   return onFindCombinedNames();
+});
+// System admin › Cleanup › Capitals: text typed in capitals, and dotted competition names.
+const onFindCapitals = getOnFindCapitals(appConfig.db);
+export const findCapitals = adminHttps.onCall(async (data, ctx) => {
+  await ensureAdmin(ctx, appConfig.db);
+  return onFindCapitals();
 });
 
 const competitionsIndexRef = configDatabase.ref(`/${env}/competitions/{competitionId}`);

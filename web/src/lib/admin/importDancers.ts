@@ -1,3 +1,5 @@
+import { allCapitals, isShouting, known, learn, spelled } from '@/lib/capitals'
+
 // Turning an organiser's entry list (Excel, CSV, or cells pasted from a
 // spreadsheet) into dancers, age groups and categories.
 //
@@ -130,6 +132,43 @@ export function hasWholeNames(dancers: ImportedDancer[]): boolean {
 /** Each whole name split as a combined name column is; pairs left as they are. */
 export function splitWholeNames(dancers: ImportedDancer[]): ImportedDancer[] {
   return dancers.map((d) => (!d.lastName.trim() && !isPair(d.firstName) ? { ...d, ...splitFullName(d.firstName.trim()) } : d))
+}
+
+/** Whether a list has names typed in capitals ("MARY MACKENZIE"). */
+export function hasCapitals(dancers: ImportedDancer[]): boolean {
+  return dancers.some((d) => isShouting(d.firstName) || isShouting(d.lastName))
+}
+
+/** What's typed in a competition already, to spell a list in capitals by. */
+export interface ExistingText {
+  names: string[]
+  locations: string[]
+  /** Category and age group names. */
+  groups: string[]
+}
+
+/**
+ * A list's text in capitals written as it's spelled (lib/capitals): the
+ * competition's own spellings first, so a name fixed by hand stays fixed when
+ * the list's imported again, then the rest of the list's. In a list typed in
+ * capitals, every name with no small letters, short ones too ("MIA LEE");
+ * short words in a location are a state or country (VIC, ON), so stay.
+ */
+export function spellCapitals(dancers: ImportedDancer[], existing: ExistingText): ImportedDancer[] {
+  const names = known(learn([...existing.names, ...dancers.flatMap((d) => [d.firstName, d.lastName])]))
+  const locations = known(learn([...existing.locations, ...dancers.map((d) => d.location)]))
+  const groups = known(learn([...existing.groups, ...dancers.flatMap((d) => [d.category, d.group])]))
+  const loud = hasCapitals(dancers)
+  const name = (s: string) => ((loud ? allCapitals(s) : isShouting(s, names)) ? spelled(s, names) : s)
+  const other = (s: string, dict: Map<string, string>) => (isShouting(s, dict) ? spelled(s, dict) : s)
+  return dancers.map((d) => ({
+    ...d,
+    firstName: name(d.firstName),
+    lastName: name(d.lastName),
+    location: isShouting(d.location) ? spelled(d.location, locations) : d.location,
+    category: other(d.category, groups),
+    group: other(d.group, groups),
+  }))
 }
 
 function parseProgram(grid: Grid): ImportedDancer[] {

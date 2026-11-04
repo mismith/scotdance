@@ -4,12 +4,14 @@ import {
   gridFromSheet,
   gridFromText,
   guessColumns,
+  hasCapitals,
   hasWholeNames,
   parseGrid,
   parseTable,
   pickSheet,
   planImport,
   planUpdates,
+  spellCapitals,
   splitGroupTitle,
   splitWholeNames,
   type ExistingCategory,
@@ -226,6 +228,39 @@ describe('hasWholeNames + splitWholeNames', () => {
   it('leaves a list with last names, whatever its double first names', () => {
     const r = parseGrid([['Primary'], ['101', 'Mary Jane', ''], ['102', 'Anna Rose', ''], ['103', 'Ella Grace', ''], ['104', 'Isla', 'Ross']])!
     expect(hasWholeNames(r.dancers)).toBe(false)
+  })
+})
+
+describe('hasCapitals + spellCapitals', () => {
+  // As ECHDA's lists come.
+  const program = () =>
+    parseGrid([
+      ['PREMIER 12 & UNDER 14 YEARS'],
+      ['301', 'MIA', 'LEE', 'CALGARY, AB'],
+      ['302', 'KYLEIGH-ANN', 'MCGILL', 'VIC'],
+      ['303', 'MACKENZIE', "O'HARE", ''],
+    ])!
+  const none = { names: [], locations: [], groups: [] }
+
+  it('spots names in capitals and writes everything as it’s spelled', () => {
+    const { dancers } = program()
+    expect(hasCapitals(dancers)).toBe(true)
+    expect(spellCapitals(dancers, none).map((d) => [d.firstName, d.lastName, d.location, d.category, d.group])).toEqual([
+      ['Mia', 'Lee', 'Calgary, AB', 'Premier', '12 & Under 14 Years'],
+      ['Kyleigh-Ann', 'McGill', 'VIC', 'Premier', '12 & Under 14 Years'],
+      ['Mackenzie', "O'Hare", '', 'Premier', '12 & Under 14 Years'],
+    ])
+  })
+
+  it('spells as the competition already has it, so a name fixed by hand stays fixed', () => {
+    const [, , third] = spellCapitals(program().dancers, { names: ['MacKenzie'], locations: [], groups: ['Premier'] })
+    expect(third.firstName).toBe('MacKenzie')
+  })
+
+  it('leaves a list typed as it’s spelled alone', () => {
+    const r = parseGrid([['Primary'], ['101', 'Mia', 'Lee', 'Calgary, AB'], ['102', 'AJ', 'Ross', 'SCO']])!
+    expect(hasCapitals(r.dancers)).toBe(false)
+    expect(spellCapitals(r.dancers, none)).toEqual(r.dancers)
   })
 })
 

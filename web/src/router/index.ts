@@ -213,6 +213,7 @@ const routes: RouteRecordRaw[] = [
           { path: 'venues', name: 'admin.venues', component: () => import('@/views/admin/Venues.vue') },
           { path: 'dancers', name: 'admin.dancers', component: () => import('@/views/admin/DancerCleanup.vue') },
           { path: 'dances', name: 'admin.dances', component: () => import('@/views/admin/DanceCleanup.vue') },
+          { path: 'capitals', name: 'admin.capitals', component: () => import('@/views/admin/CapitalsCleanup.vue') },
         ],
       },
       { path: 'users/:userId?', name: 'admin.users', component: () => import('@/views/admin/Users.vue') },

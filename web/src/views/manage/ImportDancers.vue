@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { until, useIntervalFn, useMediaQuery, useNow } from '@vueuse/core'
 import { onValue } from 'firebase/database'
-import { ChevronDown, ClipboardPaste, Download, FileSpreadsheet, Inbox, RotateCcw } from '@lucide/vue'
+import { CaseSensitive, ChevronDown, ClipboardPaste, Download, FileSpreadsheet, Inbox, RotateCcw } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import Checkbox from '@/components/ui/Checkbox.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
@@ -20,6 +20,7 @@ import {
   gridFromSheet,
   gridFromText,
   guessColumns,
+  hasCapitals,
   hasWholeNames,
   headerRowOf,
   parseGrid,
@@ -27,6 +28,7 @@ import {
   pickSheet,
   planImport,
   planUpdates,
+  spellCapitals,
   splitFullName,
   splitWholeNames,
   type Grid,
@@ -149,15 +151,34 @@ const read = computed(() => {
   if (!base || base.layout === 'program' || !columnOverrides.value) return base
   return { ...base, columns: columnOverrides.value, dancers: parseTable(grid.value, headerRowOf(grid.value), columnOverrides.value) }
 })
+// Text in capitals is always written as it's spelled, with one shown so
+// it's clear what changes (and a word to type it that way next time).
+const capitals = computed(() => !!read.value && hasCapitals(read.value.dancers))
+const spelledList = computed(() =>
+  read.value
+    ? spellCapitals(read.value.dancers, {
+        names: m.dancers.value.flatMap((d) => [d.firstName ?? '', d.lastName ?? '']),
+        locations: m.dancers.value.map((d) => d.location ?? ''),
+        groups: [...m.categories.value.map((c) => c.name ?? ''), ...m.groups.value.map((g) => g.name ?? '')],
+      })
+    : [],
+)
+const capitalsExample = computed(() => {
+  const i = read.value?.dancers.findIndex((d) => d.firstName.trim() && d.lastName.trim() && hasCapitals([d])) ?? -1
+  const name = (d?: { firstName: string; lastName: string }) => `${d?.firstName ?? ''} ${d?.lastName ?? ''}`.trim()
+  return i < 0 ? null : { typed: name(read.value?.dancers[i]), spelled: name(spelledList.value[i]) }
+})
 // Whole names in First name are split unless unticked (a sheet of
 // choreography titles, say), with one shown so it's clear what changes.
 const wholeNames = computed(() => !!read.value && hasWholeNames(read.value.dancers))
 const splitNames = ref(true)
 const wholeNameExample = computed(() => {
-  const name = read.value?.dancers.find((d) => /[ ,]/.test(d.firstName.trim()))?.firstName.trim() ?? ''
+  const name = spelledList.value.find((d) => /[ ,]/.test(d.firstName.trim()))?.firstName.trim() ?? ''
   return { name, ...splitFullName(name) }
 })
-const parsed = computed(() => (read.value && wholeNames.value && splitNames.value ? { ...read.value, dancers: splitWholeNames(read.value.dancers) } : read.value))
+const parsed = computed(() =>
+  read.value ? { ...read.value, dancers: wholeNames.value && splitNames.value ? splitWholeNames(spelledList.value) : spelledList.value } : read.value,
+)
 const columns = computed(() => columnOverrides.value ?? parsed.value?.columns ?? null)
 function setColumn(field: TableField, index: number) {
   const base = columns.value ?? guessColumns(parsed.value?.headers ?? [])
@@ -448,6 +469,16 @@ async function doImport() {
               </span>
             </span>
           </button>
+          <div v-if="capitals" class="flex items-start gap-3">
+            <CaseSensitive class="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
+            <p>
+              <span class="block text-base font-medium">Names in capitals are saved as they’re spelled</span>
+              <span class="text-muted-foreground block text-sm">
+                <template v-if="capitalsExample">“{{ capitalsExample.typed }}” is saved as “{{ capitalsExample.spelled }}”. </template>Capitals can’t tell MacKenzie
+                from Mackenzie, so check the names below, and next time please type them as they’re spelled.
+              </span>
+            </p>
+          </div>
           <p v-if="plan.counts.error" class="text-destructive text-sm font-medium">
             {{ plan.counts.error }} {{ plan.counts.error === 1 ? 'row needs' : 'rows need' }} fixing and will be skipped. Fix them in the file and import again, or add them by hand afterwards.
           </p>
