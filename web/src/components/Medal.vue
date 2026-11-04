@@ -90,7 +90,7 @@ const label = computed(() => {
          opens their day, which lists every dance). -->
     <span
       v-if="dance"
-      class="hud pointer-events-none invisible absolute bottom-full left-1/2 z-20 mb-1.5 -translate-x-1/2 rounded-lg px-2 py-1 text-xs leading-tight font-semibold tracking-normal whitespace-nowrap opacity-0 transition-opacity group-hover/medal:visible group-hover/medal:opacity-100 group-hover/medal:delay-200"
+      class="hud pointer-events-none invisible absolute bottom-full left-1/2 z-20 mb-1.5 -translate-x-1/2 rounded-lg px-2 py-1 text-xs leading-tight font-semibold tracking-normal whitespace-nowrap opacity-0 group-hover/medal:visible group-hover/medal:opacity-100"
       aria-hidden="true"
     >
       {{ label }}
