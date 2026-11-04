@@ -224,6 +224,9 @@ const missingWithResults = computed(() => {
 // Rows as a table where there's room, else as cards (nothing scrolls sideways).
 const wide = useMediaQuery('(min-width: 640px)')
 const nameOf = (d: { source: { firstName: string; lastName: string } }) => `${d.source.firstName} ${d.source.lastName}`.trim() || '–'
+// Split whole names show where they split: the last name tinted, as in Dancer cleanup.
+const splitShown = (d: { source: { lastName: string } }) => wholeNames.value && splitNames.value && !!d.source.lastName
+const lastNameChip = 'bg-primary/10 text-primary ms-[0.3em] rounded px-1'
 const groupOf = (d: { source: { category: string; group: string } }) => `${d.source.category} ${d.source.group}`.trim() || '–'
 
 // --- Step 3: saving it, all at once
@@ -469,7 +472,8 @@ async function doImport() {
                 <td class="px-3 py-2"><span :class="['rounded-full px-2 py-0.5 text-sm font-semibold whitespace-nowrap', STATUS[d.status].cls]">{{ STATUS[d.status].label }}</span></td>
                 <td class="px-3 py-2 font-mono font-semibold">{{ d.source.number || '–' }}</td>
                 <td class="px-3 py-2">
-                  {{ nameOf(d) }}
+                  <template v-if="splitShown(d)">{{ d.source.firstName }}<span :class="lastNameChip">{{ d.source.lastName }}</span></template>
+                  <template v-else>{{ nameOf(d) }}</template>
                   <p v-for="e in d.errors" :key="e" class="text-destructive text-sm font-medium">{{ e }}</p>
                   <p v-for="(change, field) in d.changes" :key="field" class="text-muted-foreground text-sm">
                     {{ field }}: <span class="line-through">{{ change[0] || 'empty' }}</span> → {{ change[1] || 'empty' }}
@@ -487,7 +491,10 @@ async function doImport() {
           <li v-for="d in shownRows.slice(0, 500)" :key="d.source.row" class="space-y-1 px-4 py-3">
             <div class="flex items-center gap-2">
               <NumberTile :num="d.source.number" />
-              <span class="min-w-0 flex-1 truncate text-base font-medium">{{ nameOf(d) }}</span>
+              <span class="min-w-0 flex-1 truncate text-base font-medium">
+                <template v-if="splitShown(d)">{{ d.source.firstName }}<span :class="lastNameChip">{{ d.source.lastName }}</span></template>
+                <template v-else>{{ nameOf(d) }}</template>
+              </span>
               <span :class="['rounded-full px-2 py-0.5 text-sm font-semibold whitespace-nowrap', STATUS[d.status].cls]">{{ STATUS[d.status].label }}</span>
             </div>
             <p class="text-muted-foreground text-sm">{{ [groupOf(d), d.source.location, `Row ${d.source.row}`].filter(Boolean).join(' · ') }}</p>

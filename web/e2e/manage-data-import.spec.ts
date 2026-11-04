@@ -158,6 +158,41 @@ test('pasted cells; rows that need fixing are shown and skipped', async ({ page 
   expect(await dancersNow()).toEqual(['10 Eilidh Campbell [Premier 12 & Under 14]'])
 })
 
+test('whole names in one column are split, shown first and untickable; pairs stay as they are', async ({ page }) => {
+  await page.goto(importPage())
+  await page.getByRole('textbox').fill(
+    ['Novice 10 & Under 12 Years\t\t\t', '501\tKirsty Mackenzie\t\tCalgary, AB', '502\tSmith, Mary Ann\t\tEdmonton', '503\tEilidh Campbell\t\t', '504\tLily Siecker & Grace Thompson\t\t'].join('\n'),
+  )
+  await page.getByRole('button', { name: 'Use these cells' }).click()
+  const split = page.getByRole('checkbox', { name: /Split whole names into first and last name/ })
+  await expect(split).toHaveAttribute('aria-checked', 'true')
+  await expect(split).toContainText('“Kirsty Mackenzie” becomes first name “Kirsty”, last name “Mackenzie”')
+  await page.getByRole('button', { name: 'Import 4 dancers' }).click()
+  await expect(page.getByRole('status').getByText('Imported: 4 added')).toBeVisible()
+  const stored = Object.values((await dbGet<Record<string, Dancer>>(data('dancers'))) ?? {}).sort((a, b) => a.number.localeCompare(b.number))
+  expect(stored.map((d) => [d.firstName, d.lastName ?? null])).toEqual([
+    ['Kirsty', 'Mackenzie'],
+    ['Mary Ann', 'Smith'],
+    ['Eilidh', 'Campbell'],
+    ['Lily Siecker & Grace Thompson', null],
+  ])
+})
+
+test('unticked, whole names import as typed', async ({ page }) => {
+  await page.goto(importPage())
+  await page.getByRole('textbox').fill(['Choreography\t\t\t', '601\tWalking on the Waves\t\tBC', '602\tCeltic Sails\t\tNS', '603\tSky Dancers\t\tAB'].join('\n'))
+  await page.getByRole('button', { name: 'Use these cells' }).click()
+  await page.getByRole('checkbox', { name: /Split whole names into first and last name/ }).click()
+  await page.getByRole('button', { name: 'Import 3 dancers' }).click()
+  await expect(page.getByRole('status').getByText('Imported: 3 added')).toBeVisible()
+  const stored = Object.values((await dbGet<Record<string, Dancer>>(data('dancers'))) ?? {}).map((d) => [d.firstName, d.lastName ?? null])
+  expect(stored.sort()).toEqual([
+    ['Celtic Sails', null],
+    ['Sky Dancers', null],
+    ['Walking on the Waves', null],
+  ])
+})
+
 test('a file that isn’t a spreadsheet says so', async ({ page }) => {
   await page.goto(importPage())
   await page.locator('input[type=file]').setInputFiles({ name: 'entries.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: Buffer.from('not really a spreadsheet') })
