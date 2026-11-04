@@ -103,24 +103,34 @@ const byYear = computed(() => {
   })
 })
 
+// Every competition's placings, all at once (each is a few small reads, and
+// fetchEntrySummary keeps them), so a long record has ribbons all the way back.
 const summaries = ref<Record<string, EntrySummary[]>>({})
 watch(
   rows,
-  async (list) => {
-    for (const r of list.slice(0, 20)) {
+  (list) => {
+    for (const r of list) {
       if (summaries.value[r.competitionId]) continue
-      const got = await Promise.all(r.entryIds.map((id) => fetchEntrySummary(r.competitionId, id)))
-      summaries.value = { ...summaries.value, [r.competitionId]: got.filter((x): x is EntrySummary => !!x) }
+      Promise.all(r.entryIds.map((id) => fetchEntrySummary(r.competitionId, id))).then((got) => {
+        summaries.value = { ...summaries.value, [r.competitionId]: got.filter((x): x is EntrySummary => !!x) }
+      })
     }
   },
   { immediate: true },
 )
 
+// Their best three, and how many more there are, so a shorter row never
+// passes for the whole story.
 function medals(cid: string) {
   const list = summaries.value[cid] ?? []
   const overall = list.map((s) => s.overall).find(Boolean)
-  const best = list.flatMap((s) => s.placings).sort((a, b) => a.place - b.place).slice(0, 3)
-  return { overall, best, groups: list.map((s) => s.groupName).filter(Boolean) as string[] }
+  const placings = list.flatMap((s) => s.placings).sort((a, b) => a.place - b.place)
+  return {
+    overall,
+    best: placings.slice(0, 3),
+    more: Math.max(0, placings.length - 3),
+    groups: list.map((s) => s.groupName).filter(Boolean) as string[],
+  }
 }
 </script>
 
@@ -194,10 +204,16 @@ function medals(cid: string) {
                   >
                     <NumberCard v-for="n in r.numbers" :key="n" :number="n" :color="color" size="xs" class="mr-1.5" />
                     <Medal v-for="m in medals(r.competitionId).best" :key="m.danceId" :place="m.place" :tied="m.tied" :dance="m.name" />
-                    <span v-if="medals(r.competitionId).overall" class="ml-1.5 inline-flex items-center gap-1.5 border-l pl-2.5">
-                      <Medal :place="medals(r.competitionId).overall!.place" dance="Overall" />
-                      <span class="text-muted-foreground text-sm font-semibold" aria-hidden="true">Overall</span>
+                    <span v-if="medals(r.competitionId).more" class="text-muted-foreground ml-0.5 text-sm font-semibold tabular-nums">
+                      +{{ medals(r.competitionId).more }}<span class="sr-only"> more placing{{ medals(r.competitionId).more === 1 ? '' : 's' }}</span>
                     </span>
+                    <Medal
+                      v-if="medals(r.competitionId).overall"
+                      :place="medals(r.competitionId).overall!.place"
+                      :tied="medals(r.competitionId).overall!.tied"
+                      dance="Overall"
+                      trophy
+                    />
                   </span>
                 </span>
                 <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />

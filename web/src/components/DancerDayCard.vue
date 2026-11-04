@@ -47,7 +47,7 @@ const lg = computed(() => props.size === 'lg')
 
 const sub = computed(() => (multi.value ? `${shown.value.length} age groups` : (day.value.group?.fullName ?? '')))
 
-// What's pinned on so far: callbacks, a ribbon per placing (Overall last),
+// What's pinned on so far: callbacks, a ribbon per placing (Overall last, as a trophy),
 // championship points, and what's still to come in.
 const dances = computed(() => shown.value.flatMap((d) => d.dances.map((s) => ({ d, s }))))
 const won = computed(() => dances.value.filter(({ s }) => s.state === 'placed' && s.place != null))
@@ -170,16 +170,15 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
             :dance="s.dance.fullName || s.dance.name"
             size="lg"
           />
-          <span v-if="overall" :class="['inline-flex items-center gap-1.5', (won.length || calledBack != null) && 'ml-2 border-l pl-3']">
-            <Medal
-              :place="overall.s!.place"
-              :tied="overall.s!.tied"
-              :fresh="fresh === `${overall.d.dancer.id}:overall`"
-              dance="Overall"
-              size="lg"
-            />
-            <span class="text-muted-foreground text-sm font-semibold" aria-hidden="true">Overall</span>
-          </span>
+          <Medal
+            v-if="overall"
+            :place="overall.s!.place"
+            :tied="overall.s!.tied"
+            :fresh="fresh === `${overall.d.dancer.id}:overall`"
+            dance="Overall"
+            size="lg"
+            trophy
+          />
           <span v-if="points" class="bg-blue-paper text-primary ml-1.5 inline-flex h-8 items-center rounded-full px-3 text-sm font-semibold">
             {{ points === 1 ? 'Championship point' : `${points} championship points` }}
           </span>
@@ -253,6 +252,7 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
                 v-if="d.overall.state !== 'later'"
                 :status="d.overall"
                 :fresh="fresh === `${d.dancer.id}:overall`"
+                trophy
               />
               <span v-else class="text-muted-foreground text-sm">After all dances</span>
             </RouterLink>

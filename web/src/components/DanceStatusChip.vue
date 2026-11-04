@@ -6,7 +6,7 @@ import type { DanceStatus } from '@/lib/dancerDay'
 import { platformLabel } from '@/lib/schedule'
 
 // A dance's state in words. Never colour alone: every chip has a word.
-const props = defineProps<{ status: DanceStatus; fresh?: boolean }>()
+const props = defineProps<{ status: DanceStatus; fresh?: boolean; trophy?: boolean }>()
 
 const platform = computed(() => platformLabel(props.status.slot?.platformName) || null)
 </script>
@@ -18,6 +18,7 @@ const platform = computed(() => platformLabel(props.status.slot?.platformName) |
     :tied="status.tied"
     :fresh="fresh"
     :dance="status.dance.fullName || status.dance.name"
+    :trophy="trophy"
   />
   <!-- A championship point is a result to be proud of: marked like one, not
        greyed out with the misses. -->
