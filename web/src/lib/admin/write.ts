@@ -44,9 +44,31 @@ export function newKey(): string {
 const clean = (value: unknown) => (value === undefined || value === '' ? null : value)
 
 /**
+ * Entries one save may touch. The database refuses a save that would set off
+ * more than 1,000 functions, and each entry sets off up to four (a staff
+ * member: its judge and piper profiles, staff sync, the changed stamp).
+ */
+const BATCH = 200
+
+/** The paths split into saves of at most BATCH entries each, an entry's paths kept together. */
+function batches(paths: Record<string, unknown>): Array<Record<string, unknown>> {
+  const byEntry = new Map<string, Record<string, unknown>>()
+  for (const [path, value] of Object.entries(paths)) {
+    const entry = path.split('/').slice(0, 5).join('/')
+    byEntry.set(entry, { ...byEntry.get(entry), [path]: value })
+  }
+  const entries = [...byEntry.values()]
+  const out: Array<Record<string, unknown>> = []
+  for (let i = 0; i < entries.length; i += BATCH) out.push(Object.assign({}, ...entries.slice(i, i + BATCH)))
+  return out
+}
+
+/**
  * Apply a multi-path update, with paths relative to the data namespace
  * (e.g. `competitions:data/{id}/dancers/{dancerId}/firstName`). All paths in
- * one call save together or not at all.
+ * one call save together or not at all, except past BATCH entries (a big
+ * import, a cleanup): those save a batch at a time, so a failure part way
+ * leaves the batches before it saved.
  */
 export async function write(updates: Record<string, unknown>): Promise<void> {
   if (!connected.value) {
@@ -60,7 +82,7 @@ export async function write(updates: Record<string, unknown>): Promise<void> {
   saveState.pending += 1
   saveState.error = null
   try {
-    await update(dbRef(database), prefixed)
+    for (const batch of batches(prefixed)) await update(dbRef(database), batch)
     saveState.lastSavedAt = Date.now()
   } catch (e) {
     console.warn('[admin] save failed', e, Object.keys(updates))

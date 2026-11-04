@@ -63,6 +63,15 @@ describe('write', () => {
     expect(saveState.error).toBe('You’re offline. Changes can’t be saved until you’re back online.')
   })
 
+  it('saves hundreds of entries a batch at a time, each entry whole, so the database doesn’t refuse them', async () => {
+    const updates: Record<string, unknown> = {}
+    for (let i = 0; i < 450; i++) Object.assign(updates, { [`competitions:data/c1/dancers/d${i}/firstName`]: 'Ava', [`competitions:data/c1/dancers/d${i}/lastName`]: 'Reid' })
+    await write(updates)
+    expect(sent.map((b) => Object.keys(b).length)).toEqual([400, 400, 100])
+    expect(sent[0][`${NS}/competitions:data/c1/dancers/d199/lastName`]).toBe('Reid')
+    expect(sent[1][`${NS}/competitions:data/c1/dancers/d200/firstName`]).toBe('Ava')
+  })
+
   it('reports a failed save and lets the caller know', async () => {
     failWith = new Error('PERMISSION_DENIED: Permission denied')
     await expect(write({ a: 1 })).rejects.toThrow('PERMISSION_DENIED')
