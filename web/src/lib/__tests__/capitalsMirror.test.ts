@@ -24,10 +24,11 @@ const typed = [
   '16 & UNDER 18 YEARS',
   'E.C.H.D.A 59th OPEN CHAMPIONSHIP',
   'SDTA (ON)',
+  'H. THIBAULT, S. REILLY',
   'Mary MACKENZIE',
   'McLeod',
 ]
-const elsewhere = ['Mackenzie Reid', 'MacKenzie', 'Mackenzie', 'Mia Lee', 'ECHDA January Competition', 'SDTA Milton', 'Niagara-on-the-Lake']
+const elsewhere = ['Mackenzie Reid', 'MacKenzie', 'Mackenzie', 'Mia Lee', 'ECHDA January Competition', 'SDTA Milton', 'Niagara-on-the-Lake', "Andrew's", 'Carry on Dancing']
 
 describe('the app’s capitals mirror the server’s', () => {
   const dicts = [app.known(app.learn(elsewhere))]

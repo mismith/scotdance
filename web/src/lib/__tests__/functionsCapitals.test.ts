@@ -54,6 +54,8 @@ describe('tidyCapitals', () => {
   it('takes short words only from the same kind of thing', () => {
     expect(tidyCapitals('SDTA (ON)', spelled('SDTA Milton'), spelled('Dancing on the Green'))).toBe('SDTA (ON)')
     expect(tidyCapitals('ED LEE', spelled('Ed Lee'))).toBe('Ed Lee')
+    expect(tidyCapitals('SDTA (ON)', spelled('SDTA Milton', 'Carry on Dancing'))).toBe('SDTA (ON)')
+    expect(tidyCapitals('H. THIBAULT, S. REILLY', spelled("Andrew's", 'Thibault', 'Reilly'))).toBe('H. Thibault, S. Reilly')
   })
 })
 

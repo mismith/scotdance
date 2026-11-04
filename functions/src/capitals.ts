@@ -91,10 +91,11 @@ export function spelled(s: string, ...dictionaries: Known[]): string {
     first = false;
     if (/^\d+(st|nd|rd|th)$/i.test(w)) return w.toLowerCase();
     if (!/\p{L}/u.test(w)) return w;
-    // Short ones (ON, AB, A Left) only as typed in the same kind of thing.
+    // Short ones (ON, AB, A Left) only as typed in the same kind of thing,
+    // and with a capital: Ed and Jo, but not "on" or "s" for ON and S.
     for (const d of w.length <= 2 ? dictionaries.slice(0, 1) : dictionaries) {
       const form = d.get(w.toLowerCase());
-      if (form) return isFirst && SMALL.has(form) ? form.charAt(0).toUpperCase() + form.slice(1) : form;
+      if (form && (w.length > 2 || /\p{Lu}/u.test(form))) return isFirst && SMALL.has(form) ? form.charAt(0).toUpperCase() + form.slice(1) : form;
     }
     return ruleCase(w, isFirst);
   });
