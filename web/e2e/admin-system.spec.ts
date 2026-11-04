@@ -355,6 +355,66 @@ test('Backfills: rebuilding the published list and search reports back', async (
   }
 })
 
+// A competition that typed each whole name into First name, as Dancer cleanup lists them.
+async function seedWholeNames() {
+  const comp = await seedCompetition({ dancersPerGroup: 1 })
+  const dancers = await dbGet<Record<string, { firstName: string; lastName: string }>>(`competitions:data/${comp.id}/dancers`)
+  for (const [id, d] of Object.entries(dancers)) await dbSet(`competitions:data/${comp.id}/dancers/${id}`, { ...d, firstName: `${d.firstName} ${d.lastName}`, lastName: null })
+  return { comp, dancers }
+}
+
+test('Dancer cleanup: splits whole names in First name, leaving out any unticked, and Undo puts them back', async ({ page }) => {
+  test.setTimeout(120_000)
+  const { comp, dancers } = await seedWholeNames()
+  const [kept, split] = [`${comp.id}-dancer-0-0`, `${comp.id}-dancer-1-0`]
+  const whole = (id: string) => `${dancers[id].firstName} ${dancers[id].lastName}`
+  const sys = await systemAdmin()
+  try {
+    await signIn(page, sys.email)
+    await page.goto('/admin/cleanup/dancers')
+    const row = page.getByRole('listitem').filter({ hasText: comp.name }).first()
+    await expect(row).toContainText('11 names', { timeout: 90_000 })
+    await row.getByRole('checkbox', { name: `Split ${whole(kept)}` }).click()
+    await expect(row).toContainText('1 left as is')
+
+    await row.getByRole('button', { name: 'Split', exact: true }).click()
+    await expect(page.getByRole('listitem').filter({ hasText: comp.name })).toHaveCount(0)
+    await expect.poll(() => dbGet(`competitions:data/${comp.id}/dancers/${split}`)).toMatchObject({ firstName: dancers[split].firstName, lastName: dancers[split].lastName })
+    expect(await dbGet(`competitions:data/${comp.id}/dancers/${kept}/firstName`)).toBe(whole(kept))
+
+    await page.getByRole('button', { name: 'Undo' }).click()
+    await expect.poll(() => dbGet(`competitions:data/${comp.id}/dancers/${split}/firstName`)).toBe(whole(split))
+    expect(await dbGet(`competitions:data/${comp.id}/dancers/${split}/lastName`)).toBeNull()
+  } finally {
+    await dbRemove(`users:permissions/${sys.id}`)
+    await removeCompetition(comp.id)
+  }
+})
+
+test('Dancer cleanup: a competition whose names are right as typed is left as is until brought back', async ({ page }) => {
+  test.setTimeout(120_000)
+  const { comp } = await seedWholeNames()
+  const sys = await systemAdmin()
+  try {
+    await signIn(page, sys.email)
+    await page.goto('/admin/cleanup/dancers')
+    const row = page.getByRole('listitem').filter({ hasText: comp.name }).first()
+    await expect(row).toContainText('11 names', { timeout: 90_000 })
+    await row.getByRole('button', { name: 'Leave as is' }).click()
+    await expect.poll(() => dbGet(`dancers:namesAsTyped/${comp.id}`)).toBe(true)
+    await expect(page.getByRole('listitem').filter({ hasText: comp.name })).toHaveCount(0)
+
+    await page.getByRole('button', { name: /Names left as is/ }).click()
+    await page.getByRole('listitem').filter({ hasText: comp.name }).getByRole('button', { name: 'Bring back' }).click()
+    await expect.poll(() => dbGet(`dancers:namesAsTyped/${comp.id}`)).toBeNull()
+    await expect(page.getByRole('listitem').filter({ hasText: comp.name }).getByRole('button', { name: 'Leave as is' })).toBeVisible()
+  } finally {
+    await dbRemove(`dancers:namesAsTyped/${comp.id}`)
+    await dbRemove(`users:permissions/${sys.id}`)
+    await removeCompetition(comp.id)
+  }
+})
+
 test('Submissions: waiting ones first, approved ones folded away, ⌘Enter to approve', async ({ page }) => {
   const sys = await systemAdmin()
   const [waiting, done] = [uid('sub'), uid('sub')]
