@@ -36,7 +36,6 @@ test.describe('old routes redirect', () => {
     ['/judges/abc/competitions', /\/judges\/abc\/info$/],
     ['/pipers/abc/results', /\/pipers\/abc\/info$/],
     ['/venues/abc/results', /\/venues\/abc\/info$/],
-    ['/admin/info/whatever', /\/admin\/tools$/],
   ] as const) {
     test(`${from} redirects`, async ({ page }) => {
       const warnings: string[] = []

@@ -105,7 +105,7 @@ test('a system admin manages any competition, and a missing one says so', async 
     await expect(page.getByText('Competition not found')).toBeVisible()
 
     await page.goto('/admin')
-    for (const name of ['Submissions', 'Users', 'Tools']) await expect(page.getByRole('main').getByRole('link', { name: new RegExp(name) })).toBeVisible()
+    for (const name of ['Submissions', 'Users', 'Backfills']) await expect(page.getByRole('main').getByRole('link', { name: new RegExp(name) })).toBeVisible()
   } finally {
     await Promise.all([removeCompetition(comp.id), dbRemove(`users:permissions/${id}`)])
   }

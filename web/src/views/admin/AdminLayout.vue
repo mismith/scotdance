@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { BrushCleaning, CalendarSearch, ChevronRight, Inbox, Landmark, Lock, LogIn, School, UserCog, Wrench } from '@lucide/vue'
+import { BrushCleaning, CalendarSearch, ChevronRight, Inbox, Landmark, Lock, LogIn, RefreshCw, Smartphone, UserCog } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import SidebarBranch from '@/components/nav/SidebarBranch.vue'
 import SidebarLink from '@/components/nav/SidebarLink.vue'
@@ -34,15 +34,28 @@ interface AdminSection {
   blurb: string
   icon: typeof Inbox
 }
-const SECTIONS: AdminSection[] = [
-  { route: 'admin.submissions', title: 'Submissions', blurb: 'Review and approve new competitions', icon: Inbox },
-  { route: 'admin.organisations', title: 'Organisations', blurb: 'Every organisation, and which competitions they run', icon: Landmark },
-  { route: 'admin.known', title: 'Known competitions', blurb: 'The governing bodies’ lists, offered when adding a competition', icon: CalendarSearch },
-  { route: 'admin.venues', title: 'Venues', blurb: 'Merge venues typed in more than one way', icon: School },
-  { route: 'admin.dancers', title: 'Dancer cleanup', blurb: 'Leftover entries and whole names in First name', icon: BrushCleaning },
-  { route: 'admin.users', title: 'Users', blurb: 'Accounts and who can manage what', icon: UserCog },
-  { route: 'admin.tools', title: 'Tools', blurb: 'App versions, search and profile rebuilds', icon: Wrench },
+// Under a heading each: what comes in to review, who and what's on the
+// app, the data worked out from competitions, and the apps themselves.
+const GROUPS: Array<{ title: string; sections: AdminSection[] }> = [
+  { title: 'Review', sections: [{ route: 'admin.submissions', title: 'Submissions', blurb: 'Review and approve new competitions', icon: Inbox }] },
+  {
+    title: 'Directory',
+    sections: [
+      { route: 'admin.organisations', title: 'Organisations', blurb: 'Every organisation, and which competitions they run', icon: Landmark },
+      { route: 'admin.users', title: 'Users', blurb: 'Accounts and who can manage what', icon: UserCog },
+      { route: 'admin.known', title: 'Known competitions', blurb: 'The governing bodies’ lists, offered when adding a competition', icon: CalendarSearch },
+    ],
+  },
+  {
+    title: 'Data',
+    sections: [
+      { route: 'admin.cleanup', title: 'Cleanup', blurb: 'Venues typed more than one way, leftover entries, whole names in First name', icon: BrushCleaning },
+      { route: 'admin.backfills', title: 'Backfills', blurb: 'Search, profiles, alerts and map positions', icon: RefreshCw },
+    ],
+  },
+  { title: 'App', sections: [{ route: 'admin.versions', title: 'Versions', blurb: 'The versions people are asked to update to', icon: Smartphone }] },
 ]
+const SECTIONS = GROUPS.flatMap((g) => g.sections)
 
 const authReady = ref(false)
 onMounted(async () => {
@@ -97,18 +110,21 @@ const barSubtitle = computed(() => (isHome.value || exit.value.label === 'System
         <template v-else>
           <div v-if="isHome" class="mx-auto max-w-3xl space-y-4 p-4">
             <h1 class="text-display">System admin</h1>
-            <ul class="rows-engraved -mx-4 [--inset:3.25rem] [--inset-end:1rem]">
-              <li v-for="s in SECTIONS" :key="s.route">
-                <RouterLink :to="{ name: s.route }" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
-                  <component :is="s.icon" class="text-primary size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
-                  <span class="min-w-0 flex-1">
-                    <span class="block text-base font-semibold">{{ s.title }}</span>
-                    <span class="text-muted-foreground block text-sm">{{ s.blurb }}</span>
-                  </span>
-                  <ChevronRight class="text-muted-foreground size-5" />
-                </RouterLink>
-              </li>
-            </ul>
+            <section v-for="g in GROUPS" :key="g.title" class="space-y-1 pt-2">
+              <h2 class="text-muted-foreground text-sm font-semibold">{{ g.title }}</h2>
+              <ul class="rows-engraved -mx-4 [--inset:3.25rem] [--inset-end:1rem]">
+                <li v-for="s in g.sections" :key="s.route">
+                  <RouterLink :to="{ name: s.route }" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
+                    <component :is="s.icon" class="text-primary size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
+                    <span class="min-w-0 flex-1">
+                      <span class="block text-base font-semibold">{{ s.title }}</span>
+                      <span class="text-muted-foreground block text-sm">{{ s.blurb }}</span>
+                    </span>
+                    <ChevronRight class="text-muted-foreground size-5" />
+                  </RouterLink>
+                </li>
+              </ul>
+            </section>
           </div>
           <RouterView v-else />
         </template>
@@ -116,7 +132,10 @@ const barSubtitle = computed(() => (isHome.value || exit.value.label === 'System
     </div>
     <!-- Wide screens: the sections, nested under System admin in the sidebar. -->
     <SidebarBranch v-if="sidebar && access === 'ok'" under="admin">
-      <SidebarLink v-for="s in SECTIONS" :key="s.route" :to="{ name: s.route }" :icon="s.icon" :label="s.title" :state="section?.route === s.route ? 'current' : null" />
+      <template v-for="g in GROUPS" :key="g.title">
+        <p class="text-muted-foreground px-3 pt-2 text-xs font-semibold">{{ g.title }}</p>
+        <SidebarLink v-for="s in g.sections" :key="s.route" :to="{ name: s.route }" :icon="s.icon" :label="s.title" :state="section?.route === s.route ? 'current' : null" />
+      </template>
     </SidebarBranch>
   </div>
 </template>

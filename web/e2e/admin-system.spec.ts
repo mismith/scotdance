@@ -328,12 +328,12 @@ test('Submissions: one with nothing to look at is approved as it arrives; one th
   }
 })
 
-test('Tools: rebuilding the published list and search reports back', async ({ page }) => {
+test('Backfills: rebuilding the published list and search reports back', async ({ page }) => {
   test.setTimeout(120_000)
   const sys = await systemAdmin()
   try {
     await signIn(page, sys.email)
-    await page.goto('/admin/tools')
+    await page.goto('/admin/backfills')
     for (const [label, result] of [
       ['Published and listed competitions lists', /^Done: \d+ published, \d+ listed\.$/],
       ['Competitions search', /^Done: \d+ indexed\.$/],
@@ -405,7 +405,7 @@ test('Dancer cleanup: lists empty and leftover entries in a past competition, re
   const sys = await systemAdmin()
   try {
     await signIn(page, sys.email)
-    await page.goto('/admin/dancers')
+    await page.goto('/admin/cleanup/dancers')
     const row = page.getByRole('listitem').filter({ hasText: comp.name }).first()
     await expect(row).toContainText('3 entries, 1 of them copies', { timeout: 90_000 })
     await expect(row).toContainText(`${first.firstName} ${first.lastName} · No number or age group. Entered as ${first.number}`)

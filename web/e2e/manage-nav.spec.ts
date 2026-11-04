@@ -91,15 +91,13 @@ test('a deep Manage link opens the item, and survives a reload', async ({ page }
   }
 })
 
-test('old admin links land in Manage and System admin', async ({ page }) => {
+test('old admin links land in Manage', async ({ page }) => {
   const comp = await seedCompetition({ dancersPerGroup: 1 })
   try {
     await page.goto(`/competitions/${comp.id}/admin/dancers`)
     await expect(page).toHaveURL(new RegExp(`/competitions/${comp.id}/manage$`))
     await page.goto(`/#/competitions/${comp.id}/admin`)
     await expect(page).toHaveURL(new RegExp(`/competitions/${comp.id}/manage$`))
-    await page.goto('/admin/info/versions')
-    await expect(page).toHaveURL(/\/admin\/tools$/)
     await page.goto('/more')
     await expect(page).toHaveURL(/\/settings$/)
   } finally {
