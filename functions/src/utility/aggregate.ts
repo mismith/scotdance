@@ -124,6 +124,14 @@ function appearanceKey(ctx: AppearanceCtx): string {
     : `${ctx.competitionId}:${ctx.recordId}`;
 }
 
+/**
+ * How many competitions the appearances span, which every page shows as
+ * "N competitions": a dancer with two entries at one counts it once.
+ */
+function competitionCount(list: Array<{ competitionId?: unknown }>): number {
+  return new Set(list.map((a) => a.competitionId)).size;
+}
+
 /** Usable as an index key: not empty, and (venues) neither half of `name|locality` missing. */
 export function validKey(key: string): boolean {
   // RTDB refuses paths over 768 bytes, and one such key would fail a whole
@@ -321,7 +329,7 @@ export function createAggregator<R, A extends Record<string, any>>(
         ? recomputeFromAppearances(list)
         : { name: nameFromAppearance?.(list[0]) || agg.name || '' };
       return {
-        ...agg, ...refreshed, appearances: apps, _identity: identity, appearanceCount: list.length,
+        ...agg, ...refreshed, appearances: apps, _identity: identity, appearanceCount: competitionCount(list),
       };
     });
     if (!identity) return;
@@ -572,7 +580,7 @@ export function createAggregator<R, A extends Record<string, any>>(
             ? recomputeFromAppearances(list)
             : { name: nameFromAppearance?.(list[0]) || prior?.name || nameOf(first) }),
           _identity: key,
-          appearanceCount: list.length,
+          appearanceCount: competitionCount(list),
         };
         await writer.set(`${namespace}/${id}/appearances`, apps);
         for (const [field, value] of Object.entries(fields)) {

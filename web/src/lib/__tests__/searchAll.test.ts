@@ -14,6 +14,13 @@ vi.mock('firebase/functions', () => ({
   },
 }))
 
+// Profile index entries by namespace and normalised name.
+let index: Record<string, { id: string; appearanceCount?: number }> = {}
+vi.mock('@/lib/entityIndex', async (actual) => {
+  const mod = await actual<typeof import('@/lib/entityIndex')>()
+  return { ...mod, lookupEntityEntry: async (ns: string, name: string) => index[`${ns}/${mod.normalizeEntityName(name)}`] ?? null }
+})
+
 const { searchAll } = await import('@/lib/searchAll')
 
 const person = (name: string, competitionId: string, extra: Record<string, unknown> = {}) => ({
@@ -24,6 +31,7 @@ const place = (id: string, extra: Record<string, unknown>) => ({ document: { id,
 beforeEach(() => {
   calls.length = 0
   respond = () => ({})
+  index = {}
 })
 
 describe('searchAll', () => {
@@ -79,18 +87,21 @@ describe('searchAll', () => {
     ])
   })
 
-  it('counts every competition a person is in, not just the sampled entries', async () => {
+  it('counts competitions as the profile does, not search entries', async () => {
+    index = { 'dancers/isla macdonald': { id: 'a1', appearanceCount: 70 } }
     respond = () => ({
       dancers: {
-        found: 2,
+        found: 3,
         grouped_hits: [
-          { group_key: ['Isla MacDonald'], found: 31, hits: [person('Isla MacDonald', 'c1'), person('Isla MacDonald', 'c2')] },
+          { group_key: ['Isla MacDonald'], found: 88, hits: [person('Isla MacDonald', 'c1'), person('Isla MacDonald', 'c1')] },
           { group_key: ['ISLA MACDONALD'], found: 9, hits: [person('ISLA MACDONALD', 'c3')] },
+          { group_key: ['Eilidh Grant'], found: 4, hits: [person('Eilidh Grant', 'c1'), person('Eilidh Grant', 'c2')] },
         ],
       },
     })
-    const out = await searchAll({ q: 'isla macdonald' })
-    expect(out.dancers.groups.map((g) => g.competitions)).toEqual([40])
+    const out = await searchAll({ q: 'isla or eilidh' })
+    // Eilidh has no profile yet: the sample's competitions stand in.
+    expect(out.dancers.groups.map((g) => [g.name, g.competitions])).toEqual([['Isla MacDonald', 70], ['Eilidh Grant', 2]])
   })
 
   it('lists competitions with a readable place, skipping hits without an id', async () => {

@@ -16,7 +16,15 @@ export function normalizeEntityName(name: string): string {
     .join(' ')
 }
 
-const cache = new Map<string, Promise<string | null>>()
+/** A `/{namespace}:index/{key}` entry: the aggregate's id plus what lists show of it. */
+export interface IndexEntry {
+  id: string
+  name?: string
+  /** How many published competitions they're in. */
+  appearanceCount?: number
+}
+
+const cache = new Map<string, Promise<IndexEntry | null>>()
 
 function cacheKey(namespace: string, key: string): string {
   return `${namespace}::${key}`
@@ -40,6 +48,16 @@ export async function lookupEntityIdOrThrow(
   const key = normalizeEntityName(name)
   if (!key) return null
   return readIndex(namespace, key)
+}
+
+/** The index entry for a name, or null when no one goes by it (or it can't be read). */
+export async function lookupEntityEntry(
+  namespace: string,
+  name: string,
+): Promise<IndexEntry | null> {
+  const key = normalizeEntityName(name)
+  if (!key) return null
+  return readEntry(namespace, key).catch(() => null)
 }
 
 // Venues key on `normalize(name) + '|' + town || 'none'` so "Telus
@@ -67,6 +85,10 @@ export async function lookupVenueId(
 }
 
 async function readIndex(namespace: string, key: string): Promise<string | null> {
+  return (await readEntry(namespace, key))?.id ?? null
+}
+
+async function readEntry(namespace: string, key: string): Promise<IndexEntry | null> {
   const ck = cacheKey(namespace, key)
   if (!cache.has(ck)) {
     cache.set(
@@ -77,8 +99,8 @@ async function readIndex(namespace: string, key: string): Promise<string | null>
           const v = snap.val()
           // Legacy entries stored a bare id string; new entries are slim
           // objects with `.id`.
-          if (typeof v === 'string' && v) return v
-          if (v && typeof v === 'object' && typeof v.id === 'string') return v.id
+          if (typeof v === 'string' && v) return { id: v }
+          if (v && typeof v === 'object' && typeof v.id === 'string') return v as IndexEntry
           return null
         } catch (err) {
           // Offline or a hiccup: try again next time rather than never.

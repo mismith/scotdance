@@ -130,7 +130,9 @@ function problems({ read }: Setup): string[] {
       const apps = (agg.appearances ?? {}) as Obj
       const n = Object.keys(apps).length
       if (!n) out.push(`${ns}/${id} is empty`)
-      if (agg.appearanceCount !== n) out.push(`${ns}/${id} appearanceCount ${agg.appearanceCount}, has ${n}`)
+      // Competitions, not entries: two entries at one competition count once.
+      const comps = new Set(Object.values(apps).map((a) => (a as Obj).competitionId)).size
+      if (agg.appearanceCount !== comps) out.push(`${ns}/${id} appearanceCount ${agg.appearanceCount}, in ${comps} competitions`)
       if (index[agg._identity]?.id !== id) out.push(`${ns}/${id} (${agg._identity}) isn't the one indexed`)
       for (const [appKey, app] of Object.entries(apps)) {
         const want = expected.get(appKey)
@@ -175,9 +177,9 @@ describe('triggers', () => {
   it('link a new competition’s dancers, judges, pipers and venue', async () => {
     const s = await seeded()
     expect(problems(s)).toEqual([])
-    // The same person in two age groups is one dancer with two entries.
+    // The same person in two age groups is one dancer with two entries, in one competition.
     const isla = s.read('dancers:index/isla macdonald')
-    expect(isla).toMatchObject({ name: 'Isla MacDonald', appearanceCount: 2 })
+    expect(isla).toMatchObject({ name: 'Isla MacDonald', appearanceCount: 1 })
     expect(s.read('competitions:data/c1/dancers/d1/dancerId')).toBe(isla.id)
     expect(s.read('competitions:data/c1/dancers/d3/dancerId')).toBe(isla.id)
     expect(s.read('competitions:data/c1/staff/s1/judgeId')).toBeTruthy()
@@ -344,7 +346,7 @@ describe('triggers', () => {
       'competitions:data/c2/dancers/e1': dancer('Isla', 'MacDonald', '33'),
     })
     await s.drain()
-    expect(s.read('dancers:index/isla macdonald')).toMatchObject({ appearanceCount: 3 })
+    expect(s.read('dancers:index/isla macdonald')).toMatchObject({ appearanceCount: 2 })
     s.write({ 'competitions/c1': null, 'competitions:data/c1': null })
     await s.drain()
     expect(s.read('dancers:index/isla macdonald')).toMatchObject({ appearanceCount: 1 })

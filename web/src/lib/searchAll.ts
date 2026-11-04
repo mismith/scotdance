@@ -1,7 +1,7 @@
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/firebase'
 import { initialsOf } from '@/lib/format'
-import { normalizeEntityName } from '@/lib/entityIndex'
+import { lookupEntityEntry, normalizeEntityName } from '@/lib/entityIndex'
 
 export type SearchEntityType = 'competitions' | 'dancers' | 'judges' | 'pipers' | 'places' | 'organisations'
 
@@ -42,8 +42,6 @@ interface RawHit<D> {
 interface RawGroupedHit<D> {
   group_key?: string[]
   hits?: RawHit<D>[]
-  /** Every entry under this name: `hits` is only a sample of them. */
-  found?: number
 }
 
 interface RawSearchResult<D> {
@@ -81,7 +79,7 @@ export interface SearchCompetitionHit {
 export interface SearchPersonGroup {
   name: string
   initials: string
-  /** How many competitions they're in, across every spelling of their name. */
+  /** How many competitions they're in: their profile's count, as it says. */
   competitions: number
   location?: string
   image?: string
@@ -160,7 +158,8 @@ function mapPeople(
   for (const g of raw) {
     const name = g.group_key?.[0] ?? ''
     const docs = (g.hits ?? []).map((h) => h.document).filter((d): d is RawPersonDoc => !!d)
-    const competitions = g.found ?? new Set(docs.map((d) => d.$competitionId).filter(Boolean)).size
+    // Only a sample of their entries, so a stand-in until withProfileCounts.
+    const competitions = new Set(docs.map((d) => d.$competitionId).filter(Boolean)).size
     const key = normalizeEntityName(name) || name
     const same = byPerson.get(key)
     if (same) {
@@ -179,6 +178,24 @@ function mapPeople(
   }
   const groups = [...byPerson.values()]
   return { groups, total: (result.found ?? raw.length) - (raw.length - groups.length) }
+}
+
+/**
+ * Each person's count from their profile's index entry, so the row and the
+ * profile agree. Search sees one entry per age group, and admins see private
+ * competitions too; the profile counts published competitions once each.
+ * Someone with no profile yet keeps the count from the sample.
+ */
+async function withProfileCounts(
+  namespace: string,
+  people: { groups: SearchPersonGroup[]; total: number },
+): Promise<{ groups: SearchPersonGroup[]; total: number }> {
+  const entries = await Promise.all(people.groups.map((g) => lookupEntityEntry(namespace, g.name)))
+  const groups = people.groups.map((g, i) => {
+    const n = entries[i]?.appearanceCount
+    return typeof n === 'number' && n > 0 ? { ...g, competitions: n } : g
+  })
+  return { ...people, groups }
 }
 
 function parentLabelFor(kind: PlaceKind, sample: RawCompetitionDoc | undefined): string | undefined {
@@ -273,9 +290,9 @@ export async function searchAll(params: CallParams): Promise<SearchAllResults> {
       const { data } = await callable({ ...params, q: trimmed })
       const out: SearchAllResults = {
         competitions: mapCompetitions(data?.competitions ?? null),
-        dancers: mapPeople(data?.dancers ?? null),
-        judges: mapPeople(data?.judges ?? null),
-        pipers: mapPeople(data?.pipers ?? null),
+        dancers: await withProfileCounts('dancers', mapPeople(data?.dancers ?? null)),
+        judges: await withProfileCounts('judges', mapPeople(data?.judges ?? null)),
+        pipers: await withProfileCounts('pipers', mapPeople(data?.pipers ?? null)),
         places: mapPlaces(data?.places ?? null),
         organisations: mapOrganisations(data?.organisations ?? null),
       }
