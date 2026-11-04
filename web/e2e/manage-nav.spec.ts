@@ -91,6 +91,26 @@ test('a deep Manage link opens the item, and survives a reload', async ({ page }
   }
 })
 
+test('the pencil on a competition’s page opens the same thing in Manage', async ({ page }) => {
+  const comp = await seedCompetition({ dancersPerGroup: 2 })
+  const org = await organiser(comp)
+  const dancer = comp.dancers[0]
+  const pencil = page.getByRole('link', { name: 'Manage this competition' })
+  try {
+    await signIn(page, org.email)
+    await page.goto(`/competitions/${comp.id}/results/${dancer.groupId}`)
+    await expect(pencil).toHaveAttribute('href', `/competitions/${comp.id}/manage/results/${dancer.groupId}`)
+    await page.goto(`/competitions/${comp.id}/schedule`)
+    await expect(pencil).toHaveAttribute('href', `/competitions/${comp.id}/manage/schedule`)
+    await page.goto(`/competitions/${comp.id}/dancers/${dancer.id}`)
+    await pencil.click()
+    await expect(page).toHaveURL(new RegExp(`/competitions/${comp.id}/manage/dancers/${dancer.id}$`))
+    await expect(page.getByRole('textbox', { name: 'First name' })).toHaveValue(dancer.firstName)
+  } finally {
+    await Promise.all([removeCompetition(comp.id), dbRemove(`users:permissions/${org.id}`)])
+  }
+})
+
 test('old admin links land in Manage', async ({ page }) => {
   const comp = await seedCompetition({ dancersPerGroup: 1 })
   try {

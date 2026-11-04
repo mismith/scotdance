@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, toRef, watch } from 'vue'
+import { computed, onScopeDispose, ref, toRef, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { CalendarX, ChevronRight, EyeOff, Hourglass, Pencil } from '@lucide/vue'
+import { CalendarX, ChevronRight, EyeOff, Hourglass, LoaderCircle, Pencil } from '@lucide/vue'
 import { useMeStore } from '@/stores/me'
 import AppBar from '@/components/nav/AppBar.vue'
 import PageStack from '@/components/nav/PageStack.vue'
@@ -22,6 +22,7 @@ import { competitionEntry, historyPosition } from '@/lib/competitionExit'
 import { backLabelFor } from '@/lib/backLabels'
 import { competitionPhase } from '@/lib/dancerDay'
 import { formatShortDate } from '@/lib/format'
+import { manageTarget } from '@/lib/manageTarget'
 import { OfflineUnavailableError } from '@/lib/offline'
 import { VISIBILITY, visibilityOf } from '@/lib/visibility'
 
@@ -120,6 +121,28 @@ const subtitle = computed(() => {
 // from, or the competitions list for a deep link. Deeper pages step back
 // normally (a group back to Results).
 const router = useRouter()
+
+// The pencil opens this page's own thing in Manage. Manage's code isn't
+// loaded with the public pages (most people never open it), so for someone
+// who can manage this competition it's loaded ahead of the tap, and the
+// pencil spins until Manage opens.
+const manageTo = computed(() => manageTarget(route, competitionId.value))
+const canManage = computed(() => me.hasCompetitionPerm(competitionId.value))
+watch(
+  [canManage, manageTo],
+  ([can, to]) => {
+    if (!can) return
+    for (const r of router.resolve(to).matched) {
+      const load = r.components?.default
+      // Lazy pages are loaders (`() => import(…)`); loaded ones are objects.
+      if (typeof load === 'function' && !load.length) void Promise.resolve((load as () => unknown)()).catch(() => {})
+    }
+  },
+  { immediate: true },
+)
+const opening = ref(false)
+onScopeDispose(router.afterEach(() => (opening.value = false)))
+
 const exit = computed(() => {
   void route.fullPath
   const e = competitionEntry.value
@@ -162,13 +185,19 @@ usePageTitle(() => [
     >
       <template #actions>
         <RouterLink
-          v-if="me.hasCompetitionPerm(competitionId)"
-          :to="{ name: 'manage', params: { competitionId } }"
+          v-if="canManage"
+          :to="manageTo"
           aria-label="Manage this competition"
           title="Manage"
+          :aria-busy="opening || undefined"
           class="press hover:bg-accent flex size-9 items-center justify-center rounded-full"
+          @click="(e: MouseEvent) => (opening = !(e.metaKey || e.ctrlKey || e.shiftKey))"
         >
-          <span class="relative flex"><Pencil class="size-5" /><AdminMark ring="background" /></span>
+          <span class="relative flex">
+            <LoaderCircle v-if="opening" class="size-5 animate-spin" aria-hidden="true" />
+            <Pencil v-else class="size-5" />
+            <AdminMark ring="background" />
+          </span>
         </RouterLink>
         <ShareButton :title="competition?.name ?? undefined" />
       </template>
