@@ -48,7 +48,7 @@ const label = computed(() => {
     role="img"
     :aria-label="label"
     :class="[
-      'relative inline-flex shrink-0',
+      'group/medal relative inline-flex shrink-0',
       size === 'lg' ? 'h-[3.25rem] w-12 text-[1.5rem]' : size === 'md' ? 'h-12 w-11 text-[1.25rem]' : 'h-10 w-9 text-[1.0625rem]',
       fresh && 'animate-medal motion-reduce:animate-none',
     ]"
@@ -85,6 +85,15 @@ const label = computed(() => {
       aria-hidden="true"
     >
       Tie
+    </span>
+    <!-- Where there's a pointer, hovering names the dance (on touch, a tap
+         opens their day, which lists every dance). -->
+    <span
+      v-if="dance"
+      class="hud pointer-events-none invisible absolute bottom-full left-1/2 z-20 mb-1.5 -translate-x-1/2 rounded-lg px-2 py-1 text-xs leading-tight font-semibold tracking-normal whitespace-nowrap opacity-0 transition-opacity group-hover/medal:visible group-hover/medal:opacity-100 group-hover/medal:delay-200"
+      aria-hidden="true"
+    >
+      {{ label }}
     </span>
   </span>
   <!-- Blue like the placings: amber is reserved for up next. -->

@@ -119,16 +119,23 @@ watch(
   { immediate: true },
 )
 
-// Their best three, and how many more there are, so a shorter row never
-// passes for the whole story.
+// Every placing, best first, on one line on a phone: a narrow row keeps to
+// its best three (two beside an Overall trophy on the narrowest) and says how
+// many more, so it never passes for the whole story; a wide one shows them all.
+const NARROW = '@max-[17.5rem]:hidden'
+const PHONE = '@max-[26rem]:hidden'
 function medals(cid: string) {
   const list = summaries.value[cid] ?? []
   const overall = list.map((s) => s.overall).find(Boolean)
   const placings = list.flatMap((s) => s.placings).sort((a, b) => a.place - b.place)
+  const n = placings.length
+  const more: Array<{ count: number; class: string }> = []
+  if (overall && n > 2) more.push({ count: n - 2, class: '@min-[17.5rem]:hidden' })
+  if (n > 3) more.push({ count: n - 3, class: overall ? 'hidden @min-[17.5rem]:inline @min-[26rem]:hidden' : '@min-[26rem]:hidden' })
   return {
     overall,
-    best: placings.slice(0, 3),
-    more: Math.max(0, placings.length - 3),
+    placings: placings.map((p, i) => ({ ...p, class: i >= 3 ? PHONE : i === 2 && overall ? NARROW : '' })),
+    more,
     groups: list.map((s) => s.groupName).filter(Boolean) as string[],
   }
 }
@@ -190,7 +197,7 @@ function medals(cid: string) {
                 class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4"
               >
                 <DateTile :date="r.competition.date" :managed="me.organises(r.competitionId)" />
-                <span class="min-w-0 flex-1">
+                <span class="@container min-w-0 flex-1">
                   <span class="line-clamp-2 text-base leading-snug font-semibold">{{ r.competition.name }}</span>
                   <span v-if="r.withOthers" class="text-muted-foreground block text-sm">{{ r.withOthers }}</span>
                   <span v-if="medals(r.competitionId).groups.length" class="text-muted-foreground block text-sm">
@@ -199,13 +206,24 @@ function medals(cid: string) {
                   <span v-if="hiddenAs(r.competitionId, r.competition)" class="mt-0.5 flex"><VisibilityChip :visibility="hiddenAs(r.competitionId, r.competition)" /></span>
                   <!-- The number they wore there, then what they won, pinned on as on their day card. -->
                   <span
-                    v-if="r.numbers.length || medals(r.competitionId).best.length || medals(r.competitionId).overall"
+                    v-if="r.numbers.length || medals(r.competitionId).placings.length || medals(r.competitionId).overall"
                     class="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1.5"
                   >
                     <NumberCard v-for="n in r.numbers" :key="n" :number="n" :color="color" size="xs" class="mr-1.5" />
-                    <Medal v-for="m in medals(r.competitionId).best" :key="m.danceId" :place="m.place" :tied="m.tied" :dance="m.name" />
-                    <span v-if="medals(r.competitionId).more" class="text-muted-foreground ml-0.5 text-sm font-semibold tabular-nums">
-                      +{{ medals(r.competitionId).more }}<span class="sr-only"> more placing{{ medals(r.competitionId).more === 1 ? '' : 's' }}</span>
+                    <Medal
+                      v-for="m in medals(r.competitionId).placings"
+                      :key="m.danceId"
+                      :place="m.place"
+                      :tied="m.tied"
+                      :dance="m.name"
+                      :class="m.class"
+                    />
+                    <span
+                      v-for="t in medals(r.competitionId).more"
+                      :key="t.count"
+                      :class="['text-muted-foreground ml-0.5 text-sm font-semibold tabular-nums', t.class]"
+                    >
+                      +{{ t.count }}<span class="sr-only"> more placing{{ t.count === 1 ? '' : 's' }}</span>
                     </span>
                     <Medal
                       v-if="medals(r.competitionId).overall"
