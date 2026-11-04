@@ -17,6 +17,7 @@ import * as Sheets from './sheets';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
 import { getOnFindStrayDancers } from './strayDancers';
+import { getOnFindCombinedNames } from './combinedNames';
 import { getOnChange } from './changed';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
@@ -224,6 +225,12 @@ const onFindStrayDancers = getOnFindStrayDancers(appConfig.db);
 export const findStrayDancers = adminHttps.onCall(async (data, ctx) => {
   await ensureAdmin(ctx, appConfig.db);
   return onFindStrayDancers();
+});
+// System admin › Dancer cleanup: whole names typed in First name.
+const onFindCombinedNames = getOnFindCombinedNames(appConfig.db);
+export const findCombinedNames = adminHttps.onCall(async (data, ctx) => {
+  await ensureAdmin(ctx, appConfig.db);
+  return onFindCombinedNames();
 });
 
 const competitionsIndexRef = configDatabase.ref(`/${env}/competitions/{competitionId}`);

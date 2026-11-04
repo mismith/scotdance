@@ -39,7 +39,7 @@ const SECTIONS: AdminSection[] = [
   { route: 'admin.organisations', title: 'Organisations', blurb: 'Every organisation, and which competitions they run', icon: Landmark },
   { route: 'admin.known', title: 'Known competitions', blurb: 'The governing bodies’ lists, offered when adding a competition', icon: CalendarSearch },
   { route: 'admin.venues', title: 'Venues', blurb: 'Merge venues typed in more than one way', icon: School },
-  { route: 'admin.dancers', title: 'Dancer cleanup', blurb: 'Empty and leftover entries in past competitions', icon: BrushCleaning },
+  { route: 'admin.dancers', title: 'Dancer cleanup', blurb: 'Leftover entries and whole names in First name', icon: BrushCleaning },
   { route: 'admin.users', title: 'Users', blurb: 'Accounts and who can manage what', icon: UserCog },
   { route: 'admin.tools', title: 'Tools', blurb: 'App versions, search and profile rebuilds', icon: Wrench },
 ]
