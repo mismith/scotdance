@@ -130,28 +130,26 @@ interface TrophyEventRow {
   posted: number
   unknown: boolean
   mine: Row['mine']
-  /** A followed dancer can win it, placed or not (for Only my dancers’ age groups). */
-  yours: boolean
 }
 const trophyEventRows = computed<TrophyEventRow[]>(() => {
   if (resultsHidden.value) return []
   const rows = trophyEvents.value.map<TrophyEventRow>((trophyEvent) => {
     const eligible = [...followedByGroup.value].filter(([groupId]) => trophyEvent.groupIds?.[groupId]).flatMap(([, list]) => list)
-    // Only the ones who placed: most who could win one don't, and a line
-    // saying so under every trophy event would be noise. Someone in two of its
-    // age groups shows once, at their best place.
+    // Every followed dancer who can win it, as on age group rows, with the cup
+    // once they place. Someone in two of its age groups shows once, at their
+    // best place.
     const best = new Map<string, Row['mine'][number]>()
     for (const d of eligible) {
       const status = dayFor(d).trophyEvents.find((s) => s.dance.id === trophyEvent.id)
-      if (status?.state !== 'placed' || status.place == null) continue
+      const placed = status?.state === 'placed' && status.place != null
       const person = d.dancerId ?? d.id
       const kept = best.get(person)
-      if (kept && kept.medals[0].place <= status.place) continue
+      if (kept && (!placed || (kept.medals.length && kept.medals[0].place <= status!.place!))) continue
       best.set(person, {
         key: d.id,
         name: d.firstName ?? d.fullName,
         color: following.colorFor(d.dancerId),
-        medals: [{ id: TROPHY_EVENT_RESULT, name: trophyEvent.fullName, place: status.place, tied: status.tied, dancerId: d.id }],
+        medals: placed ? [{ id: TROPHY_EVENT_RESULT, name: trophyEvent.fullName, place: status!.place!, tied: status!.tied, dancerId: d.id }] : [],
       })
     }
     const mine = [...best.values()]
@@ -160,10 +158,9 @@ const trophyEventRows = computed<TrophyEventRow[]>(() => {
       posted: trophyEventPosted(results.value, trophyEvent.id) ? 1 : 0,
       unknown: danceHasPlaceholder(results.value, points.value, trophyEvent.id, TROPHY_EVENT_RESULT),
       mine,
-      yours: eligible.length > 0,
     }
   })
-  return mineOnly.value ? rows.filter((r) => r.yours) : rows
+  return mineOnly.value ? rows.filter((r) => r.mine.length) : rows
 })
 
 const totals = computed(() => resultsCount(groups.value, dances.value, results.value, trophyEvents.value))
@@ -302,9 +299,10 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
                     :key="m.key"
                     :color="m.color"
                     :name="m.name"
+                    :details="[m.medals.length ? null : r.posted ? 'Not placed' : 'After all dances']"
                     class="mt-1"
                   >
-                    <span class="flex items-center gap-1">
+                    <span v-if="m.medals.length" class="flex items-center gap-1">
                       <Medal
                         v-for="x in m.medals"
                         :key="x.id"

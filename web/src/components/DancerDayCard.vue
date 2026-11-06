@@ -275,15 +275,16 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
               <span v-else class="text-muted-foreground text-sm">After all dances</span>
             </RouterLink>
           </li>
-          <!-- Trophies across age groups they placed in, each opening its page.
-               Most who could win one don't, so the rest aren't listed. -->
-          <li v-for="s in d.trophyEvents.filter((x) => x.state === 'placed')" :key="s.dance.id">
+          <!-- Trophies across age groups they can win, after Overall and worded
+               the same way; each opens its page. -->
+          <li v-for="s in d.trophyEvents" :key="s.dance.id">
             <RouterLink
               :to="{ name: 'competition.trophyEvent', params: { competitionId, trophyEventId: s.dance.id } }"
               :class="['press-row focus-inset', ROW, rowSize]"
             >
               <span :class="['min-w-0 flex-1 font-semibold break-words', lg ? 'text-base' : 'text-callout']">{{ s.dance.fullName }}</span>
-              <DanceStatusChip :status="s" :fresh="fresh === `${d.dancer.id}:${s.dance.id}`" trophy />
+              <DanceStatusChip v-if="s.state !== 'later'" :status="s" :fresh="fresh === `${d.dancer.id}:${s.dance.id}`" trophy />
+              <span v-else class="text-muted-foreground shrink-0 text-sm">After all dances</span>
             </RouterLink>
           </li>
         </ul>
