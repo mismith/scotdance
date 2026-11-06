@@ -379,9 +379,9 @@ export function readNames(r: Pick<ImportedDancer, 'firstName' | 'lastName' | 'me
   const first = r.firstName.trim()
   const last = r.lastName.trim()
   if (SEVERAL.test(first) || SEVERAL.test(last)) return listOf(`${first} ${last}`)
-  // A whole name typed in one cell.
+  // A whole name typed in Last name alone. (In First name, the "Split whole
+  // names" tick decides, before here: splitWholeNames.)
   if (!first && last) return [splitFullName(last)]
-  if (first && !last && first.includes(' ')) return [splitFullName(first)]
   return first || last ? [{ firstName: first, lastName: last }] : []
 }
 

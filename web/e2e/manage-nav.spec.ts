@@ -105,7 +105,7 @@ test('the pencil on a competition’s page opens the same thing in Manage', asyn
     await page.goto(`/competitions/${comp.id}/dancers/${dancer.id}`)
     await pencil.click()
     await expect(page).toHaveURL(new RegExp(`/competitions/${comp.id}/manage/dancers/${dancer.id}$`))
-    await expect(page.getByRole('textbox', { name: 'First name' })).toHaveValue(dancer.firstName)
+    await expect(page.getByRole('combobox', { name: /^First name/ })).toHaveValue(dancer.firstName)
   } finally {
     await Promise.all([removeCompetition(comp.id), dbRemove(`users:permissions/${org.id}`)])
   }

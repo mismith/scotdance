@@ -53,8 +53,10 @@ test('Manage edits keep profiles and back-pointers in step', async () => {
     },
   })
   const isla = indexKey(`Isla ${surname('Qa')}`)
-  await expect.poll(async () => (await index('dancers', isla))?.appearanceCount, POLL).toBe(2)
+  // Both entries, one competition: counted once.
+  await expect.poll(async () => (await index('dancers', isla))?.appearanceCount, POLL).toBe(1)
   const islaId = (await index('dancers', isla))!.id
+  await expect.poll(async () => Object.keys(((await dbGet(`dancers/${islaId}/appearances`)) ?? {}) as object).length, POLL).toBe(2)
   await expect.poll(() => dbGet(`${dancerPath(`${comp}-a`)}/dancerId`), POLL).toBe(islaId)
   await expect.poll(() => dbGet(`${dancerPath(`${comp}-b`)}/dancerId`), POLL).toBe(islaId)
   await expect.poll(() => dbGet(`competitions:data/${comp}/staff/${comp}-j/judgeId`), POLL).toBeTruthy()
@@ -110,7 +112,7 @@ test('profiles show what Manage says is public: listed shows staff and venue, pu
   // Published (the Publish switch lists it too): everything's back, under the
   // same ids, so anyone following still is.
   await write({ [`competitions/${comp}/published`]: true, [`competitions/${comp}/listed`]: true })
-  await expect.poll(async () => (await index('dancers', isla))?.appearanceCount, POLL).toBe(2)
+  await expect.poll(async () => Object.keys(((await dbGet(`dancers/${islaId}/appearances`)) ?? {}) as object).length, POLL).toBe(2)
   expect((await index('dancers', isla))?.id).toBe(islaId)
   await expect.poll(() => dbGet(`${dancerPath(`${comp}-b`)}/dancerId`), POLL).toBeTruthy()
   await expect.poll(() => dbGet(`competitions:data/${comp}/staff/${comp}-j/piperId`), POLL).toBeTruthy()

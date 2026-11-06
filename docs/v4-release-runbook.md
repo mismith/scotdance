@@ -312,10 +312,11 @@ are rows in `dancers`, read as dancers are. The functions go first, so a
 team made on `next` gets its dancers linked to their profiles straight away.
 From the branch:
 
-1. `firebase deploy --only functions:dancerCreated,functions:dancerUpdated,functions:dancerDeleted,functions:searchDancers,functions:reindexDancers,functions:backfillDancerAggregates,functions:backfillDancerBackPointers,functions:competitionPublishedChanged,functions:notifyFollowersOnResult,functions:sendResultAlerts,functions:morningSummaries,functions:sendMorningSummary,functions:sendLinkedPublishedAlerts`.
+1. `firebase deploy --only functions:dancerCreated,functions:dancerUpdated,functions:dancerDeleted,functions:searchDancers,functions:reindexDancers,functions:backfillDancerAggregates,functions:backfillDancerBackPointers,functions:competitionPublishedChanged,functions:notifyFollowersOnResult,functions:sendResultAlerts,functions:morningSummaries,functions:sendMorningSummary,functions:sendLinkedPublishedAlerts,functions:findCombinedNames`.
    The dancer triggers link a team's members (never the team) and index
    them for search; `searchDancers` opens a member's team for v3; the alerts
-   reach members' followers. Old-style rows behave as before, so nothing
+   reach members' followers; `findCombinedNames` (Dancer cleanup) leaves
+   their entries out. Old-style rows behave as before, so nothing
    changes until a team exists. Check `next` holds nothing else unshipped in
    these (`competitionPublishedChanged` and `sendLinkedPublishedAlerts` are
    ADR 0007's too). No reindex or backfill is needed.

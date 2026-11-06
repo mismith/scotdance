@@ -149,8 +149,9 @@ test('pasted cells; rows sharing a number are one entry, rows that need fixing a
   expect(await dancersNow()).toContain('10 Eilidh Campbell [Premier 12 & Under 14]')
 })
 
-test('whole names in one column are split, shown first and untickable; pairs stay as they are', async ({ page }) => {
+test('whole names in one column are split, shown first and untickable; pairs are a duet', async ({ page }) => {
   await page.goto(importPage())
+  await page.getByRole('button', { name: 'Paste' }).click()
   await page.getByRole('textbox').fill(
     ['Novice 10 & Under 12 Years\t\t\t', '501\tKirsty Mackenzie\t\tCalgary, AB', '502\tSmith, Mary Ann\t\tEdmonton', '503\tEilidh Campbell\t\t', '504\tLily Siecker & Grace Thompson\t\t'].join('\n'),
   )
@@ -158,19 +159,23 @@ test('whole names in one column are split, shown first and untickable; pairs sta
   const split = page.getByRole('checkbox', { name: /Split whole names into first and last name/ })
   await expect(split).toHaveAttribute('aria-checked', 'true')
   await expect(split).toContainText('“Kirsty Mackenzie” becomes first name “Kirsty”, last name “Mackenzie”')
-  await page.getByRole('button', { name: 'Import 4 dancers' }).click()
+  await page.getByRole('button', { name: 'Import 4 entries' }).click()
   await expect(page.getByRole('status').getByText('Imported: 4 added')).toBeVisible()
-  const stored = Object.values((await dbGet<Record<string, Dancer>>(data('dancers'))) ?? {}).sort((a, b) => a.number.localeCompare(b.number))
-  expect(stored.map((d) => [d.firstName, d.lastName ?? null])).toEqual([
+  const stored = Object.values((await dbGet<Record<string, Dancer & { team?: boolean; members?: Record<string, { firstName: string; lastName?: string }> }>>(data('dancers'))) ?? {}).sort((a, b) =>
+    a.number.localeCompare(b.number),
+  )
+  expect(stored.slice(0, 3).map((d) => [d.firstName, d.lastName ?? null])).toEqual([
     ['Kirsty', 'Mackenzie'],
     ['Mary Ann', 'Smith'],
     ['Eilidh', 'Campbell'],
-    ['Lily Siecker & Grace Thompson', null],
   ])
+  expect(stored[3]).toMatchObject({ team: true })
+  expect(Object.values(stored[3].members ?? {}).map((m) => `${m.firstName} ${m.lastName}`).sort()).toEqual(['Grace Thompson', 'Lily Siecker'])
 })
 
 test('unticked, whole names import as typed', async ({ page }) => {
   await page.goto(importPage())
+  await page.getByRole('button', { name: 'Paste' }).click()
   await page.getByRole('textbox').fill(['Choreography\t\t\t', '601\tWalking on the Waves\t\tBC', '602\tCeltic Sails\t\tNS', '603\tSky Dancers\t\tAB'].join('\n'))
   await page.getByRole('button', { name: 'Use these cells' }).click()
   await page.getByRole('checkbox', { name: /Split whole names into first and last name/ }).click()
