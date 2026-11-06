@@ -8,6 +8,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import { setDancerHidden, type HiddenInfo } from '@/composables/useDancerHidden'
+import { BASIC_LATEST } from '@/composables/useDancerRecord'
 import { dataRef } from '@/firebase'
 import { toast } from '@/lib/admin/feedback'
 import { friendlyError } from '@/lib/admin/write'
@@ -62,7 +63,7 @@ async function showAgain(id: string) {
     <SectionHeader
       title="Hidden profiles"
       :count="rows.length || null"
-      description="Profiles hidden when a family asked. Everyone sees the basic profile: the latest 10 competitions. They stay in Search, Dancers and every competition’s results."
+      :description="`Profiles hidden when a family asked. Everyone sees the basic profile: the latest ${BASIC_LATEST} competitions. They stay in Search, Dancers and every competition’s results.`"
     />
     <div v-if="!loaded" class="space-y-2"><Skeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-xl!" /></div>
     <EmptyState v-else-if="!rows.length" :icon="EyeOff" size="inline" title="No hidden profiles" description="Hide one from the dancer’s profile." />

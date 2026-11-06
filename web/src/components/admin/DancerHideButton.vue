@@ -6,6 +6,7 @@ import Dialog from '@/components/Dialog.vue'
 import Button from '@/components/ui/Button.vue'
 import FormInput from '@/components/admin/FormInput.vue'
 import { setDancerHidden, useDancerHidden } from '@/composables/useDancerHidden'
+import { BASIC_LATEST } from '@/composables/useDancerRecord'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import { formatLongDate } from '@/lib/format'
@@ -14,7 +15,7 @@ import { useMeStore } from '@/stores/me'
 
 // A system admin's control on a dancer's profile, for when a family asks:
 // hiding it turns off the signed-in extra (every competition, not just the
-// latest ten), so everyone sees the basic profile. They stay in Search,
+// latest few), so everyone sees the basic profile. They stay in Search,
 // Dancers and every competition's results. Nothing for anyone else. (System admin ›
 // Directory › Hidden profiles lists them all, to show again.)
 
@@ -83,7 +84,7 @@ async function submit() {
         <p class="text-muted-foreground text-base">
           <template v-if="hidden">Signed-in people see all of {{ firstName }}’s competitions again.</template>
           <template v-else>
-            Everyone sees {{ firstName }}’s profile as if signed out: the latest 10 competitions only. {{ firstName }} stays in Search, Dancers and every competition’s results.
+            Everyone sees {{ firstName }}’s profile as if signed out: the latest {{ BASIC_LATEST }} competitions only. {{ firstName }} stays in Search, Dancers and every competition’s results.
           </template>
         </p>
         <FormInput v-if="!hidden" v-model="note" label="Note for admins" placeholder="A parent asked by email" />

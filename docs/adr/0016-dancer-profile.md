@@ -43,7 +43,7 @@ looks at it.
 
 ### 2. Signed out, and hidden profiles
 
-- Signed out, a profile shows its latest 10 competitions with placings, and
+- Signed out, a profile shows its latest 3 competitions with placings, and
   a way to sign in to see the rest.
 - A system admin can **hide** a profile when a family asks. That turns off
   the signed-in extra only: everyone sees the signed-out profile, and the

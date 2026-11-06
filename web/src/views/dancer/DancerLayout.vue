@@ -7,7 +7,7 @@ import { provideDancerProfile } from '@/composables/useDancerProfile'
 import { provideDancerRecord } from '@/composables/useDancerRecord'
 
 // A dancer across every competition: one page. Signed in (and not hidden by
-// a family's request) it lists every competition; otherwise the latest ten.
+// a family's request) it lists every competition; otherwise the latest few.
 const route = useRoute()
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
 

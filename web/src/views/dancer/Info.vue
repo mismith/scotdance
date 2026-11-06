@@ -20,7 +20,7 @@ import { useAuthStore } from '@/stores/auth'
 // A dancer across every competition. Their number is different at each one,
 // so it's shown per competition, never as who they are. Signed in: every
 // competition, a season at a time. Otherwise the basic profile: the latest
-// ten competitions and a way in to the rest.
+// few competitions and a way in to the rest.
 const setHeader = injectInfoHeaderSetter()
 const route = useRoute()
 const auth = useAuthStore()

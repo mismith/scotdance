@@ -14,7 +14,8 @@ import type { Competition } from '@/types/competition'
 
 // A dancer's record across every competition, loaded once by DancerLayout:
 // the competition rows and each entry's placings. Signed-in people get all of
-// it; everyone else, and a hidden profile, the latest ten competitions only.
+// it; everyone else, and a hidden profile, the latest few competitions
+// (BASIC_LATEST) only.
 
 /** One competition they entered (entries in two age groups share a number). */
 export interface Row {
@@ -34,7 +35,7 @@ export type ListRow = Row & {
 type Summary = EntrySummary & { entryId: string }
 
 /** How many competitions the basic profile shows. */
-export const BASIC_LATEST = 10
+export const BASIC_LATEST = 3
 
 function createDancerRecord(dancerId: Ref<string>, profile: UseDancerProfile) {
   const auth = useAuthStore()
