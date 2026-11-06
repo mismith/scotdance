@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { connected } from '@/lib/offline'
+import { shortName } from '@/lib/entries'
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import ResultsMark from '@/components/ResultsMark.vue'
 import { computed, onMounted, ref } from 'vue'
@@ -82,8 +83,8 @@ function rowFor(group: EnrichedGroup): Row {
       const all = [...day.dances, ...(day.overall ? [day.overall] : [])]
       return {
         key: d.id,
-        name: d.firstName ?? d.fullName,
-        color: following.colorFor(d.dancerId),
+        name: shortName(d),
+        color: following.colorFor(following.followedIn(d)),
         medals: all
           .filter((s) => s.state === 'placed' && s.place != null)
           .map((s) => ({ id: s.dance.id, name: s.dance.fullName || s.dance.name || '', place: s.place!, tied: s.tied, dancerId: d.id })),

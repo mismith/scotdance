@@ -448,6 +448,68 @@ describe('result alerts', () => {
   })
 })
 
+describe('team alerts (ADR 0012)', () => {
+  const sword = 'competitions:data/c1/results/g2/sword'
+  function withTeam(): Json {
+    const data = seed()
+    data['competitions:data'].c1.dancers.t1 = {
+      team: true,
+      title: 'Celtic Sisters',
+      number: '201',
+      groupId: 'g2',
+      members: {
+        m0: { firstName: 'Ailsa', lastName: 'Grant', dancerId: 'p1', _order: 0 },
+        m1: { firstName: 'Mairi', lastName: 'Ross', dancerId: 'p2', _order: 1 },
+        m2: { firstName: 'Eilidh', lastName: 'Shaw', dancerId: 'p7', _order: 2 },
+      },
+    }
+    data['dancers:followers'].p1.u6 = true
+    data['dancers:followers'].p2.u6 = true
+    data['dancers:followers'].p7 = { u7: true }
+    data.users.u6 = { alerts: on }
+    data.users.u7 = { alerts: on }
+    return data
+  }
+
+  it('tells everyone following a member where their team placed, once each', async () => {
+    const { save, results, log, said } = setup(withTeam())
+    await save({ [sword]: ['t1', 'e4'] }, results())
+    expect(said()).toEqual([
+      'u1: Ailsa’s trio placed 1st (Celtic Sisters)',
+      'u1: Kirsty placed 2nd (Sword Dance)',
+      'u2: Mairi’s trio placed 1st (Celtic Sisters)',
+      'u6: Ailsa and Mairi’s trio placed 1st (Celtic Sisters)',
+      'u7: Eilidh’s trio placed 1st (Celtic Sisters)',
+    ])
+    expect(log().find((m) => m.uid === 'u6')?.body).toBe('Celtic Sisters · Sword Dance · Premier 13 & Over · Calgary Highland Games')
+  })
+
+  it('says whose team’s results are in when it isn’t placed', async () => {
+    const { save, results, said } = setup(withTeam())
+    await save({ [sword]: ['e4'] }, results())
+    expect(said()).toContain('u7: Results are in for Eilidh’s trio (Celtic Sisters)')
+  })
+
+  it('counts members’ followers as someone to tell', async () => {
+    const data = withTeam()
+    delete data['dancers:followers'].p4
+    delete data['dancers:followers'].p1
+    delete data['dancers:followers'].p2
+    const queue: SettleTask[] = []
+    const { save, results } = setup(data)
+    await save({ [sword]: ['t1'] }, results(true, queue))
+    expect(queue).toHaveLength(1)
+  })
+
+  it('names team members on the dancer list when a competition goes live', async () => {
+    const data = withTeam()
+    data.competitions.c1.published = false
+    const { db, save, log } = setup(data)
+    await save({ 'competitions/c1/published': true }, getOnCompetitionPublished(db, app, true))
+    expect(log().find((m) => m.uid === 'u7')?.body).toBe('Eilidh is on the dancer list. See platforms and dancing order.')
+  })
+})
+
 describe('competition alerts', () => {
   it('tells followers when a competition goes live, once', async () => {
     const data = seed()

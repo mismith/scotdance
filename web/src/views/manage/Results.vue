@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { isWinnable } from '@/lib/trophyEvents'
+import { isTeam, memberName, teamMembers } from '@/lib/entries'
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { ChevronDown, ChevronRight, CircleCheck, ClipboardList, Download, EyeOff, Plus, Trophy } from '@lucide/vue'
@@ -106,12 +107,30 @@ const totals = computed(() => {
 
 // A spreadsheet of every placing, for the organisers' records.
 function exportCsv() {
-  const rows: string[][] = [['Category', 'Age group', 'Dance', 'Place', 'Number', 'First name', 'Last name', 'Location']]
+  // Teams' and studios' columns only when there are any, so a sheet is as it always was otherwise.
+  const anyTeam = m.dancers.value.some((d) => isTeam(d))
+  const anyStudio = m.dancers.value.some((d) => d.studio)
+  const rows: string[][] = [
+    ['Category', 'Age group', 'Dance', 'Place', 'Number', 'First name', 'Last name', 'Location', ...(anyTeam ? ['Routine', 'Dancers'] : []), ...(anyStudio ? ['Studio'] : [])],
+  ]
   for (const g of m.groups.value) {
     for (const { id, label: name } of danceRows(g)) {
       const row = (dancerId: string, place: string) => {
         const d = m.dancersById.value.get(dancerId)
-        return [g.category?.label ?? '', g.name ?? '', name, place, d?.num ?? '?', d?.firstName ?? '', d?.lastName ?? '', d?.location ?? '']
+        // A team: its name and dancers in their own columns (its first and last name are only v3's copy).
+        const team = d && isTeam(d)
+        return [
+          g.category?.label ?? '',
+          g.name ?? '',
+          name,
+          place,
+          d?.num ?? '?',
+          team ? '' : (d?.firstName ?? ''),
+          team ? '' : (d?.lastName ?? ''),
+          d?.location ?? '',
+          ...(anyTeam ? [team ? d.label : '', team ? teamMembers(d).map(([, x]) => memberName(x)).join(', ') : ''] : []),
+          ...(anyStudio ? [d?.studio ?? ''] : []),
+        ]
       }
       const p = parsePlacings(m.results.value[g.id]?.[id])
       p.entries.forEach((e, i) => rows.push(row(e.id, id === CALLBACKS ? '' : String(placeAt(i, p) ?? ''))))

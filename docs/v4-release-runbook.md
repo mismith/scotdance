@@ -305,6 +305,38 @@ first. From the branch:
    A source that says what went wrong keeps its last good list.
 4. Merge to `next` (the Add a competition changes ship with the web).
 
+## Teams (ADR 0012)
+
+Built on `claude/choreographies-architecture-bc368d`. No rules change: teams
+are rows in `dancers`, read as dancers are. The functions go first, so a
+team made on `next` gets its dancers linked to their profiles straight away.
+From the branch:
+
+1. `firebase deploy --only functions:dancerCreated,functions:dancerUpdated,functions:dancerDeleted,functions:searchDancers,functions:reindexDancers,functions:backfillDancerAggregates,functions:backfillDancerBackPointers,functions:competitionPublishedChanged,functions:notifyFollowersOnResult,functions:sendResultAlerts,functions:morningSummaries,functions:sendMorningSummary,functions:sendLinkedPublishedAlerts`.
+   The dancer triggers link a team's members (never the team) and index
+   them for search; `searchDancers` opens a member's team for v3; the alerts
+   reach members' followers. Old-style rows behave as before, so nothing
+   changes until a team exists. Check `next` holds nothing else unshipped in
+   these (`competitionPublishedChanged` and `sendLinkedPublishedAlerts` are
+   ADR 0007's too). No reindex or backfill is needed.
+2. Merge to `next`.
+3. Convert production's old team rows (decision 8), after step 1's
+   functions are live (they link the members). Until it runs, an old team
+   shows as it did, as a dancer. In a new folder in `scotdance-backups`:
+   ```bash
+   firebase database:get /production/competitions:data --project firebase-scotdance --instance scotdance > competitions-data.before.json
+   firebase database:get /production/competitions --project firebase-scotdance --instance scotdance > competitions.before.json
+   (cd <branch>/web && node scripts/convert-teams.ts --data "$OLDPWD/competitions-data.before.json" --competitions "$OLDPWD/competitions.before.json" --fixes ~/Sites/@mismith/scotdance-backups/2026-11-teams-conversion/fixes.json --out "$OLDPWD")
+   ```
+   Read `report.html`, then write `applied.json` (one multi-path update;
+   `restore.json` puts it back):
+   ```bash
+   firebase database:update /production applied.json --project firebase-scotdance --instance scotdance
+   ```
+   A dry run on the 2026-11-04 copy: 1,377 rows made duets, trios and
+   groups and 182 solo routines tidied; the 6 it wasn't sure of were fixed
+   by hand (`fixes.json`, kept out of the repo for its names).
+
 ## Parked
 
 - Tartans: branch `claude/tartans-parked`, as a future optional side tool.

@@ -87,6 +87,8 @@ export interface Group {
   sponsor?: string
   /** A championship class that ran as a regular competition: too few dancers turned up. */
   notChampionship?: boolean
+  /** Its entries are teams, like duets or groups (ADR 0012): Manage adds teams here. */
+  teams?: boolean
   _order?: number
 }
 
@@ -125,22 +127,51 @@ export interface EnrichedTrophyEvent extends TrophyEvent {
   openTo: string
 }
 
+/** One of a team's dancers, typed by the organiser (ADR 0012). */
+export interface TeamMember {
+  firstName?: string
+  lastName?: string
+  /** Back-pointer to their profile, written by the aggregator. */
+  dancerId?: string
+  _order?: number
+}
+
+/**
+ * An entry in a competition: a number in an age group, danced by one person
+ * (a dancer), or by several (`team: true`, ADR 0012).
+ */
 export interface Dancer {
   id: string
+  /** A dancer's name; on a team, only what v3 shows (see lib/entries legacyNames). */
   firstName?: string
   lastName?: string
   number?: number
   groupId?: string
   location?: string
   image?: string
-  /** Back-pointer to the aggregate dancer profile, written by the aggregator. */
+  /** Back-pointer to the aggregate dancer profile, written by the aggregator. Never on a team. */
   dancerId?: string
+  /** The routine's name, e.g. a solo choreography's, or a team's. */
+  title?: string
+  /** Their dance school or teacher, as the organiser wrote it. */
+  studio?: string
+  team?: boolean
+  members?: Record<string, TeamMember>
   _order?: number
 }
 
+/** A team member, ready to show. */
+export interface EnrichedMember extends TeamMember {
+  key: string
+  name: string
+}
+
 export interface EnrichedDancer extends Dancer {
+  /** A dancer's name, or a team's (lib/entries entryName). */
   fullName: string
   group?: EnrichedGroup
+  /** A team's members, in order. */
+  teamMembers?: EnrichedMember[]
 }
 
 export const dancerFullName = (d: Pick<Dancer, 'firstName' | 'lastName'>) =>

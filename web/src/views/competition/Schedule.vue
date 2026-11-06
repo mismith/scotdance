@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { shortName } from '@/lib/entries'
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import ResultsMark from '@/components/ResultsMark.vue'
 import { computed, nextTick, onMounted, ref } from 'vue'
@@ -53,7 +54,7 @@ function mineIn(event: ScheduleEvent): Mine {
       for (const gid of slot.orderedGroupIds ?? []) {
         for (const d of followedByGroup.value.get(gid) ?? []) {
           if (!mine.has(d.id))
-            mine.set(d.id, { dancer: d, color: following.colorFor(d.dancerId), platform: platformName.value.get(pid) || null })
+            mine.set(d.id, { dancer: d, color: following.colorFor(following.followedIn(d)), platform: platformName.value.get(pid) || null })
         }
       }
     }
@@ -195,7 +196,7 @@ async function openAtToday() {
                   v-for="m in e.mine"
                   :key="m.dancer.id"
                   :color="m.color"
-                  :name="m.dancer.firstName ?? ''"
+                  :name="shortName(m.dancer)"
                   :details="[`#${m.dancer.number}`, m.platform]"
                   class="mt-1"
                 />

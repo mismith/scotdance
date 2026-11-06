@@ -24,7 +24,9 @@ test.beforeEach(async ({ page }) => {
 })
 
 /** A text box by its label (the Undo and Redo buttons' names mention fields too). */
-const field = (scope: Page | Locator, label: string) => scope.getByRole('textbox', { name: new RegExp(`^${label}`) })
+// A dancer's names offer the names dancing here, so they're comboboxes.
+const field = (scope: Page | Locator, label: string) =>
+  scope.getByRole(/^(First|Last) name/.test(label) ? 'combobox' : 'textbox', { name: new RegExp(`^${label}`) })
 const dancerPath = (id: string) => `competitions:data/${comp.id}/dancers/${id}`
 const manage = (path = '') => `/competitions/${comp.id}/manage${path}`
 
@@ -239,7 +241,8 @@ test('Cmd/Ctrl+Z undoes and Shift+Cmd/Ctrl+Z redoes; Undo in the bar too', async
 
 test('two quick Cmd/Ctrl+Z presses undo two changes', async ({ page }, info) => {
   test.skip(isPhone(info), 'keyboard shortcuts')
-  const d = comp.dancers[15]
+  // (Not 15: selecting several deletes it.)
+  const d = comp.dancers[12]
   await page.goto(manage(`/dancers/${d.id}`))
   await field(page, 'First name').fill('Avah')
   await field(page, 'First name').press('Enter')

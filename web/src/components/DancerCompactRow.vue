@@ -30,9 +30,13 @@ const props = withDefaults(
 const f = computed(() => props.card.focus)
 const days = computed(() => f.value?.days ?? [])
 const day = computed(() => days.value.find((d) => d.dances.length) ?? days.value[0] ?? null)
+// Their own number: a team's (ADR 0012) isn't one they wear as theirs.
+const own = computed(() => days.value.filter((d) => !d.dancer.team))
+const bib = computed(() => own.value.find((d) => d.dances.length) ?? own.value[0] ?? null)
 const stage = computed(() => (f.value?.phase === 'today' && days.value.length ? dayStage(days.value) : null))
 const best = computed(() => {
-  const all = days.value.map(bestPlacing).filter((b): b is NonNullable<typeof b> => !!b)
+  // Their own best; a team's only when they dance in nothing else.
+  const all = (own.value.length ? own.value : days.value).map(bestPlacing).filter((b): b is NonNullable<typeof b> => !!b)
   return all.sort((a, b) => (a.place ?? 99) - (b.place ?? 99))[0] ?? null
 })
 
@@ -72,8 +76,8 @@ const to = computed(() =>
     >
       <span class="flex w-11 shrink-0 justify-center">
         <NumberCard
-          v-if="day?.dancer.number != null"
-          :number="day.dancer.number"
+          v-if="bib?.dancer.number != null"
+          :number="bib.dancer.number"
           size="xs"
           :color="color"
         />

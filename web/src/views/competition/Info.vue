@@ -361,6 +361,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
             :fresh="freshIn(f.days)"
             :competition-id="competitionId"
             :color="f.color"
+            :name="f.name"
           />
         </div>
         <Button v-if="followedHere.length > FOLLOWED_SHOWN" block @click="allFollowed = !allFollowed">

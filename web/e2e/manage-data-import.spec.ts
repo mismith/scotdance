@@ -25,7 +25,7 @@ test.afterEach(async () => {
 
 const data = (p: string) => `competitions:data/${comp.id}/${p}`
 const importPage = () => `/competitions/${comp.id}/manage/dancers/import`
-const filterButton = (page: Page, name: RegExp) => page.getByRole('radio', { name })
+const column = (page: Page, name: string) => page.getByRole('combobox', { name: `${name} column` })
 
 /** Every dancer as "number First Last [Category Age group] Location". */
 async function dancersNow() {
@@ -51,11 +51,8 @@ test('imports an Excel program, then the updated list, and re-importing changes 
 
   // The program sheet is picked over the notes.
   await expect(page.getByRole('combobox', { name: 'Sheet' })).toHaveValue('1')
-  await expect(filterButton(page, /^All 10$/)).toBeVisible()
-  await expect(filterButton(page, /^New 10$/)).toBeVisible()
-  await expect(filterButton(page, /^Needs fixing 0$/)).toBeVisible()
-  await expect(page.getByText('New categories: Primary, Beginner, Premier, Premier Championship')).toBeVisible()
-  await expect(page.getByText('New age groups: Primary, Beginner 7 & Under 9 Years, Premier 12 & Under 14 Years, Premier Championship 12 & Over')).toBeVisible()
+  await expect(page.getByText('10 dancers in 4 age groups')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Premier Championship 12 & Over' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Import 10 dancers' }).click()
   await expect(page).toHaveURL(`/competitions/${comp.id}/manage/dancers`)
@@ -78,7 +75,6 @@ test('imports an Excel program, then the updated list, and re-importing changes 
   // The same file again: nothing to do.
   await page.goto(importPage())
   await page.locator('input[type=file]').setInputFiles(fixture('program.xlsx'))
-  await expect(filterButton(page, /^No change 10$/)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Nothing to change' })).toBeDisabled()
 
   // Ella (202) has a result, so removing her would leave a "?" there.
@@ -89,15 +85,8 @@ test('imports an Excel program, then the updated list, and re-importing changes 
   await page.getByRole('button', { name: 'Choose another' }).click()
   await page.locator('input[type=file]').setInputFiles(fixture('program-updated.csv'))
   // Hannah (302) in another age group is another entry, never a guessed move.
-  await expect(filterButton(page, /^New 2$/)).toBeVisible()
-  await expect(filterButton(page, /^Changed 1$/)).toBeVisible()
-  await expect(filterButton(page, /^No change 7$/)).toBeVisible()
-  await filterButton(page, /^Changed 1$/).click()
+  await expect(page.getByText('Changed', { exact: true })).toHaveCount(1)
   await expect(page.getByText('Last name: MacDonald → MacDonald-Smith')).toBeVisible()
-  // (A table on wide screens, a card per row on phones.)
-  await expect(page.getByRole('main').getByText('Seán')).toHaveCount(0)
-  await filterButton(page, /^No change 7$/).click()
-  await expect(page.getByRole('main').getByText(/Ó Briain/)).toBeVisible()
   await expect(page.getByText('Remove 2 dancers who aren’t in this file')).toBeVisible()
   await expect(page.getByText('202 Ella Grant, 302 Hannah Murray')).toBeVisible()
   await expect(page.getByText('1 of them has results entered. Those places would show as an unknown dancer (?).')).toBeVisible()
@@ -125,13 +114,12 @@ test('imports an Excel program, then the updated list, and re-importing changes 
 test('a table under a title: choose the number column by hand', async ({ page }) => {
   await page.goto(importPage())
   await page.locator('input[type=file]').setInputFiles(fixture('table.xlsx'))
-  await expect(page.getByRole('heading', { name: 'Columns' })).toBeVisible()
-  await expect(page.getByRole('combobox', { name: 'Number' })).toHaveValue('-1')
-  await expect(page.getByRole('combobox', { name: 'Location' })).toHaveValue('3')
-  await expect(filterButton(page, /^Needs fixing 3$/)).toBeVisible()
+  await expect(column(page, 'Bib No.')).toHaveValue('')
+  await expect(column(page, 'From')).toHaveValue('location')
+  await expect(page.getByText('3 left out')).toBeVisible()
   await expect(page.getByText('Choose the column with the dancers’ numbers.')).toBeVisible()
-  await page.getByRole('combobox', { name: 'Number' }).selectOption({ label: 'Bib No.' })
-  await expect(filterButton(page, /^New 3$/)).toBeVisible()
+  await column(page, 'Bib No.').selectOption({ label: 'Number' })
+  await expect(page.getByText('3 left out')).toBeHidden()
   await expect(page.getByText('Choose the column with the dancers’ numbers.')).toBeHidden()
   await page.getByRole('button', { name: 'Import 3 dancers' }).click()
   await expect(page.getByRole('status').getByText('Imported: 3 added')).toBeVisible()
@@ -142,20 +130,23 @@ test('a table under a title: choose the number column by hand', async ({ page })
   ])
 })
 
-test('pasted cells; rows that need fixing are shown and skipped', async ({ page }) => {
+test('pasted cells; rows sharing a number are one entry, rows that need fixing are left out', async ({ page }) => {
   await page.goto(importPage())
+  await page.getByRole('button', { name: 'Paste' }).click()
   await page.getByRole('textbox').fill(
     ['Number\tFirst name\tLast name\tAge group', '7\tAva\tReid\tPremier 12 & Under 14', '7\tMia\tLee\tPremier 12 & Under 14', '8\t\t\tPremier 12 & Under 14', 'x9\tLucy\tKerr\tPremier 12 & Under 14', '10\tEilidh\tCampbell\tPremier 12 & Under 14'].join('\n'),
   )
   await page.getByRole('button', { name: 'Use these cells' }).click()
-  await expect(filterButton(page, /^Needs fixing 4$/)).toBeVisible()
-  await expect(page.getByText('4 rows need fixing and will be skipped.')).toBeVisible()
-  await expect(page.getByText('Number 7 is in this age group more than once').first()).toBeVisible()
-  await expect(page.getByText('No name')).toBeVisible()
-  await expect(page.getByText('Number “x9” should be digits, like 101')).toBeVisible()
-  await page.getByRole('button', { name: 'Import 1 dancer' }).click()
-  await expect(page.getByRole('status').getByText('Imported: 1 added')).toBeVisible()
-  expect(await dancersNow()).toEqual(['10 Eilidh Campbell [Premier 12 & Under 14]'])
+  await expect(page.getByText('Ava Reid & Mia Lee')).toBeVisible()
+  await expect(page.getByText('2 left out')).toBeVisible()
+  await expect(page.getByText('No name: it’ll be left out.')).toBeVisible()
+  await expect(page.getByText('Number “x9” should be digits, like 101: it’ll be left out.')).toBeVisible()
+  await page.getByRole('button', { name: 'Import 2 entries' }).click()
+  await expect(page.getByRole('status').getByText('Imported: 2 added')).toBeVisible()
+  const saved = Object.values((await dbGet<Record<string, Dancer & { team?: boolean; members?: object }>>(data('dancers'))) ?? {})
+  expect(saved.find((d) => d.number === '7')).toMatchObject({ team: true })
+  expect(Object.keys(saved.find((d) => d.number === '7')?.members ?? {})).toHaveLength(2)
+  expect(await dancersNow()).toContain('10 Eilidh Campbell [Premier 12 & Under 14]')
 })
 
 test('whole names in one column are split, shown first and untickable; pairs stay as they are', async ({ page }) => {

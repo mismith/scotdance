@@ -6,7 +6,8 @@ import type { Reference } from 'firebase-admin/database';
 // way import splits a combined name column. Only a competition where most
 // entries are like that: one "Mary Jane" with no last name is just a name.
 // A pair ("Lily Siecker & Grace Thompson") is two names, not one to split, so
-// it counts neither way.
+// it counts neither way; nor does a duet, trio or group's entry (ADR 0012),
+// whose First name is v3's copy of its routine.
 
 export interface CombinedName {
   id: string;
@@ -21,7 +22,7 @@ export interface CombinedCompetition {
   dancers: CombinedName[];
 }
 
-type Dancer = { firstName?: unknown; lastName?: unknown; number?: string | number | null };
+type Dancer = { firstName?: unknown; lastName?: unknown; number?: string | number | null; team?: unknown };
 
 const text = (v: unknown) => (typeof v === 'string' || typeof v === 'number' ? String(v).trim() : '');
 const isPair = (d: Dancer) => /&|\band\b|\+/i.test(text(d.firstName));
@@ -31,7 +32,7 @@ const hasNumber = (d: Dancer) => d.number != null && String(d.number).trim() !==
 const MOSTLY = 0.6;
 
 export function combinedNames(dancers: Record<string, Dancer> | null | undefined): CombinedName[] {
-  const named = Object.entries(dancers ?? {}).filter(([, d]) => d && typeof d === 'object' && (text(d.firstName) || text(d.lastName)) && !isPair(d));
+  const named = Object.entries(dancers ?? {}).filter(([, d]) => d && typeof d === 'object' && (text(d.firstName) || text(d.lastName)) && !isPair(d) && d.team !== true);
   const combined = named.filter(([, d]) => !text(d.lastName) && /[ ,]/.test(text(d.firstName)));
   if (combined.length < 3 || combined.length < named.length * MOSTLY) return [];
   return combined

@@ -67,7 +67,7 @@ describe('searchDancers', () => {
         group_limit: 99,
         per_page: 99,
         include_fields:
-          'id,competitionId,name,firstName,lastName,number,groupId,location,website',
+          'id,entryId,competitionId,name,firstName,lastName,number,groupId,location,website',
       },
     ])
   })

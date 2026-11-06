@@ -6,6 +6,7 @@
 
 import type { AggregatorConfig } from './aggregate';
 import { normalizeName } from './normalize';
+import { isTeam, teamMembers, type EntryRecord } from './entries';
 
 // What shows where, as Manage tells organisers: "Listed: basic details are
 // public; dancers, schedule and results aren't yet"; listing "shows in the
@@ -62,6 +63,9 @@ export interface DancerRecord {
   location?: string
   number?: number | string
   dancerId?: string
+  /** A team member's record: in a team, with its title (ADR 0012). */
+  team?: boolean
+  title?: string | null
 }
 
 export interface DancerAppearance {
@@ -72,6 +76,38 @@ export interface DancerAppearance {
   image: string | null
   location: string | null
   number: number | null
+  /** Only on a team member's appearance: their team's entry and its title. */
+  team?: true
+  title?: string | null
+}
+
+/**
+ * A team member with a profile: a first and a last name, more than
+ * initials. "Clare" alone, or "E. Breeze", would join everyone of that name
+ * at every competition into one profile, and send their followers strangers'
+ * results; they stay on the team, just without one.
+ */
+export function linkableMember(m: { firstName?: unknown, lastName?: unknown }): boolean {
+  const word = (v: unknown) => (typeof v === 'string' ? v.replace(/[^\p{L}]/gu, '') : '');
+  return word(m.firstName).length >= 2 && word(m.lastName).length >= 2;
+}
+
+/**
+ * The people in a `dancers` row: a dancer's entry is one, a team's is each
+ * member, with the team's number and title. Their town and photo stay the
+ * dancer's own, never a team's.
+ */
+export function dancerRecords(row: any): Array<[string | null, DancerRecord]> {
+  if (!isTeam(row)) return [[null, row as DancerRecord]];
+  const team = row as EntryRecord;
+  return teamMembers(team).filter(([, m]) => linkableMember(m)).map(([key, m]) => [key, {
+    firstName: m.firstName as string | undefined,
+    lastName: m.lastName as string | undefined,
+    ...(typeof m.dancerId === 'string' && { dancerId: m.dancerId }),
+    number: team.number as number | string | undefined,
+    team: true,
+    title: typeof team.title === 'string' && team.title.trim() ? team.title.trim() : null,
+  }]);
 }
 
 export const dancerAggregator: AggregatorConfig<DancerRecord, DancerAppearance> = {
@@ -79,8 +115,11 @@ export const dancerAggregator: AggregatorConfig<DancerRecord, DancerAppearance> 
   sectionName: 'dancers',
   recordIdParam: 'dancerId',
   backPointerField: 'dancerId',
-  // Every dancer record contributes — no type filter like staff has.
+  // Every dancer record contributes — no type filter like staff has. A
+  // team's row is never a person: its members are (`subRecords`).
   predicate: (d): d is DancerRecord => !!d,
+  subRecords: dancerRecords,
+  subPath: 'members',
   // Aggregates are public; entries stay private until a competition is published.
   shownIn: published,
   nameOf: personName,
@@ -97,6 +136,8 @@ export const dancerAggregator: AggregatorConfig<DancerRecord, DancerAppearance> 
     number: typeof dancer.number === 'string'
       ? Number.parseInt(dancer.number, 10) || null
       : dancer.number ?? null,
+    // Only on teams, so dancers' appearances stay as they were.
+    ...(dancer.team && { team: true as const, title: dancer.title ?? null }),
   }),
   // Denorm name/image/location onto the agg root so the slim index can carry them.
   recomputeFromAppearances: personDisplay,

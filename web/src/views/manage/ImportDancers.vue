@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { until, useIntervalFn, useMediaQuery, useNow } from '@vueuse/core'
+import { until, useEventListener, useIntervalFn, useNow } from '@vueuse/core'
 import { onValue } from 'firebase/database'
 import { CaseSensitive, ChevronDown, ClipboardPaste, Download, FileSpreadsheet, Inbox, RotateCcw } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
@@ -19,22 +19,27 @@ import {
   decodeText,
   gridFromSheet,
   gridFromText,
-  guessColumns,
   hasCapitals,
   hasWholeNames,
-  headerRowOf,
   parseGrid,
-  parseTable,
   pickSheet,
   planImport,
   planUpdates,
   spellCapitals,
   splitFullName,
   splitWholeNames,
+  type ImportedTeam,
   type Grid,
-  type RowStatus,
+  type PlannedDancer,
   type TableField,
 } from '@/lib/admin/importDancers'
+import { entryLine, entryName } from '@/lib/entries'
+
+// Import dancers: bring the list, check it reads right, import. Each entry
+// shows as it will in the Dancers list, under its age group. The column
+// headings say what each column of the file became; change one if it's wrong.
+// Rows with the same number in an age group, or names joined by "&", are
+// one entry with several dancers (lib/admin/importDancers).
 
 const m = useManagedCompetition()
 const router = useRouter()
@@ -48,6 +53,8 @@ const sourceName = ref('')
 const reading = ref(false)
 const readError = ref<string | null>(null)
 const pasted = ref('')
+const pasting = ref(false)
+const pasteBox = ref<HTMLTextAreaElement | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 
 async function onFile(e: Event) {
@@ -74,12 +81,33 @@ async function readFile(file: File) {
     reading.value = false
   }
 }
-function usePasted() {
-  if (!pasted.value.trim()) return
-  sheets.value = [{ sheet: 'Pasted', grid: gridFromText(pasted.value) }]
+function usePasted(text = pasted.value) {
+  if (!text.trim()) return
+  sheets.value = [{ sheet: 'Pasted', grid: gridFromText(text) }]
   sheetIndex.value = 0
   sourceName.value = 'Pasted cells'
 }
+// Paste: straight from the clipboard where the browser allows it, else a box to paste into.
+async function paste() {
+  try {
+    const text = await navigator.clipboard.readText()
+    if (text.trim()) return usePasted(text)
+  } catch {
+    // Not allowed here: paste by hand below.
+  }
+  pasting.value = true
+  await nextTick()
+  pasteBox.value?.focus()
+}
+// ⌘V anywhere on the page does the same.
+useEventListener(document, 'paste', (e: ClipboardEvent) => {
+  if (sheets.value.length || (e.target instanceof Element && e.target.closest('input, textarea'))) return
+  const text = e.clipboardData?.getData('text') ?? ''
+  if (text.trim()) {
+    e.preventDefault()
+    usePasted(text)
+  }
+})
 
 // What the organiser's other tools sent them (Splits first), read like pasted cells.
 const inboxTree = ref<unknown>(null)
@@ -135,22 +163,19 @@ function startOver() {
   sheets.value = []
   fromItem.value = null
   pasted.value = ''
+  pasting.value = false
   readError.value = null
-  filter.value = 'all'
   removeMissing.value = false
-  columnOverrides.value = null
+  chosen.value = null
 }
 
 // --- Step 2: reading it
 const grid = computed(() => sheets.value[sheetIndex.value]?.grid ?? [])
-const columnOverrides = ref<Record<TableField, number> | null>(null)
+/** The organiser's choice of what each column holds, when it isn't what was guessed. */
+const chosen = ref<Record<TableField, number> | null>(null)
 // Columns chosen for one sheet don't fit another.
-watch(sheetIndex, () => (columnOverrides.value = null))
-const read = computed(() => {
-  const base = parseGrid(grid.value)
-  if (!base || base.layout === 'program' || !columnOverrides.value) return base
-  return { ...base, columns: columnOverrides.value, dancers: parseTable(grid.value, headerRowOf(grid.value), columnOverrides.value) }
-})
+watch(sheetIndex, () => (chosen.value = null))
+const read = computed(() => parseGrid(grid.value, chosen.value))
 // Text in capitals is always written as it's spelled, with one shown so
 // it's clear what changes (and a word to type it that way next time).
 const capitals = computed(() => !!read.value && hasCapitals(read.value.dancers))
@@ -179,56 +204,112 @@ const wholeNameExample = computed(() => {
 const parsed = computed(() =>
   read.value ? { ...read.value, dancers: wholeNames.value && splitNames.value ? splitWholeNames(spelledList.value) : spelledList.value } : read.value,
 )
-const columns = computed(() => columnOverrides.value ?? parsed.value?.columns ?? null)
-function setColumn(field: TableField, index: number) {
-  const base = columns.value ?? guessColumns(parsed.value?.headers ?? [])
-  columnOverrides.value = { ...base, [field]: index }
-}
-// What a table still needs a column for (nothing matched its heading).
-const missingColumns = computed(() => {
-  const c = columns.value
-  if (!c || parsed.value?.layout !== 'table') return []
-  return [c.number < 0 && 'numbers', c.firstName < 0 && c.lastName < 0 && c.fullName < 0 && 'names', c.group < 0 && c.category < 0 && 'age groups'].filter(
-    (x): x is string => !!x,
-  )
-})
-const FIELD_LABELS: Array<[TableField, string]> = [
+// "The guide": what a list should look like, when this one couldn't be read.
+const unreadable = computed(() => !!readError.value || (sheets.value.length > 0 && !parsed.value?.dancers.length))
+
+const FIELDS: Array<[TableField, string]> = [
   ['number', 'Number'],
   ['firstName', 'First name'],
   ['lastName', 'Last name'],
   ['fullName', 'Full name'],
+  ['members', 'Dancers'],
   ['location', 'Location'],
   ['group', 'Age group'],
   ['category', 'Category'],
+  ['title', 'Routine'],
+  ['studio', 'Studio'],
 ]
+/** The file's columns that hold anything, each with what it became. */
+const fileColumns = computed(() => {
+  const p = parsed.value
+  if (!p?.columns) return []
+  const table = p.layout === 'table'
+  const width = Math.max(0, ...grid.value.map((r) => r.length))
+  const letter = (i: number) => String.fromCharCode(65 + (i % 26))
+  return Array.from({ length: width }, (_, i) => i)
+    .filter((i) => grid.value.some((r) => r[i]))
+    .map((i) => ({
+      index: i,
+      name: table ? p.headers?.[i] || `Column ${letter(i)}` : `Column ${letter(i)}`,
+      field: (Object.keys(p.columns!) as TableField[]).find((f) => p.columns![f] === i) ?? '',
+      options: FIELDS.filter(([f]) => table || (f !== 'group' && f !== 'category')),
+    }))
+})
+/** The first entries' rows, under the columns' headings. */
+const sampleRows = computed(() => {
+  const n = parsed.value?.columns?.number ?? -1
+  return grid.value.filter((r) => /^\d/.test((n >= 0 ? r[n] : r.find(Boolean)) ?? '')).slice(0, 2)
+})
+function setColumn(index: number, field: TableField | '') {
+  const next = { ...parsed.value!.columns! }
+  for (const f of Object.keys(next) as TableField[]) if (next[f] === index) next[f] = -1
+  if (field) next[field] = index
+  chosen.value = next
+}
+// What a table still needs a column for.
+const missingColumns = computed(() => {
+  const c = parsed.value?.columns
+  if (!c || parsed.value?.layout !== 'table') return []
+  return [c.number < 0 && 'numbers', c.firstName < 0 && c.lastName < 0 && c.fullName < 0 && c.members < 0 && 'names', c.group < 0 && c.category < 0 && 'age groups'].filter(
+    (x): x is string => !!x,
+  )
+})
 
 const existing = computed(() => ({
   categories: m.categories.value.map((c) => ({ id: c.id, name: c.name })),
   groups: m.groups.value.map((g) => ({ id: g.id, name: g.name, categoryId: g.categoryId })),
-  dancers: m.dancers.value.map((d) => ({ id: d.id, num: d.num, firstName: d.firstName, lastName: d.lastName, location: d.location, groupId: d.groupId, label: d.label })),
+  dancers: m.dancers.value.map((d) => ({
+    id: d.id,
+    num: d.num,
+    firstName: d.firstName,
+    lastName: d.lastName,
+    location: d.location,
+    groupId: d.groupId,
+    label: d.label,
+    team: d.team,
+    title: d.title,
+    studio: d.studio,
+    members: d.members,
+  })),
 }))
 const plan = computed(() => (parsed.value ? planImport(parsed.value.dancers, existing.value) : null))
 
-const filter = ref<RowStatus | 'all'>('all')
-const shownRows = computed(() => (plan.value?.dancers ?? []).filter((d) => filter.value === 'all' || d.status === filter.value))
-const STATUS: Record<RowStatus, { label: string; cls: string }> = {
-  new: { label: 'New', cls: 'bg-done text-done-foreground' },
-  changed: { label: 'Changed', cls: 'bg-blue-paper text-primary' },
-  same: { label: 'No change', cls: 'bg-muted text-muted-foreground' },
-  error: { label: 'Needs fixing', cls: 'bg-destructive/10 text-destructive' },
-}
+// Each entry as the Dancers list will show it, under its age group.
+const teamEntry = (t: ImportedTeam) => ({
+  team: true,
+  title: t.title,
+  studio: t.studio,
+  location: t.location,
+  members: Object.fromEntries(t.members.map((x, i) => [String(i), { ...x, _order: i }])),
+})
+const nameOf = (d: PlannedDancer) => (d.team ? entryName(teamEntry(d.team)) : `${d.source.firstName} ${d.source.lastName}`.trim()) || '–'
+const lineOf = (d: PlannedDancer) => (d.team ? entryLine(teamEntry(d.team)) : entryLine({ title: d.source.title, studio: d.source.studio, location: d.source.location }))
+const groupName = (d: PlannedDancer) => `${d.source.category} ${d.source.group}`.trim()
+const byGroup = computed(() => {
+  const out = new Map<string, PlannedDancer[]>()
+  for (const d of plan.value?.dancers ?? []) out.set(groupName(d), [...(out.get(groupName(d)) ?? []), d])
+  return [...out.entries()]
+})
+const going = computed(() => (plan.value?.dancers ?? []).filter((d) => d.status === 'new' || d.status === 'changed'))
+const summary = computed(() => {
+  const p = plan.value
+  if (!p) return ''
+  const entries = p.dancers.filter((d) => d.status !== 'error').length
+  const groups = new Set(p.dancers.filter((d) => d.status !== 'error').map(groupName)).size
+  const solo = p.dancers.every((d) => !d.team)
+  return `${entries} ${solo ? (entries === 1 ? 'dancer' : 'dancers') : entries === 1 ? 'entry' : 'entries'} in ${groups} ${groups === 1 ? 'age group' : 'age groups'}`
+})
+const errors = computed(() => (plan.value?.dancers ?? []).filter((d) => d.status === 'error').length)
 
 const removeMissing = ref(false)
-const writes = computed(() => {
-  if (!plan.value) return 0
-  return plan.value.counts.new + plan.value.counts.changed + (removeMissing.value ? plan.value.missing.length : 0)
-})
+const writes = computed(() => going.value.length + (removeMissing.value ? (plan.value?.missing.length ?? 0) : 0))
 const importLabel = computed(() => {
   const p = plan.value
   if (!p || !writes.value) return 'Nothing to change'
-  const n = p.counts.new + p.counts.changed
+  const n = going.value.length
   const plural = (k: number) => (k === 1 ? 'dancer' : 'dancers')
-  return n ? `Import ${n} ${plural(n)}` : `Remove ${p.missing.length} ${plural(p.missing.length)}`
+  if (!n) return `Remove ${p.missing.length} ${plural(p.missing.length)}`
+  return `Import ${n} ${going.value.some((d) => d.team) ? (n === 1 ? 'entry' : 'entries') : plural(n)}`
 })
 // Removing a dancer leaves an unknown dancer (?) wherever they have results.
 const missingWithResults = computed(() => {
@@ -241,14 +322,6 @@ const missingWithResults = computed(() => {
   }
   return (plan.value?.missing ?? []).filter((d) => placed.has(d.id)).length
 })
-
-// Rows as a table where there's room, else as cards (nothing scrolls sideways).
-const wide = useMediaQuery('(min-width: 640px)')
-const nameOf = (d: { source: { firstName: string; lastName: string } }) => `${d.source.firstName} ${d.source.lastName}`.trim() || '–'
-// Split whole names show where they split: the last name tinted, as in Dancer cleanup.
-const splitShown = (d: { source: { lastName: string } }) => wholeNames.value && splitNames.value && !!d.source.lastName
-const lastNameChip = 'bg-primary/10 text-primary ms-[0.3em] rounded px-1'
-const groupOf = (d: { source: { category: string; group: string } }) => `${d.source.category} ${d.source.group}`.trim() || '–'
 
 // --- Step 3: saving it, all at once
 const importing = ref(false)
@@ -284,11 +357,8 @@ async function doImport() {
 </script>
 
 <template>
-  <div class="max-w-4xl space-y-8 p-4 pb-[calc(3rem+var(--safe-bottom))]">
-    <SectionHeader
-      title="Import dancers"
-      description="From your entry list in Excel or Google Sheets. You’ll see exactly what changes before anything is saved."
-    />
+  <div class="max-w-4xl space-y-6 p-4 pb-[calc(3rem+var(--safe-bottom))]">
+    <SectionHeader title="Import dancers" />
 
     <!-- Step 1 -->
     <template v-if="!sheets.length">
@@ -320,67 +390,29 @@ async function doImport() {
       >
         <FileSpreadsheet class="text-primary pointer-events-none mx-auto size-10" />
         <div class="pointer-events-none space-y-1">
-          <h2 class="text-heading">Choose your entry list</h2>
-          <p class="text-muted-foreground text-sm">An .xlsx or CSV file, from Excel or Google Sheets. You can also drag it here.</p>
+          <h2 class="text-heading">Drop your entry list here</h2>
+          <p class="text-muted-foreground text-sm">An Excel, Google Sheets or CSV file. Or paste the cells.</p>
         </div>
-        <Button variant="primary" size="lg" :disabled="!canEdit" :busy="reading" @click="fileInput?.click()">
-          {{ reading ? 'Reading…' : 'Choose a file' }}
-        </Button>
+        <div class="flex flex-wrap justify-center gap-2">
+          <Button variant="primary" size="lg" :disabled="!canEdit" :busy="reading" @click="fileInput?.click()">
+            {{ reading ? 'Reading…' : 'Choose a file' }}
+          </Button>
+          <Button size="lg" :disabled="!canEdit" @click="paste"><ClipboardPaste /> Paste</Button>
+        </div>
         <input ref="fileInput" type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="sr-only" tabindex="-1" @change="onFile" />
         <p v-if="readError" class="text-destructive text-sm font-medium">{{ readError }}</p>
       </section>
 
-      <!-- Where entries from other systems get ready (the Toolkit's Splits), unless a list from it is already waiting above. -->
-      <section v-if="inboxLoaded && !inbox.length" class="bg-muted flex items-center gap-3 rounded-2xl px-4 py-3.5">
-        <img src="/img/toolkit.png" alt="" class="size-8 shrink-0 rounded-lg" />
-        <p class="text-muted-foreground min-w-0 flex-1 text-sm">
-          Entries from Eventry or HD Comps? The
-          <a href="https://toolkit.scotdance.app/#splits" target="_blank" rel="noopener" class="text-primary font-semibold">ScotDance Toolkit</a>
-          has free tools to get them ready to send here.
-        </p>
-      </section>
-
-      <section class="space-y-3">
-        <h2 class="text-heading">Or paste from a spreadsheet</h2>
-        <p class="text-muted-foreground text-sm">Select the cells in Excel or Google Sheets, copy, and paste them here.</p>
+      <section v-if="pasting" class="space-y-3">
         <textarea
+          ref="pasteBox"
           v-model="pasted"
           rows="6"
+          aria-label="Cells to import"
           placeholder="Number	First name	Last name	Location	Age group"
           class="field w-full rounded-xl p-3 font-mono text-sm"
         />
-        <Button :disabled="!pasted.trim()" @click="usePasted">
-          <ClipboardPaste /> Use these cells
-        </Button>
-      </section>
-
-      <section class="space-y-3">
-        <h2 class="text-heading">What the list should look like</h2>
-        <p class="text-muted-foreground text-sm">Either way works:</p>
-        <div class="grid gap-4 md:grid-cols-2">
-          <div class="space-y-2">
-            <p class="text-sm font-semibold">An age group heading, then its dancers</p>
-            <table class="bg-card w-full overflow-hidden rounded-lg text-sm shadow-(--shadow-card)">
-              <tbody class="divide-y">
-                <tr><td colspan="4" class="px-2 py-1 font-semibold">Premier 12 &amp; Under 14 Years</td></tr>
-                <tr><td class="px-2 py-1 font-mono">301</td><td class="px-2 py-1">Ava</td><td class="px-2 py-1">Reid</td><td class="px-2 py-1">Calgary</td></tr>
-                <tr><td class="px-2 py-1 font-mono">302</td><td class="px-2 py-1">Mia</td><td class="px-2 py-1">Lee</td><td class="px-2 py-1">Edmonton</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="space-y-2">
-            <p class="text-sm font-semibold">Or a table with headings</p>
-            <table class="bg-card w-full overflow-hidden rounded-lg text-sm shadow-(--shadow-card)">
-              <tbody class="divide-y">
-                <tr class="font-semibold"><td class="px-2 py-1">Number</td><td class="px-2 py-1">First name</td><td class="px-2 py-1">Last name</td><td class="px-2 py-1">Age group</td></tr>
-                <tr><td class="px-2 py-1 font-mono">301</td><td class="px-2 py-1">Ava</td><td class="px-2 py-1">Reid</td><td class="px-2 py-1">Premier 12 &amp; Under 14</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <Button variant="plain" class="-ml-4" href="/examples/ScotDance-Import-Template.xlsx" download>
-          <Download /> Download a template
-        </Button>
+        <Button variant="primary" :disabled="!pasted.trim()" @click="usePasted()">Use these cells</Button>
       </section>
     </template>
 
@@ -407,51 +439,39 @@ async function doImport() {
       </p>
 
       <template v-else-if="plan">
-        <!-- Columns, for tables -->
-        <section v-if="parsed.layout === 'table' && parsed.headers" class="space-y-2">
-          <h2 class="text-heading">Columns</h2>
-          <div class="grid grid-cols-2 gap-2 lg:grid-cols-4">
-            <label v-for="[field, label] in FIELD_LABELS" :key="field" class="space-y-1">
-              <span class="block text-sm font-medium">{{ label }}</span>
-              <span class="relative block">
-                <select
-                  :value="columns?.[field] ?? -1"
-                  class="field h-11 w-full appearance-none rounded-xl pr-9 pl-3 text-callout"
-                  @change="setColumn(field, Number(($event.target as HTMLSelectElement).value))"
-                >
-                  <option :value="-1">Not in the file</option>
-                  <option v-for="(h, i) in parsed.headers" :key="i" :value="i">{{ h || `Column ${i + 1}` }}</option>
-                </select>
-                <ChevronDown class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
-              </span>
-            </label>
+        <!-- What each column became -->
+        <section class="space-y-2">
+          <div class="-mx-4 overflow-x-auto px-4">
+            <table class="text-callout">
+              <thead>
+                <tr>
+                  <th v-for="c in fileColumns" :key="c.index" class="pr-2 pb-1 text-left font-normal">
+                    <span class="relative block">
+                      <select
+                        :value="c.field"
+                        :aria-label="`${c.name} column`"
+                        :class="['field h-11 w-full min-w-32 appearance-none rounded-xl pr-9 pl-3', !c.field && 'text-muted-foreground']"
+                        @change="setColumn(c.index, ($event.target as HTMLSelectElement).value as TableField | '')"
+                      >
+                        <option value="">Not used</option>
+                        <option v-for="[f, label] in c.options" :key="f" :value="f">{{ label }}</option>
+                      </select>
+                      <ChevronDown class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="text-muted-foreground">
+                <tr v-for="(r, i) in sampleRows" :key="i">
+                  <td v-for="c in fileColumns" :key="c.index" class="max-w-56 truncate py-1 pr-2 pl-3">{{ r[c.index] }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           <p v-if="missingColumns.length" class="text-destructive text-sm font-medium">
             Choose the {{ missingColumns.length === 1 ? 'column' : 'columns' }} with the dancers’
             {{ missingColumns.length > 1 ? `${missingColumns.slice(0, -1).join(', ')} and ${missingColumns.at(-1)}` : missingColumns[0] }}.
           </p>
-        </section>
-
-        <!-- Summary -->
-        <section class="space-y-3">
-          <h2 class="text-heading">What will happen</h2>
-          <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Show">
-            <button
-              v-for="key in (['all', 'new', 'changed', 'same', 'error'] as const)"
-              :key="key"
-              type="button"
-              role="radio"
-              :aria-checked="filter === key"
-              :class="['press min-h-11 rounded-full px-4 text-sm font-semibold', filter === key ? 'bg-primary-fill text-primary-foreground' : 'surface']"
-              @click="filter = key"
-            >
-              {{ key === 'all' ? `All ${plan.dancers.length}` : `${STATUS[key].label} ${plan.counts[key]}` }}
-            </button>
-          </div>
-          <ul v-if="plan.newCategories.length || plan.newGroups.length" class="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
-            <li v-if="plan.newCategories.length">New categories: {{ plan.newCategories.join(', ') }}</li>
-            <li v-if="plan.newGroups.length">New age groups: {{ plan.newGroups.map((g) => `${g.category} ${g.group}`.trim()).join(', ') }}</li>
-          </ul>
           <button
             v-if="wholeNames"
             type="button"
@@ -479,63 +499,26 @@ async function doImport() {
               </span>
             </p>
           </div>
-          <p v-if="plan.counts.error" class="text-destructive text-sm font-medium">
-            {{ plan.counts.error }} {{ plan.counts.error === 1 ? 'row needs' : 'rows need' }} fixing and will be skipped. Fix them in the file and import again, or add them by hand afterwards.
-          </p>
         </section>
 
-        <!-- Rows: a table where there's room -->
-        <div v-if="wide" class="surface overflow-x-auto rounded-2xl">
-          <table class="w-full text-callout">
-            <thead class="text-muted-foreground border-b text-left text-sm">
-              <tr>
-                <th class="px-3 py-2 font-medium">Row</th>
-                <th class="px-3 py-2 font-medium"><span class="sr-only">Status</span></th>
-                <th class="px-3 py-2 font-medium">Number</th>
-                <th class="px-3 py-2 font-medium">Name</th>
-                <th class="px-3 py-2 font-medium">Age group</th>
-                <th class="px-3 py-2 font-medium">Location</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y">
-              <tr v-for="d in shownRows.slice(0, 500)" :key="d.source.row" class="align-top">
-                <td class="text-muted-foreground px-3 py-2 tabular-nums">{{ d.source.row }}</td>
-                <td class="px-3 py-2"><span :class="['rounded-full px-2 py-0.5 text-sm font-semibold whitespace-nowrap', STATUS[d.status].cls]">{{ STATUS[d.status].label }}</span></td>
-                <td class="px-3 py-2 font-mono font-semibold">{{ d.source.number || '–' }}</td>
-                <td class="px-3 py-2">
-                  <template v-if="splitShown(d)">{{ d.source.firstName }}<span :class="lastNameChip">{{ d.source.lastName }}</span></template>
-                  <template v-else>{{ nameOf(d) }}</template>
-                  <p v-for="e in d.errors" :key="e" class="text-destructive text-sm font-medium">{{ e }}</p>
-                  <p v-for="(change, field) in d.changes" :key="field" class="text-muted-foreground text-sm">
-                    {{ field }}: <span class="line-through">{{ change[0] || 'empty' }}</span> → {{ change[1] || 'empty' }}
-                  </p>
-                </td>
-                <td class="px-3 py-2">{{ groupOf(d) }}</td>
-                <td class="px-3 py-2">{{ d.source.location }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <p v-if="shownRows.length > 500" class="text-muted-foreground border-t p-3 text-sm">Showing the first 500 rows.</p>
-        </div>
-        <!-- …and on a phone, a row each, nothing cut off -->
-        <ul v-else class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
-          <li v-for="d in shownRows.slice(0, 500)" :key="d.source.row" class="space-y-1 px-4 py-3">
-            <div class="flex items-center gap-2">
-              <NumberTile :num="d.source.number" />
-              <span class="min-w-0 flex-1 truncate text-base font-medium">
-                <template v-if="splitShown(d)">{{ d.source.firstName }}<span :class="lastNameChip">{{ d.source.lastName }}</span></template>
-                <template v-else>{{ nameOf(d) }}</template>
-              </span>
-              <span :class="['rounded-full px-2 py-0.5 text-sm font-semibold whitespace-nowrap', STATUS[d.status].cls]">{{ STATUS[d.status].label }}</span>
-            </div>
-            <p class="text-muted-foreground text-sm">{{ [groupOf(d), d.source.location, `Row ${d.source.row}`].filter(Boolean).join(' · ') }}</p>
-            <p v-for="e in d.errors" :key="e" class="text-destructive text-sm font-medium">{{ e }}</p>
-            <p v-for="(change, field) in d.changes" :key="field" class="text-muted-foreground text-sm">
-              {{ field }}: <span class="line-through">{{ change[0] || 'empty' }}</span> → {{ change[1] || 'empty' }}
-            </p>
-          </li>
-          <li v-if="shownRows.length > 500" class="text-muted-foreground px-4 py-3 text-sm">Showing the first 500 rows.</li>
-        </ul>
+        <!-- Each entry, as the Dancers list will show it -->
+        <section v-for="[name, entries] in byGroup" :key="name" class="space-y-1">
+          <h2 class="text-muted-foreground px-1 text-footnote font-semibold">{{ name || 'No age group' }}</h2>
+          <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
+            <li v-for="d in entries" :key="d.source.row" class="flex items-start gap-3 px-4 py-2.5">
+              <NumberTile :num="d.source.number" class="mt-0.5" />
+              <div class="min-w-0 flex-1">
+                <p class="text-base font-semibold break-words">{{ nameOf(d) }}</p>
+                <p v-if="lineOf(d)" class="text-muted-foreground text-sm break-words">{{ lineOf(d) }}</p>
+                <p v-for="e in d.errors" :key="e" class="text-destructive text-sm font-medium">{{ e }}: it’ll be left out.</p>
+                <p v-for="(change, field) in d.changes" :key="field" class="text-muted-foreground text-sm">
+                  {{ field }}: <span class="line-through">{{ change[0] || 'empty' }}</span> → {{ change[1] || 'empty' }}
+                </p>
+              </div>
+              <span v-if="d.status === 'changed'" class="bg-blue-paper text-primary shrink-0 rounded-full px-2 py-0.5 text-sm font-semibold">Changed</span>
+            </li>
+          </ul>
+        </section>
 
         <!-- Dancers not in the file -->
         <button
@@ -557,12 +540,52 @@ async function doImport() {
         </button>
 
         <div class="glass sticky bottom-[calc(var(--safe-bottom)+0.75rem)] flex flex-wrap items-center gap-3 rounded-2xl py-2 pr-2 pl-4">
-          <p class="text-muted-foreground min-w-0 flex-1 text-sm">You can undo the import straight after.</p>
+          <p class="min-w-0 flex-1 text-sm">
+            <span class="font-semibold">{{ summary }}</span>
+            <span v-if="errors" class="text-destructive"> · {{ errors }} left out</span>
+          </p>
           <Button variant="primary" size="lg" :disabled="!canEdit || !writes" :busy="importing" @click="doImport">
             {{ importLabel }}
           </Button>
         </div>
       </template>
     </template>
+
+    <!-- What a list should look like: there to look up, and open when one couldn't be read. -->
+    <details :open="unreadable" class="space-y-3">
+      <summary class="text-primary cursor-pointer text-sm font-semibold">See what lists look like</summary>
+      <div class="mt-3 grid gap-4 md:grid-cols-2">
+        <div class="space-y-2">
+          <p class="text-sm font-semibold">An age group heading, then its dancers</p>
+          <table class="bg-card w-full overflow-hidden rounded-lg text-sm shadow-(--shadow-card)">
+            <tbody class="divide-y">
+              <tr><td colspan="4" class="px-2 py-1 font-semibold">Premier 12 &amp; Under 14 Years</td></tr>
+              <tr><td class="px-2 py-1 font-mono">301</td><td class="px-2 py-1">Ava</td><td class="px-2 py-1">Reid</td><td class="px-2 py-1">Calgary</td></tr>
+              <tr><td class="px-2 py-1 font-mono">302</td><td class="px-2 py-1">Mia</td><td class="px-2 py-1">Lee</td><td class="px-2 py-1">Edmonton</td></tr>
+              <tr><td colspan="4" class="px-2 py-1 font-semibold">Choreography Duet</td></tr>
+              <tr><td class="px-2 py-1 font-mono">401</td><td class="px-2 py-1">Ava Reid &amp;</td><td class="px-2 py-1">Mia Lee</td><td class="px-2 py-1">Calgary</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="space-y-2">
+          <p class="text-sm font-semibold">Or a table with headings</p>
+          <table class="bg-card w-full overflow-hidden rounded-lg text-sm shadow-(--shadow-card)">
+            <tbody class="divide-y">
+              <tr class="font-semibold"><td class="px-2 py-1">Number</td><td class="px-2 py-1">First name</td><td class="px-2 py-1">Last name</td><td class="px-2 py-1">Age group</td></tr>
+              <tr><td class="px-2 py-1 font-mono">301</td><td class="px-2 py-1">Ava</td><td class="px-2 py-1">Reid</td><td class="px-2 py-1">Premier 12 &amp; Under 14</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="text-muted-foreground mt-3 text-sm">A duet or group is its dancers’ names joined by “&amp;”, or a row for each dancer with the same number.</p>
+      <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <Button variant="plain" class="-ml-4" href="/examples/ScotDance-Import-Template.xlsx" download><Download /> Download a template</Button>
+        <p class="text-muted-foreground text-sm">
+          Entries from Eventry or HD Comps? The
+          <a href="https://toolkit.scotdance.app/#splits" target="_blank" rel="noopener" class="text-primary font-semibold">ScotDance Toolkit</a>
+          gets them ready to send here.
+        </p>
+      </div>
+    </details>
   </div>
 </template>

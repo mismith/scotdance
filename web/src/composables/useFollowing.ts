@@ -24,6 +24,8 @@ export interface FollowableDancer {
   firstName?: string
   lastName?: string
   fullName?: string
+  /** A team's members (ADR 0012): following any of them follows the team. */
+  teamMembers?: Array<{ dancerId?: string }>
 }
 
 /**
@@ -88,9 +90,20 @@ export function useFollowing() {
     return { '--dc': colorFor(aggregateId) ?? fallback }
   }
 
+  /**
+   * Whom you follow in an entry: the dancer, or a team's first member you
+   * follow (whose look the team wears). Null when nobody.
+   */
+  function followedIn(d: FollowableDancer | null | undefined): string | null {
+    if (!d) return null
+    if (d.dancerId) return favorites.isFavorite('dancers', d.dancerId) ? d.dancerId : null
+    return d.teamMembers?.find((m) => m.dancerId && favorites.isFavorite('dancers', m.dancerId))?.dancerId ?? null
+  }
+
+  /** Whether you follow a dancer (by entry or profile id), or anyone in a team. */
   function isFollowing(d: FollowableDancer | string | null | undefined): boolean {
-    const id = typeof d === 'string' ? d : d?.dancerId
-    return !!id && favorites.isFavorite('dancers', id)
+    if (typeof d === 'string') return favorites.isFavorite('dancers', d)
+    return !!followedIn(d)
   }
 
   function nameOf(d: FollowableDancer) {
@@ -127,5 +140,5 @@ export function useFollowing() {
 
   const followedIds = computed(() => order.value)
 
-  return { isFollowing, alertsOn, setAlerts, lookFor, colorFor, colorIdFor, paint, toggle, setFollowing, followedIds }
+  return { isFollowing, followedIn, alertsOn, setAlerts, lookFor, colorFor, colorIdFor, paint, toggle, setFollowing, followedIds }
 }

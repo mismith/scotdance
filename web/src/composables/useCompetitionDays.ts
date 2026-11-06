@@ -5,7 +5,8 @@ import { compareDays, competitionPhase, dancerDay, type DancerDay } from '@/lib/
 import type { EnrichedDancer } from '@/types/competition'
 
 // Inside a competition: the followed people entered here, each with their
-// day (one DancerDay per age-group entry), in follow order.
+// day (one DancerDay per entry: their own in each age group, and any team
+// they're in), in follow order.
 
 export interface FollowedHere {
   personId: string
@@ -37,22 +38,42 @@ export function useCompetitionDays() {
     return dancerDay(d, bundle.value, phase.value)
   }
 
-  const followedHere = computed<FollowedHere[]>(() => {
-    const byPerson = new Map<string, EnrichedDancer[]>()
+  /** Each person's entries here, by profile id: their own, then their teams'. */
+  const entriesByPerson = computed(() => {
+    const own = new Map<string, EnrichedDancer[]>()
+    const teams = new Map<string, EnrichedDancer[]>()
+    const names = new Map<string, string>()
     for (const d of c.dancers.value) {
-      if (!d.dancerId || !following.isFollowing(d)) continue
-      const list = byPerson.get(d.dancerId) ?? []
-      list.push(d)
-      byPerson.set(d.dancerId, list)
+      if (d.dancerId) {
+        own.set(d.dancerId, [...(own.get(d.dancerId) ?? []), d])
+        names.set(d.dancerId, d.fullName)
+      }
+      for (const m of d.teamMembers ?? []) {
+        if (!m.dancerId) continue
+        teams.set(m.dancerId, [...(teams.get(m.dancerId) ?? []), d])
+        if (!names.has(m.dancerId)) names.set(m.dancerId, m.name)
+      }
     }
+    const out = new Map<string, { name: string; entries: EnrichedDancer[] }>()
+    for (const id of new Set([...own.keys(), ...teams.keys()])) {
+      out.set(id, { name: names.get(id) ?? '', entries: [...(own.get(id) ?? []), ...(teams.get(id) ?? [])] })
+    }
+    return out
+  })
+
+  /** One person's entries here (their own, then their teams'), by profile id. */
+  const entriesFor = (personId: string) => entriesByPerson.value.get(personId)?.entries ?? []
+
+  const followedHere = computed<FollowedHere[]>(() => {
+    const byPerson = entriesByPerson.value
     return following.followedIds.value
       .filter((id) => byPerson.has(id))
       .map((id) => {
-        const entries = byPerson.get(id)!
+        const { name, entries } = byPerson.get(id)!
         return {
           personId: id,
           color: following.colorFor(id),
-          name: entries[0].fullName,
+          name,
           days: entries.map(dayFor),
         }
       })
@@ -72,5 +93,5 @@ export function useCompetitionDays() {
     return m
   })
 
-  return { phase, followedHere, followedByGroup, dayFor }
+  return { phase, followedHere, followedByGroup, dayFor, entriesFor }
 }

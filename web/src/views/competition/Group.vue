@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { entryLine, isTeam } from '@/lib/entries'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Award, ChevronDown, ChevronRight, CircleSlash, Clock, Hourglass, Trophy } from '@lucide/vue'
@@ -73,10 +74,17 @@ const groupDancers = computed(() =>
     (a, b) => (a.number ?? Infinity) - (b.number ?? Infinity),
   ),
 )
+// "12 dancers", "4 teams", or both.
+const count = (n: number, one: string) => `${n} ${n === 1 ? one : `${one}s`}`
+const entriesCount = computed(() => {
+  const teams = groupDancers.value.filter(isTeam).length
+  const dancers = groupDancers.value.length - teams
+  return [dancers || !teams ? count(dancers, 'dancer') : '', teams ? count(teams, 'team') : ''].filter(Boolean).join(', ')
+})
 
 const followedHere = computed(() => oncePerPerson(groupDancers.value.filter((d) => following.isFollowing(d))))
-const colorOf = (d: EnrichedDancer | null) => (d && following.isFollowing(d) ? following.colorFor(d.dancerId) : null)
-const rowStyle = (d: EnrichedDancer | null) => (colorOf(d) ? following.paint(d!.dancerId) : undefined)
+const colorOf = (d: EnrichedDancer | null) => (d && following.isFollowing(d) ? following.colorFor(following.followedIn(d)) : null)
+const rowStyle = (d: EnrichedDancer | null) => (colorOf(d) ? following.paint(following.followedIn(d)) : undefined)
 
 // Where and when, from the schedule (first slot this group dances).
 const where = computed(() => {
@@ -212,7 +220,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
         <!-- One title with the category in it ("Primary Under 7"), not a label above. -->
         <h1 :class="heroTitle(group.fullName || group.name)">{{ group.fullName || group.name }}</h1>
         <p class="text-muted-foreground text-callout">
-          {{ [where, `${groupDancers.length} dancers`].filter(Boolean).join(' · ') }}
+          {{ [where, entriesCount].filter(Boolean).join(' · ') }}
         </p>
         <div v-if="followedHere.length" class="space-y-1 pt-1">
           <MyDancerLine v-for="d in followedHere" :key="d.id" :color="colorOf(d)" :name="d.fullName" :details="[`#${d.number}`]" />
@@ -287,7 +295,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
             class="press-row focus-inset text-primary text-callout h-12 w-full font-semibold"
             @click="showAllCallbacks = !showAllCallbacks"
           >
-            {{ showAllCallbacks ? 'Show callbacks only' : `Show all ${groupDancers.length} dancers` }}
+            {{ showAllCallbacks ? 'Show callbacks only' : `Show all ${entriesCount}` }}
           </button>
         </div>
       </section>
@@ -351,7 +359,8 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
                   />
                   <span class="min-w-0 flex-1">
                     <span class="block truncate text-base font-semibold">{{ row.dancer.fullName }}</span>
-                    <span v-if="dancerPlace(row.dancer.location, group)" class="text-muted-foreground block truncate text-sm">{{ row.dancer.location }}</span>
+                    <span v-if="row.dancer.team && entryLine(row.dancer)" class="text-muted-foreground block truncate text-sm">{{ entryLine(row.dancer) }}</span>
+                    <span v-else-if="dancerPlace(row.dancer.location, group)" class="text-muted-foreground block truncate text-sm">{{ row.dancer.location }}</span>
                   </span>
                 </template>
                 <span v-else class="text-muted-foreground text-base">Unknown dancer</span>

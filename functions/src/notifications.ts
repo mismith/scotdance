@@ -3,6 +3,7 @@ import type { App } from 'firebase-admin/app';
 import type { DataSnapshot, Reference } from 'firebase-admin/database';
 import { getMessaging, type MulticastMessage } from 'firebase-admin/messaging';
 import tzlookup from '@photostructure/tz-lookup';
+import { ensemble, entryName, isTeam, teamMembers } from './utility/entries';
 
 // Push alerts for people's favourite dancers, and competitions they've
 // turned alerts on for (ADR 0008).
@@ -210,6 +211,36 @@ const listNames = (names: string[]) => (names.length > 1
   : names[0]);
 
 /**
+ * A team's result alert (ADR 0012), for someone following one or more of its
+ * members: "Isla’s duet placed 1st", or "Isla and Mairi’s group…", with its
+ * name under it. Not placed says whose too: a dancer in a solo, a duet and a
+ * trio would otherwise get three alerts that read the same.
+ */
+export function teamResultMessage(
+  ctx: ResultContext,
+  teamName: string,
+  firstNames: string[],
+  place?: number,
+  /** How many dance in it: a duet, a trio, or a group. */
+  size = 0,
+) {
+  const names = firstNames.map((n) => n.trim()).filter(Boolean);
+  const noun = ensemble(size);
+  const who = names.length ? `${listNames(names)}’s ${noun}` : `Your dancer’s ${noun}`;
+  const where = [ctx.groupName, ctx.competitionName].filter(Boolean).join(' · ');
+  if (!place) {
+    return ctx.overall
+      ? { title: `Overall results are in for ${who}`, body: [teamName, where].filter(Boolean).join(' · ') }
+      : { title: `Results are in for ${who}`, body: [teamName, danceTitle(ctx.danceName), where].filter(Boolean).join(' · ') };
+  }
+  if (ctx.overall) return { title: `${who} placed ${ordinal(place)} overall`, body: [teamName, where].filter(Boolean).join(' · ') };
+  return {
+    title: `${who} placed ${ordinal(place)}`,
+    body: [teamName, danceTitle(ctx.danceName), where].filter(Boolean).join(' · '),
+  };
+}
+
+/**
  * A competition alert: the morning of, or when it's published. `names` are
  * the first names of the dancers the person follows who are entered (none
  * when they follow only the competition).
@@ -390,7 +421,7 @@ export interface SettleTask {
   results: unknown[];
 }
 
-type Entry = { firstName?: string; dancerId?: string };
+type Entry = { firstName?: string; dancerId?: string; team?: boolean; title?: string };
 
 /**
  * Who gets a dancer's alerts: everyone with them as a favourite, except anyone
@@ -402,17 +433,35 @@ async function alertFollowers(db: Db, personId: string) {
   return uids.filter((_, i) => !off[i]);
 }
 
-/** Everyone entered in an age group, with who gets their alerts. */
+/** The people in an entry, by profile: a dancer's entry is them; a team's, its members. */
+export function peopleIn(entry: unknown): Array<{ dancerId: string; firstName: string }> {
+  const text = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+  if (isTeam(entry)) {
+    return teamMembers(entry as Parameters<typeof teamMembers>[0])
+      .filter(([, m]) => typeof m.dancerId === 'string' && m.dancerId)
+      .map(([, m]) => ({ dancerId: m.dancerId as string, firstName: text(m.firstName) }));
+  }
+  const e = entry as Entry | null;
+  return e?.dancerId ? [{ dancerId: e.dancerId, firstName: text(e.firstName) }] : [];
+}
+
+/**
+ * Everyone entered in an age group, with who gets their alerts: for
+ * each one, the first names of the people they follow in the entry (a team
+ * can have several).
+ */
 async function entriesWithFollowers(db: Db, competitionId: string, groupId: string) {
   const snap = await db.child(`competitions:data/${competitionId}/dancers`).orderByChild('groupId').equalTo(groupId).get();
   return Promise.all(
     Object.entries((snap.val() || {}) as Record<string, Entry>)
-      .filter(([, entry]) => !!entry?.dancerId)
-      .map(async ([entryId, entry]) => ({
-        entryId,
-        entry,
-        followers: await alertFollowers(db, entry.dancerId as string),
-      })),
+      .filter(([, entry]) => peopleIn(entry).length)
+      .map(async ([entryId, entry]) => {
+        const people = peopleIn(entry);
+        const lists = await Promise.all(people.map((p) => alertFollowers(db, p.dancerId)));
+        const names = new Map<string, string[]>();
+        lists.forEach((uids, i) => uids.forEach((uid) => names.set(uid, [...(names.get(uid) ?? []), people[i].firstName])));
+        return { entryId, entry, followers: [...names.keys()], names };
+      }),
   );
 }
 
@@ -545,7 +594,9 @@ export function getOnResultsSettled(db: Db, app: App, emulated: boolean) {
     }
 
     const perEntry = await Promise.all(
-      entries.map(async ({ entryId, entry, followers }) => {
+      entries.map(async ({
+        entryId, entry, followers, names,
+      }) => {
         const allowed = await Promise.all(followers.map(wants));
         const place = placings.get(entryId);
         return followers
@@ -554,7 +605,9 @@ export function getOnResultsSettled(db: Db, app: App, emulated: boolean) {
           uid,
           kind: 'results',
           competitionId,
-          ...resultMessage(context, entry.firstName, place),
+          ...(isTeam(entry)
+            ? teamResultMessage(context, entryName(entry), names.get(uid) ?? [], place, teamMembers(entry).length)
+            : resultMessage(context, entry.firstName, place)),
           link,
           key: `${competitionId}/${groupId}/${danceId}/${uid}_${entryId}`,
           signature: String(place ?? 'in'),
@@ -632,13 +685,14 @@ export function getOnBackfillFollowers(db: Db) {
  * no names.
  */
 async function recipientsFor(db: Db, competitionId: string) {
-  type Entry = { firstName?: string; dancerId?: string };
-  const entries = Object.values(
-    ((await db.child(`competitions:data/${competitionId}/dancers`).get()).val() || {}) as Record<string, Entry>,
-  );
+  // Everyone dancing: dancers, and the members of teams.
+  const people = Object.values(
+    ((await db.child(`competitions:data/${competitionId}/dancers`).get()).val() || {}) as Record<string, unknown>,
+  ).flatMap(peopleIn);
   const byUid = new Map<string, Set<string>>();
-  const personIds = [...new Set(entries.map((e) => e?.dancerId).filter((x): x is string => !!x))];
-  const firstName = new Map(entries.filter((e) => e?.dancerId).map((e) => [e.dancerId as string, e.firstName?.trim() || '']));
+  const personIds = [...new Set(people.map((p) => p.dancerId))];
+  const firstName = new Map<string, string>();
+  for (const p of people) if (p.firstName || !firstName.has(p.dancerId)) firstName.set(p.dancerId, p.firstName);
   const followerLists = await Promise.all(personIds.map((id) => alertFollowers(db, id)));
   followerLists.forEach((uids, i) => uids.forEach((uid) => {
     const set = byUid.get(uid) ?? new Set<string>();

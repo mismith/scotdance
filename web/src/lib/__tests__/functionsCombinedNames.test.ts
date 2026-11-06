@@ -36,6 +36,11 @@ describe('combinedNames', () => {
     ).toEqual([])
   })
 
+  it('leaves duets, trios and groups out: their First name is the routine', () => {
+    const team = (firstName: string) => ({ firstName, team: true, members: { m: { firstName: 'Isla', lastName: 'Ross' } } })
+    expect(combinedNames({ a: team('Celtic Sisters'), b: team('Rain on Me'), c: team('Time for Tartan'), d: { firstName: 'Isla', lastName: 'Ross' } })).toEqual([])
+  })
+
   it('needs a few before it calls it a pattern', () => {
     expect(combinedNames({ a: { firstName: 'Adelyn Dalgleish' }, b: { firstName: 'Adeline Riehl' } })).toEqual([])
   })

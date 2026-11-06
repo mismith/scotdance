@@ -91,6 +91,7 @@ function watchBundles(
   personIds: string[],
   cb: (b: Bundles, resultsChanged: boolean) => void,
   onError: () => void,
+  teamIdsOf: (personId: string) => string[] = () => [],
 ) {
   const entries: Record<string, DancersBundle> = {}
   let results: ResultsBundle | undefined
@@ -102,7 +103,7 @@ function watchBundles(
     ready = true
   }
   const offs = [
-    ...personIds.map((p) => watchEntries(cid, p, (b) => ((entries[p] = b), emit()), onError)),
+    ...personIds.map((p) => watchEntries(cid, p, (b) => ((entries[p] = b), emit()), onError, teamIdsOf(p))),
     watchResults(cid, (b) => ((results = b), emit(true)), onError),
     watchSchedule(cid, (b) => ((schedule = b), emit()), onError),
   ]
@@ -131,8 +132,11 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
     focusComp: Competition | null
     phase: Phase
     upcoming: Array<{ competitionId: string; competition: Competition }>
+    /** Their teams' entries, by competition (their profile names them). */
+    teams: Record<string, string[]>
   }
   const plans = ref<Plan[]>([])
+  const teamsOf = (personId: string, cid: string) => plans.value.find((p) => p.id === personId)?.teams[cid] ?? []
 
   let run = 0
   watch(
@@ -152,6 +156,10 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
           const [agg] = await Promise.all([fetchAggregate(id), recentList])
           const apps = Object.values(agg?.appearances ?? {})
           const compIds = [...new Set(apps.map((a) => a.competitionId).filter((x): x is string => !!x))]
+          const teams: Record<string, string[]> = {}
+          for (const a of apps) {
+            if (a.team && a.competitionId && a.dancerId) teams[a.competitionId] = [...new Set([...(teams[a.competitionId] ?? []), a.dancerId])]
+          }
           const openable = (metas: Array<Competition | null>) =>
             compIds
               .map((cid, i) => ({ competitionId: cid, competition: metas[i] }))
@@ -176,8 +184,9 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
             .filter((c) => phaseOf.get(c.competitionId) === 'after')
             .sort((a, b) => dateMs(b.competition) - dateMs(a.competition))
           const focus = today[0] ?? ahead[0] ?? behind[0] ?? null
-          const displayName =
-            [apps.at(-1)?.firstName, apps.at(-1)?.lastName].filter(Boolean).join(' ') || agg?.name || name
+          // From their own entry where there is one: a team's has the name as typed in the team.
+          const named = [...apps].reverse().find((a) => !a.team) ?? apps.at(-1)
+          const displayName = [named?.firstName, named?.lastName].filter(Boolean).join(' ') || agg?.name || name
           return {
             id,
             name: displayName,
@@ -185,6 +194,7 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
             focusComp: focus?.competition ?? null,
             phase: focus ? phaseOf.get(focus.competitionId)! : 'before',
             upcoming: ahead.filter((c) => c.competitionId !== focus?.competitionId),
+            teams,
           }
         }),
       )
@@ -221,6 +231,7 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
               if (resultsChanged) resultsAt.value = { ...resultsAt.value, [cid]: Date.now() }
             },
             () => setBundle(cid, null),
+            (p) => teamsOf(p, cid),
           ),
         )
       }
@@ -233,7 +244,7 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
             const [r, s, mine] = await Promise.all([
               fetchResults(cid),
               fetchSchedule(cid),
-              Promise.all(who.map((p) => fetchEntries(cid, p))),
+              Promise.all(who.map((p) => fetchEntries(cid, p, teamsOf(p, cid)))),
             ])
             const entries = Object.fromEntries(who.map((p, i) => [p, mine[i]!]))
             if (token === run) setBundle(cid, { entries, results: r, schedule: s })

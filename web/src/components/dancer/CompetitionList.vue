@@ -46,7 +46,13 @@ const shown = computed(() =>
 const NARROW = '@max-[17.5rem]:hidden'
 const PHONE = '@max-[26rem]:hidden'
 function medals(cid: string) {
-  const list = record.summaries.value[cid] ?? []
+  const all = record.summaries.value[cid] ?? []
+  // Their own placings here; each team's best beside its name (ADR 0012).
+  const list = all.filter((s) => !s.team)
+  const teams = all
+    .filter((s) => s.team)
+    .map((s) => ({ name: s.team!, best: [...s.placings, ...(s.overall ? [{ ...s.overall, name: 'Overall' }] : [])].sort((a, b) => a.place - b.place)[0] }))
+    .filter((t) => t.best)
   const overall = list.map((s) => s.overall).find(Boolean)
   const placings = list.flatMap((s) => s.placings).sort((a, b) => a.place - b.place)
   // One cup per trophy event, even when two of their age groups can win it.
@@ -63,11 +69,12 @@ function medals(cid: string) {
   return {
     overall,
     // Results are in and they weren't placed, so the row doesn't read as results still to come.
-    unplaced: !n && !overall && list.some((s) => s.danced.length || s.overallMissed),
+    unplaced: !n && !overall && !teams.length && list.some((s) => s.danced.length || s.overallMissed),
     placings: placings.map((p) => ({ ...p, class: hide.get(p) })),
     trophyEvents: trophyEvents.map((a) => ({ ...a, class: hide.get(a) })),
     more,
-    groups: list.map((s) => s.groupName).filter(Boolean) as string[],
+    teams,
+    groups: all.map((s) => s.groupName).filter(Boolean) as string[],
   }
 }
 </script>
@@ -112,7 +119,7 @@ function medals(cid: string) {
             <span v-if="hiddenAs(r.competitionId, r.competition)" class="mt-0.5 flex"><VisibilityChip :visibility="hiddenAs(r.competitionId, r.competition)" /></span>
             <!-- The number they wore there, then what they won, pinned on as on their day card. -->
             <span
-              v-if="r.numbers.length || medals(r.competitionId).placings.length || medals(r.competitionId).overall || medals(r.competitionId).trophyEvents.length"
+              v-if="r.numbers.length || medals(r.competitionId).placings.length || medals(r.competitionId).overall || medals(r.competitionId).trophyEvents.length || medals(r.competitionId).teams.length"
               class="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1.5"
             >
               <NumberCard v-for="n in r.numbers" :key="n" :number="n" :color="color" size="xs" class="mr-1.5" />
@@ -148,6 +155,10 @@ function medals(cid: string) {
                 :class="a.class"
                 trophy
               />
+              <span v-for="t in medals(r.competitionId).teams" :key="t.name" class="ml-1.5 inline-flex min-w-0 items-center gap-1.5 border-l pl-2.5">
+                <Medal :place="t.best!.place" :tied="t.best!.tied" :dance="`${t.name}, ${t.best!.name}`" />
+                <span class="text-muted-foreground max-w-40 truncate text-sm font-semibold" aria-hidden="true">{{ t.name }}</span>
+              </span>
             </span>
           </span>
           <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />

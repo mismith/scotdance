@@ -277,7 +277,7 @@ const exact = computed(() => numberMatches.value.find((m) => String(m.dancer.num
 const others = computed(() => numberMatches.value.filter((m) => m !== exact.value))
 const typed = (n: number | string | undefined) => String(n ?? '').slice(0, num.value.length)
 const untyped = (n: number | string | undefined) => String(n ?? '').slice(num.value.length)
-const colorOf = (d: EnrichedDancer) => (following.isFollowing(d) ? following.colorFor(d.dancerId) : null)
+const colorOf = (d: EnrichedDancer) => (following.isFollowing(d) ? following.colorFor(following.followedIn(d)) : null)
 
 const competitionName = computed(
   () => choices.value.find((c) => c.id === competitionId.value)?.competition.name ?? '',

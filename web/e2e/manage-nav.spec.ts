@@ -83,9 +83,9 @@ test('a deep Manage link opens the item, and survives a reload', async ({ page }
   try {
     await signIn(page, org.email)
     await page.goto(`/competitions/${comp.id}/manage/dancers/${dancer.id}`)
-    await expect(page.getByRole('textbox', { name: 'First name' })).toHaveValue(dancer.firstName)
+    await expect(page.getByRole('combobox', { name: 'First name' })).toHaveValue(dancer.firstName)
     await page.reload()
-    await expect(page.getByRole('textbox', { name: 'First name' })).toHaveValue(dancer.firstName)
+    await expect(page.getByRole('combobox', { name: 'First name' })).toHaveValue(dancer.firstName)
   } finally {
     await Promise.all([removeCompetition(comp.id), dbRemove(`users:permissions/${org.id}`)])
   }

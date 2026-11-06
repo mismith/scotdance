@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { shortName } from '@/lib/entries'
 import { useMorph } from '@/lib/morph'
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import { computed, onMounted, ref } from 'vue'
@@ -113,7 +114,7 @@ function platformsFor(sd: ScheduleDance): PlatformRow[] {
             mine: oncePerPerson(all.filter((d) => following.isFollowing(d)))
               .map((d) => ({
                 dancer: d,
-                color: following.colorFor(d.dancerId),
+                color: following.colorFor(following.followedIn(d)),
                 pos: sd.danceId ? drawPos(d, g.id, sd.danceId) : null,
               })),
           }
@@ -258,7 +259,7 @@ const judging = computed(() => {
                     v-for="m in g.mine"
                     :key="m.dancer.id"
                     :color="m.color"
-                    :name="m.dancer.firstName ?? ''"
+                    :name="shortName(m.dancer)"
                     :details="[`#${m.dancer.number}`, m.pos ? `${m.pos}${getOrdinalSuffix(m.pos)} to dance` : null]"
                     class="mt-1"
                   />

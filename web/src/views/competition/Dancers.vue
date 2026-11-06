@@ -8,6 +8,7 @@ import { useCompetitionSearch } from '@/composables/useCompetitionSearch'
 import { useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import type { EnrichedDancer } from '@/types/competition'
+import { entryLine } from '@/lib/entries'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import FollowButton from '@/components/FollowButton.vue'
@@ -75,10 +76,12 @@ const sections = computed<Section[]>(() => {
   }
   if (sortBy.value === 'lastName' || sortBy.value === 'firstName') {
     const k = sortBy.value
-    list.sort((a, b) => (a[k] ?? '').localeCompare(b[k] ?? ''))
+    // A team goes by its name either way.
+    const by = (d: EnrichedDancer) => (d.team ? d.fullName : (d[k] ?? ''))
+    list.sort((a, b) => by(a).localeCompare(by(b)))
     const map = new Map<string, EnrichedDancer[]>()
     for (const d of list) {
-      const letter = (d[k] ?? '?').trim().charAt(0).toUpperCase() || '?'
+      const letter = (by(d) || '?').trim().charAt(0).toUpperCase() || '?'
       map.set(letter, [...(map.get(letter) ?? []), d])
     }
     return [...map.entries()].map(([letter, rows]) => ({ key: letter, label: letter, rows }))
@@ -229,7 +232,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
               v-for="d in s.rows"
               :key="d.id"
               class="relative isolate flex items-center gap-1 pr-2"
-              :style="following.isFollowing(d) ? following.paint(d.dancerId) : undefined"
+              :style="following.isFollowing(d) ? following.paint(following.followedIn(d)) : undefined"
             >
               <span v-if="following.isFollowing(d)" class="dancer-sash" aria-hidden="true" />
               <RouterLink
@@ -239,16 +242,23 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
                 <NumberCard
                   :number="d.number"
                   size="xs"
-                  :color="following.isFollowing(d) ? following.colorFor(d.dancerId) : null"
+                  :color="following.isFollowing(d) ? following.colorFor(following.followedIn(d)) : null"
                 />
                 <span class="min-w-0">
                   <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>
                   <span class="text-muted-foreground block truncate text-sm">
-                    {{ sortBy === 'group' ? dancerPlace(d.location, d.group) : d.group?.fullName }}
+                    {{
+                      d.team
+                        ? (sortBy === 'group' ? entryLine(d) : [d.group?.fullName, entryLine(d, { location: false })].filter(Boolean).join(' · '))
+                        : sortBy === 'group'
+                          ? [entryLine(d, { location: false }), dancerPlace(d.location, d.group)].filter(Boolean).join(' · ')
+                          : d.group?.fullName
+                    }}
                   </span>
                 </span>
               </RouterLink>
-              <FollowButton :dancer="d" />
+              <!-- A team isn't followed itself: following one of its dancers covers it. -->
+              <FollowButton v-if="!d.team" :dancer="d" />
             </li>
           </ul>
         </section>

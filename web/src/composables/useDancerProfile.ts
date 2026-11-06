@@ -42,6 +42,9 @@ export interface DancerAppearanceRaw {
   image?: string | null
   location?: string | null
   number?: number | null
+  /** A team member's appearance: in a team, with its title (ADR 0012). */
+  team?: true
+  title?: string | null
 }
 
 export interface DancerAggregate {

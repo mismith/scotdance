@@ -45,6 +45,7 @@ describe('fetchEntrySummary', () => {
     expect(await fetchEntrySummary(c, 'me')).toEqual({
       groupName: 'Novice 9 & 10 Years',
       danced: [],
+      team: null,
       placings: [
         { danceId: 'fling', name: 'Highland Fling', place: 1, tied: true },
         { danceId: 'sword', name: 'Sword Dance', place: 3, tied: false },

@@ -102,12 +102,18 @@ function problems({ read }: Setup): string[] {
     const index = (read(`${ns}:index`) ?? {}) as Obj
     const keyOf = (r: Obj) => (config.identityKey ? config.identityKey(r) : normalizeName(config.nameOf(r)))
     const expected = new Map<string, { key: string; app: Obj }>() // appearance key → …
-    const records: Array<{ path: string; rec: Obj; ctx: { competitionId: string; recordId: string | null } }> = []
+    const records: Array<{ path: string; rec: Obj; ctx: { competitionId: string; recordId: string | null; subId?: string | null } }> = []
     for (const [competitionId, comp] of Object.entries(competitions)) {
       if (section === null) records.push({ path: `competitions/${competitionId}`, rec: comp, ctx: { competitionId, recordId: null } })
       else {
-        for (const [recordId, rec] of Object.entries((data[competitionId]?.[section] ?? {}) as Obj)) {
-          records.push({ path: `competitions:data/${competitionId}/${section}/${recordId}`, rec, ctx: { competitionId, recordId } })
+        for (const [recordId, row] of Object.entries((data[competitionId]?.[section] ?? {}) as Obj)) {
+          const rowPath = `competitions:data/${competitionId}/${section}/${recordId}`
+          // A team's row holds its members, each a record of its own.
+          const subs: Array<[string | null, Obj]> = config.subRecords ? config.subRecords(row) : [[null, row]]
+          if (row?.[field] && !subs.some(([k]) => k === null)) out.push(`${rowPath} should have no ${field}`)
+          for (const [subId, rec] of subs) {
+            records.push({ path: subId ? `${rowPath}/${config.subPath}/${subId}` : rowPath, rec, ctx: { competitionId, recordId, subId } })
+          }
         }
       }
     }
@@ -122,7 +128,9 @@ function problems({ read }: Setup): string[] {
       const holder = index[key]?.id
       if (!holder) out.push(`${ns}:index/${key} missing for ${path}`)
       else if (pointer !== holder) out.push(`${path} ${field} ${pointer} should be ${holder}`)
-      const appKey = ctx.recordId === null ? ctx.competitionId : `${ctx.competitionId}:${ctx.recordId}`
+      const appKey = ctx.recordId === null
+        ? ctx.competitionId
+        : [ctx.competitionId, ctx.recordId, ctx.subId].filter(Boolean).join(':')
       // As stored: RTDB keeps no nulls.
       expected.set(appKey, { key, app: JSON.parse(JSON.stringify(config.toAppearance(rec, ctx), (_k, v) => (v === null ? undefined : v))) })
     }
@@ -690,6 +698,185 @@ describe('backfill', () => {
     expect(Object.keys(s.read('dancers'))).toHaveLength(1200)
     // 3,000 records: a second or two here, several times that on a CI runner.
   }, 30_000)
+})
+
+describe('teams', () => {
+  const team = (title: string | null, members: Array<[string, string]>, extra: Obj = {}) => ({
+    team: true,
+    number: '201',
+    groupId: 'gt',
+    ...(title && { title }),
+    members: Object.fromEntries(members.map(([firstName, lastName], i) => [`m${i}`, { firstName, lastName, _order: i }])),
+    ...extra,
+  })
+
+  it('links each member to their own profile, and never makes one for the team', async () => {
+    const s = await seeded()
+    s.write({ 'competitions:data/c1/dancers/t1': team('Celtic Sisters', [['Isla', 'MacDonald'], ['Mairi', 'Shaw']]) })
+    await s.drain()
+    expect(problems(s)).toEqual([])
+    expect(s.read('dancers:index/celtic sisters')).toBeNull()
+    const isla = s.read('dancers:index/isla macdonald')
+    expect(isla).toMatchObject({ appearanceCount: 1 })
+    // (Their solo entries and the team's are one competition: counted once.)
+    expect(s.read('competitions:data/c1/dancers/t1/members/m0/dancerId')).toBe(isla.id)
+    expect(s.read('competitions:data/c1/dancers/t1/dancerId')).toBeNull()
+    // A team member's appearance names the team, and leaves their town alone.
+    const mairi = s.read('dancers:index/mairi shaw')
+    expect(s.read(`dancers/${mairi.id}/appearances/c1:t1:m1`)).toEqual({
+      competitionId: 'c1', dancerId: 't1', firstName: 'Mairi', lastName: 'Shaw', number: 201, team: true, title: 'Celtic Sisters',
+    })
+  })
+
+  it('keeps members’ profiles in step as the team is renamed, renumbered and changes members', async () => {
+    const s = await seeded()
+    s.write({ 'competitions:data/c1/dancers/t1': team('Celtic Sisters', [['Isla', 'MacDonald'], ['Mairi', 'Shaw']]) })
+    await s.drain()
+    s.write({ 'competitions:data/c1/dancers/t1/title': 'Silver Sails', 'competitions:data/c1/dancers/t1/number': '205' })
+    await s.drain()
+    expect(problems(s)).toEqual([])
+    const mairi = s.read('dancers:index/mairi shaw').id
+    expect(s.read(`dancers/${mairi}/appearances/c1:t1:m1`)).toMatchObject({ number: 205, title: 'Silver Sails' })
+    // One leaves, someone new joins, and a name is corrected.
+    s.write({
+      'competitions:data/c1/dancers/t1/members/m1': null,
+      'competitions:data/c1/dancers/t1/members/m2': { firstName: 'Ava', lastName: 'Ross', _order: 2 },
+      'competitions:data/c1/dancers/t1/members/m0/lastName': 'Macdonald',
+    })
+    await s.drain()
+    expect(problems(s)).toEqual([])
+    expect(s.read('dancers:index/mairi shaw')).toBeNull()
+    expect(s.read('dancers:retired/mairi shaw')).toBe(mairi)
+    expect(s.read('dancers:index/ava ross')).toMatchObject({ appearanceCount: 1 })
+  })
+
+  it('drops the profile a team used to be when its row becomes a team', async () => {
+    const s = await seeded()
+    s.write({ 'competitions:data/c1/dancers/t1': { firstName: 'Celtic Sisters', lastName: 'Thistle School', number: '201', groupId: 'gt' } })
+    await s.drain()
+    const fake = s.read('dancers:index/celtic sisters thistle school').id
+    expect(s.read('competitions:data/c1/dancers/t1/dancerId')).toBe(fake)
+    // Converted in one write, as the conversion tool does.
+    s.write({
+      'competitions:data/c1/dancers/t1/team': true,
+      'competitions:data/c1/dancers/t1/title': 'Celtic Sisters',
+      'competitions:data/c1/dancers/t1/studio': 'Thistle School',
+      'competitions:data/c1/dancers/t1/members': { m0: { firstName: 'Isla', lastName: 'MacDonald', _order: 0 } },
+    })
+    await s.drain()
+    expect(problems(s)).toEqual([])
+    expect(s.read(`dancers/${fake}`)).toBeNull()
+    expect(s.read('competitions:data/c1/dancers/t1/dancerId')).toBeNull()
+    expect(s.read('dancers:index/isla macdonald')).toMatchObject({ appearanceCount: 1 })
+  })
+
+  it('links and unlinks members as the competition is published and unpublished', async () => {
+    const s = setup()
+    s.write({ 'competitions/c1': comp(false), 'competitions:data/c1/dancers/t1': team(null, [['Isla', 'MacDonald'], ['Mairi', 'Shaw']]) })
+    await s.drain()
+    expect(s.read('dancers')).toBeNull()
+    s.write({ 'competitions/c1/published': true })
+    await s.drain()
+    expect(problems(s)).toEqual([])
+    expect(Object.keys(s.read('dancers'))).toHaveLength(2)
+    s.write({ 'competitions/c1/published': false })
+    await s.drain()
+    expect(s.read('dancers')).toBeNull()
+    expect(problems(s)).toEqual([])
+  })
+
+  it('unlinks every member when the team is deleted', async () => {
+    const s = await seeded()
+    s.write({ 'competitions:data/c1/dancers/t1': team('Celtic Sisters', [['Isla', 'MacDonald'], ['Mairi', 'Shaw']]) })
+    await s.drain()
+    s.write({ 'competitions:data/c1/dancers/t1': null })
+    await s.drain()
+    expect(problems(s)).toEqual([])
+    expect(s.read('dancers:index/isla macdonald')).toMatchObject({ appearanceCount: 1 })
+    expect(s.read('dancers:index/mairi shaw')).toBeNull()
+  })
+
+  it('never links a dancer taken off the team before the first events ran', async () => {
+    const s = await seeded()
+    // Added, then a typo taken off straight away: both writes are in before any event runs.
+    s.write({ 'competitions:data/c1/dancers/t1': team('Celtic Sisters', [['Ann', 'Lee'], ['Bea', 'Moe'], ['Mia', 'Le']]) })
+    s.write({ 'competitions:data/c1/dancers/t1/members/m2': null })
+    await s.drain()
+    expect(s.read('dancers:index/mia le')).toBeNull()
+    expect(problems(s)).toEqual([])
+  })
+
+  it('leaves nothing behind when a new team is undone straight after, however its events arrive', async () => {
+    for (const drain of ['drain', 'drainTogether'] as const) {
+      const s = await seeded()
+      s.write({ 'competitions:data/c1/dancers/t1': team('Celtic Sisters', [['Ann', 'Lee'], ['Bea', 'Moe']]) })
+      s.write({ 'competitions:data/c1/dancers/t1': null })
+      await s[drain]()
+      expect(s.read('dancers:index/ann lee'), drain).toBeNull()
+      expect(problems(s), drain).toEqual([])
+    }
+  })
+
+  it('links each member once as the server writes their back-pointers', async () => {
+    const s = await seeded()
+    s.write({ 'competitions:data/c1/dancers/t1': team('Silver Sails', Array.from({ length: 8 }, (_, i) => [`Dancer${String.fromCharCode(65 + i)}`, 'Reid'] as [string, string])) })
+    const events = await s.drain()
+    // The create, then one quick event per back-pointer: not one full pass per sibling.
+    expect(events).toBeLessThanOrEqual(1 + 8 + 2)
+    expect(problems(s)).toEqual([])
+  })
+
+  it('unlinks the profile a team row still pointed at as a dancer', async () => {
+    const s = await seeded()
+    // Linked as a dancer by functions from before teams, then made a team by the app.
+    s.write({ 'competitions:data/c1/dancers/t1': { firstName: 'Celtic Sisters', lastName: 'Thistle', number: '201', groupId: 'gt' } })
+    await s.drain()
+    const fake = s.read('competitions:data/c1/dancers/t1/dancerId')
+    expect(fake).toBeTruthy()
+    // The whole row replaced by a team that still carries the old pointer.
+    s.write({ 'competitions:data/c1/dancers/t1': { ...team('Celtic Sisters', [['Ann', 'Lee']]), dancerId: fake } })
+    await s.drain()
+    expect(s.read('competitions:data/c1/dancers/t1/dancerId')).toBeNull()
+    expect(s.read(`dancers/${fake}`)).toBeNull()
+    expect(problems(s)).toEqual([])
+  })
+
+  it('gives no profile to a member with only a first name or initials', async () => {
+    const s = await seeded()
+    s.write({ 'competitions:data/c1/dancers/t1': team(null, [['Clare', ''], ['E.', 'Breeze'], ['Mairi', 'Shaw']]) })
+    await s.drain()
+    expect(s.read('dancers:index/clare')).toBeNull()
+    expect(s.read('dancers:index/e breeze')).toBeNull()
+    expect(s.read('dancers:index/mairi shaw')).toMatchObject({ appearanceCount: 1 })
+    expect(s.read('competitions:data/c1/dancers/t1/members/m0/dancerId')).toBeNull()
+    expect(problems(s)).toEqual([])
+  })
+
+  it('builds the same from a backfill, repeatably, and clears a converted team’s own pointer', async () => {
+    const s = setup()
+    s.rtdb.data = {
+      competitions: { c1: comp(true) },
+      'competitions:data': {
+        c1: {
+          dancers: {
+            d1: dancer('Isla', 'MacDonald'),
+            t1: { ...team('Celtic Sisters', [['Isla', 'MacDonald'], ['Mairi', 'Shaw']]), dancerId: '-Stale' },
+            t2: team(null, []),
+          },
+        },
+      },
+    }
+    const first = await s.dancers.backfill()
+    expect(first).toMatchObject({ linked: 3 })
+    const pointers = await s.dancers.backfillBackPointers()
+    expect(pointers).toMatchObject({ written: 3, cleared: 1 })
+    await s.drain()
+    expect(problems(s)).toEqual([])
+    const before = JSON.stringify(s.rtdb.data)
+    await s.dancers.backfill()
+    expect(await s.dancers.backfillBackPointers()).toMatchObject({ written: 0, cleared: 0 })
+    expect(JSON.stringify(s.rtdb.data)).toBe(before)
+  })
 })
 
 describe('names', () => {

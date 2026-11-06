@@ -4,8 +4,8 @@ import type { EnrichedDancer } from '@/types/competition'
 
 // Finding a dancer in a competition: digits match competitor numbers from
 // the start ("23" finds 230–239), anything else matches names and towns,
-// best match first. Shared by the Dancers tab and the Overview's "Is your
-// dancer here?".
+// best match first. A team is found by its title, studio or any member's
+// name. Shared by the Dancers tab and the Overview's "Is your dancer here?".
 export function useCompetitionSearch(
   dancers: MaybeRefOrGetter<EnrichedDancer[]>,
   query: MaybeRefOrGetter<string>,
@@ -13,7 +13,7 @@ export function useCompetitionSearch(
   const fuse = computed(
     () =>
       new Fuse(toValue(dancers), {
-        keys: ['fullName', 'firstName', 'lastName', 'location'],
+        keys: ['fullName', 'firstName', 'lastName', 'location', 'title', 'studio', 'teamMembers.name'],
         threshold: 0.3,
         ignoreLocation: true,
       }),

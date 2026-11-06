@@ -17,6 +17,7 @@ import { forgetCompetitionsList } from '@/composables/useCompetitions'
 import { newKey, write } from '@/lib/admin/write'
 import { at } from '@/lib/admin/collection'
 import { openToText } from '@/lib/trophyEvents'
+import { entryName, isTeam } from '@/lib/entries'
 import { record, undo, type HistoryWriter } from '@/lib/admin/history'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
@@ -26,6 +27,7 @@ import {
   groupFullName,
   type Competition,
   type DrawsTree,
+  type TeamMember,
   type PointsTree,
   type SheetsTree,
   type ResultsTree,
@@ -49,6 +51,11 @@ export interface RawDancer {
   groupId?: string
   categoryId?: string
   dancerId?: string
+  /** A solo's routine, or a team's name (ADR 0012). */
+  title?: string
+  studio?: string
+  team?: boolean
+  members?: Record<string, TeamMember>
 }
 export interface RawStaff {
   type?: string
@@ -230,7 +237,7 @@ export function createManagedCompetition(competitionId: Ref<string>) {
         return {
           ...d,
           num,
-          label: dancerFullName(d) || 'Unnamed dancer',
+          label: isTeam(d) ? entryName(d) : dancerFullName(d) || 'Unnamed dancer',
           group: d.groupId ? groupsById.value.get(d.groupId) : undefined,
         }
       })

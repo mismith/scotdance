@@ -11,7 +11,8 @@ export interface SelectOption {
 export interface FieldSpec {
   key: string
   label: string
-  kind: 'text' | 'textarea' | 'select' | 'image' | 'url'
+  /** `dancers`: an entry's dancers, one row each (DancersField, ADR 0012). */
+  kind: 'text' | 'textarea' | 'select' | 'image' | 'url' | 'dancers'
   required?: boolean
   hint?: string
   placeholder?: string
@@ -21,12 +22,21 @@ export interface FieldSpec {
   bulk?: boolean
   /** Sit beside the next half-width field on wide forms. */
   half?: boolean
+  /**
+   * Shown once it has a value, or when asked for with a "+ Add a routine"
+   * button under the form (`addLabel`: "a routine"), so a form isn't a wall
+   * of boxes to fill in.
+   */
+  optional?: boolean
+  addLabel?: string
   /** Storage folder for images (Firebase Storage rules allow these). */
   storage?: 'staff' | 'info' | 'links'
   /** How it's saved ("3 & 1" as 3+1), said under the box while it differs from what's typed. */
   tidy?: (value: string) => string
   /** `values`: the rest of the form (or the saved item), e.g. to check a number within its age group. */
   validate?: (value: string, itemId: string | null, values: Record<string, unknown>) => string | null
+  /** What's wrong with a list field's value on the add form, if anything. */
+  check?: (value: unknown, values: Record<string, unknown>) => string | null
 }
 
 export interface CollectionItem {
@@ -59,6 +69,8 @@ export interface CollectionSpec<T extends CollectionItem = CollectionItem> {
   sortable?: boolean
   title: (item: T) => string
   subtitle?: (item: T) => string | null | undefined
+  /** Under its title when open, if not the list's subtitle (which may repeat its fields). */
+  detailSubtitle?: (item: T) => string | null | undefined
   /** A competitor-number tile at the start of the row. */
   badge?: (item: T) => string | null | undefined
   /** Extra text matched by search. */
@@ -73,7 +85,17 @@ export interface CollectionSpec<T extends CollectionItem = CollectionItem> {
   /** Empty, the way to start is importing the dancers, which creates these too. */
   importFirst?: boolean
   /** Extra writes when a field changes (e.g. a dancer's category follows their age group). */
-  onChange?: (item: T, key: string, value: string | null) => Record<string, unknown>
+  onChange?: (item: T, key: string, value: unknown) => Record<string, unknown>
+  /**
+   * The fields for one item, or for the add form's values, when the list
+   * holds more than one kind (dancers and teams). Defaults to `fields`,
+   * which must hold every field any kind has.
+   */
+  fieldsFor?: (values: Record<string, unknown>) => FieldSpec[]
+  /** What one is called ("team"), by item or add form values. Defaults to `singular`. */
+  singularFor?: (values: Record<string, unknown>) => string
+  /** The record the add form saves. Defaults to its fields' values, trimmed, empty ones left out. */
+  toRecord?: (values: Record<string, unknown>) => Record<string, unknown>
   /** What deleting these rows affects. */
   impact?: (ids: string[]) => DeleteImpact
   /** Shown when the list is empty. */

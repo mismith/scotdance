@@ -379,6 +379,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
                 :fresh="liveFresh"
                 :competition-id="card.focus.competitionId"
                 :color="cardColor(card)"
+                :name="card.name"
               />
               <Skeleton v-else-if="card.loading" class="mx-4 my-3 h-36 rounded-2xl!" />
             </template>
@@ -482,6 +483,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
                 :fresh="liveFresh"
                 :competition-id="card.focus.competitionId"
                 :color="cardColor(card)"
+                :name="card.name"
                 :competition-name="`${card.focus.phase === 'before' ? 'Next' : 'Last'}: ${card.focus.competition.name}`"
               />
               <Skeleton v-else-if="card.loading" class="mx-4 my-3 h-36 rounded-2xl!" />

@@ -16,6 +16,8 @@ export interface AppearanceCtx {
   competitionId: string
   /** Push key of the per-comp record. null for single-per-comp entities (venues). */
   recordId: string | null
+  /** Which of the row's records, when one row holds several (a team's members). */
+  subId?: string | null
 }
 
 export interface AggregatorConfig<R, A extends Record<string, any>> {
@@ -79,6 +81,14 @@ export interface AggregatorConfig<R, A extends Record<string, any>> {
   /** When `iterate` is not supplied, scan `competitions:data/{compId}/{sectionName}`. */
   sectionName?: string
   /**
+   * The records one source row holds, by sub-id: `[[null, row]]` by default.
+   * A team's row holds its members (ADR 0012), each its own record with its
+   * own back-pointer at `{row}/{subPath}/{subId}`.
+   */
+  subRecords?: (row: any) => Array<[string | null, R]>
+  /** Where a row's sub-records live in it, e.g. 'members'. */
+  subPath?: string
+  /**
    * Which competitions' records may show: the aggregates are world-readable.
    * Dancers wait for a competition to be published (its entries are private
    * until then: rules on competitions:data, and Manage says so); judges and
@@ -119,8 +129,9 @@ export function indexedId(entry: unknown): string | null {
 }
 
 function appearanceKey(ctx: AppearanceCtx): string {
-  return ctx.recordId === null
-    ? ctx.competitionId
+  if (ctx.recordId === null) return ctx.competitionId;
+  return ctx.subId
+    ? `${ctx.competitionId}:${ctx.recordId}:${ctx.subId}`
     : `${ctx.competitionId}:${ctx.recordId}`;
 }
 
@@ -158,7 +169,10 @@ export function createAggregator<R, A extends Record<string, any>>(
     recomputeFromAppearances,
     sectionName,
     shownIn,
+    subPath,
   } = config;
+  const subRecords = config.subRecords ?? ((row: any): Array<[string | null, R]> => [[null, row as R]]);
+  const subMap = (row: unknown) => new Map<string | null, R>(row ? subRecords(row) : []);
   const slimFields = config.slimFields ?? (() => ({}));
 
   const buildIndexEntry = (id: string, agg: any) => ({
@@ -203,8 +217,8 @@ export function createAggregator<R, A extends Record<string, any>>(
       return Object.entries(records) as Array<[string, R]>;
     });
 
-  /** The source record's path (relative to the data namespace). */
-  function recordPath({ competitionId, recordId }: AppearanceCtx): string {
+  /** The source row's path (relative to the data namespace). */
+  function rowPath({ competitionId, recordId }: AppearanceCtx): string {
     // Venues: the record is the comp meta itself.
     if (recordId === null) return `competitions/${competitionId}`;
     if (!sectionName) {
@@ -212,6 +226,20 @@ export function createAggregator<R, A extends Record<string, any>>(
     }
     return `competitions:data/${competitionId}/${sectionName}/${recordId}`;
   }
+
+  /** The source record's path: its row, or one of the row's sub-records. */
+  function recordPath(ctx: AppearanceCtx): string {
+    return ctx.subId ? `${rowPath(ctx)}/${subPath}/${ctx.subId}` : rowPath(ctx);
+  }
+
+  /** Every record in a competition's rows, with where each one is. */
+  function recordsIn(competitionId: string, rows: Array<[string | null, unknown]>) {
+    return rows.flatMap(([recordId, row]) => (row ? subRecords(row) : []).map(([subId, record]) => ({
+      ctx: { competitionId, recordId, subId } as AppearanceCtx,
+      record,
+    })));
+  }
+  const recordsOf = async (competitionId: string, comp: any) => recordsIn(competitionId, await iterate(db, competitionId, comp));
 
   async function included(competitionId: string): Promise<boolean> {
     if (!shownIn) return true;
@@ -389,6 +417,18 @@ export function createAggregator<R, A extends Record<string, any>>(
       if (pointer === await lookup(newKey)) return;
     }
 
+    // Read again before linking: events can run late and out of order (a
+    // team's members each fire one as the server writes their back-pointer),
+    // and the record may have been renamed or removed since this one (a
+    // dancer taken off a team, an Undo straight after an import). The event
+    // for that later write sees it as it is; this one would link what it was.
+    let current = record;
+    if (isMatch) {
+      const now = await recordNow(ctx);
+      if (!matches(now) || keyOf(now) !== newKey) return;
+      current = now;
+    }
+
     const inc = (isMatch || wasMatch) && await included(ctx.competitionId);
     // Where this record's appearance may be linked now. The back-pointer can
     // be missing (records the backfill linked before back-pointers were
@@ -398,21 +438,54 @@ export function createAggregator<R, A extends Record<string, any>>(
       const id = await lookup(oldKey);
       if (id) linked.add(id);
     }
-    const target = inc && isMatch ? await findOrCreateAggregate(record) : null;
-     
+    const target = inc && isMatch ? await findOrCreateAggregate(current as R) : null;
+
     for (const id of linked) {
-       
+
       if (id !== target) await unlinkAppearance(id, ctx);
     }
-    if (target) await linkAppearance(target, ctx, record as R);
-    if (record && pointer !== target) await setBackPointer(ctx, target);
+    if (target) await linkAppearance(target, ctx, current as R);
+    if (current && pointerOf(current) !== target) await setBackPointer(ctx, target);
+  }
+
+  /** A record as it is now: its row read again, and the record picked from it. */
+  async function recordNow(ctx: AppearanceCtx): Promise<R | null> {
+    const row = (await db.child(rowPath(ctx)).get()).val();
+    return subMap(row).get(ctx.subId ?? null) ?? null;
+  }
+
+  /**
+   * A row was written: each of its records (one, or a team's members) is
+   * maintained on its own. A row that stops being a record itself (a
+   * dancer's entry made into a team) loses its own back-pointer.
+   */
+  async function maintainRow(row: unknown, prev: unknown, ctx: AppearanceCtx) {
+    const after = subMap(row);
+    const before = subMap(prev);
+    for (const subId of new Set([...before.keys(), ...after.keys()])) {
+      const record = after.get(subId) ?? null;
+      const was = before.get(subId) ?? null;
+      // Only the records this write changed: one member's back-pointer
+      // leaves the others alone (else a team of 12 re-links 66 times).
+      if (row && prev && JSON.stringify(record) === JSON.stringify(was)) continue;
+      await maintainOnWrite(record, was, { ...ctx, subId });
+    }
+    // A row that isn't a record of its own any more (a team) but still points
+    // at a profile (linked as a dancer before): unlink it from there too.
+    const leftover = row && !after.has(null) ? pointerOf(row) : null;
+    if (leftover) {
+      await unlinkAppearance(leftover, { ...ctx, subId: null });
+      await setBackPointer({ ...ctx, subId: null }, null);
+    }
   }
 
   /** Link (or unlink) one record as it stands, for the publish sync. */
   async function syncRecord(ctx: AppearanceCtx): Promise<'linked' | 'unlinked' | null> {
     // Read again: the list was read before the sync began, and the record may
     // have been renamed or deleted since (its own trigger deals with that).
-    const record = (await db.child(recordPath(ctx)).get()).val() as R | null;
+    // The whole row, since a team member's record takes in its team.
+    const row = (await db.child(rowPath(ctx)).get()).val();
+    const record = subMap(row).get(ctx.subId ?? null) ?? null;
     if (!record) return null;
     const pointer = pointerOf(record);
     // Checked per record: listing then unlisting quickly runs two syncs at once.
@@ -452,29 +525,27 @@ export function createAggregator<R, A extends Record<string, any>>(
 
   return {
     async onCreate(snap, ctx) {
-      await maintainOnWrite(snap.val() as R | null, null, ctxFor(ctx.params));
+      await maintainRow(snap.val(), null, ctxFor(ctx.params));
     },
     async onUpdate(change, ctx) {
-      await maintainOnWrite(
-        change.after.val() as R | null,
-        change.before.val() as R | null,
-        ctxFor(ctx.params),
-      );
+      await maintainRow(change.after.val(), change.before.val(), ctxFor(ctx.params));
     },
     async onDelete(snap, ctx) {
-      const record = snap.val() as R | null;
-      const actx = ctxFor(ctx.params);
-      const ids = new Set<string>();
-      const pointer = pointerOf(record);
-      if (pointer) ids.add(pointer);
-      else if (matches(record) && await included(actx.competitionId)) {
-        const id = await lookup(keyOf(record));
-        if (id) ids.add(id);
-      }
-       
-      for (const id of ids) {
-         
-        await unlinkAppearance(id, actx);
+      const row = snap.val();
+      for (const [subId, record] of row ? subRecords(row) : []) {
+        const actx = { ...ctxFor(ctx.params), subId };
+        const ids = new Set<string>();
+        const pointer = pointerOf(record);
+        if (pointer) ids.add(pointer);
+        else if (matches(record) && await included(actx.competitionId)) {
+          const id = await lookup(keyOf(record));
+          if (id) ids.add(id);
+        }
+
+        for (const id of ids) {
+
+          await unlinkAppearance(id, actx);
+        }
       }
     },
     // The backfills walk every competition one at a time on purpose: running
@@ -483,13 +554,13 @@ export function createAggregator<R, A extends Record<string, any>>(
     async syncCompetition(competitionId) {
       // A deleted competition's records (if any are left) all unlink.
       const comp = (await db.child(`competitions/${competitionId}`).get()).val();
-      const records = await iterate(db, competitionId, comp);
+      const records = await recordsOf(competitionId, comp);
       let linked = 0;
       let unlinked = 0;
       // A few at a time: quick enough for a big competition, gentle on RTDB.
       for (let i = 0; i < records.length; i += SYNC_CONCURRENCY) {
         const done = await Promise.all(records.slice(i, i + SYNC_CONCURRENCY).map(
-          ([recordId]) => syncRecord({ competitionId, recordId }),
+          ({ ctx }) => syncRecord(ctx),
         ));
         linked += done.filter((d) => d === 'linked').length;
         unlinked += done.filter((d) => d === 'unlinked').length;
@@ -534,14 +605,14 @@ export function createAggregator<R, A extends Record<string, any>>(
       let skipped = 0;
       for (const competitionId of compIds) {
         const comp = competitions[competitionId];
-        const records = await iterate(db, competitionId, comp);
+        const records = await recordsOf(competitionId, comp);
         const inc = !shownIn || shownIn(comp ?? {});
-        for (const [recordId, record] of records) {
+        for (const { ctx, record } of records) {
           if (!inc || !matches(record)) {
             skipped += 1;
             continue;
           }
-          linking.push({ ctx: { competitionId, recordId }, record, key: keyOf(record) });
+          linking.push({ ctx, record, key: keyOf(record) });
         }
       }
       // Ids some record still reaches by its key. A key nobody had (the rule
@@ -650,11 +721,20 @@ export function createAggregator<R, A extends Record<string, any>>(
 
       for (const competitionId of compIds) {
         const comp = competitions[competitionId];
-        const records = await iterate(db, competitionId, comp);
+        // A row that isn't a record of its own any more (a team) keeps no
+        // back-pointer of its own.
+        const rows = await iterate(db, competitionId, comp);
+        for (const [recordId, row] of rows) {
+          if (row && pointerOf(row) && !subMap(row).has(null)) {
+            await writer.set(`${rowPath({ competitionId, recordId })}/${backPointerField}`, null);
+            cleared += 1;
+          }
+        }
+        const records = recordsIn(competitionId, rows);
         const inc = !shownIn || shownIn(comp ?? {});
-        for (const [recordId, record] of records) {
+        for (const { ctx, record } of records) {
           const pointer = pointerOf(record);
-          const path = `${recordPath({ competitionId, recordId })}/${backPointerField}`;
+          const path = `${recordPath(ctx)}/${backPointerField}`;
           if (!inc || !matches(record)) {
             if (pointer) {
               await writer.set(path, null);

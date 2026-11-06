@@ -20,6 +20,7 @@ import SharedValue from '@/components/admin/SharedValue.vue'
 import FormInput from '@/components/admin/FormInput.vue'
 import NumberTile from '@/components/admin/NumberTile.vue'
 import NumberCard from '@/components/NumberCard.vue'
+import DancersField from '@/components/admin/DancersField.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { useSharedSheet } from '@/composables/admin/useSharedParts'
 import { useSplit } from '@/composables/admin/useWide'
@@ -62,6 +63,11 @@ const m = useManagedCompetition()
 const split = useSplit()
 const readonly = computed(() => !!props.shared)
 const sheet = useSharedSheet()
+
+// A list can hold more than one kind (dancers and teams): each item, and the
+// add form, shows its own kind's fields.
+const fieldsOf = (values: object) => props.spec.fieldsFor?.(values as Record<string, unknown>) ?? props.spec.fields
+const singularOf = (values: object) => props.spec.singularFor?.(values as Record<string, unknown>) ?? props.spec.singular
 
 const itemId = computed(() => (route.params.itemId ? String(route.params.itemId) : null))
 const adding = computed(() => itemId.value === 'new')
@@ -282,11 +288,11 @@ async function remove(ids: string[], swiped = false) {
 }
 
 // --- Editing one
-function saveField(item: T, key: string, value: string | null) {
+function saveField(item: T, key: string, value: unknown) {
   const updates: Record<string, unknown> = { [`${props.spec.path}/${item.id}/${key}`]: value }
   if (props.spec.onChange) Object.assign(updates, props.spec.onChange(item, key, value))
-  const field = props.spec.fields.find((f) => f.key === key)?.label ?? key
-  return m.writeData(updates, `${field} of ${props.spec.title(item) || `the ${props.spec.singular}`}`)
+  const field = [...fieldsOf(item), ...props.spec.fields].find((f) => f.key === key)?.label ?? key
+  return m.writeData(updates, `${field} of ${props.spec.title(item) || `the ${singularOf(item)}`}`)
 }
 // Bound to the item as rendered: a field saving on its way out (Back pressed
 // mid-edit) must land on its own item, not whatever is open by then. If that
@@ -319,14 +325,35 @@ const shownValue = (item: T, f: FieldSpec): string | null => {
 
 // --- Adding
 const lastAdded = ref<Record<string, string> | null>(null)
-const draft = reactive<Record<string, string>>({})
+// Text fields hold strings; a list field (a team's dancers) holds its list.
+const draft = reactive<Record<string, unknown>>({})
 const draftErrors = reactive<Record<string, string | null>>({})
 const formEl = ref<HTMLFormElement | null>(null)
+const draftText = (key: string) => (typeof draft[key] === 'string' ? (draft[key] as string) : '')
+
+// --- Optional fields: shown once they have a value, or asked for with their
+// "+ Add …" button. `scope` is the item's id, or "new" for the add form.
+const opened = reactive(new Set<string>())
+const filledIn = (values: object, key: string) => {
+  const v = (values as Record<string, unknown>)[key]
+  return Array.isArray(v) ? v.length > 0 : v != null && String(v).trim() !== ''
+}
+const isShown = (values: object, scope: string, f: FieldSpec) => !f.optional || filledIn(values, f.key) || opened.has(`${scope}:${f.key}`)
+const shownFields = (values: object, scope: string) => fieldsOf(values).filter((f) => isShown(values, scope, f))
+const toAdd = (values: object, scope: string) => fieldsOf(values).filter((f) => !isShown(values, scope, f))
+// The dancers field's own "+ Add another dancer" joins the row of buttons.
+const dancersField = shallowRef<{ addDancer: () => void; several: boolean } | null>(null)
+async function openField(scope: string, key: string) {
+  opened.add(`${scope}:${key}`)
+  await nextTick()
+  document.querySelector<HTMLElement>(`[data-field="${key}"] input, [data-field="${key}"] textarea`)?.focus()
+}
 
 function resetDraft() {
+  for (const k of [...opened]) if (k.startsWith('new:')) opened.delete(k)
   const defaults = props.spec.defaults?.(lastAdded.value) ?? {}
   for (const f of props.spec.fields) {
-    draft[f.key] = defaults[f.key] ?? ''
+    draft[f.key] = f.kind === 'dancers' ? [{ firstName: '', lastName: '' }] : (defaults[f.key] ?? '')
     draftErrors[f.key] = null
   }
 }
@@ -346,11 +373,17 @@ const submitting = ref(false)
 async function submitDraft(another: boolean) {
   if (submitting.value) return
   let firstError: string | null = null
-  for (const f of props.spec.fields) {
-    const v = (draft[f.key] ?? '').trim()
+  const fields = fieldsOf(draft)
+  for (const f of fields) {
+    if (f.kind === 'dancers') {
+      draftErrors[f.key] = f.check?.(draft[f.key], { ...draft }) ?? null
+      if (draftErrors[f.key] && !firstError) firstError = f.key
+      continue
+    }
+    const v = draftText(f.key).trim()
     let err: string | null = null
     if (f.required && !v) err = `${f.label} can’t be empty.`
-    else if (v && f.validate) err = f.validate(v, null, draft)
+    else if (v && f.validate) err = f.validate(v, null, { ...draft })
     else if (v && f.kind === 'url' && !looksLikeLink(v)) err = LINK_PROBLEM
     draftErrors[f.key] = err
     if (err && !firstError) firstError = f.key
@@ -363,20 +396,20 @@ async function submitDraft(another: boolean) {
     return
   }
   const id = m.newKey()
-  const record: Record<string, unknown> = {}
-  for (const f of props.spec.fields) {
-    const v = tidied(f, draft[f.key] ?? '')
-    if (v) record[f.key] = v
-  }
+  // (Each typed field tidied as the line under its box said.)
+  const typed = Object.fromEntries(fields.filter((f) => typeof draft[f.key] === 'string').map((f) => [f.key, tidied(f, draftText(f.key))]))
+  const record: Record<string, unknown> = props.spec.toRecord
+    ? props.spec.toRecord({ ...draft, ...typed })
+    : Object.fromEntries(Object.entries(typed).filter(([, v]) => v))
   if (props.spec.sortable) record._order = nextOrder()
   // Extra fields that follow from others (e.g. a dancer's category) go into
   // the new record itself: one write can't touch a path and its child.
   const updates: Record<string, unknown> = {}
   const own = `${props.spec.path}/${id}/`
   if (props.spec.onChange) {
-    for (const f of props.spec.fields) {
-      const v = tidied(f, draft[f.key] ?? '')
-      if (!v) continue
+    for (const f of fields) {
+      const v = tidied(f, draftText(f.key))
+      if (!v || !(f.key in record)) continue
       for (const [path, value] of Object.entries(props.spec.onChange({ ...(record as object), id, label: '' } as unknown as T, f.key, v))) {
         if (path.startsWith(own)) {
           if (value != null) record[path.slice(own.length)] = value
@@ -386,11 +419,11 @@ async function submitDraft(another: boolean) {
   }
   updates[`${props.spec.path}/${id}`] = record
   const recordLabel = String(record.name ?? [record.firstName, record.lastName].filter(Boolean).join(' '))
-  const name = props.spec.title({ ...(record as object), id, label: recordLabel } as unknown as T) || recordLabel || `the ${props.spec.singular}`
+  const name = props.spec.title({ ...(record as object), id, label: recordLabel } as unknown as T) || recordLabel || `the ${singularOf(record)}`
   submitting.value = true
   try {
     await m.writeData(updates, `Added ${name}`)
-    lastAdded.value = Object.fromEntries(Object.entries(record).map(([k, v]) => [k, String(v)]))
+    lastAdded.value = Object.fromEntries(Object.entries(record).filter(([, v]) => typeof v !== 'object').map(([k, v]) => [k, String(v)]))
     if (another) {
       toast(`Added ${name}`)
       resetDraft()
@@ -657,30 +690,43 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
     <template #detail>
       <!-- Adding -->
       <form v-if="adding && !readonly" ref="formEl" class="mx-auto max-w-2xl space-y-6 p-4 md:p-8" novalidate @submit.prevent="submitDraft(false)">
-        <h2 class="text-display">Add {{ spec.singular }}</h2>
-        <div class="grid gap-4 sm:grid-cols-2">
+        <h2 class="text-display">Add {{ singularOf(draft) }}</h2>
+        <div class="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2">
           <div
-            v-for="f in spec.fields.filter((f) => f.kind !== 'image')"
+            v-for="f in shownFields(draft, 'new').filter((f) => f.kind !== 'image')"
             :key="f.key"
             :data-field="f.key"
             :class="f.half ? 'sm:col-span-1' : 'sm:col-span-2'"
           >
+            <DancersField
+              v-if="f.kind === 'dancers'"
+              :ref="(el) => (dancersField = el as never)"
+              :model-value="(draft[f.key] as never) ?? []"
+              :error="draftErrors[f.key]"
+              @update:model-value="(v) => (draft[f.key] = v)"
+            />
             <FormInput
-              v-model="draft[f.key]"
+              v-else
+              :model-value="draftText(f.key)"
               :label="f.label"
               :kind="f.kind === 'select' ? 'select' : f.kind === 'textarea' ? 'textarea' : f.kind === 'url' ? 'url' : 'text'"
               :options="f.options?.()"
-              :hint="noteFor(f)?.(draft[f.key] ?? '') || f.hint"
+              :hint="noteFor(f)?.(draftText(f.key)) || f.hint"
               :error="draftErrors[f.key]"
               :required="f.required"
               :placeholder="f.placeholder"
               :inputmode="f.inputmode"
+              @update:model-value="(v: string) => (draft[f.key] = v)"
             />
           </div>
         </div>
+        <div v-if="toAdd(draft, 'new').length || (dancersField && !dancersField.several)" class="flex flex-wrap gap-2">
+          <Button v-if="dancersField && !dancersField.several" :disabled="!canEdit" @click="dancersField.addDancer()"><Plus /> Add another dancer</Button>
+          <Button v-for="f in toAdd(draft, 'new')" :key="f.key" :disabled="!canEdit" @click="openField('new', f.key)"><Plus /> Add {{ f.addLabel ?? f.label.toLowerCase() }}</Button>
+        </div>
         <div class="flex flex-col gap-2 sm:flex-row">
           <Button type="submit" variant="primary" size="lg" :disabled="!canEdit" :busy="submitting">
-            Add {{ spec.singular }}
+            Add {{ singularOf(draft) }}
           </Button>
           <Button size="lg" :disabled="!canEdit || submitting" @click="submitDraft(true)">
             Add and add another
@@ -695,11 +741,11 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
           <NumberCard v-if="spec.badge?.(current)" :number="spec.badge(current)" size="md" />
           <div class="min-w-0">
             <h2 class="text-display break-words">{{ spec.title(current) }}</h2>
-            <p v-if="spec.subtitle?.(current)" class="text-muted-foreground text-base">{{ spec.subtitle(current) }}</p>
+            <p v-if="(spec.detailSubtitle ?? spec.subtitle)?.(current)" class="text-muted-foreground text-base">{{ (spec.detailSubtitle ?? spec.subtitle)!(current) }}</p>
           </div>
         </header>
-        <div class="grid gap-4 sm:grid-cols-2">
-          <div v-for="f in spec.fields" :key="f.key" :class="f.half ? 'sm:col-span-1' : 'sm:col-span-2'">
+        <div class="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2">
+          <div v-for="f in shownFields(current, current.id)" :key="f.key" :data-field="f.key" :class="f.half ? 'sm:col-span-1' : 'sm:col-span-2'">
             <template v-if="shared">
               <SharedValue v-if="f.kind === 'image'" :label="f.label" :part="shared">
                 <img v-if="stringValue(current, f.key)" :src="stringValue(current, f.key)!" alt="" class="size-16 rounded-full object-cover" />
@@ -707,6 +753,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
               </SharedValue>
               <SharedValue v-else :label="f.label" :part="shared" :value="shownValue(current, f)" :multiline="f.kind === 'textarea'" />
             </template>
+            <DancersField v-else-if="f.kind === 'dancers'" :ref="(el) => (dancersField = el as never)" :item="current as never" />
             <SelectField
               v-else-if="f.kind === 'select'"
               :model-value="stringValue(current, f.key)"
@@ -743,10 +790,14 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
             />
           </div>
         </div>
+        <div v-if="!readonly && !shared && (toAdd(current, current.id).length || (dancersField && !dancersField.several))" class="flex flex-wrap gap-2">
+          <Button v-if="dancersField && !dancersField.several" :disabled="!canEdit" @click="dancersField.addDancer()"><Plus /> Add another dancer</Button>
+          <Button v-for="f in toAdd(current, current.id)" :key="f.key" :disabled="!canEdit" @click="openField(current.id, f.key)"><Plus /> Add {{ f.addLabel ?? f.label.toLowerCase() }}</Button>
+        </div>
         <slot name="detail-extra" :item="current" />
         <footer v-if="!readonly" class="engraved-line pt-6">
           <Button variant="plain" class="text-destructive! -ml-4" :disabled="!canEdit" @click="remove([current.id])">
-            <Trash2 /> Delete {{ spec.singular }}
+            <Trash2 /> Delete {{ singularOf(current) }}
           </Button>
         </footer>
       </div>

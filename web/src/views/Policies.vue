@@ -86,7 +86,8 @@ const crisp = useCrisp()
         <ul class="ml-6 list-disc space-y-1">
           <li>
             for dancers: name, competitor number, where they’re from (a town, province,
-            state or country), age group, dances and placings
+            state or country), dance studio, age group, any duets, groups and routines, dances
+            and placings
           </li>
           <li>
             for judges and pipers: name, plus any photo, bio or website the organisers add
@@ -94,8 +95,8 @@ const crisp = useCrisp()
         </ul>
         <p>
           Organisers enter these from their own entries. <em>ScotDance.app</em> doesn’t
-          take entries itself, and has nowhere to put a dancer’s birthdate, address,
-          school or contact details. Each person’s competitions are gathered onto one profile,
+          take entries itself, and has nowhere to put a dancer’s birthdate, home address
+          or contact details. Each person’s competitions are gathered onto one profile,
           matched by name, so families can keep up with a dancer from one competition to
           the next and keep a record of their results. Search engines like Google are asked
           not to list dancer pages, and competitions that aren’t published stay private.

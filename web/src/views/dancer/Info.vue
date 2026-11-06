@@ -83,7 +83,7 @@ const signIn = () => auth.openLogin()
     <div class="space-y-5">
       <section v-if="focus && showFocus" class="space-y-2">
         <h2 :class="['text-section', focus.phase === 'today' && 'text-live']">{{ focusLabel }}</h2>
-        <DancerDayCard class="-mx-4" :days="focus.days" :competition-id="focus.competitionId" :color="color" size="lg" />
+        <DancerDayCard class="-mx-4" :days="focus.days" :competition-id="focus.competitionId" :color="color" :name="name" size="lg" />
       </section>
 
       <!-- Until it's known who is looking, nothing below the day card. -->

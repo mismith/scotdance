@@ -2,7 +2,8 @@ import { get, ref as dbRef } from 'firebase/database'
 import { database } from '@/firebase'
 import { TROPHY_EVENT_RESULT, trophyEventsFor, enrichTrophyEvents } from '@/lib/trophyEvents'
 import { getDancerPlace, isPosted } from '@/lib/results'
-import { OVERALL_ID, groupFullName, type TrophyEvent, type Category, type Dance, type Group } from '@/types/competition'
+import { OVERALL_ID, groupFullName, type TrophyEvent, type Category, type Dance, type Dancer, type Group } from '@/types/competition'
+import { entryName, isTeam } from '@/lib/entries'
 
 // One competition entry's placings, read narrowly (the entry, its group, the
 // group's results, the dance list) rather than a whole competition, so a
@@ -17,6 +18,8 @@ const val = async <T>(path: string): Promise<T | null> => {
 
 export interface EntrySummary {
   groupName: string | null
+  /** A team's entry (ADR 0012): its name. Its placings are the team's, not the dancer's own. */
+  team: string | null
   placings: Array<{ danceId: string; name: string; place: number; tied: boolean }>
   /** Dances with results posted where this entry wasn't placed: danced, no place. */
   danced: Array<{ danceId: string; name: string }>
@@ -35,9 +38,9 @@ export function fetchEntrySummary(competitionId: string, entryId: string): Promi
   if (!p) {
     p = (async () => {
       try {
-        const entry = await val<{ groupId?: string }>(`${competitionId}/dancers/${entryId}`)
+        const entry = await val<Omit<Dancer, 'id'>>(`${competitionId}/dancers/${entryId}`)
         const groupId = entry?.groupId
-        if (!groupId) return { groupName: null, placings: [], danced: [], overall: null, overallMissed: false, trophyEvents: [] }
+        if (!groupId) return { groupName: null, team: null, placings: [], danced: [], overall: null, overallMissed: false, trophyEvents: [] }
         const [group, results, dances, allTrophyEvents] = await Promise.all([
           val<Group>(`${competitionId}/groups/${groupId}`),
           val<Record<string, unknown>>(`${competitionId}/results/${groupId}`),
@@ -73,8 +76,11 @@ export function fetchEntrySummary(competitionId: string, entryId: string): Promi
           const r = getDancerPlace(entryId, a.id, TROPHY_EVENT_RESULT, { [a.id]: { [TROPHY_EVENT_RESULT]: lists[i] ?? [] } } as never, {})
           if (r.place != null) trophyEvents.push({ id: a.id, name: a.fullName, place: r.place, tied: r.tied })
         })
+        const groupName = group ? groupFullName({ ...group, id: groupId }, category ?? undefined) : null
         return {
-          groupName: group ? groupFullName({ ...group, id: groupId }, category ?? undefined) : null,
+          // A team's entry by the team ("Silver Sails (Duet Group B)").
+          groupName: isTeam(entry) ? `${entryName(entry)}${groupName ? ` (${groupName})` : ''}` : groupName,
+          team: isTeam(entry) ? entryName(entry) : null,
           placings,
           danced,
           overall: o.place != null ? { place: o.place, tied: o.tied } : null,

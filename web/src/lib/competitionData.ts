@@ -3,6 +3,7 @@ import { database } from '@/firebase'
 import { competitionChanged, editedCompetition, stampOf } from '@/lib/competitionChanged'
 import { enrichTrophyEvents } from '@/lib/trophyEvents'
 import { getSavedAt, onReconnect, onValueSaved } from '@/lib/offline'
+import { entryName, isTeam, memberName, teamMembers } from '@/lib/entries'
 import {
   danceFullName,
   dancerFullName,
@@ -76,6 +77,24 @@ function entriesOf(id: string, personId: string): Part {
   }
 }
 
+// A team's entry by its id: someone's teams aren't found by `dancerId` (it's
+// on each member, inside the team), so their profile names them (ADR 0012).
+function entryPart(id: string, entryId: string): Part {
+  const q = dbRef(database, `${NAMESPACE}/competitions:data/${id}/dancers/${entryId}`)
+  return { q, stamp: 'dancers', key: q.toString() }
+}
+
+/** Someone's own entries, with their teams' added. */
+function withTeams(own: unknown, teamIds: string[], teams: unknown[]) {
+  const rows = { ...((own && typeof own === 'object' ? own : {}) as Record<string, unknown>) }
+  teamIds.forEach((t, i) => {
+    if (teams[i] && typeof teams[i] === 'object') rows[t] = teams[i]
+  })
+  return rows
+}
+const entriesKey = (id: string, personId: string, teamIds: string[]) =>
+  `${id}/${personId}${teamIds.length ? `+${teamIds.join(',')}` : ''}`
+
 export function snapshotToArray<T extends { id: string }>(
   value: Record<string, Omit<T, 'id'>> | null,
 ): T[] {
@@ -136,15 +155,21 @@ export function toDancersBundle(dancersVal: unknown, groupsVal: unknown, categor
   )
 
   const dancers = rawDancers
-    .filter((d) => d.firstName || d.lastName)
+    .filter((d) => isTeam(d) || d.firstName || d.lastName)
     .map<EnrichedDancer>((d) => {
       // RTDB stores `number` as a string; coerce so numeric sort works.
       const parsed = typeof d.number === 'string' ? Number.parseInt(d.number, 10) : d.number
+      const team = isTeam(d)
       return {
         ...d,
         number: Number.isFinite(parsed as number) ? (parsed as number) : undefined,
-        fullName: dancerFullName(d),
+        fullName: team ? entryName(d) : dancerFullName(d),
         group: d.groupId ? groupsById.get(d.groupId) : undefined,
+        // A team is never a person: only its members have profiles.
+        ...(team && {
+          dancerId: undefined,
+          teamMembers: teamMembers(d).map(([key, m]) => ({ ...m, key, name: memberName(m) })),
+        }),
       }
     })
 
@@ -239,11 +264,12 @@ export function fetchDancers(id: string): Promise<DancersBundle> {
   })
 }
 
-/** One person's entries (by their profile id), with the groups and categories. */
-export function fetchEntries(id: string, personId: string): Promise<DancersBundle> {
-  return cached(caches.entries, `${id}/${personId}`, async () => {
-    const [d, g, c, a] = await readAll(id, [entriesOf(id, personId), ...sections(id, ['groups', 'categories']), trophyEventsPart(id)])
-    return toDancersBundle(d, g, c, a)
+/** One person's entries (by their profile id) and their teams' (by entry id), with the groups and categories. */
+export function fetchEntries(id: string, personId: string, teamIds: string[] = []): Promise<DancersBundle> {
+  return cached(caches.entries, entriesKey(id, personId, teamIds), async () => {
+    const [d, ...rest] = await readAll(id, [entriesOf(id, personId), ...teamIds.map((t) => entryPart(id, t)), ...sections(id, ['groups', 'categories']), trophyEventsPart(id)])
+    const [g, c, a] = rest.slice(teamIds.length)
+    return toDancersBundle(withTeams(d, teamIds, rest.slice(0, teamIds.length)), g, c, a)
   })
 }
 
@@ -317,11 +343,12 @@ export function watchDancers(id: string, cb: (b: DancersBundle) => void, onError
   }, onError)
 }
 
-/** One person's entries streaming, late ones included. */
-export function watchEntries(id: string, personId: string, cb: (b: DancersBundle) => void, onError?: OnError) {
-  return watchParts([entriesOf(id, personId), ...sections(id, ['groups', 'categories']), trophyEventsPart(id)], ([d, g, c, a]) => {
-    const b = toDancersBundle(d, g, c, a)
-    caches.entries.set(`${id}/${personId}`, Promise.resolve(b))
+/** One person's entries streaming, late ones included, with their teams'. */
+export function watchEntries(id: string, personId: string, cb: (b: DancersBundle) => void, onError?: OnError, teamIds: string[] = []) {
+  return watchParts([entriesOf(id, personId), ...teamIds.map((t) => entryPart(id, t)), ...sections(id, ['groups', 'categories']), trophyEventsPart(id)], ([d, ...rest]) => {
+    const [g, c, a] = rest.slice(teamIds.length)
+    const b = toDancersBundle(withTeams(d, teamIds, rest.slice(0, teamIds.length)), g, c, a)
+    caches.entries.set(entriesKey(id, personId, teamIds), Promise.resolve(b))
     cb(b)
   }, onError)
 }

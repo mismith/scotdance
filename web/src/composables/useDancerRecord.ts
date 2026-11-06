@@ -80,7 +80,8 @@ function createDancerRecord(dancerId: Ref<string>, profile: UseDancerProfile) {
         numbers: [],
         entryIds: [],
       }
-      if (a.raw.number != null && !r.numbers.includes(Number(a.raw.number)))
+      // The numbers they wore: a team's (ADR 0012) isn't theirs.
+      if (a.raw.number != null && !a.raw.team && !r.numbers.includes(Number(a.raw.number)))
         r.numbers.push(Number(a.raw.number))
       if (a.raw.dancerId && !r.entryIds.includes(a.raw.dancerId))
         r.entryIds.push(a.raw.dancerId)

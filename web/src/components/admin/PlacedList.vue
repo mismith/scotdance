@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { entryLine } from '@/lib/entries'
 import { computed, ref, watch } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { GripVertical, Trophy } from '@lucide/vue'
@@ -25,7 +26,7 @@ const props = defineProps<{
 }>()
 const detail = (id: string) => {
   const d = props.dancersById.get(id)
-  return props.byGroup ? d?.group?.label : d?.location
+  return props.byGroup ? d?.group?.label : entryLine(d)
 }
 
 const emit = defineEmits<{

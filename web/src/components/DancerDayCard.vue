@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ChevronRight, CircleSlash, Hourglass } from '@lucide/vue'
+import Avatar from '@/components/Avatar.vue'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import DanceStatusChip from '@/components/DanceStatusChip.vue'
@@ -16,7 +17,8 @@ import { successHaptic } from '@/lib/haptics'
 // bib as ribbons as they're posted; under them, one line of what the
 // schedule says about the next dance, when it says anything. A dancer
 // entered in more than one age group (Premier plus a Broadsword event) is one
-// card under one number. The card opens the dancer's page, which lists every
+// card under one number, and so are their teams' entries (ADR 0012), each
+// named for its team. The card opens the dancer's page, which lists every
 // dance. `bare` is just the day's dances, one row each, for that page, which
 // has its own header: a frameless list, one block per age group.
 const props = withDefaults(
@@ -26,6 +28,8 @@ const props = withDefaults(
     color?: string | null
     /** Shown under the name on Home, where several competitions mix. */
     competitionName?: string | null
+    /** The person's name, when their first entry here may be a team's. */
+    name?: string | null
     /** `${dancerId}:${danceId}` of a placing that just arrived. */
     fresh?: string | null
     /** lg: the dancer's own page, where it's the main thing. */
@@ -33,7 +37,7 @@ const props = withDefaults(
     /** Just the dances, under a page that has its own header. */
     bare?: boolean
   }>(),
-  { color: null, competitionName: null, fresh: null, size: 'md', bare: false },
+  { color: null, competitionName: null, name: null, fresh: null, size: 'md', bare: false },
 )
 
 // Entries with nothing scheduled are dropped when another entry has dances.
@@ -45,23 +49,47 @@ const day = computed(() => shown.value[0])
 const multi = computed(() => shown.value.length > 1)
 const lg = computed(() => props.size === 'lg')
 
-const sub = computed(() => (multi.value ? `${shown.value.length} age groups` : (day.value.group?.fullName ?? '')))
+// An entry by its age group; a team's, by the team too ("Celtic Sisters · Duet").
+const label = (d: DancerDay) =>
+  d.dancer.team ? [d.dancer.fullName, d.group?.fullName].filter(Boolean).join(' · ') : (d.group?.fullName ?? '')
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+const sub = computed(() => {
+  if (!multi.value) return label(day.value)
+  const teams = shown.value.filter((d) => d.dancer.team).length
+  const own = shown.value.length - teams
+  return [own && plural(own, 'age group', 'age groups'), teams && plural(teams, 'team', 'teams')].filter(Boolean).join(' and ')
+})
+
+// Their own entries, and their teams' (ADR 0012). A team's number isn't one
+// they wear as theirs, and its placings and Overall are the team's: each
+// is named for its team, never pinned on as the dancer's own.
+const own = computed(() => shown.value.filter((d) => !d.dancer.team))
+const bib = computed(() => own.value[0] ?? null)
 
 // What's pinned on so far: callbacks, a ribbon per placing (Overall last, as a trophy),
 // championship points, and what's still to come in.
 const dances = computed(() => shown.value.flatMap((d) => d.dances.map((s) => ({ d, s }))))
-const won = computed(() => dances.value.filter(({ s }) => s.state === 'placed' && s.place != null))
-const overall = computed(() => shown.value.map((d) => ({ d, s: d.overall })).find(({ s }) => s?.state === 'placed' && s.place != null) ?? null)
+const ownDances = computed(() => dances.value.filter(({ d }) => !d.dancer.team))
+const isWon = (s: DanceStatus | null | undefined) => s?.state === 'placed' && s.place != null
+const won = computed(() => ownDances.value.filter(({ s }) => isWon(s)))
+const overall = computed(() => own.value.map((d) => ({ d, s: d.overall })).find(({ s }) => isWon(s)) ?? null)
 // Trophy events they placed in (a cup each, after Overall); one entry per trophy event
 // when two of a person's age groups can both win it.
 const wonTrophyEvents = computed(() => {
   const seen = new Set<string>()
-  return shown.value
+  return own.value
     .flatMap((d) => d.trophyEvents.map((s) => ({ d, s })))
-    .filter(({ s }) => s.state === 'placed' && s.place != null && !seen.has(s.dance.id) && !!seen.add(s.dance.id))
+    .filter(({ s }) => isWon(s) && !seen.has(s.dance.id) && !!seen.add(s.dance.id))
 })
-const points = computed(() => dances.value.filter(({ s }) => s.state === 'unplaced' && s.pointed).length)
-const notPlaced = computed(() => dances.value.filter(({ s }) => (s.state === 'unplaced' && !s.pointed) || s.state === 'no-placings').length)
+const points = computed(() => ownDances.value.filter(({ s }) => s.state === 'unplaced' && s.pointed).length)
+const notPlaced = computed(() => ownDances.value.filter(({ s }) => (s.state === 'unplaced' && !s.pointed) || s.state === 'no-placings').length)
+// Each team that's placed: its rosettes beside its name.
+const teamWins = computed(() =>
+  shown.value
+    .filter((d) => d.dancer.team)
+    .map((d) => ({ d, placings: [...d.dances.filter(isWon).map((s) => ({ s, id: s.dance.id, dance: s.dance.fullName || s.dance.name })), ...(isWon(d.overall) ? [{ s: d.overall!, id: 'overall', dance: 'Overall' }] : [])] }))
+    .filter((t) => t.placings.length),
+)
 const upcoming = computed(() => dances.value.filter(({ s }) => s.state === 'upcoming'))
 // Danced, results not posted yet; or every dance in and Overall still to come.
 const waiting = computed(
@@ -147,9 +175,10 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
         :to="{ name: 'competition.dancer', params: { competitionId, dancerId: day.dancer.id } }"
         class="press-row focus-inset grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-3 p-4 @min-[34rem]:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
       >
-        <NumberCard :number="day.dancer.number" :color="color" size="md" />
+        <NumberCard v-if="bib" :number="bib.dancer.number" :color="color" size="md" />
+        <span v-else class="flex w-[5.5rem] justify-center"><Avatar :name="name || day.dancer.fullName" :color="color" size="lg" /></span>
         <span class="min-w-0">
-          <span class="block text-[1.25rem] leading-tight font-bold tracking-[-0.01em] break-words">{{ day.dancer.fullName }}</span>
+          <span class="block text-[1.25rem] leading-tight font-bold tracking-[-0.01em] break-words">{{ name || day.dancer.fullName }}</span>
           <span v-if="sub" class="text-muted-foreground text-callout block">{{ sub }}</span>
           <span v-if="competitionName" class="text-muted-foreground text-callout block truncate">{{ competitionName }}</span>
         </span>
@@ -208,7 +237,22 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
             <Hourglass class="size-3.5" stroke-width="2.4" aria-hidden="true" />
             Results to come
           </span>
-          <span v-if="settled && day.phase === 'today' && !won.length && !overall && !wonTrophyEvents.length" class="text-muted-foreground text-sm">Every result is in</span>
+          <span v-if="settled && day.phase === 'today' && !won.length && !overall && !wonTrophyEvents.length && !teamWins.length" class="text-muted-foreground text-sm">Every result is in</span>
+        </span>
+        <!-- Their teams' placings, each beside its team's name. -->
+        <span v-if="teamWins.length" class="col-span-full grid gap-1.5 border-t pt-3">
+          <span v-for="t in teamWins" :key="t.d.dancer.id" class="flex min-w-0 items-center gap-1">
+            <Medal
+              v-for="p in t.placings"
+              :key="p.id"
+              :place="p.s.place"
+              :tied="p.s.tied"
+              :fresh="fresh === `${t.d.dancer.id}:${p.id}`"
+              :dance="`${t.d.dancer.fullName}, ${p.dance}`"
+              size="md"
+            />
+            <span class="text-callout ml-1.5 min-w-0 truncate font-semibold" aria-hidden="true">{{ t.d.dancer.fullName }}</span>
+          </span>
         </span>
         <span v-if="nextFacts" class="text-callout col-span-full font-medium">{{ nextFacts }}</span>
       </RouterLink>
@@ -224,7 +268,7 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
     <template v-if="bare">
       <div v-for="d in shown" :key="d.dancer.id">
         <p v-if="multi" class="text-muted-foreground px-4 pt-3 pb-1 text-footnote font-semibold">
-          {{ d.group?.fullName }}
+          {{ label(d) }}
         </p>
         <p v-if="d.group?.notChampionship" class="text-muted-foreground flex items-center gap-1 px-4 pt-2 pb-1 text-sm">
           <CircleSlash class="size-3.5 shrink-0" aria-hidden="true" />

@@ -41,14 +41,14 @@ function apply(tree: Record<string, unknown>, updates: Record<string, unknown>) 
 
 interface Tree {
   categories?: Record<string, { name?: string; _order?: number }>
-  groups?: Record<string, { name?: string | null; categoryId?: string | null; _order?: number }>
-  dancers?: Record<string, { number?: string | number; firstName?: string | null; lastName?: string | null; location?: string | null; groupId?: string | null; categoryId?: string | null }>
+  groups?: Record<string, { name?: string | null; categoryId?: string | null; _order?: number; teams?: boolean }>
+  dancers?: Record<string, { number?: string | number; firstName?: string | null; lastName?: string | null; location?: string | null; groupId?: string | null; categoryId?: string | null; team?: boolean; title?: string; studio?: string; members?: Record<string, { firstName?: string; lastName?: string; _order?: number }> }>
 }
 
 /** The "existing" shape ImportDancers.vue builds from the live data. */
 function existingFrom(tree: Tree) {
   const categories: ExistingCategory[] = Object.entries(tree.categories ?? {}).map(([id, c]) => ({ id, name: c.name }))
-  const groups: ExistingGroup[] = Object.entries(tree.groups ?? {}).map(([id, g]) => ({ id, name: g.name ?? undefined, categoryId: g.categoryId ?? undefined }))
+  const groups: ExistingGroup[] = Object.entries(tree.groups ?? {}).map(([id, g]) => ({ id, name: g.name ?? undefined, categoryId: g.categoryId ?? undefined, teams: g.teams }))
   const dancers: ExistingDancer[] = Object.entries(tree.dancers ?? {}).map(([id, d]) => ({
     id,
     num: String(d.number ?? '').trim(),
@@ -57,6 +57,10 @@ function existingFrom(tree: Tree) {
     location: d.location ?? undefined,
     groupId: d.groupId ?? undefined,
     label: `${d.firstName ?? ''} ${d.lastName ?? ''}`.trim(),
+    team: d.team,
+    title: d.title,
+    studio: d.studio,
+    members: d.members,
   }))
   return { categories, groups, dancers }
 }
@@ -469,8 +473,6 @@ describe('planImport + planUpdates', () => {
       row('', 'No', 'Number', 'Primary', ''),
       row('5', '', '', 'Primary', ''),
       row('6', 'No', 'Group', '', ''),
-      row('7', 'Twin', 'One', 'Primary', ''),
-      row('7', 'Twin', 'Two', 'Primary', ''),
       row('8', 'Fine', 'Dancer', 'Primary', ''),
       row('#9', 'Odd', 'Number', 'Primary', ''),
     ])
@@ -478,8 +480,6 @@ describe('planImport + planUpdates', () => {
       ['', 'error', ['No number']],
       ['5', 'error', ['No name']],
       ['6', 'error', ['No age group']],
-      ['7', 'error', ['Number 7 is in this age group more than once']],
-      ['7', 'error', ['Number 7 is in this age group more than once']],
       ['8', 'new', []],
       ['#9', 'error', ['Number “#9” should be digits, like 101']],
     ])
@@ -614,5 +614,125 @@ describe('decodeText', () => {
     expect(decodeText(utf8)).toBe('Ó Briain, O’Neill')
     expect(decodeText(new Uint8Array([0xef, 0xbb, 0xbf, ...utf8]))).toBe('Ó Briain, O’Neill')
     expect(decodeText(new Uint8Array([0xd3, 0x20, 0x42, 0x72, 0x69, 0x61, 0x69, 0x6e, 0x2c, 0x20, 0x4f, 0x92, 0x4e, 0x65, 0x69, 0x6c, 0x6c]))).toBe('Ó Briain, O’Neill')
+  })
+})
+
+describe('duets, trios and groups (ADR 0012)', () => {
+  // As programs print them: a heading, then each entry.
+  const PROGRAM: string[][] = [
+    // The template's headings: its fifth column is Studio.
+    ['Dancer Number', 'First Name', 'Last Name', 'Location', 'Studio'],
+    ['Premier 12 & Under 14 Years', '', '', '', ''],
+    ['112', 'Isla', 'Grant', 'Inverness', ''],
+    ['118', 'Mairi', 'Shaw', 'Perth', ''],
+    ['Choreography Duet', '', '', '', ''],
+    ['201', 'Ava Ross &', 'Skye Munro', 'MB', 'Thistle School'],
+    ['202', 'Ruby', 'Bain & Lila Shaw', 'ON', ''],
+    ['Choreography Group', '', '', '', ''],
+    ['301', 'Ella', 'Reid', 'SK', 'House of Glen'],
+    ['301', 'Amy', 'Chan', '', ''],
+    ['301', 'Lyndsey', 'Chan', '', ''],
+  ]
+  function importTeams(tree: Tree, grid: string[][] = PROGRAM, columns?: Parameters<typeof parseGrid>[1]) {
+    const rows = parseGrid(grid, columns)!.dancers
+    const existing = existingFrom(tree)
+    const plan = planImport(rows, existing)
+    const updates = planUpdates(plan, existing, keys(), { removeMissing: false, nextGroupOrder: 0, nextCategoryOrder: 0 })
+    return { plan, tree: apply(tree as Record<string, unknown>, updates) as Tree & { dancers: Record<string, Record<string, unknown>> } }
+  }
+  const names = (d: Record<string, unknown>) => Object.values(d.members as object).map((m) => `${m.firstName} ${m.lastName}`)
+
+  it('reads names joined by “&” as several dancers, in either name cell', () => {
+    const { plan, tree } = importTeams({})
+    expect(plan.counts).toEqual({ new: 5, changed: 0, same: 0, error: 0 })
+    const entry = (n: string) => Object.values(tree.dancers).find((d) => d.number === n)!
+    expect(names(entry('201'))).toEqual(['Ava Ross', 'Skye Munro'])
+    expect(entry('201')).toMatchObject({ team: true, location: 'MB', studio: 'Thistle School', firstName: 'Ava Ross & Skye Munro' })
+    expect(names(entry('202'))).toEqual(['Ruby Bain', 'Lila Shaw'])
+    expect(entry('112')).toMatchObject({ firstName: 'Isla', lastName: 'Grant' })
+    expect(entry('112').team).toBeUndefined()
+  })
+
+  it('makes rows with the same number in an age group one entry, a dancer on each', () => {
+    const { tree } = importTeams({})
+    const group = Object.values(tree.dancers).find((d) => d.number === '301')!
+    expect(names(group)).toEqual(['Ella Reid', 'Amy Chan', 'Lyndsey Chan'])
+    expect(group).toMatchObject({ team: true, location: 'SK', studio: 'House of Glen' })
+    // Never more rows than entries.
+    expect(Object.values(tree.dancers).filter((d) => d.number === '301')).toHaveLength(1)
+  })
+
+  it('changes nothing when imported again, and keeps each dancer’s place', () => {
+    const first = importTeams({}).tree
+    const again = importTeams(first)
+    expect(again.plan.counts).toEqual({ new: 0, changed: 0, same: 5, error: 0 })
+  })
+
+  it('reads a routine-first program once its columns are chosen', () => {
+    const grid = [
+      ['Duet Group A', '', '', ''],
+      ['152', 'Red and Blue', 'Safiya Mulyukov & Violet Linton', 'Champagne Highland Dancers'],
+      ['Solo A', '', '', ''],
+      ['101', 'Celtic Spring', 'Sienna Reilly', 'Aspects of Dance'],
+    ]
+    const columns = { number: 0, title: 1, lastName: 2, studio: 3, firstName: -1, fullName: -1, location: -1, group: -1, category: -1, members: -1 }
+    const { tree } = importTeams({}, grid, columns)
+    const entry = (n: string) => Object.values(tree.dancers).find((d) => d.number === n)!
+    expect(entry('152')).toMatchObject({ team: true, title: 'Red and Blue', studio: 'Champagne Highland Dancers' })
+    expect(names(entry('152'))).toEqual(['Safiya Mulyukov', 'Violet Linton'])
+    expect(entry('101')).toMatchObject({ firstName: 'Sienna', lastName: 'Reilly', title: 'Celtic Spring', studio: 'Aspects of Dance' })
+  })
+
+  it('makes an entry typed as one dancer a duet when the file lists two', () => {
+    const tree: Tree = {
+      categories: { c: { name: 'Choreography Duet' } },
+      groups: { g: { name: '', categoryId: 'c' } },
+      dancers: { old: { number: '201', firstName: 'Celtic Sisters', lastName: 'Isla Grant & Mairi Shaw', location: 'Ontario', groupId: 'g', categoryId: 'c' } },
+    }
+    const grid = [['Number', 'Age group', 'Routine', 'Dancers', 'Studio'], ['201', 'Choreography Duet', 'Celtic Sisters', 'Isla Grant & Mairi Shaw', 'Thistle School']]
+    const { plan, tree: after } = importTeams(tree, grid)
+    expect(plan.dancers[0].status).toBe('changed')
+    expect(after.dancers.old).toMatchObject({ team: true, title: 'Celtic Sisters', studio: 'Thistle School' })
+    expect(names(after.dancers.old)).toEqual(['Isla Grant', 'Mairi Shaw'])
+  })
+
+  it('takes a routine, its dancers and a studio from their own columns', () => {
+    const grid = [
+      ['Number', 'Age group', 'Routine', 'Dancers', 'Studio', 'Location'],
+      ['201', 'Choreography Duet', 'Celtic Sisters', 'Isla Grant, Mairi Shaw', 'Thistle School', 'ON'],
+    ]
+    const { plan, tree } = importTeams({}, grid)
+    expect(plan.dancers[0].team).toMatchObject({ title: 'Celtic Sisters', studio: 'Thistle School', location: 'ON' })
+    expect(names(Object.values(tree.dancers)[0])).toEqual(['Isla Grant', 'Mairi Shaw'])
+  })
+
+  it('never reads a program’s other columns as a studio, nor an email or phone under a Studio heading', () => {
+    const bare = parseGrid([['Premier 12 & Under 14', '', '', '', ''], ['101', 'Ava', 'Reid', 'Calgary', 'ava.mom@example.com'], ['102', 'Mia', 'Lee', 'Edmonton', 'Thistle School']])!
+    expect(bare.dancers.map((d) => d.studio)).toEqual([undefined, undefined])
+    const headed = parseGrid([['Dancer Number', 'First Name', 'Last Name', 'Location', 'Studio'], ['Premier 12 & Under 14', '', '', '', ''], ['101', 'Ava', 'Reid', 'Calgary', 'ava.mom@example.com'], ['102', 'Mia', 'Lee', 'Edmonton', '403-555-0101'], ['103', 'Isla', 'Grant', 'Perth', 'Thistle School']])!
+    expect(headed.dancers.map((d) => d.studio)).toEqual([undefined, undefined, 'Thistle School'])
+  })
+
+  it('leaves a group’s studio and location alone when the file has none', () => {
+    const tree: Tree = {
+      categories: { c: { name: 'Choreography Duet' } },
+      groups: { g: { name: '', categoryId: 'c', teams: true } },
+      dancers: { t: { number: '201', groupId: 'g', categoryId: 'c', team: true, title: 'Celtic Sisters', studio: 'Thistle School', location: 'Calgary', members: { a: { firstName: 'Isla', lastName: 'Grant', _order: 0 }, b: { firstName: 'Mairi', lastName: 'Shaw', _order: 1 } } } },
+    }
+    const grid = [['Choreography Duet', '', '', ''], ['201', 'Celtic Sisters', 'Isla Grant & Mairi Shaw & Ava Reid', '']]
+    const columns = { number: 0, title: 1, lastName: 2, location: 3, firstName: -1, fullName: -1, studio: -1, group: -1, category: -1, members: -1 }
+    const { plan, tree: after } = importTeams(tree, grid, columns)
+    expect(plan.dancers[0].changes).toEqual({ Dancers: ['Isla Grant, Mairi Shaw', 'Isla Grant, Mairi Shaw, Ava Reid'] })
+    expect(after.dancers.t).toMatchObject({ studio: 'Thistle School', location: 'Calgary', lastName: 'Thistle School' })
+    expect(Object.keys(after.dancers.t.members as object)).toHaveLength(3)
+  })
+
+  it('reads a dancer’s routine and studio columns', () => {
+    const grid = [
+      ['Number', 'First name', 'Last name', 'Age group', 'Routine', 'Studio'],
+      ['101', 'Isla', 'Grant', 'Solo Choreography', 'Celtic Rock', 'Thistle School'],
+    ]
+    const { tree } = importTeams({}, grid)
+    expect(Object.values(tree.dancers)[0]).toMatchObject({ firstName: 'Isla', title: 'Celtic Rock', studio: 'Thistle School' })
   })
 })

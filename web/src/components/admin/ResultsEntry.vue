@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { entryLine } from '@/lib/entries'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch, watchEffect } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { createReusableTemplate, useMediaQuery } from '@vueuse/core'
@@ -305,7 +306,7 @@ const fixQuery = ref('')
 const fixChoices = computed(() => {
   const q = fixQuery.value.trim().toLowerCase()
   // Not someone already placed, or given a point (they can't be both).
-  return candidates.value.filter((d) => !placedIndex.value.has(d.id) && !pointed.value.has(d.id) && (!q || d.num.startsWith(q) || d.label.toLowerCase().includes(q)))
+  return candidates.value.filter((d) => !placedIndex.value.has(d.id) && !pointed.value.has(d.id) && (!q || d.num.startsWith(q) || `${d.label} ${entryLine(d)}`.toLowerCase().includes(q)))
 })
 function openFix(index: number) {
   fixQuery.value = ''
@@ -550,7 +551,7 @@ watch(() => props.danceId, showCurrent)
                   <span class="min-w-0 flex-1">
                     <span class="block truncate text-base font-semibold">{{ d.label }}</span>
                     <!-- A trophy event mixes age groups: say which. -->
-                    <span v-if="isTrophyEvent ? d.group : d.location" class="text-muted-foreground block truncate text-sm">{{ isTrophyEvent ? d.group?.label : d.location }}</span>
+                    <span v-if="isTrophyEvent ? d.group : entryLine(d)" class="text-muted-foreground block truncate text-sm">{{ isTrophyEvent ? d.group?.label : entryLine(d) }}</span>
                   </span>
                   <template v-if="placeOf(d.id)">
                     <CircleCheck v-if="isCallbacks" class="text-primary size-6 shrink-0" aria-label="Called back" />

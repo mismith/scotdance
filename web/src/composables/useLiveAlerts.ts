@@ -3,6 +3,7 @@ import { useFavoritesStore } from '@/stores/favorites'
 import { useDancerCards } from '@/composables/useDancerCards'
 import { useAlerts } from '@/composables/useAlerts'
 import { getOrdinalSuffix } from '@/lib/results'
+import { ensemble } from '@/lib/entries'
 
 // While the app is open on competition day, watch your favourite dancers'
 // live results and raise an alert the moment a placing is posted, unless
@@ -62,7 +63,10 @@ export function startLiveAlerts() {
             // Most who can win a trophy event don't: only a win is news.
             if (isTrophyEvent && s.state !== 'placed') continue
             if (!favorites.hasAlerts('dancers', card.id)) continue
-            const first = day.dancer.firstName || day.dancer.fullName
+            // Their duet's or group's entry is theirs too: "Poppy’s group placed 3rd" (ADR 0012).
+            const first = day.dancer.team
+              ? `${card.name.split(' ')[0] || 'Your dancer'}’s ${ensemble(day.dancer.teamMembers?.length ?? 0)}`
+              : day.dancer.firstName || day.dancer.fullName
             const danceName = s.dance.id === 'overall' ? 'Overall' : s.dance.fullName || s.dance.name
             fresh.push({
               id: `${key}:${sig}`,
@@ -74,7 +78,7 @@ export function startLiveAlerts() {
                       ? `${first} placed ${s.place}${getOrdinalSuffix(s.place)} overall`
                       : `${first} placed ${s.place}${getOrdinalSuffix(s.place)} in the ${danceName}`
                   : `Results are in for the ${danceName}`,
-              subtitle: [day.group?.fullName, f.competition.name].filter(Boolean).join(' · '),
+              subtitle: [day.dancer.team ? day.dancer.fullName : null, day.group?.fullName, f.competition.name].filter(Boolean).join(' · '),
               to: isTrophyEvent
                 ? { name: 'competition.trophyEvent', params: { competitionId: f.competitionId, trophyEventId: s.dance.id } }
                 : {

@@ -16,11 +16,13 @@ import Skeleton from '@/components/Skeleton.vue'
 import { TROPHY_EVENT_RESULT } from '@/lib/trophyEvents'
 import { dancerPlace } from '@/lib/competitionInfo'
 import { heroTitle } from '@/lib/heroTitle'
+import { entryLine } from '@/lib/entries'
+import type { EnrichedMember } from '@/types/competition'
 
 const route = useRoute()
 const setHeader = injectInfoHeaderSetter()
 const { competitionId, competition, dancers, loadDancers, loadResults, loadSchedule } = useCompetition()
-const { dayFor, phase } = useCompetitionDays()
+const { dayFor, entriesFor, phase } = useCompetitionDays()
 const following = useFollowing()
 const isFresh = useFreshPlacings()
 
@@ -36,16 +38,40 @@ const dancer = computed(() => dancers.value.find((d) => d.id === dancerId.value)
 usePageTitle(() => [dancer.value?.fullName, competition.value?.name])
 
 // The same person can be entered in more than one age group here, under
-// the same number. Show every entry.
+// the same number, and dance in teams too. Show every entry. A team's page
+// is the team's own day.
 const entries = computed(() => {
   const d = dancer.value
   if (!d) return []
-  const same = d.dancerId ? dancers.value.filter((x) => x.dancerId === d.dancerId) : [d]
+  if (d.team) return [dayFor(d)]
+  const same = d.dancerId ? entriesFor(d.dancerId) : [d]
   return [d, ...same.filter((x) => x.id !== d.id)].map(dayFor)
 })
 
+// A team's dancers, each linking to their own entry here, or else their profile.
+const members = computed(() =>
+  (dancer.value?.teamMembers ?? []).map((m: EnrichedMember) => {
+    const own = m.dancerId ? dancers.value.find((x) => !x.team && x.dancerId === m.dancerId) : null
+    return {
+      m,
+      own,
+      to: own
+        ? { name: 'competition.dancer', params: { competitionId: competitionId.value, dancerId: own.id } }
+        : m.dancerId
+          ? { name: 'dancer.info', params: { dancerId: m.dancerId } }
+          : null,
+      color: m.dancerId && following.isFollowing(m.dancerId) ? following.colorFor(m.dancerId) : null,
+    }
+  }),
+)
+const teamLine = computed(() => {
+  const d = dancer.value
+  if (!d?.team) return ''
+  return [d.group?.fullName, d.studio && d.studio !== d.fullName ? d.studio : null, d.location].filter(Boolean).join(' · ')
+})
+
 const color = computed(() =>
-  dancer.value && following.isFollowing(dancer.value) ? following.colorFor(dancer.value.dancerId) : null,
+  dancer.value && following.isFollowing(dancer.value) ? following.colorFor(following.followedIn(dancer.value)) : null,
 )
 const firstName = computed(() => dancer.value?.firstName || dancer.value?.fullName || 'this dancer')
 
@@ -95,10 +121,38 @@ const fresh = computed(() => {
         <NumberCard v-else :number="dancer.number" :color="color" size="xl" />
         <h1 :class="[heroTitle(dancer.fullName), 'mt-5']">{{ dancer.fullName }}</h1>
         <p class="text-muted-foreground text-callout mt-1.5">
-          {{ [dancer.group?.fullName, dancerPlace(dancer.location, dancer.group)].filter(Boolean).join(' · ') }}
+          {{
+            dancer.team
+              ? [members.length > 1 ? `${members.length} dancers` : null, teamLine].filter(Boolean).join(' · ')
+              : [dancer.group?.fullName, entryLine(dancer, { location: false }), dancerPlace(dancer.location, dancer.group)].filter(Boolean).join(' · ')
+          }}
         </p>
         <FollowButton v-if="dancer.dancerId" :dancer="dancer" size="block" class="mt-4 w-auto! min-w-48" />
       </header>
+
+      <!-- A team's dancers: follow any of them to follow the team. -->
+      <section v-if="dancer.team && members.length" class="space-y-2">
+        <h2 class="text-heading pt-2">Dancers</h2>
+        <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:1rem]">
+          <li
+            v-for="{ m, own, to, color: c } in members"
+            :key="m.key"
+            class="relative flex items-center gap-1 pr-2"
+            :style="c ? { '--dc': c } : undefined"
+          >
+            <span v-if="c" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+            <RouterLink v-if="to" :to="to" class="press-row focus-inset flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-r-xl py-2 pl-4">
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-base font-semibold">{{ m.name }}</span>
+                <span v-if="own" class="text-muted-foreground block truncate text-sm">Also dancing {{ own.group?.fullName ?? 'here' }}</span>
+              </span>
+              <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+            </RouterLink>
+            <span v-else class="flex min-h-14 min-w-0 flex-1 items-center py-2 pl-4 text-base font-semibold">{{ m.name }}</span>
+            <FollowButton v-if="m.dancerId" :dancer="{ dancerId: m.dancerId, firstName: m.firstName, lastName: m.lastName, fullName: m.name }" />
+          </li>
+        </ul>
+      </section>
 
       <section class="space-y-2">
         <h2 class="text-section flex min-h-6 items-center justify-between gap-2 pt-2">

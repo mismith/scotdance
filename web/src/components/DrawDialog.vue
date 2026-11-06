@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { entryLine, shortName } from '@/lib/entries'
 import { computed, nextTick, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useCompetition } from '@/composables/useCompetition'
@@ -110,7 +111,7 @@ const ord = (n: number) => `${n}${getOrdinalSuffix(n)}`
 const yours = computed(() => {
   if (!hasRealDraw.value) return null
   const mine = drawRows.value.flatMap((r, i) =>
-    r.mine && r.dancer ? [`${r.dancer.firstName || r.dancer.fullName || '?'} ${ord(i + 1)}`] : [],
+    r.mine && r.dancer ? [`${shortName(r.dancer) || '?'} ${ord(i + 1)}`] : [],
   )
   if (!mine.length) return null
   return `${mine.length === 1 ? mine[0].replace(/ (\S+)$/, ' dances $1') : mine.join(', ')} of ${drawRows.value.length}`
@@ -161,7 +162,7 @@ function openDancer() {
           :key="row.key"
           :ref="(el) => (rowEls[row.key] = el as HTMLElement | null)"
           class="relative isolate flex items-center pr-2"
-          :style="row.mine && row.dancer ? following.paint(row.dancer.dancerId) : undefined"
+          :style="row.mine && row.dancer ? following.paint(following.followedIn(row.dancer)) : undefined"
         >
           <span v-if="row.mine" class="dancer-sash" aria-hidden="true" />
           <component
@@ -179,12 +180,12 @@ function openDancer() {
             <NumberCard
               :number="row.dancer?.number ?? row.number"
               size="xs"
-              :color="row.mine ? following.colorFor(row.dancer!.dancerId) : null"
+              :color="row.mine ? following.colorFor(following.followedIn(row.dancer)) : null"
             />
             <span v-if="row.dancer" class="min-w-0">
               <span class="block truncate text-base font-semibold">{{ row.dancer.fullName || '?' }}</span>
-              <span v-if="row.dancer.location" class="text-muted-foreground block truncate text-sm">
-                {{ row.dancer.location }}
+              <span v-if="entryLine(row.dancer)" class="text-muted-foreground block truncate text-sm">
+                {{ entryLine(row.dancer) }}
               </span>
             </span>
             <span v-else class="text-muted-foreground flex-1 text-base">Not on the dancer list</span>

@@ -75,9 +75,12 @@ const spec: CollectionSpec<MGroup> = {
   ],
   title: (g) => g.label,
   subtitle: (g) => {
-    const dancers = m.groupDancers(g.id).length
+    const entries = m.groupDancers(g.id)
     const dances = m.groupDances(g.id).length
-    return `${dancers} ${dancers === 1 ? 'dancer' : 'dancers'} · ${dances} ${dances === 1 ? 'dance' : 'dances'}`
+    // Any duet, trio or group: count entries, as its dancers are more.
+    const n = entries.length
+    const who = entries.some((d) => d.team) ? `${n} ${n === 1 ? 'entry' : 'entries'}` : `${n} ${n === 1 ? 'dancer' : 'dancers'}`
+    return `${who} · ${dances} ${dances === 1 ? 'dance' : 'dances'}`
   },
   defaults: (prev) => ({ categoryId: prev?.categoryId ?? '' }),
   presets: AGE_RANGES.map((name) => ({ label: name, values: { name } })),

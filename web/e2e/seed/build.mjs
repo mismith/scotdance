@@ -5,7 +5,9 @@
 // same person to the same made-up name everywhere, so profiles and search
 // still join up), and whatever else is theirs goes: accounts, bios, photos,
 // websites, invites, submissions and organisers' free text. Competitions,
-// dates and venues (public events and places) stay.
+// dates and venues (public events and places) stay. A team's dancers are
+// people too (ADR 0012); its routine's title stays, its studio is renamed
+// (studios often carry a teacher's name).
 //
 //   node web/e2e/seed/build.mjs [export dir, default .firebase/emulator-data]
 //
@@ -52,7 +54,11 @@ const originals = new Set()
 const addName = (name) => hasLetters(name) && originals.add(normalizeName(name))
 const fullName = (r) => [r?.firstName, r?.lastName].filter((s) => s != null && s !== '').join(' ')
 for (const c of Object.values(data['competitions:data'] ?? {})) {
-  for (const r of Object.values(c.dancers ?? {})) addName(fullName(r))
+  for (const r of Object.values(c.dancers ?? {})) {
+    // A team's own first and last name are only v3's copy of its name: its dancers are the people.
+    if (r?.team === true) for (const m of Object.values(r.members ?? {})) addName(fullName(m))
+    else addName(fullName(r))
+  }
   for (const r of Object.values(c.staff ?? {})) addName(fullName(r))
 }
 // Sponsors named outright (older competitions) are renamed too, but some are
@@ -109,6 +115,19 @@ function renameParts(r) {
   return { ...r, firstName: p.first, lastName: p.last }
 }
 const without = (r, keys) => Object.fromEntries(Object.entries(r).filter(([k]) => !keys.includes(k)))
+// A studio as a made-up school ("Napier School of Dance"): the same studio to the same one everywhere.
+const renameStudio = (studio) => (hasLetters(studio) ? `${person(`studio:${normalizeName(studio)}`).last} School of Dance` : studio)
+// A team: its dancers renamed, its studio too, and v3's copy of its name made again from them.
+function renameTeam(r) {
+  const members = mapValues(r.members, (m) => renameParts(m))
+  const studio = r.studio ? renameStudio(r.studio) : r.studio
+  const order = (m) => (typeof m._order === 'number' ? m._order : Infinity)
+  const names = Object.values(members ?? {}).sort((a, b) => order(a) - order(b)).map(fullName).filter(hasLetters)
+  const listed = names.length > 3 ? `${names.slice(0, 3).join(', ')} & ${names.length - 3} more` : names.length > 1 ? `${names.slice(0, -1).join(', ')} & ${names.at(-1)}` : names[0]
+  const name = r.title || listed || studio || `Team ${r.number ?? ''}`.trim()
+  const next = { ...r, members, studio, firstName: name, lastName: r.title && studio ? studio : null }
+  return Object.fromEntries(Object.entries(next).filter(([, v]) => v != null))
+}
 const mapValues = (o, f) => (o ? Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v, k)])) : o)
 const mapKeys = (o, f) => (o ? Object.fromEntries(Object.entries(o).map(([k, v]) => [f(k), v])) : o)
 
@@ -129,7 +148,7 @@ out.competitions = mapValues(out.competitions, (c) => {
 
 out['competitions:data'] = mapValues(out['competitions:data'], (c) => {
   const r = without(c, ['invites'])
-  r.dancers = mapValues(r.dancers, renameParts)
+  r.dancers = mapValues(r.dancers, (d) => (d?.team === true ? renameTeam(d) : d?.studio ? { ...renameParts(d), studio: renameStudio(d.studio) } : renameParts(d)))
   r.staff = mapValues(r.staff, (s) => renameParts(without(s, ['description', 'image', 'website'])))
   r.groups = mapValues(r.groups, (g) => {
     const next = { ...g }
