@@ -19,7 +19,7 @@ import { allCapitals, isShouting, known, learn, spelled } from '@/lib/capitals'
 // cell) are several dancers, and rows with the same number in the same age
 // group are one entry, a dancer on each row.
 
-import type { MemberName } from '@/lib/admin/teamReader'
+import type { MemberName } from '@/lib/admin/memberNames'
 import { listToMembers, membersToList } from '@/lib/admin/teamMembers'
 import { legacyNames } from '@/lib/entries'
 import type { TeamMember } from '@/types/competition'

@@ -9,7 +9,7 @@ import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import { draftName, listToMembers, membersToList, type MemberDraft } from '@/lib/admin/teamMembers'
 import { namesDancingHere, suggestNames, type NameSuggestion } from '@/lib/admin/nameSuggestions'
-import { splitMembers, splitName } from '@/lib/admin/teamReader'
+import { splitMembers, splitName } from '@/lib/admin/memberNames'
 import { ensemble, entryName, isTeam, legacyNames } from '@/lib/entries'
 
 // An entry's dancers (ADR 0012). One dancer is a first and a last name, as

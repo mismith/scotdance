@@ -279,15 +279,16 @@ trio or group, and nothing else is guessed:
   changes on a re-import marked Changed.
 - **Matching an updated list** works as now, by number within an age
   group, so re-importing changes teams rather than duplicating them.
-- The recogniser (`teamReader`) is kept for the conversion script, not the
-  import.
+- The recogniser (`teamReader`) was for the conversion script, not the
+  import. It went with the script; only splitting a box of names
+  (`memberNames`) stays in the app.
 
 ### 8. Converting existing rows
 
 A one-off script, not a screen (2026-11-03): organisers never see old
 competitions' team rows as anything but what they were. It reads each
-competition's rows typed as dancers in age groups for teams with
-`teamReader` (tested on 1,182 production rows: 30 of 36 right with no
+competition's rows typed as dancers in age groups for teams with a
+recogniser, `teamReader` (tested on 1,182 production rows: 30 of 36 right with no
 fixes on a first try, then each miss pattern fixed and unit-tested), and
 writes teams.
 
