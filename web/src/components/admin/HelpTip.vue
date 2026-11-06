@@ -7,7 +7,8 @@ import { useMorph } from '@/lib/morph'
 // grows out of it, like the ⋯ menus; tap anywhere else or press Escape to
 // close.
 
-defineProps<{ label?: string }>()
+// `wide`: room for a longer tip, or a picture in it.
+defineProps<{ label?: string; wide?: boolean }>()
 
 const tip = useMorph()
 </script>
@@ -26,7 +27,7 @@ const tip = useMorph()
   <!-- Out of the page's tree: a tip can sit inside another control (a tab),
        and taps in it mustn't reach that. -->
   <Teleport to="body">
-    <Dialog :open="tip.open" :morph="tip" variant="dropdown" :aria-label="label ?? 'More about this'" @close="tip.hide()">
+    <Dialog :open="tip.open" :morph="tip" variant="dropdown" :size="wide ? 'lg' : undefined" :aria-label="label ?? 'More about this'" @close="tip.hide()">
       <div class="text-callout p-2.5 text-left leading-snug">
         <slot />
       </div>

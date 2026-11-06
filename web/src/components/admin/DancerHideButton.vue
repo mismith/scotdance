@@ -13,7 +13,7 @@ import { useMorph } from '@/lib/morph'
 import { useMeStore } from '@/stores/me'
 
 // A system admin's control on a dancer's profile, for when a family asks:
-// hiding it turns off the signed-in extras (Overview, Results by
+// hiding it turns off the signed-in extras (Overview, Progress, Results by
 // dance), so everyone sees the basic profile. They stay in Search, Dancers and
 // every competition's results. Nothing for anyone else. (System admin ›
 // Directory › Hidden profiles lists them all, to show again.)
@@ -81,9 +81,9 @@ async function submit() {
           <template v-if="info.note"><br /><span class="text-muted-foreground">{{ info.note }}</span></template>
         </p>
         <p class="text-muted-foreground text-base">
-          <template v-if="hidden">{{ firstName }}’s signed-in extras come back: Overview and Results by dance.</template>
+          <template v-if="hidden">{{ firstName }}’s signed-in extras come back: Overview, Progress and Results by dance.</template>
           <template v-else>
-            Everyone sees {{ firstName }}’s profile as if signed out: the latest 10 competitions, with no Overview or Results by dance. {{ firstName }} stays in Search, Dancers and every competition’s results.
+            Everyone sees {{ firstName }}’s profile as if signed out: the latest 10 competitions, with no Overview, Progress or Results by dance. {{ firstName }} stays in Search, Dancers and every competition’s results.
           </template>
         </p>
         <FormInput v-if="!hidden" v-model="note" label="Note for admins" placeholder="A parent asked by email" />

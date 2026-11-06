@@ -18,15 +18,49 @@ shape.
 
 ## Decisions
 
-### 1. Two tabs, signed in
+### 1. Three tabs, signed in
 
 - Signed in, a profile gets its own tab bar, like a competition's:
-  **Overview, Results**. Results is always last.
-- **Overview:** the header, four facts (level, competitions, seasons,
-  dances) as tiles that open Results, the latest three competitions.
-- A third tab, **Progress** (a wheel of the kinds of dance and a path
-  through the seasons), is parked on its own branch until its design
-  settles.
+  **Overview, Progress, Results**. Results is always last.
+- **Overview:** the header, four facts (level, competitions, dances,
+  seasons), the latest three competitions.
+- **Progress:** **Dances**, a wheel, then **How it’s gone**, a path.
+  - The wheel splits into four fixed quarters with a thin X: Highland at
+    the top, Character (Jig and Hornpipe) right, National at the bottom,
+    Choreography left. An empty quarter says "not yet", which shows what
+    a well-rounded dancer looks like.
+  - A kind danced more fills more of its quarter, with its share under
+    its name. Each dance reaches further out the better it goes, against
+    the dancer's own best: its average share of the ribbons (1st = 1, 6th
+    = 1/6, not placed 0), from three times danced. A fine twill marks the
+    room to grow; double lines mark halfway and full.
+  - Counted since moving up to the current level when that level has 20
+    dances or more (placings drop on a step up), otherwise everything.
+  - Tapping a quarter opens its dances across the whole wheel; tapping
+    one gives its numbers. No tooltips.
+  - The path wanders down the page, newest at the top, from where the
+    dancer is now and the next competition count to reach, every season at
+    once. It looks drawn in felt-tip and marked up in pen, like a printout
+    someone was proud of; the words stay in the app's font. Each season is
+    a milepost, a short tick across the road with its years underlined in
+    pen (after Ogilby's 1675 strip road maps); quiet years are dashed. Its
+    shape is seeded per dancer, a long gap travels further, and it deepens
+    in colour with each level. The road draws itself down the page as it
+    scrolls into view, once a visit, and each stop lands as the road
+    reaches it (all at once with Reduce Motion).
+  - Moments have three weights. Peaks (first competition, moving up a
+    level, first trophy) get a big dot (gold for a trophy) circled in pen,
+    and moving up is a double milepost. Every stop is a marker dot with
+    words beside it: no icons, so no legend. Ordinary ones (first placing
+    and first win at a level, championships, abroad, a dance that rarely
+    placed then placed three times running, a kind of dance that improved
+    most, placing in three kinds in one day) are solid dots, and counts
+    show their number. Quiet ones (a best ever top three, one a season) are
+    small hollow dots. Each opens the dancer's entry at that competition; a
+    season's trend opens their results.
+  - Trends were tested on the 2026 export first: better on Saturday or
+    Sunday was noise and isn't shown. Nothing is about a drop, and the
+    weakest dance is never named.
 - **Results:** the full list, or **By dance**: a row per dance with every
   time they danced it, a season at a time. Overall comes last, as a trophy.
 - Placings stay blue. A dancer's own placings and how they've improved are
@@ -39,6 +73,8 @@ shape.
   career totals.
 - Seasons run September to August and show as "2025–26". A season
   with no competitions shows as a gap, never smoothed over.
+- Moments are counts, firsts at each level and trends in what
+  ScotDance.app saw. They stay true however much history is missing.
 - Levels come from the category names organisers typed (Primary, Beginner,
   Novice, Intermediate, Premier). A category naming two levels, or none,
   is skipped rather than guessed.

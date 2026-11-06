@@ -134,6 +134,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/dancer/Info.vue'),
       },
       // Signed-in extras: the layout sends everyone else to Overview.
+      { path: 'progress', name: 'dancer.progress', component: () => import('@/views/dancer/Progress.vue') },
       { path: 'results', name: 'dancer.results', component: () => import('@/views/dancer/Results.vue') },
     ],
   },

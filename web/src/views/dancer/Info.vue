@@ -14,15 +14,16 @@ import DancerLookButton from '@/components/DancerLookButton.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import Button from '@/components/ui/Button.vue'
-import { KIND_NAMES, kindOf, type DanceKind } from '@/lib/danceKinds'
+import { KIND_NAMES } from '@/lib/danceKinds'
+import { danceWheel } from '@/lib/danceWheel'
 import { heroTitle } from '@/lib/heroTitle'
 import { profileColumns, profileHeader } from '@/lib/profile'
 import { useAuthStore } from '@/stores/auth'
 
 // A dancer across every competition. Their number is different at each one,
 // so it's shown per competition, never as who they are. Signed in: who they
-// are, a few counted facts and the latest competitions (Results has the
-// rest). Otherwise the basic profile: the latest ten competitions
+// are, a few counted facts and the latest competitions (Progress and Results
+// have the rest). Otherwise the basic profile: the latest ten competitions
 // and a way in to the rest.
 const setHeader = injectInfoHeaderSetter()
 const route = useRoute()
@@ -60,38 +61,34 @@ const moreBehind = computed(() => !auth.isSignedIn && total.value > BASIC_LATEST
 const signIn = () => auth.openLogin()
 const level = computed(() => facts.value.level)
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+const wheel = computed(() => danceWheel(record.points.value))
 // The kind of dance they do most, by times danced.
 const mostly = computed(() => {
-  const times = new Map<DanceKind, number>()
-  for (const p of record.points.value)
-    for (const d of p.dances ?? []) {
-      const k = kindOf(d.name)
-      if (k) times.set(k, (times.get(k) ?? 0) + 1)
-    }
-  const top = [...times].sort((a, b) => b[1] - a[1])[0]
-  return top ? KIND_NAMES[top[0]] : null
+  const top = wheel.value.kinds.reduce<(typeof wheel.value.kinds)[number] | null>((a, k) => (!a || k.times > a.times ? k : a), null)
+  return top ? KIND_NAMES[top.kind] : null
 })
-// The counted facts, as tiles, each a way into Results.
+// The counted facts, as tiles: the level, seasons and dances lead to
+// Progress (the saltire and journey), the competitions to Results.
 const tiles = computed(() => {
   const ready = record.ready.value
   const lv = level.value
   const word = (n: number, w: string) => plural(n, w).replace(/^\d+ /, '')
   return [
     ...(!ready || lv
-      ? [{ key: 'level', icon: ChevronsUp, to: 'dancer.results', value: lv?.level ?? null, label: lv ? `since ${new Date(lv.since).getFullYear()}` : '' }]
+      ? [{ key: 'level', icon: ChevronsUp, to: 'dancer.progress', value: lv?.level ?? null, label: lv ? `since ${new Date(lv.since).getFullYear()}` : '' }]
       : []),
     { key: 'competitions', icon: CalendarDays, to: 'dancer.results', value: facts.value.competitions, label: word(facts.value.competitions, 'competition') },
     {
       key: 'seasons',
       icon: History,
-      to: 'dancer.results',
+      to: 'dancer.progress',
       value: facts.value.seasons,
       label: `${word(facts.value.seasons, 'season')}${facts.value.since ? ` since ${facts.value.since}` : ''}`,
     },
     {
       key: 'dances',
       icon: Footprints,
-      to: 'dancer.results',
+      to: 'dancer.progress',
       value: ready ? facts.value.dances : null,
       label: `${word(facts.value.dances, 'dance')}${mostly.value ? `, mostly ${mostly.value}` : ''}`,
     },

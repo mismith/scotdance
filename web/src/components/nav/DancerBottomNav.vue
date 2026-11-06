@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ChevronLeft, LayoutGrid, Trophy, Users } from '@lucide/vue'
+import { ChevronLeft, ChartLine, LayoutGrid, Trophy, Users } from '@lucide/vue'
 import TabBar, { type TabItem } from '@/components/nav/TabBar.vue'
 import SidebarBranch from '@/components/nav/SidebarBranch.vue'
 import SidebarLink from '@/components/nav/SidebarLink.vue'
@@ -9,7 +9,7 @@ import { backPath, goUp } from '@/lib/back'
 import { tapHaptic } from '@/lib/haptics'
 
 // A signed-in dancer's profile has its own tabs, like a competition's:
-// Overview, Results (always last). Switching replaces history, so
+// Overview, Progress, Results (always last). Switching replaces history, so
 // Back never steps through them. A round glass button beside the pill leaves
 // the profile in one tap: back to wherever you came from within the app, else
 // up to Dancers.
@@ -20,6 +20,7 @@ const dancerId = computed(() => String(route.params.dancerId ?? ''))
 
 const TABS = [
   { label: 'Overview', icon: LayoutGrid, to: 'dancer.info' },
+  { label: 'Progress', icon: ChartLine, to: 'dancer.progress' },
   { label: 'Results', icon: Trophy, to: 'dancer.results' },
 ]
 const items = computed<TabItem[]>(() =>
@@ -72,6 +73,11 @@ function leave() {
       :label="t.label"
       :state="t.active ? 'current' : null"
       replace
-    />
+    >
+      <!-- Progress is new and may still change (as its own page says). -->
+      <template v-if="t.label === 'Progress'" #end>
+        <span class="border-primary/40 text-primary rounded-full border px-1.5 text-[0.6875rem] leading-4 font-semibold">Beta</span>
+      </template>
+    </SidebarLink>
   </SidebarBranch>
 </template>

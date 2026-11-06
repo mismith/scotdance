@@ -14,7 +14,7 @@ const props = withDefaults(
      * card in the middle.
      */
     variant?: 'center' | 'sheet' | 'dropdown'
-    /** lg: wide on bigger screens, for pictures (the judges' sheet viewer). */
+    /** lg: wide on bigger screens, for pictures (the judges' sheet viewer); a wider dropdown for a longer tip. */
     size?: 'sm' | 'md' | 'lg'
     closable?: boolean
     /**
@@ -214,10 +214,10 @@ const anchor = computed<Record<string, string> | undefined>(() => {
   const anchorEl = trigger.closest<HTMLElement>('[data-menu-anchor]')
   const bar = (anchorEl ?? trigger).getBoundingClientRect()
   const centred = anchorEl?.dataset.menuAnchor === 'center'
-  // The panel is w-72 (18rem, so larger with bigger text), at most the
-  // window less a 12px margin each side.
+  // The panel is w-72 (18rem, so larger with bigger text), or 22rem for a
+  // large one, at most the window less a 12px margin each side.
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-  const width = Math.min(18 * rem, innerWidth - 24)
+  const width = Math.min((props.size === 'lg' ? 22 : 18) * rem, innerWidth - 24)
   const leftSide = r.left + r.width / 2 < innerWidth / 2
   const want = centred ? bar.left + (bar.width - width) / 2 : leftSide ? r.left : r.right - width
   const left = Math.min(Math.max(12, want), innerWidth - width - 12)
@@ -302,8 +302,9 @@ const dragStyle = computed(() =>
       variant === 'dropdown' ? 'frosted-paper menu-edge [&:popover-open]:block' : 'frosted-paper',
       // Width by size prop.
       variant !== 'dropdown' && (size === 'sm' ? 'w-full md:max-w-sm' : size === 'lg' ? 'w-full md:max-w-2xl' : 'w-full md:max-w-md'),
+      variant === 'dropdown' && (size === 'lg' ? 'w-[22rem]' : 'w-72'),
       variant === 'dropdown' &&
-        'fixed top-[calc(var(--chrome-top)+0.25rem)] bottom-auto left-auto right-[calc(var(--chrome-right)+0.75rem)] m-0 w-72 max-w-[calc(100vw-1.5rem)] max-h-[calc(100svh-var(--chrome-top)-1rem)] origin-top-right overflow-y-auto rounded-[1.375rem] p-1.5',
+        'fixed top-[calc(var(--chrome-top)+0.25rem)] bottom-auto left-auto right-[calc(var(--chrome-right)+0.75rem)] m-0 max-w-[calc(100vw-1.5rem)] max-h-[calc(100svh-var(--chrome-top)-1rem)] origin-top-right overflow-y-auto rounded-[1.375rem] p-1.5',
       // Layout per variant.
       variant === 'center' &&
         'fixed inset-x-0 top-[calc(var(--chrome-top)+1rem)] bottom-[calc(var(--chrome-bottom)+1rem)] m-auto h-fit rounded-3xl p-6 shadow-(--shadow-raised) max-h-[calc(100svh-var(--chrome-top)-var(--chrome-bottom)-4rem)] max-md:max-w-[calc(100vw-2rem)]',

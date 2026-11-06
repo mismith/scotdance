@@ -10,7 +10,7 @@ import { provideDancerProfile } from '@/composables/useDancerProfile'
 import { provideDancerRecord } from '@/composables/useDancerRecord'
 
 // A dancer across every competition. Signed in (and not hidden by a family's
-// request) it has its own tabs, Overview · Results; otherwise it's
+// request) it has its own tabs, Overview · Progress · Results; otherwise it's
 // the basic profile, one page, with the app's usual bottom nav. The route
 // says `ownsBottomNav` for both, so App skips its own bar and this layout
 // brings whichever one fits (the bar can't depend on who's signed in or on
@@ -28,7 +28,7 @@ const { rich, pending } = provideDancerRecord(dancerId, profile)
 watch(
   [() => route.name, pending, rich],
   ([name, wait, full]) => {
-    if (wait || full || name !== 'dancer.results') return
+    if (wait || full || (name !== 'dancer.progress' && name !== 'dancer.results')) return
     void router.replace({ name: 'dancer.info', params: { dancerId: dancerId.value } })
   },
   { immediate: true },

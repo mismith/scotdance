@@ -22,7 +22,7 @@ import type { Competition } from '@/types/competition'
 
 // A dancer's record across every competition, loaded once by DancerLayout and
 // shared by its tabs: the competition rows (Overview's Latest, Results'
-// List), every entry's placings (By dance) and the facts counted
+// List), every entry's placings (By dance, Progress) and the facts counted
 // from them. Signed-in people get all of it; everyone else, and a hidden
 // profile, the latest ten competitions only.
 
