@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { BrushCleaning, CalendarSearch, ChevronRight, Inbox, Landmark, Lock, LogIn, RefreshCw, Smartphone, UserCog } from '@lucide/vue'
+import { BrushCleaning, CalendarSearch, ChevronRight, Eye, EyeOff, Inbox, Landmark, Lock, LogIn, RefreshCw, Smartphone, UserCog } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import SidebarBranch from '@/components/nav/SidebarBranch.vue'
 import SidebarLink from '@/components/nav/SidebarLink.vue'
@@ -37,12 +37,19 @@ interface AdminSection {
 // Under a heading each: what comes in to review, who and what's on the
 // app, the data worked out from competitions, and the apps themselves.
 const GROUPS: Array<{ title: string; sections: AdminSection[] }> = [
-  { title: 'Review', sections: [{ route: 'admin.submissions', title: 'Submissions', blurb: 'Review and approve new competitions', icon: Inbox }] },
+  {
+    title: 'Review',
+    sections: [
+      { route: 'admin.submissions', title: 'Submissions', blurb: 'Review and approve new competitions', icon: Inbox },
+      { route: 'admin.views', title: 'Profile views', blurb: 'Accounts opening lots of dancers’ profiles', icon: Eye },
+    ],
+  },
   {
     title: 'Directory',
     sections: [
       { route: 'admin.organisations', title: 'Organisations', blurb: 'Every organisation, and which competitions they run', icon: Landmark },
       { route: 'admin.users', title: 'Users', blurb: 'Accounts and who can manage what', icon: UserCog },
+      { route: 'admin.hidden', title: 'Hidden profiles', blurb: 'Profiles hidden when a family asked', icon: EyeOff },
       { route: 'admin.known', title: 'Known competitions', blurb: 'The governing bodies’ lists, offered when adding a competition', icon: CalendarSearch },
     ],
   },

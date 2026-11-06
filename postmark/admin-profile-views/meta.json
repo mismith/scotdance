@@ -1,0 +1,27 @@
+{
+  "Name": "Admin: account opened many profiles",
+  "Alias": "admin-profile-views",
+  "Subject": "An account opened {{ count }} dancer profiles today",
+  "TemplateType": "Standard",
+  "LayoutTemplate": "scotdance",
+  "TestRenderModel": {
+    "app": {
+      "name": "ScotDance.app",
+      "url": "https://scotdance.app",
+      "host": "scotdance.app",
+      "preview": null
+    },
+    "count": 64,
+    "week": 118,
+    "over": 50,
+    "account": {
+      "uid": "abc123",
+      "name": "Morag Fraser",
+      "email": "morag@example.com",
+      "joined": "2 November 2026"
+    },
+    "admin": {
+      "link": "https://scotdance.app/admin/views"
+    }
+  }
+}

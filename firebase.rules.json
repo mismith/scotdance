@@ -120,6 +120,21 @@
       "dancers:index": {
         "$key": { ".read": true } // one at a time, like the profiles: the app only looks up names
       },
+      // Hidden profiles: a family asked, so signed-in extras are off and everyone sees the basic profile. Read one at a time; only system admins write (the rule above)
+      "dancers:hidden": {
+        "$id": { ".read": true } // one at a time: the profile asks about its own dancer
+      },
+      // Profile view counts: the app records which dancers' profiles an account opened, each once a day, to catch someone browsing lots of them. Write-only for the account itself; system admins read (the rule above), and so the flags (dancers:viewFlags)
+      "dancers:views": {
+        "$uid": {
+          "$day": {
+            "$dancerId": {
+              ".write": "auth !== null && auth.uid === $uid", // is the ACCOUNT itself
+              ".validate": "newData.val() === true && $day.matches(/^\\d{4}-\\d{2}-\\d{2}$/)" // TRUE, on a DAY
+            }
+          }
+        }
+      },
       "competitions:data": {
         "$competitionId": {
           // Organisers read and write everything here, invites included. The

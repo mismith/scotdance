@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getDatabase } from 'firebase-admin/database';
+import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { app as functionsApp } from 'firebase-functions/v1';
 import Invites from './invites';
@@ -14,6 +15,7 @@ import * as Notifications from './notifications';
 import * as Links from './links';
 import * as KnownCompetitions from './knownCompetitions';
 import * as Sheets from './sheets';
+import { checkProfileViews } from './profileViews';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
 import { getOnFindStrayDancers } from './strayDancers';
@@ -351,4 +353,11 @@ export const sendMorningSummary = adminHttps.onCall(async (data, ctx) => {
 // 06:00 and 06:59 where it's held (time zone from its coordinates).
 export const morningSummaries = onSchedule({ schedule: '30 * * * *', timeZone: 'UTC', timeoutSeconds: 300 }, async () => {
   await Notifications.sendMorningSummaries(appConfig.db, app, isEmulator());
+});
+
+// Profile view counts (profileViews.ts): hourly, any account that opened more
+// than 50 different dancers' profiles today is flagged in System admin and
+// emailed to the system admin. Clears what's older than 60 days at midnight.
+export const flagProfileViews = onSchedule({ schedule: '15 * * * *', timeZone: 'UTC', timeoutSeconds: 300, secrets: [runtimeConfig] }, async () => {
+  await checkProfileViews(appConfig, getAuth(app));
 });

@@ -124,16 +124,17 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/dancers/:dancerId',
     component: () => import('@/views/dancer/DancerLayout.vue'),
-    meta: { noindex: true },
-        children: [
+    // The layout brings the bottom nav itself: its own tabs when signed in, the app's otherwise.
+    meta: { noindex: true, ownsBottomNav: true },
+    children: [
       { path: '', redirect: { name: 'dancer.info' } },
       {
         path: 'info',
         name: 'dancer.info',
         component: () => import('@/views/dancer/Info.vue'),
       },
-      // One page now; old links to /results land on it.
-      { path: 'results', name: 'dancer.results', redirect: { name: 'dancer.info' } },
+      // Signed-in extras: the layout sends everyone else to Overview.
+      { path: 'results', name: 'dancer.results', component: () => import('@/views/dancer/Results.vue') },
     ],
   },
   {
@@ -216,6 +217,8 @@ const routes: RouteRecordRaw[] = [
           { path: 'capitals', name: 'admin.capitals', component: () => import('@/views/admin/CapitalsCleanup.vue') },
         ],
       },
+      { path: 'views', name: 'admin.views', component: () => import('@/views/admin/ProfileViews.vue') },
+      { path: 'hidden', name: 'admin.hidden', component: () => import('@/views/admin/HiddenProfiles.vue') },
       { path: 'users/:userId?', name: 'admin.users', component: () => import('@/views/admin/Users.vue') },
       { path: 'backfills', name: 'admin.backfills', component: () => import('@/views/admin/Backfills.vue') },
       { path: 'versions', name: 'admin.versions', component: () => import('@/views/admin/AppVersions.vue') },

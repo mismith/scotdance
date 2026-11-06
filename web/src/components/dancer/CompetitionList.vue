@@ -1,0 +1,139 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
+import { ChevronRight } from '@lucide/vue'
+import DateTile from '@/components/DateTile.vue'
+import LinkRail from '@/components/LinkRail.vue'
+import Medal from '@/components/Medal.vue'
+import NumberCard from '@/components/NumberCard.vue'
+import Skeleton from '@/components/Skeleton.vue'
+import VisibilityChip from '@/components/VisibilityChip.vue'
+import { useDancerRecord, type ListRow } from '@/composables/useDancerRecord'
+import { useFollowing } from '@/composables/useFollowing'
+import { useHiddenAs } from '@/composables/useHiddenAs'
+import { useMeStore } from '@/stores/me'
+
+// A dancer's competitions as rows: the date, the name, the number they wore
+// there and what they won, pinned on as on their day card. A year at a time
+// (`headings`), or one run of rows (Overview's Latest, the basic profile).
+// `skip`: a competition shown as the day card instead.
+const props = defineProps<{
+  years: ReadonlyArray<readonly [string, ListRow[]]>
+  dancerId: string
+  headings?: boolean
+  skip?: string | null
+  /** The competitions are still on their way. */
+  loading?: boolean
+}>()
+
+const me = useMeStore()
+const record = useDancerRecord()
+const hiddenAs = useHiddenAs()
+const following = useFollowing()
+const color = computed(() => following.colorFor(props.dancerId))
+
+const shown = computed(() =>
+  props.years
+    .map(([year, list]) => [year, list.filter((r) => r.competitionId !== props.skip)] as const)
+    .filter(([, list]) => list.length),
+)
+
+// Every placing, best first, on one line on a phone: a narrow row keeps to
+// its best three (two beside an Overall trophy on the narrowest) and says how
+// many more, so it never passes for the whole story; a wide one shows them all.
+const NARROW = '@max-[17.5rem]:hidden'
+const PHONE = '@max-[26rem]:hidden'
+function medals(cid: string) {
+  const list = record.summaries.value[cid] ?? []
+  const overall = list.map((s) => s.overall).find(Boolean)
+  const placings = list.flatMap((s) => s.placings).sort((a, b) => a.place - b.place)
+  const n = placings.length
+  const more: Array<{ count: number; class: string }> = []
+  if (overall && n > 2) more.push({ count: n - 2, class: '@min-[17.5rem]:hidden' })
+  if (n > 3) more.push({ count: n - 3, class: overall ? 'hidden @min-[17.5rem]:inline @min-[26rem]:hidden' : '@min-[26rem]:hidden' })
+  return {
+    overall,
+    // Results are in and they weren't placed, so the row doesn't read as results still to come.
+    unplaced: !n && !overall && list.some((s) => s.danced.length || s.overallMissed),
+    placings: placings.map((p, i) => ({ ...p, class: i >= 3 ? PHONE : i === 2 && overall ? NARROW : '' })),
+    more,
+    groups: list.map((s) => s.groupName).filter(Boolean) as string[],
+  }
+}
+</script>
+
+<template>
+  <div v-if="loading" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]" aria-busy="true">
+    <span class="sr-only">Loading competitions…</span>
+    <div v-for="i in 3" :key="i" class="flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
+      <Skeleton class="h-14 w-11 shrink-0 rounded-xl!" />
+      <div class="flex-1 space-y-2">
+        <Skeleton class="h-4 w-3/4" />
+        <Skeleton class="h-3.5 w-1/3" />
+      </div>
+    </div>
+  </div>
+  <template v-for="[year, list] in shown" :key="year">
+    <h3 v-if="headings" class="text-heading flex items-baseline justify-between pt-2">
+      {{ year }} <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ list.length }}</span>
+    </h3>
+    <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
+      <li
+        v-for="r in list"
+        :key="r.competitionId"
+        :class="[r.rail && 'relative', (r.rail === 'middle' || r.rail === 'last') && 'bg-none!']"
+      >
+        <LinkRail :rail="r.rail" />
+        <RouterLink
+          :to="
+            r.entryIds[0]
+              ? { name: 'competition.dancer', params: { competitionId: r.competitionId, dancerId: r.entryIds[0] } }
+              : { name: 'competition.info', params: { competitionId: r.competitionId } }
+          "
+          class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4"
+        >
+          <DateTile :date="r.competition.date" :managed="me.organises(r.competitionId)" />
+          <span class="@container min-w-0 flex-1">
+            <span class="line-clamp-2 text-base leading-snug font-semibold">{{ r.competition.name }}</span>
+            <span v-if="r.withOthers" class="text-muted-foreground block text-sm">{{ r.withOthers }}</span>
+            <span v-if="medals(r.competitionId).groups.length" class="text-muted-foreground block text-sm">
+              {{ medals(r.competitionId).groups.join(' · ') }}
+            </span>
+            <span v-if="hiddenAs(r.competitionId, r.competition)" class="mt-0.5 flex"><VisibilityChip :visibility="hiddenAs(r.competitionId, r.competition)" /></span>
+            <!-- The number they wore there, then what they won, pinned on as on their day card. -->
+            <span
+              v-if="r.numbers.length || medals(r.competitionId).placings.length || medals(r.competitionId).overall"
+              class="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1.5"
+            >
+              <NumberCard v-for="n in r.numbers" :key="n" :number="n" :color="color" size="xs" class="mr-1.5" />
+              <span v-if="medals(r.competitionId).unplaced" class="text-muted-foreground text-sm font-medium">Not placed</span>
+              <Medal
+                v-for="m in medals(r.competitionId).placings"
+                :key="m.danceId"
+                :place="m.place"
+                :tied="m.tied"
+                :dance="m.name"
+                :class="m.class"
+              />
+              <span
+                v-for="t in medals(r.competitionId).more"
+                :key="t.count"
+                :class="['text-muted-foreground ml-0.5 text-sm font-semibold tabular-nums', t.class]"
+              >
+                +{{ t.count }}<span class="sr-only"> more placing{{ t.count === 1 ? '' : 's' }}</span>
+              </span>
+              <Medal
+                v-if="medals(r.competitionId).overall"
+                :place="medals(r.competitionId).overall!.place"
+                :tied="medals(r.competitionId).overall!.tied"
+                dance="Overall"
+                trophy
+              />
+            </span>
+          </span>
+          <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+        </RouterLink>
+      </li>
+    </ul>
+  </template>
+</template>

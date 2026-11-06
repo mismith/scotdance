@@ -59,7 +59,10 @@ test.afterAll(async () => {
     await dbRemove(`users:alertsOff/${who.uid}`)
     await dbRemove(`users:dancerColors/${who.uid}`)
     await dbRemove(`users:inbox/${who.uid}`)
+    await dbRemove(`dancers:views/${who.uid}`)
+    await dbRemove(`dancers:viewFlags/${who.uid}`)
   }
+  await dbRemove('dancers:hidden/-RulesHide')
 })
 
 test('public reads: published data and profiles yes, private data and other people no', async () => {
@@ -294,6 +297,30 @@ test('known competitions: read when signed in, written only by functions, and ho
   } finally {
     await dbRemove(`knownCompetitions/${key}`)
   }
+})
+
+// Hidden profiles are read one at a time; view counts are written by the account itself and read by system admins only.
+test('hidden profiles are read one at a time, and profile views are written by you, once a dancer a day, and never read back', async () => {
+  await dbSet('dancers:hidden/-RulesHide', { by: 'someone', byName: 'Rules Admin', at: 1, note: 'Her mum asked' })
+  await allowed('signed-out read of one hidden profile', as(null, 'GET', 'dancers:hidden/-RulesHide'))
+  await refused('signed-out read of every hidden profile', as(null, 'GET', 'dancers:hidden'))
+  await refused('a parent hiding a profile', as(parent, 'PUT', 'dancers:hidden/-RulesOther', { by: parent.uid, byName: 'Me', at: 1 }))
+  await refused('a parent showing a hidden profile again', as(parent, 'DELETE', 'dancers:hidden/-RulesHide'))
+
+  const day = new Date().toISOString().slice(0, 10)
+  const view = (dancerId: string, who = parent.uid, d = day) => `dancers:views/${who}/${d}/${dancerId}`
+  await allowed('open a profile', as(parent, 'PUT', view('-Agg1'), true))
+  await allowed('open it again', as(parent, 'PUT', view('-Agg1'), true))
+  expect(await dbGet(view('-Agg1'))).toBe(true)
+  await refused('someone else’s views', as(parent, 'PUT', view('-Agg1', org.uid), true))
+  await refused('signed out', as(null, 'PUT', view('-Agg1'), true))
+  await refused('a view that isn’t true', as(parent, 'PUT', view('-Agg2'), 'yes'))
+  await refused('a view that is false', as(parent, 'PUT', view('-Agg2'), false))
+  await refused('a day that isn’t a day', as(parent, 'PUT', view('-Agg2', parent.uid, 'today'), true))
+  await refused('reading your own views back', as(parent, 'GET', `dancers:views/${parent.uid}`))
+  await refused('reading everyone’s views', as(parent, 'GET', 'dancers:views'))
+  await refused('flagging yourself', as(parent, 'PUT', `dancers:viewFlags/${parent.uid}/${day}`, { count: 1 }))
+  await refused('reading the flags', as(parent, 'GET', 'dancers:viewFlags'))
 })
 
 test('deleting an account can wipe its data in one write', async () => {

@@ -9,6 +9,7 @@ import NumberCard from '@/components/NumberCard.vue'
 import { bestPlacing, dayStage } from '@/lib/dancerDay'
 import { formatShortDate } from '@/lib/format'
 import type { DancerCard } from '@/composables/useDancerCards'
+import { OVERALL_ID } from '@/types/competition'
 
 // One line per dancer, for people following many (a teacher's class) and
 // for dancers you've only looked at: their number at the competition that
@@ -34,6 +35,14 @@ const best = computed(() => {
   const all = days.value.map(bestPlacing).filter((b): b is NonNullable<typeof b> => !!b)
   return all.sort((a, b) => (a.place ?? 99) - (b.place ?? 99))[0] ?? null
 })
+
+// Over, results in, and no placing: said, so it doesn't read as results to come.
+const unplaced = computed(
+  () =>
+    f.value?.phase === 'after' &&
+    !best.value &&
+    days.value.some((d) => d.dances.some((s) => s.state === 'unplaced' || s.state === 'no-placings')),
+)
 
 const line = computed(() => {
   const focus = f.value
@@ -85,7 +94,15 @@ const to = computed(() =>
         <Hourglass class="size-3" aria-hidden="true" />
         Results to come
       </span>
-      <Medal v-else-if="best && f?.phase !== 'before'" :place="best.place" :tied="best.tied" size="sm" />
+      <Medal
+        v-else-if="best && f?.phase !== 'before'"
+        :place="best.place"
+        :tied="best.tied"
+        :dance="best.dance.fullName || best.dance.name"
+        :trophy="best.dance.id === OVERALL_ID"
+        size="sm"
+      />
+      <span v-else-if="unplaced" class="text-muted-foreground shrink-0 text-sm font-medium">Not placed</span>
       <ChevronRight v-if="!follow" class="text-muted-foreground size-5 shrink-0" />
     </RouterLink>
     <FollowButton v-if="follow" :dancer="{ dancerId: card.id, fullName: card.name }" class="mr-1" />

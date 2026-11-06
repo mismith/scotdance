@@ -1,0 +1,10 @@
+<div class="preheader">{{ count }} different dancers today, {{ week }} over the last 7 days.&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<h1>An account opened {{ count }} dancer profiles today</h1>
+<p>That is more than {{ over }} different dancers in one day, and {{ week }} over the last 7 days.</p>
+<p>{{#account.name}}<strong>{{.}}</strong>{{/account.name}}{{^account.name}}<strong>An account that has since been deleted</strong>{{/account.name}}{{#account.email}} <span class="muted">({{.}})</span>{{/account.email}}{{#account.joined}}<br />Signed up {{.}}{{/account.joined}}</p>
+<p>Review it in System admin › Review › Profile views.</p>
+<table role="presentation" class="button-wrap button-table" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="button-cell" align="center"><a class="button" href="{{ admin.link }}">Review profile views</a></td>
+  </tr>
+</table>

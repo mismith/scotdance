@@ -44,17 +44,33 @@ describe('fetchEntrySummary', () => {
     })
     expect(await fetchEntrySummary(c, 'me')).toEqual({
       groupName: 'Novice 9 & 10 Years',
+      categoryName: 'Novice',
+      danced: [],
       placings: [
         { danceId: 'fling', name: 'Highland Fling', place: 1, tied: true },
         { danceId: 'sword', name: 'Sword Dance', place: 3, tied: false },
       ],
       overall: { place: 2, tied: false },
+      overallMissed: false,
     })
+  })
+
+  it('says when overall results are posted without them, and not when there are none', async () => {
+    expect(await fetchEntrySummary(seed({ fling: ['me'], overall: ['x', 'y'] }), 'me')).toMatchObject({ overall: null, overallMissed: true })
+    expect(await fetchEntrySummary(seed({ fling: ['me'] }), 'me')).toMatchObject({ overall: null, overallMissed: false })
   })
 
   it('has nothing for a championship start alone or "none placed"', async () => {
     const c = seed({ fling: ['reverse:6'], sword: false })
     expect(await fetchEntrySummary(c, 'me')).toMatchObject({ placings: [], overall: null })
+  })
+
+  it('lists posted dances with no place as danced, and leaves unposted ones out', async () => {
+    const c = seed({ fling: ['x', 'y'], sword: ['reverse:3'] })
+    expect(await fetchEntrySummary(c, 'me')).toMatchObject({
+      placings: [],
+      danced: [{ danceId: 'fling', name: 'Highland Fling' }],
+    })
   })
 
   it('tries again after a failed read instead of keeping nothing', async () => {

@@ -1,0 +1,9 @@
+An account opened {{ count }} dancer profiles today
+
+That is more than {{ over }} different dancers in one day, and {{ week }} over the last 7 days.
+
+{{#account.name}}{{.}}{{/account.name}}{{^account.name}}An account that has since been deleted{{/account.name}}{{#account.email}} <{{.}}>{{/account.email}}{{#account.joined}}
+Signed up {{.}}{{/account.joined}}
+
+Review it in System admin › Review › Profile views:
+{{ admin.link }}

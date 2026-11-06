@@ -81,11 +81,12 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
        are showing, so it doesn't come and go as pages slide. The top one is
        clear at the top of a page, so the paper shows through, and frosted
        once something scrolls under it, as on iOS (clear means no blur at
-       all); it runs 1.25rem past the bar, fading out. The tab bar's rises
-       from the foot of the screen to a third of the way up the pill. -->
+       all); it runs 1rem past the bar, fading fast then trailing off, so
+       its foot isn't a heavy band. The tab bar's rises from the foot of the
+       screen to a third of the way up the pill. -->
   <div
     :class="[
-      'paper pointer-events-none fixed inset-x-chrome-0 top-0 z-30 h-[calc(var(--safe-top)+4.75rem)] transition-[opacity,backdrop-filter] duration-(--dur-base) [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)]',
+      'paper pointer-events-none fixed inset-x-chrome-0 top-0 z-30 h-[calc(var(--safe-top)+4.5rem)] transition-[opacity,backdrop-filter] duration-(--dur-base) [mask-image:linear-gradient(to_bottom,black_calc(100%-1rem),rgb(0_0_0/0.5)_calc(100%-0.75rem),rgb(0_0_0/0.2)_calc(100%-0.5rem),rgb(0_0_0/0.05)_calc(100%-0.25rem),transparent)]',
       !topBarFrosted && 'opacity-0 [backdrop-filter:none]!',
     ]"
     aria-hidden="true"

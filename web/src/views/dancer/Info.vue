@@ -1,148 +1,115 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { ChevronRight } from '@lucide/vue'
+import { CalendarDays, ChevronRight, ChevronsUp, EyeOff, Footprints, History } from '@lucide/vue'
 import { useDancerProfile } from '@/composables/useDancerProfile'
-import { useDancerCards } from '@/composables/useDancerCards'
+import { BASIC_LATEST, useDancerRecord } from '@/composables/useDancerRecord'
 import { useFollowing } from '@/composables/useFollowing'
 import { useCrisp } from '@/composables/useCrisp'
-import { useHiddenAs } from '@/composables/useHiddenAs'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import Avatar from '@/components/Avatar.vue'
+import CompetitionList from '@/components/dancer/CompetitionList.vue'
 import DancerDayCard from '@/components/DancerDayCard.vue'
 import DancerLookButton from '@/components/DancerLookButton.vue'
-import DateTile from '@/components/DateTile.vue'
-import LinkRail from '@/components/LinkRail.vue'
 import FollowButton from '@/components/FollowButton.vue'
-import Medal from '@/components/Medal.vue'
-import NumberCard from '@/components/NumberCard.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import VisibilityChip from '@/components/VisibilityChip.vue'
-import { fetchEntrySummary, type EntrySummary } from '@/lib/entrySummary'
-import { parseDate } from '@/lib/format'
+import Button from '@/components/ui/Button.vue'
+import { KIND_NAMES, kindOf, type DanceKind } from '@/lib/danceKinds'
 import { heroTitle } from '@/lib/heroTitle'
 import { profileColumns, profileHeader } from '@/lib/profile'
-import { useMeStore } from '@/stores/me'
-import type { Competition } from '@/types/competition'
-import { useCompetitionLinks } from '@/composables/useCompetitionLinks'
-import { orderLinked, railRows } from '@/lib/linked'
+import { useAuthStore } from '@/stores/auth'
 
 // A dancer across every competition. Their number is different at each one,
-// so it's shown per competition, never as who they are.
+// so it's shown per competition, never as who they are. Signed in: who they
+// are, a few counted facts and the latest competitions (Results has the
+// rest). Otherwise the basic profile: the latest ten competitions
+// and a way in to the rest.
 const setHeader = injectInfoHeaderSetter()
 const route = useRoute()
-const me = useMeStore()
+const auth = useAuthStore()
 const profile = useDancerProfile()
+const record = useDancerRecord()
 const following = useFollowing()
 const crisp = useCrisp()
-const hiddenAs = useHiddenAs()
 
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
 const name = computed(() => profile.displayName.value)
+const first = computed(() => name.value.split(' ')[0])
 const color = computed(() => following.colorFor(dancerId.value))
+const { focus, showFocus, facts } = record
 const subtitle = computed(() => {
   const n = profile.totalComps.value
   const since = profile.firstSeenDate.value?.getFullYear()
-  const record = n ? `${n} competition${n === 1 ? '' : 's'}${since ? ` since ${since}` : ''}` : null
-  return [profile.location.value, record].filter(Boolean).join(' · ')
+  const line = n ? `${n} competition${n === 1 ? '' : 's'}${since ? ` since ${since}` : ''}` : null
+  return [profile.location.value, line].filter(Boolean).join(' · ')
 })
-
-const person = computed(() => (dancerId.value ? [{ id: dancerId.value, name: name.value }] : []))
-const { cards } = useDancerCards(person)
-const focus = computed(() => cards.value[0]?.focus ?? null)
 const focusLabel = computed(() => {
   const f = focus.value
   if (!f) return ''
   return f.phase === 'today' ? `Today at ${f.competition.name}` : f.phase === 'before' ? `Next: ${f.competition.name}` : `Last: ${f.competition.name}`
 })
 
-// One row per competition (entries in two age groups share a number), a
-// year at a time, most recent first. Today's is the card above, not a row.
-interface Row {
-  competitionId: string
-  competition: Competition
-  numbers: number[]
-  entryIds: string[]
-}
-const rows = computed<Row[]>(() => {
-  const map = new Map<string, Row>()
-  for (const a of profile.appearances.value) {
-    const cid = a.raw.competitionId
-    if (!cid || !a.competition) continue
-    const r = map.get(cid) ?? { competitionId: cid, competition: a.competition, numbers: [], entryIds: [] }
-    if (a.raw.number != null && !r.numbers.includes(Number(a.raw.number))) r.numbers.push(Number(a.raw.number))
-    if (a.raw.dancerId && !r.entryIds.includes(a.raw.dancerId)) r.entryIds.push(a.raw.dancerId)
-    map.set(cid, r)
-  }
-  return [...map.values()]
-})
-// Their day as a card only while it's to come or on; once it's over, that
-// competition is just the top of the list (its ribbons named there), not
-// shown twice.
-const showFocus = computed(() => !!focus.value?.days.length && focus.value.phase !== 'after')
-// Linked competitions together on their rail, newest first (ADR 0007 §8);
-// one without the rest of its set names them.
-const { linkOf, othersLine } = useCompetitionLinks()
-const byYear = computed(() => {
-  const today = showFocus.value ? focus.value!.competitionId : null
-  const out = new Map<string, Row[]>()
-  for (const r of rows.value) {
-    if (r.competitionId === today) continue
-    const y = r.competition.date ? String(parseDate(r.competition.date).getFullYear()) : 'Date to be announced'
-    out.set(y, [...(out.get(y) ?? []), r])
-  }
-  const at = (r: { date?: number | string }) => (r.date ? parseDate(r.date).getTime() : 0)
-  return [...out.entries()].map(([year, list]) => {
-    const keyed = list.map((r) => ({ ...r, id: r.competitionId, date: r.competition.date, name: r.competition.name }))
-    const railed = railRows(orderLinked(keyed, linkOf, { descending: true, at })).map(({ item, rail, alone }) => ({
-      ...item,
-      rail,
-      withOthers: alone ? othersLine({ id: item.id, date: item.date, name: item.name }) : null,
-    }))
-    return [year, railed] as const
-  })
-})
+const flat = (rows: ReturnType<typeof record.latest>) => [['', rows]] as const
+const latest3 = computed(() => flat(record.latest(3)))
+const latestBasic = computed(() => flat(record.latest(BASIC_LATEST)))
+const loadingRows = computed(() => profile.loading.value && !record.rows.value.length)
 
-// Every competition's placings, all at once (each is a few small reads, and
-// fetchEntrySummary keeps them), so a long record has ribbons all the way back.
-const summaries = ref<Record<string, EntrySummary[]>>({})
-watch(
-  rows,
-  (list) => {
-    for (const r of list) {
-      if (summaries.value[r.competitionId]) continue
-      Promise.all(r.entryIds.map((id) => fetchEntrySummary(r.competitionId, id))).then((got) => {
-        summaries.value = { ...summaries.value, [r.competitionId]: got.filter((x): x is EntrySummary => !!x) }
-      })
+const total = computed(() => profile.totalComps.value)
+// Signed out, there's more behind signing in; hidden, there isn't.
+const moreBehind = computed(() => !auth.isSignedIn && total.value > BASIC_LATEST)
+const signIn = () => auth.openLogin()
+const level = computed(() => facts.value.level)
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+// The kind of dance they do most, by times danced.
+const mostly = computed(() => {
+  const times = new Map<DanceKind, number>()
+  for (const p of record.points.value)
+    for (const d of p.dances ?? []) {
+      const k = kindOf(d.name)
+      if (k) times.set(k, (times.get(k) ?? 0) + 1)
     }
-  },
-  { immediate: true },
-)
-
-// Every placing, best first, on one line on a phone: a narrow row keeps to
-// its best three (two beside an Overall trophy on the narrowest) and says how
-// many more, so it never passes for the whole story; a wide one shows them all.
-const NARROW = '@max-[17.5rem]:hidden'
-const PHONE = '@max-[26rem]:hidden'
-function medals(cid: string) {
-  const list = summaries.value[cid] ?? []
-  const overall = list.map((s) => s.overall).find(Boolean)
-  const placings = list.flatMap((s) => s.placings).sort((a, b) => a.place - b.place)
-  const n = placings.length
-  const more: Array<{ count: number; class: string }> = []
-  if (overall && n > 2) more.push({ count: n - 2, class: '@min-[17.5rem]:hidden' })
-  if (n > 3) more.push({ count: n - 3, class: overall ? 'hidden @min-[17.5rem]:inline @min-[26rem]:hidden' : '@min-[26rem]:hidden' })
-  return {
-    overall,
-    placings: placings.map((p, i) => ({ ...p, class: i >= 3 ? PHONE : i === 2 && overall ? NARROW : '' })),
-    more,
-    groups: list.map((s) => s.groupName).filter(Boolean) as string[],
-  }
-}
+  const top = [...times].sort((a, b) => b[1] - a[1])[0]
+  return top ? KIND_NAMES[top[0]] : null
+})
+// The counted facts, as tiles, each a way into Results.
+const tiles = computed(() => {
+  const ready = record.ready.value
+  const lv = level.value
+  const word = (n: number, w: string) => plural(n, w).replace(/^\d+ /, '')
+  return [
+    ...(!ready || lv
+      ? [{ key: 'level', icon: ChevronsUp, to: 'dancer.results', value: lv?.level ?? null, label: lv ? `since ${new Date(lv.since).getFullYear()}` : '' }]
+      : []),
+    { key: 'competitions', icon: CalendarDays, to: 'dancer.results', value: facts.value.competitions, label: word(facts.value.competitions, 'competition') },
+    {
+      key: 'seasons',
+      icon: History,
+      to: 'dancer.results',
+      value: facts.value.seasons,
+      label: `${word(facts.value.seasons, 'season')}${facts.value.since ? ` since ${facts.value.since}` : ''}`,
+    },
+    {
+      key: 'dances',
+      icon: Footprints,
+      to: 'dancer.results',
+      value: ready ? facts.value.dances : null,
+      label: `${word(facts.value.dances, 'dance')}${mostly.value ? `, mostly ${mostly.value}` : ''}`,
+    },
+  ]
+})
 </script>
 
 <template>
   <article :class="profileColumns">
+    <!-- A system admin sees past a hidden profile; this says what everyone else gets. -->
+    <p
+      v-if="record.rich.value && record.hiddenInfo.value"
+      class="bg-card border-foreground/40 flex items-center gap-3 rounded-2xl border px-4 py-2.5 text-sm"
+    >
+      <EyeOff class="size-5 shrink-0" aria-hidden="true" />
+      <span><span class="font-semibold">Hidden:</span> everyone else sees the latest {{ BASIC_LATEST }} competitions only.</span>
+    </p>
+
     <div :class="profileHeader">
       <header :ref="setHeader" class="flex flex-col items-center gap-4">
         <DancerLookButton :dancer-id="dancerId" :name="name">
@@ -162,87 +129,77 @@ function medals(cid: string) {
         <DancerDayCard class="-mx-4" :days="focus.days" :competition-id="focus.competitionId" :color="color" size="lg" />
       </section>
 
-      <div v-if="profile.loading.value && !rows.length" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]" aria-busy="true">
-        <span class="sr-only">Loading competitions…</span>
-        <div v-for="i in 3" :key="i" class="flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
-          <Skeleton class="h-14 w-11 shrink-0 rounded-xl!" />
-          <div class="flex-1 space-y-2">
-            <Skeleton class="h-4 w-3/4" />
-            <Skeleton class="h-3.5 w-1/3" />
-          </div>
-        </div>
+      <!-- Until it's known who is looking, nothing below the day card. -->
+      <div v-if="record.pending.value" class="space-y-3" aria-busy="true">
+        <span class="sr-only">Loading…</span>
+        <Skeleton class="h-5 w-1/3" />
+        <Skeleton class="h-24 w-full rounded-2xl!" />
       </div>
-      <section v-if="byYear.length" class="space-y-2">
-        <h2 class="text-section flex items-baseline justify-between">
-          {{ showFocus ? 'Other competitions' : 'Competitions' }}
-          <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ byYear.reduce((n, [, l]) => n + l.length, 0) }}</span>
-        </h2>
-        <template v-for="[year, list] in byYear" :key="year">
-          <h3 class="text-heading flex items-baseline justify-between pt-2">
-            {{ year }} <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ list.length }}</span>
-          </h3>
-          <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
-            <li
-              v-for="r in list"
-              :key="r.competitionId"
-              :class="[r.rail && 'relative', (r.rail === 'middle' || r.rail === 'last') && 'bg-none!']"
+
+      <template v-else-if="record.rich.value">
+        <section class="space-y-2">
+          <h2 class="text-section">On ScotDance.app</h2>
+          <!-- Four tiles, two by two, each a way into the tab with the rest of it. -->
+          <div class="grid grid-cols-2 gap-2">
+            <RouterLink
+              v-for="tile in tiles"
+              :key="tile.key"
+              :to="{ name: tile.to, params: { dancerId } }"
+              replace
+              class="surface press rounded-2xl p-3 odd:last:col-span-2"
             >
-              <LinkRail :rail="r.rail" />
-              <RouterLink
-                :to="
-                  r.entryIds[0]
-                    ? { name: 'competition.dancer', params: { competitionId: r.competitionId, dancerId: r.entryIds[0] } }
-                    : { name: 'competition.info', params: { competitionId: r.competitionId } }
-                "
-                class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4"
-              >
-                <DateTile :date="r.competition.date" :managed="me.organises(r.competitionId)" />
-                <span class="@container min-w-0 flex-1">
-                  <span class="line-clamp-2 text-base leading-snug font-semibold">{{ r.competition.name }}</span>
-                  <span v-if="r.withOthers" class="text-muted-foreground block text-sm">{{ r.withOthers }}</span>
-                  <span v-if="medals(r.competitionId).groups.length" class="text-muted-foreground block text-sm">
-                    {{ medals(r.competitionId).groups.join(' · ') }}
-                  </span>
-                  <span v-if="hiddenAs(r.competitionId, r.competition)" class="mt-0.5 flex"><VisibilityChip :visibility="hiddenAs(r.competitionId, r.competition)" /></span>
-                  <!-- The number they wore there, then what they won, pinned on as on their day card. -->
-                  <span
-                    v-if="r.numbers.length || medals(r.competitionId).placings.length || medals(r.competitionId).overall"
-                    class="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1.5"
-                  >
-                    <NumberCard v-for="n in r.numbers" :key="n" :number="n" :color="color" size="xs" class="mr-1.5" />
-                    <Medal
-                      v-for="m in medals(r.competitionId).placings"
-                      :key="m.danceId"
-                      :place="m.place"
-                      :tied="m.tied"
-                      :dance="m.name"
-                      :class="m.class"
-                    />
-                    <span
-                      v-for="t in medals(r.competitionId).more"
-                      :key="t.count"
-                      :class="['text-muted-foreground ml-0.5 text-sm font-semibold tabular-nums', t.class]"
-                    >
-                      +{{ t.count }}<span class="sr-only"> more placing{{ t.count === 1 ? '' : 's' }}</span>
-                    </span>
-                    <Medal
-                      v-if="medals(r.competitionId).overall"
-                      :place="medals(r.competitionId).overall!.place"
-                      :tied="medals(r.competitionId).overall!.tied"
-                      dance="Overall"
-                      trophy
-                    />
-                  </span>
-                </span>
-                <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
-              </RouterLink>
-            </li>
-          </ul>
-        </template>
-      </section>
+              <span class="flex items-center justify-between">
+                <component :is="tile.icon" class="text-primary size-5" aria-hidden="true" />
+                <ChevronRight class="text-muted-foreground size-4" aria-hidden="true" />
+              </span>
+              <template v-if="tile.value != null">
+                <span class="mt-2 block truncate text-xl font-bold tabular-nums">{{ tile.value }}</span>
+                <span class="text-muted-foreground block text-sm leading-snug">{{ tile.label }}</span>
+              </template>
+              <span v-else class="mt-2 block space-y-1.5">
+                <Skeleton class="h-6 w-16" />
+                <Skeleton class="h-4 w-24" />
+              </span>
+            </RouterLink>
+          </div>
+        </section>
+
+        <section v-if="record.rows.value.length || loadingRows" class="space-y-2">
+          <h2 class="text-section">Latest</h2>
+          <CompetitionList :years="latest3" :dancer-id="dancerId" :loading="loadingRows" />
+          <RouterLink
+            :to="{ name: 'dancer.results', params: { dancerId } }"
+            replace
+            class="press-row focus-inset text-primary -mx-4 flex min-h-12 items-center justify-between px-4 font-semibold"
+          >
+            See all in Results <ChevronRight class="size-5" aria-hidden="true" />
+          </RouterLink>
+        </section>
+      </template>
+
+      <template v-else>
+        <section v-if="!auth.isSignedIn" class="bg-card border-border space-y-3 rounded-2xl border p-4">
+          <p v-if="total > BASIC_LATEST">Sign in to see all {{ total }} of {{ first }}’s competitions, progress and results by dance.</p>
+          <p v-else>Sign in to see {{ first }}’s progress and results by dance.</p>
+          <Button variant="primary" @click="signIn">Sign in</Button>
+        </section>
+
+        <section v-if="record.rows.value.length || loadingRows" class="space-y-2">
+          <h2 class="text-section">Latest competitions</h2>
+          <CompetitionList :years="latestBasic" :dancer-id="dancerId" :loading="loadingRows" />
+          <button
+            v-if="moreBehind"
+            type="button"
+            class="press-row focus-inset text-primary -mx-4 flex min-h-12 w-[calc(100%+2rem)] items-center justify-between px-4 text-left font-semibold"
+            @click="signIn"
+          >
+            Sign in to see all {{ total }} <ChevronRight class="size-5" aria-hidden="true" />
+          </button>
+        </section>
+      </template>
 
       <p class="text-muted-foreground text-sm">
-        Entries are matched to {{ name.split(' ')[0] }} by name, so two dancers who share a name can get mixed up.
+        Entries are matched to {{ first }} by name, so two dancers who share a name can get mixed up.
         <button v-if="crisp.available" type="button" class="text-primary font-semibold underline-offset-2 hover:underline" @click="crisp.open()">
           Report a mix-up
         </button>
