@@ -23,7 +23,7 @@ import MapPreview from '@/components/MapPreview.vue'
 import OrganisationMark from '@/components/OrganisationMark.vue'
 import OrganisationPicker from '@/components/OrganisationPicker.vue'
 import OrganisationSuggestions from '@/components/OrganisationSuggestions.vue'
-import type { OrganisationDraft } from '@/lib/organisationSuggestions'
+import { organisationSuggestions, type OrganisationDraft } from '@/lib/organisationSuggestions'
 import { useOrganisations } from '@/composables/useOrganisations'
 import { createOrganisation } from '@/lib/admin/organisations'
 import { useMorph } from '@/lib/morph'
@@ -231,6 +231,7 @@ const linked = computed(() =>
 )
 const pickingOrg = useMorph()
 const orgPrefill = ref<OrganisationDraft | null>(null)
+const orgSearch = computed(() => organisationSuggestions(c.value.name ?? '', orgs.organisations.value, linked.value.map((org) => org.id)).term)
 const grantSubmitter = ref(false)
 const submitter = ref<{ name: string } | null>(null)
 const creatingOrg = ref(false)
@@ -570,6 +571,7 @@ async function deleteCompetition() {
             <Button variant="plain" class="text-destructive!" :disabled="!canEdit" @click="removeOrganisation(org)">Take off</Button>
           </li>
         </MovingList>
+        <p v-else class="text-muted-foreground">Nothing yet</p>
         <OrganisationSuggestions
           :name="c.name ?? ''" :location="c.location" :chosen="linked.map((org) => org.id)"
           :allowed="me.isAdmin ? undefined : me.managedOrganisationIds" :disabled="!canEdit || creatingOrg"
@@ -581,6 +583,7 @@ async function deleteCompetition() {
         <OrganisationPicker
           :morph="pickingOrg"
           :prefill="orgPrefill"
+          :search="orgSearch"
           :create-hint="me.isAdmin ? 'Creates the organisation and adds this competition to it.' : 'You’ll be its admin, and can add its logo and details.'"
           :mine="me.managedOrganisationIds"
           :chosen="linked.map((org) => org.id)"

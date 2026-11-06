@@ -14,12 +14,25 @@ export const organisationKey = (value?: string | null) => (value ?? '')
   .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
   .replace(/[’']s\b/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
 
+// Small words an acronym skips: Manitoba Highland Dancers' Association of
+// Canada is MHDAC, not MHDAOC.
+const MINOR = new Set(['of', 'and', 'the', 'for', 'in', 'de', 'du', 'des', 'la', 'le', 'et'])
+
+/** A guess at a short name: initials, keeping short capitals whole (BC Highland Dancing Association is BCHDA). */
+export function acronym(name: string) {
+  const words = name.replace(/[’']/g, '').split(/[^\p{L}\p{N}]+/u).filter((w) => w && !MINOR.has(w.toLowerCase()))
+  if (words.length < 2) return ''
+  return words.map((w) => (/^\p{Lu}{2,4}$/u.test(w) ? w : w[0].toUpperCase())).join('')
+}
+
 export function organisationSuggestions(name: string, organisations: OrganisationListItem[], chosen: string[] = [], drafts: OrganisationDraft[] = []) {
   const key = ` ${organisationKey(name)} `
-  const existing = organisations.filter((o) => !chosen.includes(o.id) && [o.name, o.shortName].some((n) => {
+  // Which of its names the competition's name uses: the short one first.
+  const named = (o: OrganisationListItem) => [o.shortName, o.name].find((n) => {
     const word = organisationKey(n)
     return word.length >= 3 && key.includes(` ${word} `)
-  }))
+  })
+  const existing = organisations.filter((o) => !chosen.includes(o.id) && named(o))
   const known = [...organisations, ...drafts]
   const fresh: OrganisationDraft[] = organisationsInNames([{ id: 'suggestion', name }], known)
     .map((o) => ({ name: o.name, shortName: o.shortName ?? '' }))
@@ -30,8 +43,11 @@ export function organisationSuggestions(name: string, organisations: Organisatio
   if (full && !known.some((o) => [o.name, o.shortName].some((n) => organisationKey(n) === organisationKey(full)))) {
     fresh.unshift({ name: full, shortName: '' })
   }
+  const unknown = fresh.filter((o) => !known.some((k) => [k.name, k.shortName].some((n) => organisationKey(n) === organisationKey(o.name))))
   return {
     existing,
-    fresh: fresh.filter((o) => !known.some((k) => [k.name, k.shortName].some((n) => organisationKey(n) === organisationKey(o.name)))),
+    fresh: unknown,
+    /** What to search for first, as it's written in the competition's name. */
+    term: (existing[0] ? named(existing[0]) : unknown[0] && (unknown[0].shortName || unknown[0].name)) ?? '',
   }
 }

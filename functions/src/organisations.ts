@@ -100,9 +100,10 @@ export function getOnCreate(db: any) {
     // Re-check the current directory: another admin may have created the
     // suggestion while this form was open. Never grant access to that record.
     const normalise = (v: unknown) => text(v, 120).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
-    const names = [normalise(data?.name), normalise(data?.shortName)].filter(Boolean);
+    // Full names only: short names can be shared (Manitoba's and Montreal's MHDA).
+    const name = normalise(data?.name);
     const organisations = (await db.child('organisations').get()).val() || {};
-    if (Object.values(organisations).some((o: any) => [normalise(o.name), normalise(o.shortName)].some((n) => n && names.includes(n)))) {
+    if (name && Object.values(organisations).some((o: any) => normalise(o.name) === name)) {
       throw new HttpsError('already-exists', 'This organisation already exists. Add it from the organisation picker.');
     }
     const organisationId = await createOrganisation(db, data ?? {}, uid, adminId, competitionId);

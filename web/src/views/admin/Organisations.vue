@@ -470,7 +470,7 @@ const CHIP = 'inline-flex h-8 max-w-full items-center gap-1.5 rounded-full pr-3 
       </form>
     </Dialog>
 
-    <OrganisationPicker :morph="starting" title="New organisation" :mine="[]" any create-hint="You won’t be its admin. Invite theirs from its page." @pick="(org) => router.push({ name: 'organisation.manage', params: { organisationId: org.id } })" @create="start" />
+    <OrganisationPicker :morph="starting" title="New organisation" :mine="[]" any create-only create-hint="You won’t be its admin. Invite theirs from its page." @pick="(org) => router.push({ name: 'organisation.manage', params: { organisationId: org.id } })" @create="start" />
     <OrganisationPicker
       :morph="adding"
       :title="`Add ${selected.size === 1 ? '1 competition' : `${selected.size} competitions`} to…`"

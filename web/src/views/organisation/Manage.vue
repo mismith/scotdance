@@ -5,6 +5,7 @@ import { getCurrentUser } from 'vuefire'
 import { get } from 'firebase/database'
 import { ExternalLink, Eye, FileUp, Landmark, Lock, LogIn, Plus, Trash2 } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
+import SidebarBranch from '@/components/nav/SidebarBranch.vue'
 import Button from '@/components/ui/Button.vue'
 import DateTile from '@/components/DateTile.vue'
 import Dialog from '@/components/Dialog.vue'
@@ -299,6 +300,28 @@ async function deleteOrganisation() {
         <Button v-if="!addingLink" class="-mt-4" :disabled="!canEdit" @click="openLinkForm"><Plus /> Add a link or file</Button>
 
         <section class="space-y-3">
+          <div>
+            <h2 class="text-heading">
+              Admins <span v-if="panel?.count" class="text-muted-foreground text-sm font-medium tabular-nums">{{ panel.count }}</span>
+            </h2>
+            <p class="text-muted-foreground text-sm">People who can change its page and add its competitions. They don’t get to manage those competitions unless their own admins invite them.</p>
+          </div>
+          <AdminsPanel
+            ref="panel"
+            :invites="m.invites.value"
+            :holders="holders"
+            :write-invites="m.writeData"
+            :new-key="m.newKey"
+            :link-for="(inviteId) => `/organisations/${id}/invites/${inviteId}`"
+            what="this organisation"
+          >
+            <template #note>
+              <p v-if="me.isAdmin" class="text-muted-foreground text-sm">System admins can always change every organisation.</p>
+            </template>
+          </AdminsPanel>
+        </section>
+
+        <section class="space-y-3">
           <div class="flex items-end justify-between gap-3">
             <div>
               <h2 class="text-heading">
@@ -327,28 +350,6 @@ async function deleteOrganisation() {
           </template>
           <EmptyState v-if="!theirs.length" size="inline" :icon="Landmark" title="No competitions yet" description="Add the ones it runs or is part of." />
           <Button variant="tonal" :disabled="!canEdit" @click="picking.show($event)"><Plus /> Add a competition</Button>
-        </section>
-
-        <section class="space-y-3">
-          <div>
-            <h2 class="text-heading">
-              Admins <span v-if="panel?.count" class="text-muted-foreground text-sm font-medium tabular-nums">{{ panel.count }}</span>
-            </h2>
-            <p class="text-muted-foreground text-sm">People who can change its page and add its competitions. They don’t get to manage those competitions unless their own admins invite them.</p>
-          </div>
-          <AdminsPanel
-            ref="panel"
-            :invites="m.invites.value"
-            :holders="holders"
-            :write-invites="m.writeData"
-            :new-key="m.newKey"
-            :link-for="(inviteId) => `/organisations/${id}/invites/${inviteId}`"
-            what="this organisation"
-          >
-            <template #note>
-              <p v-if="me.isAdmin" class="text-muted-foreground text-sm">System admins can always change every organisation.</p>
-            </template>
-          </AdminsPanel>
         </section>
 
         <section v-if="me.isAdmin" class="engraved-line space-y-3 pt-8">
@@ -383,5 +384,7 @@ async function deleteOrganisation() {
         </li>
       </ul>
     </Dialog>
+    <!-- Wide screens: its name nested under Organisations, as on its page. -->
+    <SidebarBranch v-if="org.name" under="organisations" :label="org.name" :to="route.path" current />
   </div>
 </template>

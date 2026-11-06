@@ -1,17 +1,21 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Search, X } from '@lucide/vue'
 
 // A search box for a list: a magnifier, the text, and a clear button once
 // there's something to clear.
 const model = defineModel<string>({ required: true })
 defineProps<{ label: string; placeholder?: string }>()
+const input = ref<HTMLInputElement | null>(null)
+/** Focus it with the text selected, ready to type over. */
+defineExpose({ select: () => input.value?.select() })
 </script>
 
 <template>
   <label class="field flex h-11 items-center gap-2 rounded-xl px-3">
     <Search class="text-muted-foreground size-4 shrink-0" />
     <span class="sr-only">{{ label }}</span>
-    <input v-model="model" type="search" :placeholder="placeholder ?? label" class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none" />
+    <input ref="input" v-model="model" type="search" :placeholder="placeholder ?? label" class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none" />
     <!-- Field-sized, with a 44px target around it. -->
     <button
       v-if="model"

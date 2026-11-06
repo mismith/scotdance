@@ -7,7 +7,7 @@ import OrganisationMark from '@/components/OrganisationMark.vue'
 import SearchField from '@/components/admin/SearchField.vue'
 import { useOrganisations } from '@/composables/useOrganisations'
 import type { Morph } from '@/lib/morph'
-import { organisationKey, type OrganisationDraft } from '@/lib/organisationSuggestions'
+import { acronym, organisationKey, type OrganisationDraft } from '@/lib/organisationSuggestions'
 import type { OrganisationListItem } from '@/types/organisation'
 
 // Choose an organisation, or start a new one, in a sheet. Yours come first,
@@ -19,6 +19,8 @@ const props = withDefaults(
   defineProps<{
     morph: Morph
     prefill?: OrganisationDraft | null
+    /** What to search for as it opens, e.g. "MHDA" from the competition's name. */
+    search?: string
     title?: string
     /** Organisations you're an admin of, listed first. */
     mine?: string[]
@@ -30,10 +32,12 @@ const props = withDefaults(
     any?: boolean
     /** Offer to start a new one. */
     creatable?: boolean
+    /** Open on the new organisation's form, with no search to go back to. */
+    createOnly?: boolean
     /** Under the new organisation's fields, e.g. "You'll be its admin." */
     createHint?: string
   }>(),
-  { prefill: null, title: 'Add an organisation', mine: () => [], mineLabel: 'Yours', chosen: () => [], any: false, creatable: true, createHint: 'You’ll be its admin, and can add its logo and details.' },
+  { prefill: null, search: '', title: 'Add an organisation', mine: () => [], mineLabel: 'Yours', chosen: () => [], any: false, creatable: true, createOnly: false, createHint: 'You’ll be its admin, and can add its logo and details.' },
 )
 const emit = defineEmits<{
   pick: [organisation: OrganisationListItem]
@@ -51,6 +55,7 @@ const others = computed(() =>
   props.any ? o.organisations.value.filter((org) => !props.mine.includes(org.id) && matches(org)).slice(0, q.value ? 30 : 8) : [],
 )
 const exact = computed(() => o.organisations.value.some((org) => [org.name, org.shortName].some((s) => s?.trim().toLowerCase() === q.value)))
+const searchEl = ref<InstanceType<typeof SearchField> | null>(null)
 
 // --- Starting one
 const creating = ref(false)
@@ -59,21 +64,37 @@ const newShort = ref('')
 const newLocation = ref('')
 const newWebsite = ref('')
 const nameEl = ref<HTMLInputElement | null>(null)
+// The short name follows the name's initials until you change it yourself.
+const shortEdited = ref(false)
+watch(newName, (name) => { if (!shortEdited.value) newShort.value = acronym(name) })
 async function startCreate() {
   creating.value = true
-  newName.value = query.value.trim()
+  newName.value = exact.value ? '' : query.value.trim()
   await nextTick()
   nameEl.value?.focus()
 }
+// A full name that's already here is that one: adding it adds the existing
+// organisation rather than a copy. Short names can be shared (Manitoba's
+// and Montreal's MHDA), so they never count.
+const duplicate = computed(() => {
+  const typed = organisationKey(newName.value)
+  return typed ? o.organisations.value.find((org) => organisationKey(org.name) === typed) : undefined
+})
+const duplicateNote = computed(() => {
+  const org = duplicate.value
+  if (!org) return ''
+  if (props.chosen.includes(org.id)) return `${org.name} is already added.`
+  if (props.createOnly) return `${org.name} is already on ScotDance.app, so this opens it.`
+  if (props.any || props.mine.includes(org.id)) return `${org.name} is already on ScotDance.app, so this adds it.`
+  return `${org.name} is already on ScotDance.app. Its admins can add this competition to it.`
+})
 function create() {
-  const name = newName.value.trim()
-  if (!name) return
-  const existing = o.organisations.value.find((org) => [org.name, org.shortName].some((n) => n && [name, newShort.value].filter(Boolean).some((v) => organisationKey(n) === organisationKey(v))))
-  if (existing) {
-    query.value = existing.name ?? existing.shortName ?? name
-    creating.value = false
+  if (duplicate.value) {
+    if (props.any || props.mine.includes(duplicate.value.id)) pick(duplicate.value)
     return
   }
+  const name = newName.value.trim()
+  if (!name) return
   emit('create', {
     name,
     shortName: newShort.value.trim(),
@@ -90,19 +111,27 @@ watch(
   () => props.morph.open,
   (open) => {
     if (!open) return
-    query.value = ''
+    query.value = props.search
     creating.value = false
     newName.value = ''
     newShort.value = ''
+    shortEdited.value = false
     newLocation.value = ''
     newWebsite.value = ''
-    if (props.prefill) {
+    if (props.createOnly) {
+      creating.value = true
+      void nextTick(() => nameEl.value?.focus())
+    }
+    else if (props.prefill) {
       creating.value = true
       newName.value = props.prefill.name
-      newShort.value = props.prefill.shortName
+      shortEdited.value = !!props.prefill.shortName
+      newShort.value = props.prefill.shortName || acronym(props.prefill.name)
       newLocation.value = props.prefill.location ?? ''
       void nextTick(() => nameEl.value?.focus())
     }
+    // With a keyboard, ready to type over; a phone's would cover the list.
+    else if (matchMedia('(hover: hover) and (pointer: fine)').matches) void nextTick(() => searchEl.value?.select())
   },
 )
 const ROW = 'press-row focus-inset flex min-h-15 w-full items-center gap-3 px-4 py-2 text-left'
@@ -120,10 +149,11 @@ const ROW = 'press-row focus-inset flex min-h-15 w-full items-center gap-3 px-4 
         <span class="text-callout block font-medium">Name <span class="text-muted-foreground font-normal">(required)</span></span>
         <input ref="nameEl" v-model="newName" type="text" autocomplete="organization" placeholder="e.g. Foothills Highland Dancing Association" class="field h-12 w-full rounded-xl px-3 text-base" />
       </label>
+      <p v-if="duplicate" class="text-sm" role="status">{{ duplicateNote }}</p>
       <label class="block space-y-1.5">
         <span class="text-callout block font-medium">Short name</span>
-        <input v-model="newShort" type="text" autocomplete="off" placeholder="e.g. FHDA" class="field h-12 w-full rounded-xl px-3 text-base" />
-        <span class="text-muted-foreground block text-sm">What people call it, if it’s shorter. Optional.</span>
+        <input v-model="newShort" type="text" autocomplete="off" placeholder="e.g. FHDA" class="field h-12 w-full rounded-xl px-3 text-base" @input="shortEdited = true" />
+        <span class="text-muted-foreground block text-sm">{{ !shortEdited && newShort ? 'Guessed from the name. Change it if that’s not what people call it.' : 'What people call it, if it’s shorter. Optional.' }}</span>
       </label>
       <label v-if="prefill" class="block space-y-1.5">
         <span class="text-callout block font-medium">Based in</span>
@@ -134,17 +164,19 @@ const ROW = 'press-row focus-inset flex min-h-15 w-full items-center gap-3 px-4 
         <span class="text-callout block font-medium">Website</span>
         <input v-model="newWebsite" type="url" inputmode="url" autocomplete="url" placeholder="e.g. example.com" class="field h-12 w-full rounded-xl px-3 text-base" />
       </label>
-      <p class="text-muted-foreground text-sm">{{ createHint }}</p>
-      <slot name="create-options" />
+      <template v-if="!duplicate">
+        <p class="text-muted-foreground text-sm">{{ createHint }}</p>
+        <slot name="create-options" />
+      </template>
       <div class="flex gap-3">
-        <Button size="lg" @click="creating = false">Back</Button>
-        <Button type="submit" variant="primary" size="lg" class="flex-1" :disabled="!newName.trim()">Add</Button>
+        <Button v-if="!createOnly" size="lg" @click="creating = false">Back</Button>
+        <Button type="submit" variant="primary" size="lg" class="flex-1" :disabled="!newName.trim() || (!!duplicate && !any && !mine.includes(duplicate.id))">{{ createOnly && duplicate ? 'Open' : 'Add' }}</Button>
       </div>
     </form>
 
     <template v-else>
       <div class="p-4 pt-1">
-        <SearchField v-model="query" :label="any ? 'Find an organisation' : 'Find one of yours'" />
+        <SearchField ref="searchEl" v-model="query" :label="any ? 'Find an organisation' : 'Find one of yours'" />
       </div>
       <div class="pb-[calc(0.5rem+var(--safe-bottom))]">
         <section v-if="yours.length" :aria-label="mineLabel">
@@ -180,9 +212,9 @@ const ROW = 'press-row focus-inset flex min-h-15 w-full items-center gap-3 px-4 
         <p v-if="!yours.length && !others.length && !(creatable && q)" class="text-muted-foreground px-4 py-3 text-sm">
           {{ q ? `Nothing matches “${query.trim()}”.` : any ? 'Type a name to find one.' : 'You’re not an admin of any organisation yet.' }}
         </p>
-        <button v-if="creatable && !exact" type="button" :class="[ROW, 'text-primary']" @click="startCreate">
+        <button v-if="creatable" type="button" :class="[ROW, 'text-primary']" @click="startCreate">
           <span class="bg-blue-paper flex size-10 shrink-0 items-center justify-center rounded-xl"><Plus class="size-5" /></span>
-          <span class="line-clamp-2 min-w-0 flex-1 text-base font-semibold">{{ q ? `New organisation: “${query.trim()}”` : 'New organisation' }}</span>
+          <span class="line-clamp-2 min-w-0 flex-1 text-base font-semibold">{{ q && !exact ? `New organisation: “${query.trim()}”` : 'New organisation' }}</span>
         </button>
       </div>
     </template>
