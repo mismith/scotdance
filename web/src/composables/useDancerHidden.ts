@@ -6,8 +6,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 
 // Hidden profiles: a family asked, so a dancer's profile turns off its
-// signed-in extras (Overview, Results by dance) and everyone sees
-// the basic one. They stay in Search, Dancers and every competition's results.
+// signed-in extra (every competition, not just the latest ten) and everyone
+// sees the basic one. They stay in Search, Dancers and every competition's results.
 // dancers:hidden/{dancerId} = { by, byName, at, note? }, set by a system admin.
 
 export interface HiddenInfo {

@@ -4,15 +4,7 @@ import { useDancerCards } from '@/composables/useDancerCards'
 import { useCompetitionLinks } from '@/composables/useCompetitionLinks'
 import { useDancerHidden, type HiddenInfo } from '@/composables/useDancerHidden'
 import { fetchEntrySummary, type EntrySummary } from '@/lib/entrySummary'
-import { danceName, groupByDance, type DanceMark } from '@/lib/danceResults'
-import {
-  currentLevel,
-  levelOf,
-  seasonLabel,
-  seasonOf,
-  type CompetitionPoint,
-  type Level,
-} from '@/lib/dancerProgress'
+import { seasonLabel, seasonOf } from '@/lib/seasons'
 import { parseDate } from '@/lib/format'
 import { orderLinked, railRows, type RailPosition } from '@/lib/linked'
 import { recordProfileView } from '@/lib/profileViews'
@@ -20,11 +12,9 @@ import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import type { Competition } from '@/types/competition'
 
-// A dancer's record across every competition, loaded once by DancerLayout and
-// shared by its tabs: the competition rows (Overview's Latest, Results'
-// List), every entry's placings (By dance) and the facts counted
-// from them. Signed-in people get all of it; everyone else, and a hidden
-// profile, the latest ten competitions only.
+// A dancer's record across every competition, loaded once by DancerLayout:
+// the competition rows and each entry's placings. Signed-in people get all of
+// it; everyone else, and a hidden profile, the latest ten competitions only.
 
 /** One competition they entered (entries in two age groups share a number). */
 export interface Row {
@@ -45,11 +35,6 @@ type Summary = EntrySummary & { entryId: string }
 
 /** How many competitions the basic profile shows. */
 export const BASIC_LATEST = 10
-
-// Lowest to highest, to take the higher of two categories at one competition.
-const LEVEL_ORDER: Level[] = ['Primary', 'Beginner', 'Novice', 'Intermediate', 'Premier']
-
-const dateOf = (c: Competition) => (c.date ? parseDate(c.date).getTime() : NaN)
 
 function createDancerRecord(dancerId: Ref<string>, profile: UseDancerProfile) {
   const auth = useAuthStore()
@@ -142,7 +127,7 @@ function createDancerRecord(dancerId: Ref<string>, profile: UseDancerProfile) {
       (r) => !showFocus.value || r.competitionId !== focus.value!.competitionId,
     ),
   )
-  /** The `n` newest competitions, for Overview and the basic profile. */
+  /** The `n` newest competitions, for the basic profile. */
   const latest = (n: number) => railed(listRows.value, n)
 
   // Every placing, all at once (each competition is a few small reads, and
@@ -180,83 +165,6 @@ function createDancerRecord(dancerId: Ref<string>, profile: UseDancerProfile) {
       wanted.value.every((r) => summaries.value[r.competitionId]),
   )
 
-  const marks = computed<DanceMark[]>(() => {
-    const out: DanceMark[] = []
-    for (const r of rows.value) {
-      const date = dateOf(r.competition)
-      if (Number.isNaN(date)) continue
-      for (const s of summaries.value[r.competitionId] ?? []) {
-        const base = {
-          competitionId: r.competitionId,
-          entryId: s.entryId,
-          date,
-          competitionName: r.competition.name ?? '',
-        }
-        for (const p of s.placings)
-          out.push({ ...base, rawName: p.name, place: p.place, tied: p.tied })
-        for (const d of s.danced)
-          out.push({ ...base, rawName: d.name, place: null, tied: false })
-        if (s.overall)
-          out.push({
-            ...base,
-            rawName: 'Overall',
-            place: s.overall.place,
-            tied: s.overall.tied,
-          })
-        else if (s.overallMissed)
-          out.push({ ...base, rawName: 'Overall', place: null, tied: false })
-      }
-    }
-    return out
-  })
-  const byDance = computed(() => groupByDance(marks.value))
-
-  /**
-   * One per competition held so far: its level (the higher of its entries'),
-   * each dance by its grouped name with the place, and the best overall.
-   */
-  const points = computed<CompetitionPoint[]>(() => {
-    const now = Date.now()
-    const out: CompetitionPoint[] = []
-    for (const r of rows.value) {
-      const date = dateOf(r.competition)
-      if (Number.isNaN(date) || date > now) continue
-      const got = summaries.value[r.competitionId] ?? []
-      const levels = got
-        .map((s) => levelOf(s.categoryName))
-        .filter((l): l is Level => !!l)
-      const level =
-        levels.sort((a, b) => LEVEL_ORDER.indexOf(b) - LEVEL_ORDER.indexOf(a))[0] ?? null
-      const dances = got.flatMap((s) => [
-        ...s.placings.map((d) => ({ name: danceName(d.name).name, place: d.place })),
-        ...s.danced.map((d) => ({ name: danceName(d.name).name, place: null })),
-      ])
-      const overalls = got
-        .map((s) => s.overall?.place)
-        .filter((x): x is number => x != null)
-      out.push({
-        competitionId: r.competitionId,
-        entryId: r.entryIds[0],
-        competitionName: r.competition.name ?? '',
-        date,
-        level,
-        country: r.competition.country ?? null,
-        categories: got.map((s) => s.categoryName).filter((c): c is string => !!c),
-        dances,
-        overall: overalls.length ? Math.min(...overalls) : null,
-      })
-    }
-    return out
-  })
-
-  const facts = computed(() => ({
-    competitions: profile.totalComps.value,
-    since: profile.firstSeenDate.value?.getFullYear() ?? null,
-    seasons: new Set(points.value.map((p) => seasonOf(p.date))).size,
-    dances: byDance.value.dances.length,
-    level: currentLevel(points.value),
-  }))
-
   // Counted once the profile is there; signed out, it does nothing.
   let counted = ''
   watch(
@@ -286,10 +194,6 @@ function createDancerRecord(dancerId: Ref<string>, profile: UseDancerProfile) {
       return out
     }),
     ready,
-    marks,
-    byDance,
-    points,
-    facts,
   }
 }
 

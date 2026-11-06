@@ -124,8 +124,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/dancers/:dancerId',
     component: () => import('@/views/dancer/DancerLayout.vue'),
-    // The layout brings the bottom nav itself: its own tabs when signed in, the app's otherwise.
-    meta: { noindex: true, ownsBottomNav: true },
+    meta: { noindex: true },
     children: [
       { path: '', redirect: { name: 'dancer.info' } },
       {
@@ -133,8 +132,8 @@ const routes: RouteRecordRaw[] = [
         name: 'dancer.info',
         component: () => import('@/views/dancer/Info.vue'),
       },
-      // Signed-in extras: the layout sends everyone else to Overview.
-      { path: 'results', name: 'dancer.results', component: () => import('@/views/dancer/Results.vue') },
+      // One page now; old links to /results land on it.
+      { path: 'results', name: 'dancer.results', redirect: { name: 'dancer.info' } },
     ],
   },
   {

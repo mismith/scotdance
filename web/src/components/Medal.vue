@@ -18,10 +18,8 @@ const props = withDefaults(
     /** Overall: a trophy (what an age group's winner takes home), so it never
      *  passes for one more dance. Same box and number spot as the ribbon. */
     trophy?: boolean
-    /** Danced, not placed: a quiet dot the size of a ribbon, so a row keeps its rhythm. */
-    missed?: boolean
   }>(),
-  { tied: false, pointed: false, size: 'md', fresh: false, trophy: false, missed: false },
+  { tied: false, pointed: false, size: 'md', fresh: false, trophy: false },
 )
 
 // A little weight for the top placings without medal colours: the blue gets
@@ -35,10 +33,6 @@ const TIERS = {
   rest: { fill: 'fill-[color-mix(in_oklab,var(--primary)_6%,var(--card))]', edge: 'stroke-primary/40', ink: 'text-primary', metal: 'fill-[color-mix(in_oklab,var(--primary)_40%,var(--card))] stroke-[color-mix(in_oklab,var(--primary)_40%,var(--card))]' },
 }
 const tier = computed(() => TIERS[props.place === 1 || props.place === 2 || props.place === 3 ? props.place : 'rest'])
-
-// The hover bubble that names the dance, shared by the ribbon and the dot.
-const TIP =
-  "hud pointer-events-none invisible absolute top-full left-1/2 z-20 mt-3.5 -translate-x-1/2 rounded-xl px-3 py-2 text-sm leading-tight font-semibold tracking-normal whitespace-nowrap group-hover/medal:visible before:absolute before:-top-1.25 before:left-1/2 before:size-2.5 before:-translate-x-1/2 before:rotate-45 before:rounded-tl-[2px] before:border-t-[0.5px] before:border-l-[0.5px] before:border-white/20 before:bg-[rgb(27_33_40/0.92)] before:[clip-path:polygon(0_0,100%_0,0_100%)] before:content-['']"
 
 const label = computed(() => {
   const what = props.place == null
@@ -98,7 +92,7 @@ const label = computed(() => {
          square, so it carries the bubble's hairline edge onto the dark page. -->
     <span
       v-if="dance"
-      :class="TIP"
+      class="hud pointer-events-none invisible absolute top-full left-1/2 z-20 mt-3.5 -translate-x-1/2 rounded-xl px-3 py-2 text-sm leading-tight font-semibold tracking-normal whitespace-nowrap group-hover/medal:visible before:absolute before:-top-1.25 before:left-1/2 before:size-2.5 before:-translate-x-1/2 before:rotate-45 before:rounded-tl-[2px] before:border-t-[0.5px] before:border-l-[0.5px] before:border-white/20 before:bg-[rgb(27_33_40/0.92)] before:[clip-path:polygon(0_0,100%_0,0_100%)] before:content-['']"
       aria-hidden="true"
     >
       {{ label }}
@@ -114,17 +108,5 @@ const label = computed(() => {
     :aria-label="label"
   >
     Point
-  </span>
-  <span
-    v-else-if="missed"
-    role="img"
-    :aria-label="label"
-    :class="[
-      'group/medal relative flex shrink-0 items-center justify-center',
-      size === 'lg' ? 'h-[3.25rem] w-12' : size === 'md' ? 'h-12 w-11' : 'h-10 w-9',
-    ]"
-  >
-    <span class="bg-muted-foreground/45 size-[0.4375rem] rounded-full" aria-hidden="true" />
-    <span v-if="dance" :class="TIP" aria-hidden="true">{{ label }}</span>
   </span>
 </template>

@@ -16,7 +16,7 @@ const route = useRoute()
 // Shared shell for profile pages (dancer, judge, piper, venue, organisation): the bar,
 // the page (each profile's Info), and a way on when the link is stale. On
 // wide screens the page puts its header in a column of its own that stays
-// put (lib/profile). A profile can add bar actions and its own bottom nav.
+// put (lib/profile). A profile can add its own bar actions.
 
 const props = defineProps<{
   scope: 'judge' | 'piper' | 'venue' | 'dancer' | 'organisation'
@@ -27,8 +27,6 @@ const props = defineProps<{
   notFound: boolean
   emptyTitle: string
   emptyDescription: string
-  /** The name in the bar on every page, not only once the page's big title scrolls away (pages without one). */
-  titleAlways?: boolean
 }>()
 
 const section = computed(() => sectionMeta(props.sectionRouteName))
@@ -42,8 +40,7 @@ const { scrolledPast } = provideInfoHeader()
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
     <AppBar
       :title="displayName"
-      :show-title="titleAlways || scrolledPast"
-      :scrolled="scrolledPast"
+      :show-title="scrolledPast"
       :fallback="{ to: section.to, label: section.label }"
     >
       <template v-if="!notFound" #actions>
@@ -65,11 +62,7 @@ const { scrolledPast } = provideInfoHeader()
       </EmptyState>
       <PageStack v-else block />
     </main>
-    <!-- A profile with its own tabs brings its bottom nav (and the sidebar's
-         branch with them); otherwise the app's, and on wide screens this
-         profile nested under its list in the sidebar. -->
-    <slot name="nav">
-      <SidebarBranch v-if="displayName" :under="sectionRouteName" :label="displayName" :to="route.path" current />
-    </slot>
+    <!-- Wide screens: this profile, nested under its list in the sidebar. -->
+    <SidebarBranch v-if="displayName" :under="sectionRouteName" :label="displayName" :to="route.path" current />
   </div>
 </template>

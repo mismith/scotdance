@@ -16,8 +16,6 @@ const val = async <T>(path: string): Promise<T | null> => {
 
 export interface EntrySummary {
   groupName: string | null
-  /** The category's own name: where the level lives ("Premier", "Primary"). */
-  categoryName: string | null
   placings: Array<{ danceId: string; name: string; place: number; tied: boolean }>
   /** Dances with results posted where this entry wasn't placed: danced, no place. */
   danced: Array<{ danceId: string; name: string }>
@@ -36,7 +34,7 @@ export function fetchEntrySummary(competitionId: string, entryId: string): Promi
       try {
         const entry = await val<{ groupId?: string }>(`${competitionId}/dancers/${entryId}`)
         const groupId = entry?.groupId
-        if (!groupId) return { groupName: null, categoryName: null, placings: [], danced: [], overall: null, overallMissed: false }
+        if (!groupId) return { groupName: null, placings: [], danced: [], overall: null, overallMissed: false }
         const [group, results, dances] = await Promise.all([
           val<Group>(`${competitionId}/groups/${groupId}`),
           val<Record<string, unknown>>(`${competitionId}/results/${groupId}`),
@@ -59,7 +57,6 @@ export function fetchEntrySummary(competitionId: string, entryId: string): Promi
         const o = getDancerPlace(entryId, groupId, OVERALL_ID, tree, {})
         return {
           groupName: group ? groupFullName({ ...group, id: groupId }, category ?? undefined) : null,
-          categoryName: category?.name?.trim() || null,
           placings,
           danced,
           overall: o.place != null ? { place: o.place, tied: o.tied } : null,

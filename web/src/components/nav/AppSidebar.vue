@@ -29,8 +29,7 @@ const canManage = computed(() => me.canManageAny || roles.has('organizer'))
 
 const name = computed(() => String(route.name ?? ''))
 // Inside a competition's pages, or one you manage (both have their own layout).
-// (A dancer's profile owns its bottom nav too, but isn't a competition.)
-const inCompetition = computed(() => route.matched.some((r) => r.meta.ownsBottomNav && !r.meta.admin) && !name.value.startsWith('dancer.'))
+const inCompetition = computed(() => route.matched.some((r) => r.meta.ownsBottomNav && !r.meta.admin))
 const inManage = computed(() => route.matched.some((r) => r.meta.admin) && !!route.params.competitionId)
 const inAdmin = computed(() => route.matched.some((r) => r.name === 'admin'))
 
