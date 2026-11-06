@@ -47,11 +47,17 @@ describe('creating an organisation from a managed competition', () => {
   })
   it('refuses a newly existing match without granting access to it', async () => {
     const { db, create } = setup()
-    db.write({ 'organisations/existing': { name: 'British Columbia Highland Dancing Association', shortName: 'BCHDA' } })
+    db.write({ 'organisations/existing': { name: 'bchda', shortName: 'BCHDA' } })
     await expect(create({ ...draft, grantSubmitter: true })).rejects.toMatchObject({ code: 'already-exists' })
     expect(Object.keys(db.read('organisations') as object)).toEqual(['existing'])
     expect(db.read('organisations:permissions/existing')).toBeNull()
     expect(db.read('competitions/c1/organisations')).toBeNull()
+  })
+  it('allows a short name another organisation already uses (two MHDAs)', async () => {
+    const { db, create } = setup()
+    db.write({ 'organisations/existing': { name: 'British Columbia Highland Dancing Association', shortName: 'BCHDA' } })
+    const { organisationId: id } = await create({ ...draft, grantSubmitter: true })
+    expect(Object.keys(db.read('organisations') as object).sort()).toEqual(['existing', id].sort())
   })
   it('rejects missing/deleted accounts, mismatched submissions and missing competitions without partial records', async () => {
     for (const updates of [
