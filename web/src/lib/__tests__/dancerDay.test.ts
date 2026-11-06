@@ -454,3 +454,74 @@ describe('trophy events in a dancer’s day', () => {
     expect(bestPlacing(day({ agg1: { overall: ['d1'] } }))?.dance.id).toBe('agg1')
   })
 })
+
+describe('a trophy event danced on its own', () => {
+  // A Trophy Fling after the Fling, in the same cell as the age groups' Fling... on its own turn.
+  const me = dancer('d1', g1, 107)
+  const sched = schedule([
+    {
+      name: 'Saturday',
+      blocks: [
+        {
+          name: 'Morning',
+          description: '8:30 am',
+          events: [
+            [
+              { danceId: 'fling', platforms: { pA: ['g1'] } },
+              { danceId: 'fling', platforms: { pA: ['tf'] } },
+              { danceId: 'sword', platforms: { pA: ['g1'] } },
+            ],
+          ],
+        },
+      ],
+    },
+  ])
+  const tf = { id: 'tf', fullName: 'Trophy Fling', groupIds: { g1: true }, danceId: 'fling' }
+  const day = (results: ResultsTree = {}, phase: 'before' | 'today' | 'after' = 'today', te = tf) =>
+    dancerDay(me, bundle({ dances: [fling, sword], schedule: sched, results, trophyEvents: [te] }), phase)
+
+  it('is on the schedule like a dance, named for the trophy event with its dance beside it', () => {
+    const [s] = day({}, 'before').trophyEvents
+    expect(s).toMatchObject({ state: 'upcoming', danced: true, danceName: 'Highland Fling', dance: { id: 'tf', fullName: 'Trophy Fling' } })
+    expect(s.slot).toMatchObject({ platformName: 'A', dayName: 'Saturday', blockTime: '8:30 am' })
+  })
+
+  it('is upcoming, waiting by what is posted after it on the platform, or posted', () => {
+    expect(day().trophyEvents[0].state).toBe('upcoming')
+    // The Sword Dance after it is posted: it has been danced.
+    expect(day({ g1: { sword: ['d1'] } }).trophyEvents[0].state).toBe('waiting')
+    expect(day({ g1: { fling: ['d1'] } }).trophyEvents[0].state).toBe('upcoming')
+    expect(day({}, 'after').trophyEvents[0].state).toBe('not-posted')
+    expect(day({ tf: { overall: ['x', 'd1'] } }).trophyEvents[0]).toMatchObject({ state: 'placed', place: 2 })
+    expect(day({ tf: { overall: ['x'] } }).trophyEvents[0].state).toBe('unplaced')
+  })
+
+  it('counts a turn posted for the trophy event as danced for what is before it', () => {
+    const { dances: rows } = day({ tf: { overall: ['x'] } })
+    expect(rows.find((s) => s.dance.id === 'fling')?.state).toBe('waiting')
+    expect(rows.find((s) => s.dance.id === 'sword')?.state).toBe('upcoming')
+  })
+
+  it('is in the day of everyone it’s open to until its callbacks are in, then only those called back', () => {
+    expect(day({}, 'today').trophyEvents.map((s) => s.dance.id)).toEqual(['tf'])
+    expect(day({ tf: { callbacks: ['d1'] } }, 'today').trophyEvents.map((s) => s.dance.id)).toEqual(['tf'])
+    expect(day({ tf: { callbacks: ['d2'] } }, 'today').trophyEvents).toEqual([])
+    // Marked as having no callbacks: nobody was left out.
+    expect(day({ tf: { callbacks: false } }, 'today').trophyEvents).toHaveLength(1)
+  })
+
+  it('counts toward what is next, and holds the day open until danced', () => {
+    // Only the Fling is theirs, and it's posted; the Trophy Fling comes after it.
+    const only = (results: ResultsTree) => dancerDay(me, bundle({ dances: [fling], schedule: sched, results, trophyEvents: [tf] }), 'today')
+    const flung: ResultsTree = { g1: { fling: ['d1'], overall: ['d1'] } }
+    expect(soonestUpcoming([only(flung)])?.dance.id).toBe('tf')
+    expect(firstDance([only({})])?.dance.id).toBe('fling')
+    expect(dayStage([only(flung)])).toBe('upcoming')
+    expect(dayStage([only({ ...flung, g1: { ...flung.g1, sword: ['x'] } })])).toBe('waiting')
+    expect(dayStage([only({ ...flung, tf: { overall: ['x'] } })])).toBe('done')
+  })
+
+  it('leaves the others out of the dances’ position count', () => {
+    expect(day().dances.find((s) => s.dance.id === 'fling')?.slot).toMatchObject({ groupPos: 1, groupCount: 1 })
+  })
+})

@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { ordered, useBuilder, type CellLocation } from './builder'
+import { ids, ordered, useBuilder, type CellLocation } from './builder'
 
 // Starting points for a schedule, from the competition's dances, age groups,
 // judges and platforms. Each one is a single change, so one undo puts
@@ -42,7 +42,8 @@ export function useAutoFill() {
 
   /**
    * Share each dance's age groups across the platforms in turn, youngest
-   * first. Replaces the event's age groups (and spacers).
+   * first. Replaces the event's age groups (and spacers). Trophy events are
+   * never placed for them, and stay where they are.
    */
   function fillGroups(blockId: string, eventId: string, categoryIds?: Set<string>) {
     const event = b.getEvent(blockId, eventId)
@@ -55,9 +56,10 @@ export function useAutoFill() {
         all
           .filter((g) => b.eligible(row.danceId, g))
           .forEach((g, i) => each[i % platformIds.length].push(g))
-      platformIds.forEach((platformId, i) =>
-        b.setCell('group', { blockId, eventId, danceId: rowId, platformId }, each[i]),
-      )
+      platformIds.forEach((platformId, i) => {
+        const kept = ids(row.platforms?.[platformId]?.orderedGroupIds).filter(b.isTrophyEvent)
+        b.setCell('group', { blockId, eventId, danceId: rowId, platformId }, [...each[i], ...kept])
+      })
     }
   }
 

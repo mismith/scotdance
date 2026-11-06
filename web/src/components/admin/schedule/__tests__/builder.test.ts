@@ -241,6 +241,22 @@ describe('reading legacy schedules', () => {
     expect(t.b.eligible('-Gone', 'gP6')).toBe(true)
   })
 
+  it('lets a trophy event go only under its own dance, and names it', () => {
+    const data = sampleData(legacySchedule())
+    data.trophyEvents = {
+      tf: { name: 'Trophy Fling', groupIds: { gP6: true }, danceId: 'dFling' },
+      dotd: { name: 'Dancer of the Day', groupIds: { gP6: true } },
+    }
+    const t = setup(data)
+    expect(t.b.dancedTrophyEvents.value.map((a) => a.id)).toEqual(['tf'])
+    expect(t.b.eligible('dFling', 'tf')).toBe(true)
+    expect(t.b.eligible('dSword', 'tf')).toBe(false)
+    // One decided from the age groups is never danced.
+    expect(t.b.eligible('dFling', 'dotd')).toBe(false)
+    expect(t.b.groupLabel('tf')).toBe('Trophy Fling')
+    expect(t.b.groupFullLabel('tf')).toBe('Trophy Fling')
+  })
+
   it('treats a hidden schedule (false) as no days', () => {
     const t = setup(sampleData(false))
     expect(t.m.scheduleHidden.value).toBe(true)

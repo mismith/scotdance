@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   dancingNow,
+  trophyEventRows,
   danceState,
   isPlaceholderId,
   isTied,
@@ -228,5 +229,22 @@ describe('the running order', () => {
     // "None placed" counts as in; a Championship start alone doesn't.
     expect([...dancingNow(turns, { g1: { fling: false }, g2: { fling: ['reverse:6'] } })]).toEqual(['g2', 'g3'])
     expect([...dancingNow(turns, { g2: { sword: ['d1'] }, g3: { sword: ['d2'] } })]).toEqual([])
+  })
+
+  it('reads a trophy event’s turn from its one list, whatever dance it is under', () => {
+    const withTf = [T('g1', 'fling'), T('tf', 'fling'), T('g2', 'fling')]
+    const ids = new Set(['tf'])
+    expect([...dancingNow(withTf, { g1: { fling: ['d1'] } }, ids)]).toEqual(['tf'])
+    // Its placings are at overall, not at the dance.
+    expect([...dancingNow(withTf, { g1: { fling: ['d1'] }, tf: { fling: ['d1'] } }, ids)]).toEqual(['tf'])
+    expect([...dancingNow(withTf, { g1: { fling: ['d1'] }, tf: { overall: ['d1'] } }, ids)]).toEqual(['g2'])
+  })
+
+  it('lists what a trophy event enters: a danced one’s callbacks and its dance, as an age group’s', () => {
+    expect(trophyEventRows({})).toEqual([{ id: 'overall', label: 'Placings' }])
+    expect(trophyEventRows({ danceId: 'fling' }, 'Highland Fling (4)')).toEqual([
+      { id: 'callbacks', label: 'Callbacks' },
+      { id: 'overall', label: 'Highland Fling (4)' },
+    ])
   })
 })

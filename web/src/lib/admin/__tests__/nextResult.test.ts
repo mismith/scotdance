@@ -79,6 +79,53 @@ describe('trophy events', () => {
   })
 })
 
+describe('danced trophy events', () => {
+  // A Trophy Fling on platform A after Novice's Sword: only some dance it.
+  const withFling = (id: string, results: ResultsTree = {}): ResultsWork => ({
+    ...work(results),
+    trophyEvents: [{ id, danceId: 'sword' }, { id: 'dotd' }],
+    schedule: {
+      days: {
+        d1: {
+          order: 0,
+          blocks: {
+            b1: {
+              order: 0,
+              events: {
+                e1: {
+                  order: 0,
+                  dances: {
+                    r1: { order: 0, danceId: 'sword', platforms: { A: { orderedGroupIds: ['nov', id] } } },
+                    r2: { order: 1, danceId: 'fling', platforms: { A: { orderedGroupIds: ['pri', id] } } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    } as unknown as Schedule,
+  })
+
+  it('are entered where the schedule has them, callbacks first, as an age group’s dance', () => {
+    // (Not under the Fling row: it isn’t danced there.)
+    expect(keys(withFling('tf')).slice(0, 5)).toEqual(['nov:callbacks', 'nov:sword', 'tf:callbacks', 'tf:overall', 'pri:callbacks'])
+    expect(keys(withFling('tf')).filter((k) => k.startsWith('tf'))).toEqual(['tf:callbacks', 'tf:overall'])
+  })
+
+  it('carry on from callbacks to the placings, then the rest', () => {
+    expect(nextResult(withFling('tf', { nov: { callbacks: ['b'], sword: ['b'] } }))).toEqual({ groupId: 'tf', danceId: 'callbacks' })
+    expect(nextResult(withFling('tf', { nov: { callbacks: ['b'], sword: ['b'] }, tf: { callbacks: ['b'] } }))).toEqual({ groupId: 'tf', danceId: 'overall' })
+    // Marked “No callbacks” counts as entered.
+    expect(nextResult(withFling('tf', { nov: { callbacks: ['b'], sword: ['b'] }, tf: { callbacks: false, overall: ['b'] } }))).toEqual({ groupId: 'pri', danceId: 'callbacks' })
+  })
+
+  it('are not entered at the end as well', () => {
+    expect(keys(withFling('tf')).filter((k) => k === 'tf:overall')).toHaveLength(1)
+    expect(keys(withFling('tf')).slice(-2)).toEqual(['nov:overall', 'dotd:overall'])
+  })
+})
+
 describe('nextResult', () => {
   it('is the first thing not entered, skipping “none placed”', () => {
     expect(nextResult(work({ nov: { callbacks: ['x'], sword: false } }))).toEqual({ groupId: 'pri', danceId: 'callbacks' })

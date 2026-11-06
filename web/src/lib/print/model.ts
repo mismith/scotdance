@@ -30,7 +30,7 @@ export interface GridHead {
   time?: string
   platforms: string[]
 }
-/** One age group on a platform; null is a gap the organiser left. */
+/** One age group (or danced trophy event) on a platform; null is a gap the organiser left. */
 export type GridLine = { group: string } | null
 export interface GridCell {
   judges: string
@@ -58,6 +58,8 @@ export interface TrophyEventSheet {
   /** Who can win it, said briefly ("All Premier · Intermediate 12 & Under 14"). */
   openTo: string
   places: number
+  /** The dance, where it's danced on its own (a Trophy Fling); its winners' row is named for it. */
+  dance?: string
   trophy?: string
   sponsor?: string
 }
@@ -75,7 +77,7 @@ export interface DrawSheet {
 export interface PlatformDance {
   dance: string
   judges: string
-  /** `order`: numbers in dancing order; `late`: in the age group but not in its draw (entered since). */
+  /** `order`: numbers in dancing order; `late`: in the age group (or trophy event) but not in its draw (entered since). */
   rows: Array<{ group: string; count: number; order: string[]; drawn: boolean; late: string[] }>
 }
 

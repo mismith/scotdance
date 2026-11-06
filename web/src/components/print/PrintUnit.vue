@@ -182,7 +182,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
       </thead>
       <tbody>
         <tr>
-          <th :class="DANCE">Winners</th>
+          <th :class="DANCE">{{ unit.trophyEvent.dance ?? 'Winners' }}</th>
           <td v-for="p in unit.trophyEvent.places" :key="p" :class="[CELL, 'h-[24pt]']" />
         </tr>
       </tbody>

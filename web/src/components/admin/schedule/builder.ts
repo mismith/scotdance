@@ -5,6 +5,7 @@ import { dayLabel, idList, isSpacerId, platformLabel } from '@/lib/schedule'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import type { ManagedCompetition } from '@/composables/admin/useManagedCompetition'
+import { isDanced } from '@/lib/trophyEvents'
 
 // The schedule builder's model. It reads competitions:data/{id}/schedule as
 // stored and edits it the same way: every action changes a copy of the
@@ -209,21 +210,29 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
     const d = getDance(id)
     return d ? (d.shortName || d.name || '').trim() || d.label : 'Unknown dance'
   }
-  /** Can this age group do this dance? Dances with no groups set take any. */
+  // Trophy events danced on their own go in the cells beside the age groups.
+  // Only the danced ones can: the rest are decided from the age groups' results.
+  const dancedTrophyEvents = computed(() => m.trophyEvents.value.filter(isDanced))
+  const isTrophyEvent = (id: string) => m.trophyEventsById.value.has(id)
+  /** Can this age group do this dance? Dances with no groups set take any. A trophy event only does its own. */
   function eligible(danceId: string | undefined, groupId: string) {
+    const trophyEvent = m.trophyEventsById.value.get(groupId)
+    if (trophyEvent) return !!danceId && trophyEvent.danceId === danceId
     const groups = getDance(danceId)?.groupIds
     return !groups || !Object.values(groups).some(Boolean) || !!groups[groupId]
   }
 
   /** Short label for cells: "Pri 8 & Under". */
   function groupLabel(id: string) {
+    const trophyEvent = m.trophyEventsById.value.get(id)
+    if (trophyEvent) return trophyEvent.label
     const g = m.groupsById.value.get(id)
     if (!g) return 'Unknown age group'
     const cat = g.category?.name?.trim()
     return [cat && abbreviate(cat), g.name?.trim()].filter(Boolean).join(' ') || g.label
   }
   const groupFullLabel = (id: string) =>
-    m.groupsById.value.get(id)?.label ?? 'Unknown age group'
+    m.trophyEventsById.value.get(id)?.label ?? m.groupsById.value.get(id)?.label ?? 'Unknown age group'
 
   // Judges by last name, adding an initial or first name only to tell
   // people apart.
@@ -557,6 +566,8 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
     judges: m.judges,
     categories: m.categories,
     groupsByCategory,
+    dancedTrophyEvents,
+    isTrophyEvent,
     getDance,
     danceName,
     eligible,

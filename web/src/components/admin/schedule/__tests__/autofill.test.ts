@@ -154,6 +154,20 @@ describe('autofill one event', () => {
     expect(cells.dPas).toMatchObject({ pA: { orderedGroupIds: ['gP6'] }, pB: { orderedGroupIds: ['gP7'] } })
   })
 
+  it('never places a trophy event, and leaves one already there', async () => {
+    const data = sampleData()
+    data.trophyEvents = { tf: { name: 'Trophy Fling', groupIds: { gP6: true, gP7: true }, danceId: 'dFling' } }
+    const { t, blockId, eventId, rows } = await withEvent(data)
+    await t.auto.placeDances(blockId, eventId)
+    const fling = rows()[0].id
+    await t.b.addToCell('group', { blockId, eventId, danceId: fling, platformId: 'pA' }, 'tf')
+    await t.auto.fillGroups(blockId, eventId)
+    const cells = Object.fromEntries(rows().map((r) => [r.danceId, r.platforms]))
+    // The age groups are shared out afresh; the trophy event stays where it was, last.
+    expect(cells.dFling).toMatchObject({ pA: { orderedGroupIds: ['gP6', 'gB8', 'tf'] }, pB: { orderedGroupIds: ['gP7', 'gB9'] } })
+    expect(cells.dSword).toMatchObject({ pA: { orderedGroupIds: ['gB8'] } })
+  })
+
   it('gives platforms beyond the number of judges no judge', async () => {
     const data = sampleData()
     data.platforms = { pA: { name: 'A', _order: 0 }, pB: { name: 'B', _order: 1 }, pC: { name: 'C', _order: 2 }, pD: { name: 'D', _order: 3 } }

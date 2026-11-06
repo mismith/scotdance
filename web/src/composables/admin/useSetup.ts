@@ -5,7 +5,7 @@ import { useManagedCompetition } from '@/composables/admin/useManagedCompetition
 import { useSharedParts } from '@/composables/admin/useSharedParts'
 import { useMeStore } from '@/stores/me'
 import { MANAGE_STEPS, type ManageSection } from '@/lib/admin/sections'
-import { CALLBACKS, OVERALL, danceState } from '@/lib/admin/results'
+import { CALLBACKS, OVERALL, danceState, trophyEventRows } from '@/lib/admin/results'
 import { nextResult } from '@/lib/admin/nextResult'
 import { competitionPhase } from '@/lib/dancerDay'
 import { danceHasPlaceholder } from '@/lib/results'
@@ -45,7 +45,11 @@ export function useSetup() {
   // Results with a "?" stand-in (a number missed on the day): touch-ups to do.
   const placeholders = computed(() => [
     ...m.groups.value.flatMap((g) => danceIds(g).filter((id) => danceHasPlaceholder(m.results.value, m.points.value, g.id, id)).map((danceId) => ({ groupId: g.id, danceId }))),
-    ...m.trophyEvents.value.filter((a) => danceHasPlaceholder(m.results.value, m.points.value, a.id, OVERALL)).map((a) => ({ groupId: a.id, danceId: OVERALL })),
+    ...m.trophyEvents.value.flatMap((a) =>
+      trophyEventRows(a)
+        .filter((r) => danceHasPlaceholder(m.results.value, m.points.value, a.id, r.id))
+        .map((r) => ({ groupId: a.id, danceId: r.id })),
+    ),
   ])
 
   const status = computed<Record<string, StepStatus>>(() => {
@@ -60,10 +64,13 @@ export function useSetup() {
       total += ids.length
       entered += ids.filter((id) => danceState(m.results.value[g.id]?.[id]) !== 'todo').length
     }
-    // Each trophy event is one more list to enter, once someone can win it.
+    // Each trophy event is one more list to enter once someone can win it (and
+    // a danced one has callbacks too, as an age group does).
     for (const a of m.trophyEvents.value.filter(isWinnable)) {
-      total += 1
-      if (danceState(m.results.value[a.id]?.[OVERALL]) !== 'todo') entered += 1
+      for (const r of trophyEventRows(a)) {
+        total += 1
+        if (danceState(m.results.value[a.id]?.[r.id]) !== 'todo') entered += 1
+      }
     }
     const judges = m.judges.value.length
     const staff = m.staff.value.length
@@ -190,7 +197,9 @@ export function useSetup() {
     })
     if (!slot) return null
     const trophyEvent = m.trophyEventsById.value.get(slot.groupId)
-    if (trophyEvent) return { label: trophyEvent.label, to: route('manage.results', { groupId: trophyEvent.id, danceId: OVERALL }) }
+    if (trophyEvent) {
+      return { label: slot.danceId === CALLBACKS ? `${trophyEvent.label} · Callbacks` : trophyEvent.label, to: route('manage.results', { groupId: trophyEvent.id, danceId: slot.danceId }) }
+    }
     const group = m.groupsById.value.get(slot.groupId)
     const dance = m.dancesById.value.get(slot.danceId)
     const what = slot.danceId === CALLBACKS ? 'Callbacks' : slot.danceId === OVERALL ? 'Overall' : (dance?.name?.trim() || dance?.label)

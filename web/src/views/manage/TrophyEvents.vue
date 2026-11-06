@@ -6,8 +6,24 @@ import SwitchField from '@/components/admin/SwitchField.vue'
 import { useManagedCompetition, type MTrophyEvent, type MGroup } from '@/composables/admin/useManagedCompetition'
 import type { CollectionSpec } from '@/lib/admin/collection'
 import { OVERALL, parsePlacings } from '@/lib/admin/results'
+import { forEachScheduleDance } from '@/lib/admin/scheduleTree'
+import { idList } from '@/lib/schedule'
+import { isDanced } from '@/lib/trophyEvents'
 
 const m = useManagedCompetition()
+
+/** Writes that take these trophy events off every platform they're on in the schedule. */
+function offSchedule(ids: string[]): Record<string, unknown> {
+  const updates: Record<string, unknown> = {}
+  forEachScheduleDance(m.schedule.value, (path, item) => {
+    for (const [pid, p] of Object.entries(item.platforms ?? {})) {
+      const groups = idList(p?.orderedGroupIds)
+      const kept = groups.filter((g) => !ids.includes(g))
+      if (kept.length !== groups.length) updates[`${path}/platforms/${pid}/orderedGroupIds`] = kept.length ? kept : null
+    }
+  })
+  return updates
+}
 
 const PRESETS = ['Dancer of the Day', 'Most Points']
 
@@ -40,19 +56,32 @@ const spec: CollectionSpec<MTrophyEvent> = {
       },
       hint: m.sponsors.value.length ? undefined : 'Add sponsors under Staff first.',
     },
+    {
+      key: 'danceId',
+      label: 'Dance',
+      kind: 'select',
+      placeholder: 'None',
+      options: () => m.dances.value.map((d) => ({ value: d.id, label: d.label })),
+      hint: 'Only for one danced on its own, like a Trophy Fling. It goes on the schedule like an age group.',
+    },
   ],
+  // A new dance: its place on the schedule was under the old one's row.
+  onChange: (a, key, value) => (key === 'danceId' && (value || undefined) !== a.danceId ? offSchedule([a.id]) : {}),
   title: (a) => a.label,
   subtitle: (a) => {
     if (!a.openTo) return 'No age groups yet'
     const n = m.trophyEventDancers(a.id).length
     // Dancers first, as on age groups here and in Results.
-    return `${n} ${n === 1 ? 'dancer' : 'dancers'} · ${a.openTo}`
+    const dance = isDanced(a) ? m.dancesById.value.get(a.danceId!)?.label : null
+    return [`${n} ${n === 1 ? 'dancer' : 'dancers'}`, a.openTo, dance].filter(Boolean).join(' · ')
   },
   searchText: (a) => a.trophy ?? '',
   presets: PRESETS.map((name) => ({ label: name, values: { name } })),
   presetsLead: 'Rename them any time.',
   impact: (ids) => {
-    const updates: Record<string, unknown> = {}
+    // And off the schedule, where a danced one stands among the age groups.
+    const updates: Record<string, unknown> = offSchedule(ids)
+    const scheduled = Object.keys(updates).length > 0
     let placed = 0
     for (const id of ids) {
       const stored = m.results.value[id]
@@ -61,6 +90,7 @@ const spec: CollectionSpec<MTrophyEvent> = {
     }
     // Only warn when there are placings to lose (not for a "No results" mark).
     const warnings = placed ? [`${ids.length === 1 ? 'Its' : 'Their'} placings will be deleted too.`] : []
+    if (scheduled) warnings.push(`Also removes ${ids.length === 1 ? 'it' : 'them'} from the schedule.`)
     return { updates, warnings }
   },
   emptyHint: 'A trophy event is one trophy for dancers from several age groups, like Dancer of the Day. Choose who can win it here, then pick the winners in Results.',
@@ -108,8 +138,8 @@ const partly = (a: MTrophyEvent, b: Block) => {
     <template #detail-extra="{ item }">
       <section class="space-y-3">
         <div>
-          <h3 class="text-heading">Who can win</h3>
-          <p class="text-muted-foreground text-sm">The age groups whose dancers can be picked for it in Results.</p>
+          <h3 class="text-heading">Age groups</h3>
+          <p class="text-muted-foreground text-sm">Whose dancers can win it. Results use this.</p>
         </div>
         <ul v-if="blocks.length" class="rows-engraved">
           <template v-for="b in blocks" :key="b.id">
@@ -133,6 +163,7 @@ const partly = (a: MTrophyEvent, b: Block) => {
           <RouterLink :to="{ name: 'manage.groups', params: { competitionId: m.competitionId.value } }" class="text-primary font-semibold">Add age groups</RouterLink>
         </p>
       </section>
+
     </template>
   </CollectionEditor>
 </template>

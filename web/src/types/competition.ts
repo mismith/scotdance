@@ -116,6 +116,13 @@ export interface TrophyEvent {
   sponsor?: string
   /** The age groups whose dancers can win it. */
   groupIds?: Record<string, boolean>
+  /**
+   * The dance, when it's danced on its own (a Trophy Fling, a dance-off).
+   * Otherwise it's decided from the age groups' results. A danced one goes on
+   * the schedule like an age group (its id among a platform's orderedGroupIds),
+   * with callbacks like one, at results[trophyEventId].callbacks.
+   */
+  danceId?: string
   _order?: number
 }
 

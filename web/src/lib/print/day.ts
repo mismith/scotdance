@@ -1,5 +1,6 @@
 import { events, dances as eventDances, isSpacerId, platformLabel } from '@/lib/schedule'
-import type { EnrichedGroup, StaffMember } from '@/types/competition'
+import { trophyEventEntrants } from '@/lib/trophyEvents'
+import type { EnrichedGroup, EnrichedTrophyEvent, StaffMember } from '@/types/competition'
 import { shortName } from '@/lib/print/people'
 import { dancerCounts, groupDancers, sessions } from '@/lib/print/program'
 import type { PrintSource } from '@/lib/print/source'
@@ -20,9 +21,18 @@ function dancingOrder(src: PrintSource, groupId: string, danceId: string): { ord
   return { order: drawn, drawn: true, late: numbers.filter((n) => !drawn.includes(n)) }
 }
 
+/** A trophy event danced on its own, as a row: whoever dances it (those called back, once they are), in number order. */
+function trophyEventRow(src: PrintSource, a: EnrichedTrophyEvent): PlatformDance['rows'][number] {
+  const dancers = trophyEventEntrants(a, src.dancers, src.results)
+  const numbers = [...new Set(dancers.filter((d) => d.number != null).map((d) => String(d.number)))]
+  const order = numbers.sort((x, y) => Number(x) - Number(y) || x.localeCompare(y))
+  return { group: a.fullName, count: new Set(dancers.map((d) => `${d.number ?? ''}|${d.fullName.trim().toLowerCase()}`)).size, order, drawn: false, late: [] }
+}
+
 /** One page (or more) per platform per session: every dance it runs, who judges, and who dances in what order. */
 export function platformUnits(src: PrintSource): Unit[] {
   const groupsById = new Map<string, EnrichedGroup>(src.groups.map((g) => [g.id, g]))
+  const trophyEventsById = new Map(src.trophyEvents.map((a) => [a.id, a]))
   const staffById = new Map(src.staff.map((m) => [m.id, m]))
   const dancesById = new Map(src.dances.map((d) => [d.id, d]))
   const counts = dancerCounts(src)
@@ -37,9 +47,12 @@ export function platformUnits(src: PrintSource): Unit[] {
           if (!d.danceId || !slot) continue
           const rows = (slot.orderedGroupIds ?? [])
             .filter((id) => !isSpacerId(id))
-            .map((id) => groupsById.get(id))
-            .filter((g): g is EnrichedGroup => !!g)
-            .map((g) => ({ group: g.fullName || 'Age group', count: counts.get(g.id) ?? 0, ...dancingOrder(src, g.id, d.danceId!) }))
+            .flatMap((id) => {
+              const g = groupsById.get(id)
+              if (g) return [{ group: g.fullName || 'Age group', count: counts.get(g.id) ?? 0, ...dancingOrder(src, g.id, d.danceId!) }]
+              const a = trophyEventsById.get(id)
+              return a ? [trophyEventRow(src, a)] : []
+            })
           if (!rows.length) continue
           const judges = (slot.orderedJudgeIds ?? [])
             .map((id) => staffById.get(id))

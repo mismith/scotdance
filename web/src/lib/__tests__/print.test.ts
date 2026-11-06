@@ -192,6 +192,76 @@ describe('trophy events', () => {
   })
 })
 
+describe('trophy events danced on their own', () => {
+  // A Trophy Fling for the Beginner age groups (everyone dances), and a dance-off only some do.
+  const danced = {
+    tf: { name: 'Trophy Fling', trophy: 'Fling Cup', groupIds: { g7: true, g8: true }, danceId: 'fl', _order: 0 },
+    off: { name: 'Sword Dance-off', groupIds: { g7: true, g8: true }, danceId: 'sw', _order: 1 },
+    dd: { name: 'Dancer of the Day', groupIds: { g7: true }, _order: 2 },
+  }
+  const scheduleWith = (ids: string[]) => ({
+    days: {
+      d1: {
+        order: 0,
+        blocks: {
+          b1: {
+            order: 0,
+            name: 'Morning',
+            events: {
+              e1: {
+                order: 0,
+                name: 'Beginner',
+                dances: { x1: { order: 0, danceId: 'fl', platforms: { pa: { orderedGroupIds: ['g7', ...ids], orderedJudgeIds: ['j1'] } } } },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  const withDanced = (ids: string[], extra: Record<string, unknown> = {}) => source({ trophyEvents: danced, schedule: scheduleWith(ids), ...extra })
+
+  it('prints on the schedule grid like an age group, by name', () => {
+    const row = scheduleUnits(withDanced(['tf', 'off'])).find((u): u is UnitOf<'gridRow'> => u.kind === 'gridRow')!.row
+    if (row.kind !== 'dance') throw new Error()
+    expect(row.cells[0]!.lines).toEqual([{ group: 'Beginner 7' }, { group: 'Trophy Fling' }, { group: 'Sword Dance-off' }])
+  })
+
+  it('names its dance on its program block, only when it has one', () => {
+    const units = trophyEventUnits(withDanced([]), 'six')
+    expect(units.map((u) => (u as UnitOf<'trophyEvent'>).trophyEvent.dance)).toEqual(['Highland Fling (4)', 'Sword (2&1)', undefined])
+  })
+
+  it('lists everyone who can win it on the platform sheet, in number order', () => {
+    const fling = platformUnits(withDanced(['tf'])).find((u): u is UnitOf<'platformDance'> => u.kind === 'platformDance')!
+    expect(fling.dance.rows[1]).toEqual({ group: 'Trophy Fling', count: 3, order: ['101', '102', '103'], drawn: false, late: [] })
+  })
+
+  it('lists just those called back, by entry, once they are', () => {
+    // Dancers a and c are called back (a number-tied one still counts).
+    const s = withDanced(['off'], { results: { off: { callbacks: ['c', 'a:tie'] } } })
+    const row = platformUnits(s).find((u): u is UnitOf<'platformDance'> => u.kind === 'platformDance')!.dance.rows[1]
+    expect(row).toEqual({ group: 'Sword Dance-off', count: 2, order: ['102', '103'], drawn: false, late: [] })
+  })
+
+  it('leaves out a trophy event that is not on the platform', () => {
+    const fling = platformUnits(withDanced(['dd'])).find((u): u is UnitOf<'platformDance'> => u.kind === 'platformDance')!
+    expect(fling.dance.rows.map((r) => r.group)).toEqual(['Beginner 7', 'Dancer of the Day'])
+  })
+
+  it('flags one that is danced but not on the schedule, not one decided from results or already on it', () => {
+    expect(printChecks(withDanced(['tf', 'off']), 'program').find((c) => c.id === 'unscheduled')?.text).toBe('Primary 4 & 5, Beginner 8 & 9 aren’t on the schedule')
+    const missing = printChecks(withDanced(['tf']), 'program').find((c) => c.id === 'unscheduled')?.text
+    expect(missing).toBe('Primary 4 & 5, Beginner 8 & 9, Sword Dance-off aren’t on the schedule')
+  })
+
+  it('does not call a trophy event on the schedule an unknown age group', () => {
+    const ids = printChecks(withDanced(['tf', 'off']), 'day').map((c) => c.id)
+    expect(ids).not.toContain('gone-dance')
+    expect(ids).not.toContain('no-judge')
+  })
+})
+
 describe('places on a blank grid', () => {
   it('is six by default, never more than there are dancers', () => {
     expect([1, 5, 6, 30].map((n) => placesFor(n))).toEqual([1, 5, 6, 6])
@@ -430,6 +500,18 @@ describe('the Word file', () => {
     expect(doc).toContain('>Open to Beginner 7<')
     expect(doc).toContain('>Winners<')
     expect(doc).toContain('>Day Cup<')
+  })
+
+  it('writes a danced trophy event’s winners on its dance’s row, and its dancers on the platform sheet', async () => {
+    const trophyEvents = { tf: { name: 'Trophy Fling', groupIds: { g7: true }, danceId: 'fl' }, off: { name: 'Sword Dance-off', groupIds: { g7: true }, danceId: 'sw' } }
+    const schedule = {
+      days: { d1: { order: 0, blocks: { b1: { order: 0, events: { e1: { order: 0, dances: { x1: { order: 0, danceId: 'fl', platforms: { pa: { orderedGroupIds: ['tf', 'off'], orderedJudgeIds: ['j1'] } } } } } } } } } },
+    }
+    const s = source({ trophyEvents, schedule })
+    const program = await xml(await documentDocx(trophyEventUnits(s, 'six'), { ...opts, doc: 'program' }))
+    expect(program).toContain('>Highland Fling (4)<')
+    const day = await xml(await documentDocx(platformUnits(s), { ...opts, doc: 'day' }))
+    expect(day).toContain('>Sword Dance-off<')
   })
 
   it('leaves page numbers off when they’re switched off', async () => {

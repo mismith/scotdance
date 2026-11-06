@@ -4,6 +4,7 @@ import { findGroupDances } from '@/lib/results'
 import { blocks, dances as eventDances, dayLabel, days, events, idList, isSpacerId, platformLabel } from '@/lib/schedule'
 import { clockMinutes } from '@/lib/scheduleProgress'
 import { stripTags } from '@/lib/stripTags'
+import { isDanced } from '@/lib/trophyEvents'
 import { groupHasOverall, type EnrichedDancer, type EnrichedGroup, type ScheduleBlock, type StaffMember } from '@/types/competition'
 import { isType, person, shortName, sponsorName } from '@/lib/print/people'
 import { placesFor, type PlacesRule } from '@/lib/print/places'
@@ -101,6 +102,7 @@ type Session = ReturnType<typeof sessions>[number]
 /** One session's platform grid, on a page of its own. */
 export function sessionUnits(src: PrintSource, s: Session): Unit[] {
   const groupsById = new Map<string, EnrichedGroup>(src.groups.map((g) => [g.id, g]))
+  const trophyEventsById = new Map(src.trophyEvents.map((a) => [a.id, a]))
   const staffById = new Map(src.staff.map((m) => [m.id, m]))
   const dancesById = new Map(src.dances.map((d) => [d.id, d]))
   const evs = events(s.block)
@@ -135,7 +137,10 @@ export function sessionUnits(src: PrintSource, s: Session): Unit[] {
           const lines = (slot.orderedGroupIds ?? []).flatMap((id) => {
             if (isSpacerId(id)) return [null]
             const g = groupsById.get(id)
-            return g ? [{ group: g.fullName || 'Age group' }] : []
+            if (g) return [{ group: g.fullName || 'Age group' }]
+            // A trophy event danced on its own sits here like an age group.
+            const a = trophyEventsById.get(id)
+            return a ? [{ group: a.fullName }] : []
           })
           const judges = (slot.orderedJudgeIds ?? [])
             .map((id) => staffById.get(id))
@@ -251,11 +256,12 @@ export function ageGroupUnits(src: PrintSource, places: PlacesRule, groups: Enri
 /**
  * Each trophy event with an age group switched on: its name, who it's open to
  * (not a dancer list: they're the age groups' own), a grid to write the
- * winners in, and its trophy. They're short, so they share pages, starting
+ * winners in (named for its dance, where it's danced), and its trophy. They're short, so they share pages, starting
  * on a fresh one.
  */
 export function trophyEventUnits(src: PrintSource, places: PlacesRule): Unit[] {
   const staffById = new Map(src.staff.map((m) => [m.id, m]))
+  const dancesById = new Map(src.dances.map((d) => [d.id, d]))
   return src.trophyEvents
     .filter((a) => a.groups.length)
     .map<Unit>((a, i) => ({
@@ -267,6 +273,7 @@ export function trophyEventUnits(src: PrintSource, places: PlacesRule): Unit[] {
         title: a.fullName,
         openTo: a.openTo,
         places: placesFor(a.groups.reduce((n, g) => n + groupDancers(src, g.id).length, 0), places),
+        dance: (isDanced(a) && dancesById.get(a.danceId!)?.fullName) || undefined,
         trophy: a.trophy?.trim() || undefined,
         sponsor: sponsorName(a.sponsor, staffById),
       },

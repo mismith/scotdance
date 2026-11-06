@@ -90,11 +90,16 @@ const teamWins = computed(() =>
     .map((d) => ({ d, placings: [...d.dances.filter(isWon).map((s) => ({ s, id: s.dance.id, dance: s.dance.fullName || s.dance.name })), ...(isWon(d.overall) ? [{ s: d.overall!, id: 'overall', dance: 'Overall' }] : [])] }))
     .filter((t) => t.placings.length),
 )
-const upcoming = computed(() => dances.value.filter(({ s }) => s.state === 'upcoming'))
+// A trophy event danced on its own is on the schedule like a dance.
+const dancedTrophyEvents = computed(() => shown.value.flatMap((d) => d.trophyEvents.filter((s) => s.danced).map((s) => ({ d, s }))))
+const upcoming = computed(() => {
+  const list = [...dances.value, ...dancedTrophyEvents.value].filter(({ s }) => s.state === 'upcoming')
+  return dancedTrophyEvents.value.length ? list.sort((a, b) => (a.s.slot?.seq ?? Infinity) - (b.s.slot?.seq ?? Infinity)) : list
+})
 // Danced, results not posted yet; or every dance in and Overall still to come.
 const waiting = computed(
   () =>
-    dances.value.some(({ s }) => s.state === 'waiting') ||
+    [...dances.value, ...dancedTrophyEvents.value].some(({ s }) => s.state === 'waiting') ||
     (!upcoming.value.length && shown.value.some((d) => d.overall?.state === 'later' && d.resultsIn > 0)),
 )
 // Placings, Overall or championship points: the ribbons say it.
@@ -320,15 +325,33 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
             </RouterLink>
           </li>
           <!-- Trophies across age groups they can win, after Overall and worded
-               the same way; each opens its page. -->
+               the same way; each opens its page. One danced on its own is
+               scheduled like a dance, with its dance under its name. -->
           <li v-for="s in d.trophyEvents" :key="s.dance.id">
             <RouterLink
               :to="{ name: 'competition.trophyEvent', params: { competitionId, trophyEventId: s.dance.id } }"
-              :class="['press-row focus-inset', ROW, rowSize]"
+              :class="[
+                'press-row focus-inset',
+                s.danced ? ['relative flex flex-wrap items-center gap-x-3 gap-y-1', rowSize] : [ROW, rowSize],
+              ]"
             >
-              <span :class="['min-w-0 flex-1 font-semibold break-words', lg ? 'text-base' : 'text-callout']">{{ s.dance.fullName }}</span>
-              <DanceStatusChip v-if="s.state !== 'later'" :status="s" :fresh="fresh === `${d.dancer.id}:${s.dance.id}`" trophy />
+              <span :class="['min-w-0 flex-1 break-words', s.danced && 'min-w-[9rem]']">
+                <span :class="['block font-semibold', lg ? 'text-base' : 'text-callout']">{{ s.dance.fullName }}</span>
+                <span v-if="s.danceName" class="text-muted-foreground block text-sm">{{ s.danceName }}</span>
+              </span>
+              <DanceStatusChip
+                v-if="s.state !== 'later'"
+                :class="s.danced && 'ml-auto'"
+                :status="s"
+                :fresh="fresh === `${d.dancer.id}:${s.dance.id}`"
+                trophy
+              />
               <span v-else class="text-muted-foreground shrink-0 text-sm">After all dances</span>
+              <span v-if="detail(s).length" class="text-muted-foreground basis-full text-sm">
+                <template v-for="(bit, n) in detail(s)" :key="bit">
+                  <span class="inline-block">{{ bit }}{{ n < detail(s).length - 1 ? '&nbsp;·' : '' }}</span>{{ ' ' }}
+                </template>
+              </span>
             </RouterLink>
           </li>
         </ul>

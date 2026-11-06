@@ -105,7 +105,10 @@ function elsewhere(kind: 'group' | 'judge', id: string) {
   return where.length ? `On ${where.join(' and ')}` : null
 }
 const choices = computed(() => ({
-  group: b.m.groups.value.filter((g) => b.eligible(props.danceId, g.id)).map((g) => ({ id: g.id, label: g.label, on: groupIds.value.includes(g.id) })),
+  // (Then any trophy event danced as this dance.)
+  group: [...b.m.groups.value, ...b.dancedTrophyEvents.value]
+    .filter((g) => b.eligible(props.danceId, g.id))
+    .map((g) => ({ id: g.id, label: g.label, on: groupIds.value.includes(g.id) })),
   judge: b.judges.value.map((j) => ({ id: j.id, label: j.label, on: judgeIds.value.includes(j.id) })),
 }))
 function flip(kind: 'group' | 'judge', id: string, on: boolean) {

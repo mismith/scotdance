@@ -466,8 +466,9 @@ async function entriesWithFollowers(db: Db, competitionId: string, groupId: stri
 }
 
 /**
- * Who a results key is about: a trophy event's name and everyone entered in any
- * of its age groups, or (when the key is an age group) that group's entries.
+ * Who a results key is about: a trophy event's name and everyone dancing it
+ * (entered in any of its age groups and, when it's danced and has callbacks,
+ * called back), or (when the key is an age group) that group's entries.
  * Trophy event ids are push keys, never an age group's.
  */
 async function entriesFor(db: Db, competitionId: string, groupId: string) {
@@ -475,24 +476,28 @@ async function entriesFor(db: Db, competitionId: string, groupId: string) {
   if (!trophyEvent || typeof trophyEvent !== 'object') {
     return { trophyEvent: null, entries: await entriesWithFollowers(db, competitionId, groupId) };
   }
-  const groupIds = Object.keys((trophyEvent as { groupIds?: Record<string, unknown> }).groupIds || {});
-  const lists = await Promise.all(groupIds.map((id) => entriesWithFollowers(db, competitionId, id)));
-  const byEntry = new Map(lists.flat().map((e) => [e.entryId, e]));
-  return { trophyEvent: trophyEvent as { name?: string }, entries: [...byEntry.values()] };
+  const te = trophyEvent as { name?: string; danceId?: string; groupIds?: Record<string, unknown> };
+  const [lists, callbacks] = await Promise.all([
+    Promise.all(Object.keys(te.groupIds || {}).map((id) => entriesWithFollowers(db, competitionId, id))),
+    te.danceId ? db.child(`competitions:data/${competitionId}/results/${groupId}/${CALLBACKS_ID}`).get().then((s) => s.val()) : null,
+  ]);
+  const calledBack = Array.isArray(callbacks) ? parsePlacings(callbacks) : null;
+  const byEntry = new Map(lists.flat().filter((e) => !calledBack?.size || calledBack.has(e.entryId)).map((e) => [e.entryId, e]));
+  return { trophyEvent: te, entries: [...byEntry.values()] };
 }
 
 /**
- * A trophy event's news is a win: only placed dancers, once per person (one
- * entered in two age groups has two entries), at their best place.
+ * A trophy event's dancers, once per person (one entered in two age groups
+ * has two entries), at their best place, if any.
  */
-function placedPeople(entries: Awaited<ReturnType<typeof entriesWithFollowers>>, placings: Map<string, number>) {
-  const best = new Map<string, { entry: Entry; dancerId: string; place: number; followers: string[] }>();
+function byPerson(entries: Awaited<ReturnType<typeof entriesWithFollowers>>, placings: Map<string, number>) {
+  const best = new Map<string, { entry: Entry; dancerId: string; place?: number; followers: string[] }>();
   entries.forEach(({ entryId, entry, followers }) => {
+    if (!followers.length) return;
     const place = placings.get(entryId);
     const dancerId = entry.dancerId as string;
-    if (!place || !followers.length) return;
     const seen = best.get(dancerId);
-    if (!seen || place < seen.place) best.set(dancerId, { entry, dancerId, place, followers });
+    if (!seen || (place && (!seen.place || place < seen.place))) best.set(dancerId, { entry, dancerId, place, followers });
   });
   return [...best.values()];
 }
@@ -522,11 +527,8 @@ export function getOnResultsWritten(db: Db, emulated: boolean, schedule: (task: 
     // Championship mode switched on before anyone's placed: nothing to say yet.
     if (!parsePlacings(after).size) return;
     if (!(await liveCompetition(db, competitionId, emulated))) return;
-    const { trophyEvent, entries } = await entriesFor(db, competitionId, groupId);
-    const worthTelling = trophyEvent
-      ? placedPeople(entries, parsePlacings(after)).length > 0
-      : entries.some((e) => e.followers.length);
-    if (!worthTelling) return;
+    const { entries } = await entriesFor(db, competitionId, groupId);
+    if (!entries.some((e) => e.followers.length)) return;
     await schedule({ competitionId, groupId, danceId, results: after });
   };
 }
@@ -534,8 +536,8 @@ export function getOnResultsWritten(db: Db, emulated: boolean, schedule: (task: 
 /**
  * A minute after a save: if the dance's results still stand as saved, its
  * followers hear. Each placed dancer's, their place; the rest of the age
- * group's, that results are in. A trophy event's tell only the placed (once
- * per person). Changed since, a later save's task has it.
+ * group's (or of those dancing a trophy event, once per person), that
+ * results are in. Changed since, a later save's task has it.
  */
 export function getOnResultsSettled(db: Db, app: App, emulated: boolean) {
   return async ({ competitionId, groupId, danceId, results }: SettleTask) => {
@@ -574,7 +576,7 @@ export function getOnResultsSettled(db: Db, app: App, emulated: boolean) {
     const wants = wanted(db, 'results');
 
     if (trophyEvent) {
-      const people = await Promise.all(placedPeople(entries, placings).map(async ({ entry, dancerId, place, followers }) => {
+      const people = await Promise.all(byPerson(entries, placings).map(async ({ entry, dancerId, place, followers }) => {
         const allowed = await Promise.all(followers.map(wants));
         return followers
           .filter((_, i) => allowed[i])
@@ -586,7 +588,7 @@ export function getOnResultsSettled(db: Db, app: App, emulated: boolean) {
             link,
             // By person: their best place changing replaces the alert, never doubles it.
             key: `${competitionId}/${groupId}/${danceId}/${uid}_${dancerId}`,
-            signature: String(place),
+            signature: String(place ?? 'in'),
           }));
       }));
       await deliver(db, app, people.flat(), emulated);

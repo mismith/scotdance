@@ -71,3 +71,20 @@ describe('scheduleProgress', () => {
     expect(progress({ g5: { fling: ['x'] } }).events.get('pre')).toBe('done')
   })
 })
+
+describe('trophy events on the schedule', () => {
+  // A danced trophy event is a turn among an event's age groups, with its one list of placings.
+  const withTe: Schedule = { days: { d: { order: 0, blocks: { b: { order: 0, events: { e: event(0, ['g1', 'te1']) } } } } } }
+  const count = (results: ResultsTree, ids: string[] = ['te1']) =>
+    scheduleProgress({ schedule: withTe, results, groupIds: new Set(['g1']), trophyEventIds: new Set(ids), date: '2026-10-03' }).counts.get('e')
+
+  it('counts its turn, posted by its one list whatever the dance', () => {
+    expect(count({})).toEqual({ posted: 0, total: 2 })
+    expect(count({ te1: { overall: ['x'] } })).toEqual({ posted: 1, total: 2 })
+    expect(count({ te1: { fling: ['x'] } })).toEqual({ posted: 0, total: 2 })
+  })
+
+  it('leaves it out when it is not danced', () => {
+    expect(count({}, [])).toEqual({ posted: 0, total: 1 })
+  })
+})

@@ -69,8 +69,12 @@ const spec: CollectionSpec<MDance> = {
         scheduled = true
       }
     })
+    // Trophy events danced as it go back to being decided by the age groups' results.
+    const trophyEvents = m.trophyEvents.value.filter((t) => t.danceId && ids.includes(t.danceId))
+    for (const t of trophyEvents) updates[`trophyEvents/${t.id}/danceId`] = null
     const warnings: string[] = []
     if (withResults) warnings.push(`${ids.length === 1 ? 'Its' : 'Their'} results will be deleted too.`)
+    if (trophyEvents.length) warnings.push(`${trophyEvents.map((t) => t.label).join(', ')} won’t be danced any more.`)
     if (scheduled) warnings.push(`Also removes ${ids.length === 1 ? 'it' : 'them'} from the schedule.`)
     if (Object.keys(lasting).length) warnings.push(sheetsGoForGood(ids.length))
     return { updates, warnings, lasting }

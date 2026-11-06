@@ -273,13 +273,14 @@ describe('result alerts', () => {
     }
     const overall = (id: string) => `competitions:data/c1/results/${id}/overall`
 
-    it('tells followers of placed dancers only, and says nothing to the rest of its age groups', async () => {
+    it('tells followers where their dancer placed, and the rest that results are in, as a dance does', async () => {
       const { save, results, log, said } = setup(withTrophyEvents())
       await save({ [overall('agg1')]: ['e2', 'e1'] }, results())
-      // u4 follows Iona (unplaced), u3 has live results off, u5 all alerts: nothing for them.
+      // u4 follows Iona (unplaced); u3 has live results off, u5 all alerts: nothing for them.
       expect(said()).toEqual([
         'u1: Ailsa placed 2nd (Premier Dancer of the Day)',
         'u2: Mairi placed 1st (Premier Dancer of the Day)',
+        'u4: Premier Dancer of the Day results are in (Calgary Highland Games)',
       ])
       expect(log().find((m) => m.uid === 'u1')).toMatchObject({
         body: 'Premier Dancer of the Day · Calgary Highland Games',
@@ -293,7 +294,12 @@ describe('result alerts', () => {
       const { save, results, said } = setup(withTrophyEvents())
       await save({ [overall('agg2')]: ['e4', 'e1'] }, results())
       // u1 follows both placed dancers: one alert for each.
-      expect(said()).toEqual(['u1: Ailsa placed 2nd (Overall Trophy)', 'u1: Kirsty placed 1st (Overall Trophy)'])
+      expect(said()).toEqual([
+        'u1: Ailsa placed 2nd (Overall Trophy)',
+        'u1: Kirsty placed 1st (Overall Trophy)',
+        'u2: Overall Trophy results are in (Calgary Highland Games)',
+        'u4: Overall Trophy results are in (Calgary Highland Games)',
+      ])
     })
 
     it('sends one alert for a person entered twice, at their best place', async () => {
@@ -302,29 +308,40 @@ describe('result alerts', () => {
       const { save, results, said } = setup(data)
       const handler = results()
       await save({ [overall('agg2')]: ['e6', 'e2', 'e1'] }, handler)
-      expect(said()).toEqual(['u1: Ailsa placed 1st (Overall Trophy)', 'u2: Mairi placed 2nd (Overall Trophy)'])
+      // (u1 also follows Kirsty, not placed.)
+      expect(said()).toEqual([
+        'u1: Ailsa placed 1st (Overall Trophy)',
+        'u1: Overall Trophy results are in (Calgary Highland Games)',
+        'u2: Mairi placed 2nd (Overall Trophy)',
+        'u4: Overall Trophy results are in (Calgary Highland Games)',
+      ])
       // Their best place changing replaces it (the same alert on the phone), not a second for each entry.
       await save({ [overall('agg2')]: ['e2', 'e1', 'e6'] }, handler)
-      expect(said().filter((m) => m.startsWith('u1:'))).toEqual([
+      expect(said().filter((m) => m.startsWith('u1: Ailsa'))).toEqual([
         'u1: Ailsa placed 1st (Overall Trophy)',
         'u1: Ailsa placed 2nd (Overall Trophy)',
       ])
     })
 
-    it('queues nothing when nobody placed is followed', async () => {
+    it('queues nothing when nobody it\'s open to is followed', async () => {
       const data = withTrophyEvents()
-      data['competitions:data'].c1.trophyEvents.agg3 = { name: 'Senior Trophy', groupIds: { g1: true, g2: true } }
-      // Followed dancers are e1-e4 (not e5); only e5, unlinked, and a dancer in no age group place.
+      // Followed dancers are e1-e4, in g1 and g2; nobody in g3.
+      data['competitions:data'].c1.trophyEvents.agg4 = { name: 'Senior Trophy', groupIds: { g3: true } }
       const queue: SettleTask[] = []
       const { save, results, said } = setup(data)
-      await save({ [overall('agg3')]: ['e5'] }, results(true, queue))
-      expect(queue).toEqual([])
-      expect(said()).toEqual([])
-      // Someone outside its age groups, followed or not.
-      data['competitions:data'].c1.trophyEvents.agg4 = { name: 'Senior Trophy', groupIds: { g2: true } }
       await save({ [overall('agg4')]: ['e1'] }, results(true, queue))
       expect(queue).toEqual([])
       expect(said()).toEqual([])
+    })
+
+    it('tells only those called back, when a danced one has callbacks', async () => {
+      const data = withTrophyEvents()
+      data['competitions:data'].c1.trophyEvents.agg5 = { name: 'Trophy Fling', danceId: 'fling', groupIds: { g1: true, g2: true } }
+      data['competitions:data'].c1.results = { agg5: { callbacks: ['e1', 'e4'] } }
+      const { save, results, said } = setup(data)
+      await save({ [overall('agg5')]: ['e4'] }, results())
+      // Mairi (e2) and Iona (e3) weren't called back: their followers hear nothing.
+      expect(said()).toEqual(['u1: Kirsty placed 1st (Trophy Fling)', 'u1: Trophy Fling results are in (Calgary Highland Games)'])
     })
 
     it('sends each placing once, and a changed one again', async () => {

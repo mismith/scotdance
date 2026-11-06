@@ -1,5 +1,6 @@
 import { blocks, dances as eventDances, days, events } from '@/lib/schedule'
 import { isPosted } from '@/lib/results'
+import { turnResultId } from '@/lib/trophyEvents'
 import { daysFromToday } from '@/lib/format'
 import type { ResultsTree, Schedule, ScheduleEvent } from '@/types/competition'
 
@@ -36,7 +37,16 @@ export function clockMinutes(text: string | null | undefined): number | null {
   return h24 ? Number(h24[1]) * 60 + Number(h24[2]) : null
 }
 
-export function eventCount(event: Pick<ScheduleEvent, 'dances'>, results: ResultsTree, groupIds: Set<string>): EventCount {
+/**
+ * `trophyEventIds`: the trophy events danced on the schedule, which are turns
+ * like an age group's, with their placings in one list.
+ */
+export function eventCount(
+  event: Pick<ScheduleEvent, 'dances'>,
+  results: ResultsTree,
+  groupIds: Set<string>,
+  trophyEventIds: ReadonlySet<string> = new Set(),
+): EventCount {
   let posted = 0
   let total = 0
   for (const sd of eventDances(event)) {
@@ -44,9 +54,9 @@ export function eventCount(event: Pick<ScheduleEvent, 'dances'>, results: Result
     for (const slot of Object.values(sd.platforms)) {
       for (const gid of slot.orderedGroupIds ?? []) {
         // Spacers (gaps on a platform) and deleted age groups have no results to wait for.
-        if (!groupIds.has(gid)) continue
+        if (!groupIds.has(gid) && !trophyEventIds.has(gid)) continue
         total++
-        if (isPosted(results?.[gid]?.[sd.danceId])) posted++
+        if (isPosted(results?.[gid]?.[turnResultId(gid, sd.danceId, trophyEventIds)])) posted++
       }
     }
   }
@@ -57,6 +67,8 @@ export function scheduleProgress(opts: {
   schedule: Schedule | null
   results: ResultsTree
   groupIds: Set<string>
+  /** Trophy events danced on the schedule (their turns count too). */
+  trophyEventIds?: ReadonlySet<string>
   /** The competition's (first) date: days without their own follow on from it. */
   date: number | string | null | undefined
 }): ScheduleProgress {
@@ -70,7 +82,7 @@ export function scheduleProgress(opts: {
 
     for (const block of blocks(day))
       for (const event of events(block)) {
-        const count = eventCount(event, opts.results, opts.groupIds)
+        const count = eventCount(event, opts.results, opts.groupIds, opts.trophyEventIds)
         progress.counts.set(event.id, count)
         if (count.total && count.posted >= count.total) progress.events.set(event.id, 'done')
       }

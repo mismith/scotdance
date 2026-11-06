@@ -14,8 +14,9 @@ import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
 import { oncePerPerson, useFollowing } from '@/composables/useFollowing'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
-import { TROPHY_EVENT_RESULT } from '@/lib/trophyEvents'
-import { competitionPhase } from '@/lib/dancerDay'
+import { TROPHY_EVENT_RESULT, calledBackIds, isDanced, trophyEventEntrants } from '@/lib/trophyEvents'
+import { competitionPhase, scheduleIndex } from '@/lib/dancerDay'
+import { days, platformLabel } from '@/lib/schedule'
 import { heroTitle } from '@/lib/heroTitle'
 import { useMorph } from '@/lib/morph'
 import { getDanceResults } from '@/lib/results'
@@ -24,12 +25,28 @@ import { staffMemberName, type EnrichedDancer, type EnrichedGroup } from '@/type
 // One trophy event: a trophy across age groups, with its one list of placings
 // (entered by the organiser, never worked out). The page is a short Group:
 // a header, then the list, with each dancer's own age group under their name
-// since the list mixes them.
+// since the list mixes them. One danced on its own (a Trophy Fling) says its
+// dance and where it's on, and before it's danced, who's dancing it.
 
 const route = useRoute()
 const setHeader = injectInfoHeaderSetter()
-const { competitionId, competition, groups, trophyEvents, dancers, results, schedule, staff, loadDancers, loadResults, loadSchedule, loadStaff, resultsHidden } =
-  useCompetition()
+const {
+  competitionId,
+  competition,
+  groups,
+  trophyEvents,
+  dances,
+  dancers,
+  results,
+  schedule,
+  platforms,
+  staff,
+  loadDancers,
+  loadResults,
+  loadSchedule,
+  loadStaff,
+  resultsHidden,
+} = useCompetition()
 const following = useFollowing()
 const isFresh = useFreshPlacings()
 
@@ -42,13 +59,36 @@ usePageTitle(() => [trophyEvent.value?.fullName, competition.value?.name])
 
 const phase = computed(() => competitionPhase(competition.value?.date, schedule.value))
 
-// Who can win it, and which of them are yours.
+// Who can win it (or, when it's danced, who's dancing it), and which of them are yours.
 const eligible = computed(() => {
-  const on = trophyEvent.value?.groupIds
-  return dancers.value
-    .filter((d) => d.group && on?.[d.group.id])
-    .sort((a, b) => (a.number ?? Infinity) - (b.number ?? Infinity))
+  const te = trophyEvent.value
+  if (!te) return []
+  const list = isDanced(te)
+    ? trophyEventEntrants(te, dancers.value, results.value)
+    : dancers.value.filter((d) => d.group && te.groupIds?.[d.group.id])
+  return [...list].sort((a, b) => (a.number ?? Infinity) - (b.number ?? Infinity))
 })
+
+// Danced on its own: the dance and where it's on, from the schedule ("Highland
+// Fling · Saturday · Platform A · from 2:00 pm"). The day only when there are several.
+const danced = computed(() => !!trophyEvent.value && isDanced(trophyEvent.value))
+const whereWhen = computed(() => {
+  const te = trophyEvent.value
+  if (!te || !te.danceId) return null
+  const dance = dances.value.find((d) => d.id === te.danceId)
+  const slot = scheduleIndex(schedule.value, platforms.value).byGroupDance.get(`${te.id}:${te.danceId}`)
+  const time = slot?.eventTime ?? slot?.blockTime
+  const bits = [
+    dance?.fullName || dance?.name,
+    days(schedule.value).length > 1 ? slot?.dayName : null,
+    platformLabel(slot?.platformName),
+    time ? `from ${time}` : null,
+  ].filter(Boolean)
+  return bits.length ? bits.join(' · ') : null
+})
+
+// Before it's danced: who was called back for it, once its callbacks are in.
+const dancingList = computed(() => (trophyEvent.value && calledBackIds(trophyEvent.value, results.value) ? eligible.value : null))
 const followedHere = computed(() => oncePerPerson(eligible.value.filter((d) => following.isFollowing(d))))
 const colorOf = (d: EnrichedDancer | null) => (d && following.isFollowing(d) ? following.colorFor(d.dancerId) : null)
 const rowStyle = (d: EnrichedDancer | null) => (colorOf(d) ? following.paint(d!.dancerId) : undefined)
@@ -100,6 +140,7 @@ function openSponsor(e: MouseEvent) {
     <template v-else>
       <header :ref="setHeader" class="space-y-1 pt-0.5">
         <h1 :class="heroTitle(trophyEvent.fullName)">{{ trophyEvent.fullName }}</h1>
+        <p v-if="whereWhen" class="text-callout font-medium">{{ whereWhen }}</p>
         <p v-if="trophyEvent.openTo" class="text-muted-foreground text-callout">Open to {{ trophyEvent.openTo }}</p>
         <div v-if="followedHere.length" class="space-y-1 pt-1">
           <MyDancerLine
@@ -128,9 +169,29 @@ function openSponsor(e: MouseEvent) {
             <template v-else-if="phase === 'after'">No result was posted for this trophy event.</template>
             <template v-else>
               <Clock class="mt-0.5 size-5 shrink-0" />
-              <span>Posted after all the dances are in.</span>
+              <span>{{ danced ? 'Placings are posted once it’s been danced.' : 'Posted after all the dances are in.' }}</span>
             </template>
           </div>
+
+          <!-- Who was called back, until the placings are in. -->
+          <template v-if="dancingList && !placings.hasResults && !placings.explicitlyEmpty && phase !== 'after'">
+            <h2 class="text-muted-foreground text-footnote px-4 pt-3 pb-1 font-semibold">Called back</h2>
+            <ul class="rows-engraved [--inset:1rem] [--inset-end:1rem]">
+              <li v-for="d in dancingList" :key="d.id" class="relative isolate" :style="rowStyle(d)">
+                <span v-if="colorOf(d)" class="dancer-sash" aria-hidden="true" />
+                <RouterLink
+                  :to="{ name: 'competition.dancer', params: { competitionId, dancerId: d.id } }"
+                  class="press-row focus-inset flex min-h-13 items-center gap-2.5 px-4 py-1.5"
+                >
+                  <NumberCard :number="d.number" size="xs" :color="colorOf(d)" />
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>
+                    <span v-if="d.group" class="text-muted-foreground block truncate text-sm">{{ groupLabel(d.group) }}</span>
+                  </span>
+                </RouterLink>
+              </li>
+            </ul>
+          </template>
 
           <!-- Kept mounted, so the first placings to arrive grow in too. -->
           <TransitionGroup

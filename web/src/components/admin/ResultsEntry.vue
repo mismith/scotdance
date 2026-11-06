@@ -22,6 +22,7 @@ import { canEdit, friendlyError } from '@/lib/admin/write'
 import { competitionPhase } from '@/lib/dancerDay'
 import { selectionHaptic, tapHaptic } from '@/lib/haptics'
 import { getOrdinalSuffix } from '@/lib/results'
+import { isDanced } from '@/lib/trophyEvents'
 import { isChampionshipName, isPrimaryCategory } from '@/types/competition'
 import {
   CALLBACKS,
@@ -41,6 +42,7 @@ import {
   serializePlacings,
   stateLabel,
   tapGuard,
+  trophyEventRows,
   type Entry,
   type Placings,
 } from '@/lib/admin/results'
@@ -55,7 +57,8 @@ import {
 //
 // A trophy event (Dancer of the Day…) is entered the same way: its groupId is
 // the trophy event's id, and its one list of placings is its Overall, picked
-// from the dancers in the age groups it's open to (no callbacks or points).
+// from the dancers in the age groups it's open to (no points). A danced one
+// has callbacks first, as an age group does.
 
 const props = defineProps<{ groupId: string; danceId: string }>()
 
@@ -73,8 +76,21 @@ const isOverall = computed(() => props.danceId === OVERALL)
 const isDance = computed(() => !isCallbacks.value && !isOverall.value)
 const kind = computed(() => (isCallbacks.value ? 'callbacks' : isOverall.value ? 'overall' : 'dance'))
 const danceName = computed(() =>
-  trophyEvent.value ? trophyEvent.value.label : isCallbacks.value ? 'Callbacks' : isOverall.value ? 'Overall' : (m.dancesById.value.get(props.danceId)?.label ?? 'Dance'),
+  trophyEvent.value
+    ? isCallbacks.value
+      ? `${trophyEvent.value.label}: callbacks`
+      : trophyEvent.value.label
+    : isCallbacks.value
+      ? 'Callbacks'
+      : isOverall.value
+        ? 'Overall'
+        : (m.dancesById.value.get(props.danceId)?.label ?? 'Dance'),
 )
+// The heading: what this step is (a danced trophy event's callbacks or dance),
+// with the age group (or trophy event) under it.
+const trophyDance = computed(() => (trophyEvent.value?.danceId ? m.dancesById.value.get(trophyEvent.value.danceId)?.label : null))
+const heading = computed(() => (trophyEvent.value && isCallbacks.value ? 'Callbacks' : (trophyDance.value ?? danceName.value)))
+const subheading = computed(() => (trophyEvent.value ? (trophyEvent.value.danceId ? trophyEvent.value.label : trophyEvent.value.openTo) : group.value?.label))
 
 const path = computed(() => `results/${props.groupId}/${props.danceId}`)
 
@@ -90,7 +106,9 @@ const placings = computed<Placings>(() => parsePlacings(rawNow()))
 const markedNone = computed(() => rawNow() === false)
 // Said generally: it also covers a dance that didn't run, or an Overall
 // that wasn't given.
-const noneLabel = computed(() => (isCallbacks.value ? 'No callbacks' : isOverall.value && !isTrophyEvent.value ? 'No overall' : 'No results'))
+const noneLabel = computed(() =>
+  isCallbacks.value ? 'No callbacks' : isOverall.value && !isTrophyEvent.value ? 'No overall' : 'No results',
+)
 
 const TABS = [
   { value: 'placings', label: 'Placings' },
@@ -116,8 +134,8 @@ const groupDancers = computed(() => (isTrophyEvent.value ? m.trophyEventDancers(
 // everyone in the age group.
 const callbacksRaw = computed(() => m.results.value[props.groupId]?.[CALLBACKS])
 const calledBackIds = computed(() => new Set(parsePlacings(callbacksRaw.value).entries.map((e) => e.id)))
-// (A trophy event has no callbacks: everyone it's open to can place.)
-const noCallbackRound = computed(() => isTrophyEvent.value || callbacksRaw.value === false)
+// (A trophy event where everyone dances has no callbacks: everyone it's open to can place.)
+const noCallbackRound = computed(() => (trophyEvent.value ? !isDanced(trophyEvent.value) : false) || callbacksRaw.value === false)
 const calledBack = computed(() =>
   noCallbackRound.value ? groupDancers.value : groupDancers.value.filter((d) => calledBackIds.value.has(d.id)),
 )
@@ -293,8 +311,9 @@ function setNone(on: boolean) {
 // the callbacks "none" (as their own switch does) and carry on here.
 async function markNoCallbackRound() {
   try {
-    const change = await m.writeData({ [`results/${props.groupId}/${CALLBACKS}`]: false }, `No callback round in ${group.value?.label ?? 'this age group'}`)
-    if (change) toast('No callback round', { action: { label: 'Undo', run: () => m.undoChange(change) } })
+    const label = 'No callback round'
+    const change = await m.writeData({ [`results/${props.groupId}/${CALLBACKS}`]: false }, `${label} in ${subject.value?.label ?? 'this age group'}`)
+    if (change) toast(label, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }
@@ -343,25 +362,30 @@ const instruction = computed(() => {
     : 'Tap dancers in the order they placed, starting with 1st. Tap again to take one out.'
 })
 
-// This age group's callbacks, dances and Overall, with where each stands.
-const rows = computed(() =>
-  group.value
-    ? resultRows(group.value, m.groupDances(props.groupId)).map((r) => {
-        const raw = m.results.value[props.groupId]?.[r.id]
-        return { ...r, state: danceState(raw), fix: needsFixing(raw, m.points.value[props.groupId]?.[r.id]?.combined) }
-      })
-    : [],
-)
+// This age group's callbacks, dances and Overall (a trophy event's
+// callbacks and placings), with where each stands.
+const rows = computed(() => {
+  const list = trophyEvent.value ? trophyEventRows(trophyEvent.value, m.dancesById.value.get(trophyEvent.value.danceId ?? '')?.label) : group.value ? resultRows(group.value, m.groupDances(props.groupId)) : []
+  return list.map((r) => {
+    const raw = m.results.value[props.groupId]?.[r.id]
+    return { ...r, state: danceState(raw), fix: needsFixing(raw, m.points.value[props.groupId]?.[r.id]?.combined) }
+  })
+})
 
 // Where to carry straight on: this age group's next dance, then the next
 // age group in the running order (or list order with no schedule).
 const turns = computed(() => scheduleTurns(m.schedule.value, m.platforms.value))
+/** Where a trophy event's entry starts: callbacks when it's danced, else its placings. */
+const firstStep = (a: Parameters<typeof trophyEventRows>[0]) => trophyEventRows(a)[0].id
 const next = computed(() => {
-  // A trophy event carries on to the next one.
+  // A trophy event carries on through its own steps, then to the next one.
   if (trophyEvent.value) {
+    const i = rows.value.findIndex((r) => r.id === props.danceId)
+    const here = rows.value[i + 1]
+    if (here) return { groupId: props.groupId, danceId: here.id, label: `${trophyEvent.value.label} · ${here.label}` }
     const list = m.trophyEvents.value
     const after = list[list.findIndex((a) => a.id === props.groupId) + 1]
-    return after ? { groupId: after.id, danceId: OVERALL, label: after.label } : null
+    return after ? { groupId: after.id, danceId: firstStep(after), label: after.label } : null
   }
   const g = group.value
   if (!g) return null
@@ -377,18 +401,22 @@ const next = computed(() => {
   if (after) return { groupId: after.id, danceId: CALLBACKS, label: `${after.label} · Callbacks` }
   // After the last age group, the first trophy event.
   const first = m.trophyEvents.value[0]
-  return first ? { groupId: first.id, danceId: OVERALL, label: first.label } : null
+  return first ? { groupId: first.id, danceId: firstStep(first), label: first.label } : null
 })
 
 // --- Tablets and laptops (md to xl): the list folds away (see Results), so
 // the header picks the age group and its dance.
 const live = computed(() =>
-  competitionPhase(m.competition.value?.date, m.schedule.value) === 'today' ? dancingNow(turns.value, m.results.value) : new Set<string>(),
+  competitionPhase(m.competition.value?.date, m.schedule.value) === 'today'
+    ? dancingNow(turns.value, m.results.value, new Set(m.trophyEvents.value.map((a) => a.id)))
+    : new Set<string>(),
 )
 /** Another age group: where its results left off (callbacks to start). */
 function pickGroup(id: string) {
-  if (m.trophyEventsById.value.has(id)) {
-    void router.replace({ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: id, danceId: OVERALL } })
+  const te = m.trophyEventsById.value.get(id)
+  if (te) {
+    const first = trophyEventRows(te).find((r) => danceState(m.results.value[id]?.[r.id]) === 'todo')
+    void router.replace({ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: id, danceId: first?.id ?? OVERALL } })
     return
   }
   const first = resultRows(m.groupsById.value.get(id) ?? {}, m.groupDances(id)).find((r) => danceState(m.results.value[id]?.[r.id]) === 'todo')
@@ -402,6 +430,7 @@ const [DefinePlaced, ReusePlaced] = createReusableTemplate()
 const strip = computed(() => !split.value && tab.value === 'placings')
 const placedOpen = ref(false)
 watch(strip, (on) => !on && (placedOpen.value = false))
+const placedHeading = computed(() => (isCallbacks.value ? `Called back · ${placings.value.entries.length}` : 'Placed'))
 // The strip just counts, and says what a tap does; the rows show who's where.
 const stripLabel = computed(() => {
   const n = placings.value.entries.length
@@ -460,8 +489,8 @@ watch(() => props.danceId, showCurrent)
   <div v-if="subject" :class="['flex flex-col md:h-full', strip && 'pb-[calc(var(--notice-bottom)+4.5rem)]']">
     <header class="flex flex-col gap-3 border-b px-4 pt-4 pb-3">
       <div :class="['min-w-0', pickers && 'sr-only']">
-        <h1 class="text-title truncate">{{ danceName }}</h1>
-        <p class="text-muted-foreground text-callout truncate">{{ trophyEvent ? trophyEvent.openTo : group?.label }}</p>
+        <h1 class="text-title truncate">{{ heading }}</h1>
+        <p class="text-muted-foreground text-callout truncate">{{ subheading }}</p>
       </div>
       <div v-if="!isCallbacks && offersPoints || pickers" class="flex flex-wrap items-center gap-x-4 gap-y-3">
         <label v-if="pickers" class="relative max-w-full min-w-0">
@@ -486,7 +515,7 @@ watch(() => props.danceId, showCurrent)
           </HelpTip>
         </div>
       </div>
-      <nav v-if="pickers && !isTrophyEvent" ref="pills" aria-label="Dances" class="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
+      <nav v-if="pickers && (!isTrophyEvent || rows.length > 1)" ref="pills" aria-label="Dances" class="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
         <RouterLink
           v-for="r in rows"
           :key="r.id"
@@ -532,8 +561,8 @@ watch(() => props.danceId, showCurrent)
             :class="['transition-[opacity,filter] duration-(--dur-base) ease-standard', !canEdit && 'opacity-50 grayscale']"
           >
             <p class="text-muted-foreground px-4 pt-3 pb-2 text-sm">{{ instruction }}</p>
-            <p v-if="noCallbackRound && !isTrophyEvent && !isCallbacks && tab === 'placings'" class="text-muted-foreground px-4 pb-2 text-sm">
-              No callbacks: everyone in the age group can place.
+            <p v-if="noCallbackRound && !isCallbacks && tab === 'placings' && (!trophyEvent || isDanced(trophyEvent))" class="text-muted-foreground px-4 pb-2 text-sm">
+              {{ isTrophyEvent ? 'No callbacks: everyone it’s open to can place.' : 'No callbacks: everyone in the age group can place.' }}
             </p>
             <p v-if="placings.reverseFrom && tab === 'placings'" class="bg-blue-paper text-primary px-4 py-2.5 text-sm font-semibold">
               Entering from {{ placings.reverseFrom }}{{ getOrdinalSuffix(placings.reverseFrom) }} place
@@ -610,7 +639,7 @@ watch(() => props.danceId, showCurrent)
         </div>
 
         <!-- Lowest place first (dances only) -->
-        <div v-if="(isDance || isTrophyEvent) && tab === 'placings'" class="border-t px-4 py-2">
+        <div v-if="(isDance || (isTrophyEvent && !isCallbacks)) && tab === 'placings'" class="border-t px-4 py-2">
           <div class="flex min-h-12 flex-wrap items-center gap-x-2">
             <label class="flex min-h-11 items-center gap-3 font-medium">
               <Switch :model-value="championship" :disabled="!canEdit" @update:model-value="toggleChampionship" />
@@ -673,7 +702,7 @@ watch(() => props.danceId, showCurrent)
       <section v-if="!strip" ref="placedSection" class="min-w-0 max-md:mt-4 md:overflow-y-auto">
         <template v-if="tab === 'placings'">
           <h2 class="text-muted-foreground flex items-center gap-1.5 px-4 pt-3 pb-2 text-sm font-semibold">
-            {{ isCallbacks ? `Called back · ${placings.entries.length}` : 'Placed' }}
+            {{ placedHeading }}
             <HelpTip v-if="!isCallbacks" label="How the placed list works">
               Drag the handle to change the order. Switch on Tie when a dancer shares the place of the dancer above. Tap a dancer to take them out.
             </HelpTip>
@@ -748,7 +777,7 @@ watch(() => props.danceId, showCurrent)
   <Dialog v-if="subject && strip" :open="placedOpen" variant="sheet" size="md" @close="placedOpen = false">
     <template #header>
       <div class="flex items-center gap-2">
-        <h2 class="text-title">{{ isCallbacks ? `Called back · ${placings.entries.length}` : 'Placed' }}</h2>
+        <h2 class="text-title">{{ placedHeading }}</h2>
         <HelpTip v-if="!isCallbacks" label="How the placed list works">
           Drag the handle to change the order. Switch on Tie when a dancer shares the place of the dancer above. Tap a dancer to take them out.
         </HelpTip>

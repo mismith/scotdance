@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { trophyEventsFor, enrichTrophyEvents, openToText } from '@/lib/trophyEvents'
+import { calledBackIds, enrichTrophyEvents, isDanced, openToText, trophyEventEntrants, trophyEventsFor, turnResultId } from '@/lib/trophyEvents'
 
 const categories = [
   { id: 'p', name: 'Premier' },
@@ -48,5 +48,33 @@ describe('trophyEventsFor', () => {
     const list = [{ id: 'a', groupIds: { p1: true } }, { id: 'b', groupIds: { i1: true } }]
     expect(trophyEventsFor(list, 'p1').map((a) => a.id)).toEqual(['a'])
     expect(trophyEventsFor(list, null)).toEqual([])
+  })
+})
+
+describe('danced trophy events', () => {
+  const dancers = [
+    { id: 'e1', groupId: 'p1' },
+    { id: 'e2', groupId: 'p2' },
+    { id: 'e3', groupId: 'i1' },
+  ]
+  const fling = { id: 't', groupIds: { p1: true, p2: true }, danceId: 'fling' }
+
+  it('is danced by everyone it’s open to until its callbacks are in, then by those called back', () => {
+    expect(trophyEventEntrants(fling, dancers, {}).map((d) => d.id)).toEqual(['e1', 'e2'])
+    expect(calledBackIds(fling, {})).toBeNull()
+    const results = { t: { callbacks: ['e2', 'e3'] } }
+    // e3 can't win it (Intermediate), so isn't dancing it either.
+    expect(trophyEventEntrants(fling, dancers, results).map((d) => d.id)).toEqual(['e2'])
+    // Marked "No callbacks": everyone dances it.
+    expect(trophyEventEntrants(fling, dancers, { t: { callbacks: false } }).map((d) => d.id)).toEqual(['e1', 'e2'])
+  })
+  it('has no callbacks when it isn\'t danced', () => {
+    expect(calledBackIds({ id: 't' }, { t: { callbacks: ['e1'] } })).toBeNull()
+    expect(isDanced({ danceId: 'fling' })).toBe(true)
+  })
+  it('fills its one list from any schedule turn', () => {
+    const ids = new Set(['t'])
+    expect(turnResultId('t', 'fling', ids)).toBe('overall')
+    expect(turnResultId('p1', 'fling', ids)).toBe('fling')
   })
 })

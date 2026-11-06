@@ -17,7 +17,7 @@ import { useManageBack } from '@/composables/admin/useManageBack'
 import { useManagedCompetition, type MTrophyEvent, type MGroup } from '@/composables/admin/useManagedCompetition'
 import { useSplit } from '@/composables/admin/useWide'
 import { canEdit } from '@/lib/admin/write'
-import { CALLBACKS, OVERALL, danceState, dancingNow, needsFixing, parsePlacings, placeAt, resultRows, scheduleTurns, stateLabel } from '@/lib/admin/results'
+import { CALLBACKS, OVERALL, danceState, dancingNow, needsFixing, parsePlacings, placeAt, resultRows, scheduleTurns, stateLabel, trophyEventRows } from '@/lib/admin/results'
 import { competitionPhase } from '@/lib/dancerDay'
 import { sheetPages } from '@/lib/sheets'
 
@@ -32,8 +32,13 @@ const danceId = computed(() => (route.params.danceId ? String(route.params.dance
 // Only enter results for what's listed: a removed dance (or an old link)
 // would otherwise save placings nobody can see.
 const openGroup = computed(() => (groupId.value ? (m.groupsById.value.get(groupId.value) ?? null) : null))
-// A trophy event has one list of placings (its Overall), opened the same way.
+// A trophy event has one list of placings (its Overall), opened the same way,
+// and a danced one has callbacks before it, as an age group does.
 const openTrophyEvent = computed(() => (groupId.value ? (m.trophyEventsById.value.get(groupId.value) ?? null) : null))
+const openTrophyEventStep = computed(() => {
+  const a = openTrophyEvent.value
+  return a && trophyEventRows(a).some((r) => r.id === danceId.value) ? danceId.value : OVERALL
+})
 
 // On tablets and laptops (md to xl) the list folds away while a dance is
 // open, so the dancers and Placed get the width; the entry's header picks
@@ -45,6 +50,12 @@ useManageBack(() =>
 const danceRows = (g: MGroup) => resultRows(g, m.groupDances(g.id))
 const danceIds = (g: MGroup) => danceRows(g).map((d) => d.id)
 
+/** A danced trophy event's callbacks and dance, entered so far. */
+function trophyEventProgress(a: MTrophyEvent) {
+  const ids = trophyEventRows(a).map((r) => r.id)
+  return { done: ids.filter((id) => danceState(m.results.value[a.id]?.[id]) !== 'todo').length, total: ids.length }
+}
+
 function progress(g: MGroup) {
   const ids = danceIds(g)
   const done = ids.filter((id) => danceState(m.results.value[g.id]?.[id]) !== 'todo').length
@@ -55,7 +66,7 @@ function progress(g: MGroup) {
 // reordered: the list stays where the volunteer expects it).
 const live = computed(() =>
   competitionPhase(m.competition.value?.date, m.schedule.value) === 'today'
-    ? dancingNow(scheduleTurns(m.schedule.value, m.platforms.value), m.results.value)
+    ? dancingNow(scheduleTurns(m.schedule.value, m.platforms.value), m.results.value, new Set(m.trophyEvents.value.map((a) => a.id)))
     : new Set<string>(),
 )
 const stateOf = (groupId: string, danceId: string) => danceState(m.results.value[groupId]?.[danceId])
@@ -86,7 +97,15 @@ watch(groupId, (id) => {
   if (id && !isExpanded(id)) expanded.value = { ...expanded.value, [id]: true }
 })
 
+// A trophy event reads as done when its last step is (the placings).
 const trophyEventState = (a: MTrophyEvent) => stateOf(a.id, OVERALL)
+/** Where to open it: the first step not entered yet (who's dancing, then the placings). */
+const trophyEventStart = (a: MTrophyEvent) => trophyEventRows(a).find((r) => stateOf(a.id, r.id) === 'todo')?.id ?? OVERALL
+const trophyEventSubtitle = (a: MTrophyEvent) => {
+  const n = trophyEventDancers(a)
+  const dance = a.danceId ? m.dancesById.value.get(a.danceId)?.label : null
+  return [`${n} ${n === 1 ? 'dancer' : 'dancers'}`, dance, a.openTo].filter(Boolean).join(' · ')
+}
 const trophyEventDancers = (a: MTrophyEvent) => m.trophyEventDancers(a.id).length
 
 const totals = computed(() => {
@@ -97,10 +116,13 @@ const totals = computed(() => {
     done += p.done
     total += p.total
   }
-  // Each trophy event is one more list to enter, once someone can win it.
+  // Each trophy event is one more list to enter, once someone can win it (and
+  // a danced one has callbacks too).
   for (const a of m.trophyEvents.value.filter(isWinnable)) {
-    total += 1
-    if (trophyEventState(a) !== 'todo') done += 1
+    for (const r of trophyEventRows(a)) {
+      total += 1
+      if (stateOf(a.id, r.id) !== 'todo') done += 1
+    }
   }
   return { done, total }
 })
@@ -271,9 +293,61 @@ function exportCsv() {
           <li v-if="m.trophyEvents.value.length" class="rows-engraved">
             <h2 class="text-heading px-4 pt-4 pb-2">Trophy events</h2>
             <ul class="rows-engraved">
-              <li v-for="a in m.trophyEvents.value" :key="a.id">
+              <li v-for="a in m.trophyEvents.value" :key="a.id" class="rows-engraved">
+                <!-- Danced: callbacks and its dance, listed as an age group's are. -->
+                <template v-if="trophyEventRows(a).length > 1">
+                  <button
+                    type="button"
+                    :aria-expanded="isExpanded(a.id)"
+                    class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left"
+                    @click="toggle(a.id)"
+                  >
+                    <span class="min-w-0 flex-1">
+                      <span class="flex items-center gap-2">
+                        <span class="truncate text-base font-semibold">{{ a.label }}</span>
+                        <CircleCheck v-if="trophyEventProgress(a).done === trophyEventProgress(a).total" class="text-done-foreground size-4.5 shrink-0" aria-hidden="true" />
+                        <span v-if="live.has(a.id)" class="bg-live-paper text-live text-caption inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full px-2">
+                          <span class="bg-live size-1.5 rounded-full motion-safe:animate-[live-pulse_2s_infinite]" aria-hidden="true" />
+                          Dancing now
+                        </span>
+                      </span>
+                      <span class="text-muted-foreground block text-sm">
+                        {{ m.trophyEventDancers(a.id).length }} dancers · {{ trophyEventProgress(a).done }} of {{ trophyEventProgress(a).total }} entered
+                      </span>
+                      <span class="mt-1.5 mb-0.5 block h-[3px] overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)]" aria-hidden="true">
+                        <span
+                          class="bg-primary-fill block h-full rounded-full transition-[width] duration-(--dur-slow) ease-standard"
+                          :style="{ width: `${(trophyEventProgress(a).done / trophyEventProgress(a).total) * 100}%` }"
+                        />
+                      </span>
+                    </span>
+                    <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform', isExpanded(a.id) && 'rotate-180']" />
+                  </button>
+                  <Transition v-bind="rowsOpen">
+                  <ul v-if="isExpanded(a.id)" class="rows-engraved [--inset:3.5rem]">
+                    <li v-for="r in trophyEventRows(a, m.dancesById.value.get(a.danceId ?? '')?.label)" :key="r.id">
+                      <RouterLink
+                        :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: a.id, danceId: r.id } }"
+                        :replace="split"
+                        :aria-current="groupId === a.id && openTrophyEventStep === r.id ? 'true' : undefined"
+                        :aria-label="`${a.label}, ${r.label}, ${stateLabel(stateOf(a.id, r.id), hasPlaceholder(a.id, r.id))}`"
+                        :class="[
+                          'press-row focus-inset flex min-h-13 items-center gap-3 py-1.5 pr-3 pl-6',
+                          groupId === a.id && openTrophyEventStep === r.id ? 'bg-blue-paper' : hasPlaceholder(a.id, r.id) && 'bg-next/40',
+                          hasPlaceholder(a.id, r.id) && 'relative bg-[repeating-linear-gradient(135deg,transparent_0_9px,color-mix(in_oklab,var(--next-foreground)_7%,transparent)_9px_11px)] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[repeating-linear-gradient(135deg,var(--next-foreground)_0_3px,transparent_3px_6px)]',
+                        ]"
+                      >
+                        <ResultStatus :state="stateOf(a.id, r.id)" :fix="hasPlaceholder(a.id, r.id)" />
+                        <span class="text-callout min-w-0 flex-1 truncate font-medium">{{ r.label }}</span>
+                        <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
+                      </RouterLink>
+                    </li>
+                  </ul>
+                  </Transition>
+                </template>
                 <RouterLink
-                  :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: a.id, danceId: OVERALL } }"
+                  v-else
+                  :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: a.id, danceId: trophyEventStart(a) } }"
                   :replace="split"
                   :aria-current="groupId === a.id ? 'true' : undefined"
                   :aria-label="`${a.label}, ${stateLabel(trophyEventState(a), hasPlaceholder(a.id, OVERALL))}`"
@@ -285,10 +359,14 @@ function exportCsv() {
                 >
                   <ResultStatus :state="trophyEventState(a)" :fix="hasPlaceholder(a.id, OVERALL)" />
                   <span class="min-w-0 flex-1">
-                    <span class="text-callout block truncate font-medium">{{ a.label }}</span>
-                    <span class="text-muted-foreground block truncate text-sm">
-                      {{ [`${trophyEventDancers(a)} ${trophyEventDancers(a) === 1 ? 'dancer' : 'dancers'}`, a.openTo].filter(Boolean).join(' · ') }}
-                    </span>
+                    <span class="flex items-center gap-2">
+                        <span class="text-callout truncate font-medium">{{ a.label }}</span>
+                        <span v-if="live.has(a.id)" class="bg-live-paper text-live text-caption inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full px-2">
+                          <span class="bg-live size-1.5 rounded-full motion-safe:animate-[live-pulse_2s_infinite]" aria-hidden="true" />
+                          Dancing now
+                        </span>
+                      </span>
+                    <span class="text-muted-foreground block truncate text-sm">{{ trophyEventSubtitle(a) }}</span>
                   </span>
                   <Trophy class="text-muted-foreground size-4.5 shrink-0" />
                   <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
@@ -313,7 +391,7 @@ function exportCsv() {
     </template>
 
     <template #detail>
-      <ResultsEntry v-if="openTrophyEvent" :key="openTrophyEvent.id" :group-id="openTrophyEvent.id" :dance-id="OVERALL" />
+      <ResultsEntry v-if="openTrophyEvent" :key="openTrophyEvent.id" :group-id="openTrophyEvent.id" :dance-id="openTrophyEventStep" />
       <ResultsEntry v-else-if="openGroup && danceIds(openGroup).includes(danceId)" :key="openGroup.id" :group-id="openGroup.id" :dance-id="danceId" />
       <EmptyState v-else-if="openGroup" :icon="Trophy" title="This dance isn’t in this age group any more" description="Choose another from the list." />
       <EmptyState v-else :icon="Trophy" title="This age group isn’t here any more" description="Choose another from the list." />

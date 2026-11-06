@@ -1,5 +1,5 @@
 import { blocks, dances as scheduleDances, days, events, isSpacerId } from '@/lib/schedule'
-import { TROPHY_EVENT_RESULT, trophyEventsFor } from '@/lib/trophyEvents'
+import { TROPHY_EVENT_RESULT, calledBackIds, isDanced, trophyEventsFor, turnResultId } from '@/lib/trophyEvents'
 import { CALLBACKS_ID, findGroupDances, getDancerPlace, isPosted } from '@/lib/results'
 import { daysFromToday } from '@/lib/format'
 import {
@@ -26,6 +26,8 @@ import {
 //                       same platform has been, so it has been danced
 //   upcoming            still to dance, as far as anyone can tell
 //   later               Overall, until it's posted
+// A trophy event that's danced on its own (a Trophy Fling) is read like a
+// dance: it has a slot, and the same states, but only for those dancing it.
 // There's no "next": plenty of competitions post nothing until the end, so a
 // guess at what's on now would often be wrong. Upcoming dances show what the
 // schedule says (platform, session, time, draw) instead. After the day, anything
@@ -68,6 +70,10 @@ export interface DanceStatus {
   /** 1-based position in the draw (dancing order), when posted. */
   drawPos: number | null
   drawSize: number | null
+  /** A trophy event danced on its own: it has a slot and states like a dance. */
+  danced?: boolean
+  /** The dance of a danced trophy event ("Highland Fling"); `dance` is the trophy event. */
+  danceName?: string
 }
 
 export interface DancerDay {
@@ -79,7 +85,9 @@ export interface DancerDay {
   /**
    * The trophy events their age group can win, in the organiser's order, after
    * Overall. `dance` is the trophy event (its id, its name); `later` until its
-   * placings are posted, then placed or unplaced like any dance.
+   * placings are posted, then placed or unplaced like any dance. One danced on
+   * its own (`danced`) is there only for those dancing it, and is upcoming or
+   * waiting by the schedule, like a dance.
    */
   trophyEvents: DanceStatus[]
   /** null when callbacks haven't been posted for the group. */
@@ -97,7 +105,7 @@ export interface DayBundle {
   /** The competition's age groups: a schedule can still list deleted ones. */
   groups?: Array<{ id: string }>
   /** Trophies across age groups (lib/trophyEvents), when the competition has any. */
-  trophyEvents?: Array<Pick<EnrichedTrophyEvent, 'id' | 'fullName' | 'groupIds'>>
+  trophyEvents?: Array<Pick<EnrichedTrophyEvent, 'id' | 'fullName' | 'groupIds' | 'danceId'>>
 }
 
 /**
@@ -235,23 +243,25 @@ export function dancerDay(
 
   // Order by schedule where known, else by the admin's dance order.
   // "Group 2 of 3" among the age groups that still exist.
+  // Trophy events share a cell with the age groups but aren't counted among them.
   const known = bundle.groups?.length ? new Set(bundle.groups.map((g) => g.id)) : null
-  const slotFor = (danceId: string): SlotInfo | null => {
-    const s = index.byGroupDance.get(`${group.id}:${danceId}`)
-    if (!s || !known) return s ?? null
-    const real = s.groupIds.filter((g) => known.has(g) || g === group.id)
-    return { ...s, groupPos: real.indexOf(group.id) + 1, groupCount: real.length }
+  const trophyEventIds: ReadonlySet<string> = new Set((bundle.trophyEvents ?? []).map((a) => a.id))
+  const slotFor = (id: string, danceId: string): SlotInfo | null => {
+    const s = index.byGroupDance.get(`${id}:${danceId}`)
+    if (!s || (!known && !trophyEventIds.size)) return s ?? null
+    const real = s.groupIds.filter((g) => !trophyEventIds.has(g) && (!known || known.has(g) || g === id))
+    return { ...s, groupPos: real.indexOf(id) + 1, groupCount: real.length }
   }
 
   const rows = groupDances
-    .map((dance, i) => ({ dance, slot: slotFor(dance.id), i }))
+    .map((dance, i) => ({ dance, slot: slotFor(group.id, dance.id), i }))
     .sort((a, b) => (a.slot?.seq ?? 1e6 + a.i) - (b.slot?.seq ?? 1e6 + b.i))
 
   // "Danced" = posted, or something later on the same platform is posted.
   const postedSeqByPlatform = new Map<string, number>()
   if (phase === 'today') {
     for (const s of index.slots) {
-      if (s.groupIds.some((gid) => postedAt(results, gid, s.danceId))) {
+      if (s.groupIds.some((gid) => postedAt(results, gid, turnResultId(gid, s.danceId, trophyEventIds)))) {
         postedSeqByPlatform.set(
           s.platformId,
           Math.max(postedSeqByPlatform.get(s.platformId) ?? -1, s.seq),
@@ -300,20 +310,28 @@ export function dancerDay(
   }
 
   // Their results sit at results[trophyEventId].overall, in the age groups' shape.
-  const trophyEvents = trophyEventsFor(bundle.trophyEvents ?? [], group.id).map<DanceStatus>((a) => {
+  const trophyEvents = trophyEventsFor(bundle.trophyEvents ?? [], group.id).flatMap<DanceStatus>((a) => {
     const { place, tied, pointed } = getDancerPlace(dancer.id, a.id, TROPHY_EVENT_RESULT, results, points)
     const raw = results?.[a.id]?.[TROPHY_EVENT_RESULT]
     const posted = isPosted(raw)
-    return {
-      dance: { id: a.id, name: a.fullName, fullName: a.fullName },
-      state: posted ? (raw === false ? 'no-placings' : place != null ? 'placed' : 'unplaced') : phase === 'after' ? 'not-posted' : 'later',
-      place,
-      tied,
-      pointed,
-      slot: null,
-      drawPos: null,
-      drawSize: null,
+    const base = { dance: { id: a.id, name: a.fullName, fullName: a.fullName }, place, tied, pointed, drawPos: null, drawSize: null }
+    const placed = posted ? (raw === false ? ('no-placings' as const) : place != null ? ('placed' as const) : ('unplaced' as const)) : null
+    if (!isDanced(a)) {
+      return [{ ...base, state: placed ?? (phase === 'after' ? 'not-posted' : 'later'), slot: null }]
     }
+    // Only those dancing it have it in their day: everyone it's open to, until callbacks say otherwise.
+    const called = calledBackIds(a, results)
+    if (called && !called.has(dancer.id)) return []
+    const slot = slotFor(a.id, a.danceId!)
+    const state: DanceState =
+      placed ??
+      (phase === 'after'
+        ? 'not-posted'
+        : phase === 'today' && slot != null && (postedSeqByPlatform.get(slot.platformId) ?? -1) > slot.seq
+          ? 'waiting'
+          : 'upcoming')
+    const dance = bundle.dances.find((d) => d.id === a.danceId)
+    return [{ ...base, state, slot, danced: true, danceName: dance?.fullName || dance?.name }]
   })
 
   const callbacks = results?.[group.id]?.[CALLBACKS_ID]
@@ -344,15 +362,18 @@ export function bestPlacing(day: DancerDay): DanceStatus | null {
 // Home and the dancer page treat a person's entries at one competition (a
 // Premier dancer also in a Broadsword event) as one day.
 
-const statusesOf = (days: DancerDay[]) => days.flatMap((d) => [...d.dances, ...(d.overall ? [d.overall] : [])])
+// A trophy event danced on its own is on the schedule like a dance; the others
+// (decided from the age groups' results) never hold a day open.
+const dancedTrophyEvents = (d: DancerDay) => d.trophyEvents.filter((s) => s.danced)
+const scheduledOf = (days: DancerDay[]) => days.flatMap((d) => [...d.dances, ...dancedTrophyEvents(d)])
+const statusesOf = (days: DancerDay[]) => days.flatMap((d) => [...d.dances, ...dancedTrophyEvents(d), ...(d.overall ? [d.overall] : [])])
 
 const slotOrder = (s: DanceStatus | null) => s?.slot?.seq ?? Infinity
 
 /** Their soonest dance still to come, by the schedule (not a guess at "now"). */
 export function soonestUpcoming(days: DancerDay[]): DanceStatus | null {
   return (
-    days
-      .flatMap((d) => d.dances)
+    scheduledOf(days)
       .filter((s) => s.state === 'upcoming')
       .sort((a, b) => slotOrder(a) - slotOrder(b))[0] ?? null
   )
@@ -364,8 +385,7 @@ export function soonestUpcoming(days: DancerDay[]): DanceStatus | null {
  */
 export function firstDance(days: DancerDay[]): DanceStatus | null {
   return (
-    days
-      .flatMap((d) => d.dances)
+    scheduledOf(days)
       .filter((s) => s.slot)
       .sort((a, b) => slotOrder(a) - slotOrder(b))[0] ?? null
   )

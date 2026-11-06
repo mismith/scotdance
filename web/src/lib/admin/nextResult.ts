@@ -1,12 +1,15 @@
 import { scheduleIndex } from '@/lib/dancerDay'
 import { CALLBACKS, OVERALL, danceState } from '@/lib/admin/results'
+import { isDanced } from '@/lib/trophyEvents'
 import { groupHasOverall, type Platform, type ResultsTree, type Schedule } from '@/types/competition'
 
 // On competition day, where the volunteer entering results carries on: the
 // first thing not entered yet, in the order it's danced. That's the
 // schedule's order (each age group's callbacks before its first dance), then
 // whatever the schedule leaves out in age group order, overalls last, then
-// the trophy events (their one list each).
+// the trophy events (their one list each). A trophy event danced on its own
+// is entered where the schedule has it, like an age group's dance: its
+// callbacks first, then its placings.
 
 interface Group {
   id: string
@@ -17,8 +20,8 @@ export interface ResultsWork {
   groups: Group[]
   /** An age group's dances, in order. */
   dancesOf: (groupId: string) => Array<{ id: string }>
-  /** Trophy events, entered after every age group. */
-  trophyEvents?: Array<{ id: string }>
+  /** Trophy events, entered after every age group (unless danced and on the schedule). */
+  trophyEvents?: Array<{ id: string; danceId?: string }>
   results: ResultsTree
   schedule: Schedule | null
   platforms: Platform[]
@@ -41,8 +44,19 @@ export function resultsOrder(w: ResultsWork): ResultSlot[] {
     out.push({ groupId, danceId })
   }
   const known = new Map(w.groups.map((g) => [g.id, new Set(w.dancesOf(g.id).map((d) => d.id))]))
+  const trophyEvents = new Map((w.trophyEvents ?? []).map((a) => [a.id, a]))
+  const addTrophyEvent = (a: { id: string; danceId?: string }) => {
+    if (isDanced(a)) add(a.id, CALLBACKS)
+    add(a.id, OVERALL)
+  }
   for (const slot of scheduleIndex(w.schedule, w.platforms).slots) {
     for (const groupId of slot.groupIds) {
+      const a = trophyEvents.get(groupId)
+      if (a) {
+        // Only under its own dance's row: anywhere else it isn't danced.
+        if (a.danceId && a.danceId === slot.danceId) addTrophyEvent(a)
+        continue
+      }
       // Only what can be entered: a deleted group, or a dance it doesn't do, can't.
       if (!known.get(groupId)?.has(slot.danceId)) continue
       add(groupId, CALLBACKS)
@@ -54,7 +68,7 @@ export function resultsOrder(w: ResultsWork): ResultSlot[] {
     for (const d of w.dancesOf(g.id)) add(g.id, d.id)
   }
   for (const g of w.groups) if (groupHasOverall(g)) add(g.id, OVERALL)
-  for (const a of w.trophyEvents ?? []) add(a.id, OVERALL)
+  for (const a of trophyEvents.values()) addTrophyEvent(a)
   return out
 }
 

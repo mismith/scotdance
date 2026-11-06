@@ -13,7 +13,7 @@ import { useCompetitionLive } from '@/composables/useCompetitionLive'
 import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
 import { useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
-import { TROPHY_EVENT_RESULT, trophyEventPosted } from '@/lib/trophyEvents'
+import { TROPHY_EVENT_RESULT, isDanced, trophyEventPosted } from '@/lib/trophyEvents'
 import { danceHasPlaceholder, findGroupDances, groupHasPlaceholderDancers, isPosted } from '@/lib/results'
 import { resultsCount } from '@/lib/resultsCount'
 import { OVERALL_ID, groupHasOverall, type EnrichedTrophyEvent, type EnrichedGroup } from '@/types/competition'
@@ -125,9 +125,12 @@ const blocks = computed(() => {
 
 // Trophy events (Dancer of the Day and the like): one row each, after the age
 // groups. A followed dancer who can win one is on its row, with the cup if
-// they placed. Their placings stay off the age group rows above.
+// they placed. Their placings stay off the age group rows above. One danced on
+// its own is for those dancing it, and says its dance until it's posted.
 interface TrophyEventRow {
   trophyEvent: EnrichedTrophyEvent
+  /** What a followed dancer's line says until placings are in. */
+  pending: string
   posted: number
   unknown: boolean
   mine: Row['mine']
@@ -142,6 +145,8 @@ const trophyEventRows = computed<TrophyEventRow[]>(() => {
     const best = new Map<string, Row['mine'][number]>()
     for (const d of eligible) {
       const status = dayFor(d).trophyEvents.find((s) => s.dance.id === trophyEvent.id)
+      // Not picked to dance it.
+      if (!status && isDanced(trophyEvent)) continue
       const placed = status?.state === 'placed' && status.place != null
       const person = d.dancerId ?? d.id
       const kept = best.get(person)
@@ -154,8 +159,10 @@ const trophyEventRows = computed<TrophyEventRow[]>(() => {
       })
     }
     const mine = [...best.values()]
+    const dance = isDanced(trophyEvent) ? dances.value.find((x) => x.id === trophyEvent.danceId) : null
     return {
       trophyEvent,
+      pending: dance?.fullName || dance?.name || 'After all dances',
       posted: trophyEventPosted(results.value, trophyEvent.id) ? 1 : 0,
       unknown: danceHasPlaceholder(results.value, points.value, trophyEvent.id, TROPHY_EVENT_RESULT),
       mine,
@@ -300,7 +307,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
                     :key="m.key"
                     :color="m.color"
                     :name="m.name"
-                    :details="[m.medals.length ? null : r.posted ? 'Not placed' : 'After all dances']"
+                    :details="[m.medals.length ? null : r.posted ? 'Not placed' : r.pending]"
                     class="mt-1"
                   >
                     <span v-if="m.medals.length" class="flex items-center gap-1">

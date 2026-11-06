@@ -95,6 +95,28 @@ const steps = (s?: string | number) => String(s ?? '').trim()
       />
     </section>
 
+    <!-- Trophy events danced on their own: dragged in like an age group, onto their dance's row. -->
+    <section v-if="b.dancedTrophyEvents.value.length" class="space-y-2">
+      <header class="flex items-baseline justify-between gap-2">
+        <h2 class="text-heading">Trophy events</h2>
+        <RouterLink
+          :to="to('manage.trophyEvents')"
+          class="text-primary text-callout -my-3 flex min-h-11 items-center font-semibold"
+          >Edit</RouterLink
+        >
+      </header>
+      <div class="flex flex-wrap gap-1.5 md:flex-col">
+        <BuilderChip
+          v-for="(a, i) in b.dancedTrophyEvents.value"
+          :key="a.id"
+          kind="group"
+          :label="a.label"
+          :title="`${a.label}: ${b.danceName(a.danceId)}`"
+          :data="() => ({ type: 'group', groupId: a.id, index: i, source: 'palette' })"
+        />
+      </div>
+    </section>
+
     <section class="space-y-2">
       <header class="flex items-baseline justify-between gap-2">
         <h2 class="text-heading">Judges</h2>

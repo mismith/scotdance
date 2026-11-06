@@ -1,5 +1,6 @@
 import { blocks, dances as eventDances, days, events, idList, platformLabel } from '@/lib/schedule'
 import { findGroupDances } from '@/lib/results'
+import { isDanced } from '@/lib/trophyEvents'
 import type { PrintSource } from '@/lib/print/source'
 import type { DocId } from '@/lib/print/model'
 
@@ -95,7 +96,7 @@ export function printChecks(src: PrintSource, doc: DocId): PrintCheck[] {
             for (const [pid, slot] of Object.entries(d.platforms ?? {})) {
               const ids = idList(slot.orderedGroupIds)
               ids.forEach((id) => scheduled.add(id))
-              if (ids.some((id) => src.groups.some((g) => g.id === id)) && !idList(slot.orderedJudgeIds).length) {
+              if (ids.some((id) => src.groups.some((g) => g.id === id) || src.trophyEvents.some((a) => a.id === id)) && !idList(slot.orderedJudgeIds).length) {
                 const platform = platformLabel(src.platforms.find((p) => p.id === pid)?.name) || 'a platform'
                 noJudge.push(`${dance.name?.trim() || 'a dance'} on ${platform} (${block.name?.trim() || ev.name?.trim() || 'the schedule'})`)
               }
@@ -104,9 +105,10 @@ export function printChecks(src: PrintSource, doc: DocId): PrintCheck[] {
         }
       }
     }
-    const unscheduled = entered.filter((g) => !scheduled.has(g.id))
+    // A trophy event danced on its own is scheduled like an age group (one decided from results isn't).
+    const unscheduled = [...entered, ...src.trophyEvents.filter((a) => isDanced(a) && a.groups.length)].filter((x) => !scheduled.has(x.id))
     if (unscheduled.length) {
-      checks.push({ id: 'unscheduled', text: `${listed(unscheduled.map((g) => g.fullName))} ${unscheduled.length === 1 ? 'isn’t' : 'aren’t'} on the schedule`, route: 'manage.schedule' })
+      checks.push({ id: 'unscheduled', text: `${listed(unscheduled.map((x) => x.fullName))} ${unscheduled.length === 1 ? 'isn’t' : 'aren’t'} on the schedule`, route: 'manage.schedule' })
     }
     if (gone) {
       checks.push({ id: 'gone-dance', text: `${plural(gone, 'dance in the schedule no longer exists', 'dances in the schedule no longer exist')}, so ${gone === 1 ? 'it prints' : 'they print'} as “Dance”`, route: 'manage.schedule' })

@@ -1,5 +1,6 @@
 import { scheduleIndex } from '@/lib/dancerDay'
-import { groupHasOverall, type DancePlacing, type Platform, type ResultsTree, type Schedule } from '@/types/competition'
+import { isDanced, turnResultId } from '@/lib/trophyEvents'
+import { groupHasOverall, type DancePlacing, type Platform, type ResultsTree, type Schedule, type TrophyEvent } from '@/types/competition'
 
 // Reading and writing one dance's placings in the stored format the public
 // pages read (lib/results.ts):
@@ -121,7 +122,16 @@ export function resultRows(group: { category?: { name?: string } | null }, dance
   ]
 }
 
-/** One age group dancing one dance on one platform. */
+/**
+ * What a trophy event enters, in order: a danced one's callbacks and its
+ * dance (`danceLabel`), as an age group's; otherwise its one list of placings.
+ * Its placings are stored as its Overall either way.
+ */
+export function trophyEventRows(a: Pick<TrophyEvent, 'danceId'>, danceLabel?: string) {
+  return isDanced(a) ? [{ id: CALLBACKS, label: 'Callbacks' }, { id: OVERALL, label: danceLabel || 'Placings' }] : [{ id: OVERALL, label: 'Placings' }]
+}
+
+/** One age group (or danced trophy event) dancing one dance on one platform. */
 export interface Turn {
   groupId: string
   danceId: string
@@ -149,14 +159,15 @@ export function resultsOrder(groupIds: string[], turns: Turn[]): string[] {
  * Age groups dancing now, as far as the results entered can tell: on each
  * platform, the turn after the last one with results in.
  */
-export function dancingNow(turns: Turn[], results: ResultsTree): Set<string> {
+export function dancingNow(turns: Turn[], results: ResultsTree, trophyEventIds: ReadonlySet<string> = new Set()): Set<string> {
   const byPlatform = new Map<string, Turn[]>()
   for (const t of turns) byPlatform.set(t.platformId, [...(byPlatform.get(t.platformId) ?? []), t])
   const now = new Set<string>()
   for (const list of byPlatform.values()) {
     let lastIn = -1
     list.forEach((t, i) => {
-      if (danceState(results[t.groupId]?.[t.danceId]) !== 'todo') lastIn = i
+      // (A trophy event's turn is entered as its one list, whatever dance it's under.)
+      if (danceState(results[t.groupId]?.[turnResultId(t.groupId, t.danceId, trophyEventIds)]) !== 'todo') lastIn = i
     })
     const turn = list[lastIn + 1]
     if (turn) now.add(turn.groupId)

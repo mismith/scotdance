@@ -13,6 +13,7 @@ import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { blocks, dances as eventDances, dayLabel, days, events, platformLabel, slugline } from '@/lib/schedule'
 import { sanitizeRichText } from '@/lib/sanitize'
 import { competitionPhase } from '@/lib/dancerDay'
+import { isDanced, trophyEventEntrants } from '@/lib/trophyEvents'
 import { today } from '@/lib/now'
 import type { EnrichedDancer, ScheduleEvent } from '@/types/competition'
 import EmptyState from '@/components/EmptyState.vue'
@@ -29,6 +30,8 @@ const {
   competitionId,
   schedule,
   platforms,
+  trophyEvents,
+  results,
   loadSchedule,
   loadDancers,
   loadResults,
@@ -46,13 +49,21 @@ const platformName = computed(() => new Map(platforms.value.map((p) => [p.id, pl
 
 type Mine = Array<{ dancer: EnrichedDancer; color: string | null; platform: string | null }>
 
+// Who of yours dances a turn: an age group's followed dancers, or the followed
+// ones dancing a trophy event (everyone it's open to, or those picked).
+function followedIn(id: string): EnrichedDancer[] {
+  const trophyEvent = trophyEvents.value.find((a) => a.id === id)
+  if (!trophyEvent) return followedByGroup.value.get(id) ?? []
+  return isDanced(trophyEvent) ? trophyEventEntrants(trophyEvent, [...followedByGroup.value.values()].flat(), results.value) : []
+}
+
 function mineIn(event: ScheduleEvent): Mine {
   const mine = new Map<string, Mine[number]>()
   for (const sd of eventDances(event)) {
     if (!sd.danceId || !sd.platforms) continue
     for (const [pid, slot] of Object.entries(sd.platforms)) {
       for (const gid of slot.orderedGroupIds ?? []) {
-        for (const d of followedByGroup.value.get(gid) ?? []) {
+        for (const d of followedIn(gid)) {
           if (!mine.has(d.id))
             mine.set(d.id, { dancer: d, color: following.colorFor(following.followedIn(d)), platform: platformName.value.get(pid) || null })
         }

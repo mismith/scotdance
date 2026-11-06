@@ -4,7 +4,7 @@ import { useMorph } from '@/lib/morph'
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { Check, Clock } from '@lucide/vue'
+import { Check, ChevronRight, Clock } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { oncePerPerson, useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
@@ -18,10 +18,12 @@ import { findGroupDancers, getOrdinalSuffix, isPosted } from '@/lib/results'
 import { sanitizeRichText } from '@/lib/sanitize'
 import { heroTitle } from '@/lib/heroTitle'
 import { clockMinutes } from '@/lib/scheduleProgress'
+import { isDanced, trophyEventEntrants, turnResultId } from '@/lib/trophyEvents'
 import {
   staffMemberName,
   type EnrichedDancer,
   type EnrichedGroup,
+  type EnrichedTrophyEvent,
   type ScheduleDance,
   type StaffMember,
 } from '@/types/competition'
@@ -29,7 +31,9 @@ import {
 // One event in the schedule: each dance, then each platform with its judges
 // and the age groups in the order they'll dance. Your dancers are called out
 // with where they fall in the dancing order; tapping a group always shows
-// the full order, and a Results link goes to the placings once posted.
+// the full order, and a Results link goes to the placings once posted. A
+// trophy event danced on its own (a Trophy Fling) is a row among them, and
+// opens its own page instead.
 const route = useRoute()
 const setHeader = injectInfoHeaderSetter()
 const {
@@ -38,6 +42,7 @@ const {
   schedule,
   platforms,
   groups,
+  trophyEvents,
   dancers,
   dances,
   staff,
@@ -71,8 +76,14 @@ const dayName = computed(() => {
 })
 
 interface GroupRow {
-  group: EnrichedGroup
-  count: number
+  /** An age group or a trophy event's id: one turn. */
+  id: string
+  label: string
+  group: EnrichedGroup | null
+  /** Set for a trophy event's turn (then `group` is null). */
+  trophyEvent: EnrichedTrophyEvent | null
+  /** null while only some dance a trophy event and they aren't picked yet. */
+  count: number | null
   mine: Array<{ dancer: EnrichedDancer; color: string | null; pos: number | null }>
   posted: boolean
   /** Danced (a group after it on the platform is posted), its placings not in yet. */
@@ -94,6 +105,10 @@ function drawPos(d: EnrichedDancer, groupId: string, danceId: string) {
   return i >= 0 ? i + 1 : null
 }
 
+// The danced trophy events: their ids sit among a platform's age groups.
+const trophyEventById = computed(() => new Map(trophyEvents.value.filter(isDanced).map((a) => [a.id, a])))
+const trophyEventIds = computed(() => new Set(trophyEventById.value.keys()))
+
 function platformsFor(sd: ScheduleDance): PlatformRow[] {
   const judgeById = new Map(staff.value.map((m) => [m.id, m]))
   const groupById = new Map(groups.value.map((g) => [g.id, g]))
@@ -102,23 +117,28 @@ function platformsFor(sd: ScheduleDance): PlatformRow[] {
       const slot = sd.platforms?.[p.id]
       if (!slot) return null
       const rows = (slot.orderedGroupIds ?? [])
-        .map((id) => groupById.get(id))
-        .filter((g): g is EnrichedGroup => !!g)
-        .map<GroupRow>((g) => {
-          const all = findGroupDancers(g.id, dancers.value)
+        .map<GroupRow | null>((id) => {
+          const g = groupById.get(id)
+          const trophyEvent = g ? undefined : trophyEventById.value.get(id)
+          if (!g && !trophyEvent) return null
+          const all = g ? findGroupDancers(g.id, dancers.value) : trophyEventEntrants(trophyEvent!, dancers.value, results.value)
           return {
-            group: g,
+            id,
+            label: g?.fullName ?? trophyEvent!.fullName,
+            group: g ?? null,
+            trophyEvent: trophyEvent ?? null,
             count: all.length,
-            posted: !!sd.danceId && posted(g.id, sd.danceId),
+            posted: !!sd.danceId && posted(id, turnResultId(id, sd.danceId, trophyEventIds.value)),
             waiting: false,
             mine: oncePerPerson(all.filter((d) => following.isFollowing(d)))
               .map((d) => ({
                 dancer: d,
                 color: following.colorFor(following.followedIn(d)),
-                pos: sd.danceId ? drawPos(d, g.id, sd.danceId) : null,
+                pos: sd.danceId && g ? drawPos(d, g.id, sd.danceId) : null,
               })),
           }
         })
+        .filter((r): r is GroupRow => !!r)
       rows.forEach((r, i) => (r.waiting = !r.posted && rows.slice(i + 1).some((later) => later.posted)))
       const judges = (slot.orderedJudgeIds ?? [])
         .map((id) => judgeById.get(id))
@@ -242,19 +262,22 @@ const judging = computed(() => {
             </template>
           </div>
           <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
-            <li v-for="g in p.groups" :key="g.group.id" class="relative">
+            <li v-for="g in p.groups" :key="g.id" class="relative">
               <!-- The whole row opens the order (its tint spans it); a posted
-                   age group's Results link sits on top, at the right. -->
-              <button
-                type="button"
-                :class="['press-row focus-inset relative isolate flex min-h-14 w-full items-center gap-3 py-2 pl-4 text-left', g.posted ? 'pr-24' : 'pr-4']"
+                   age group's Results link sits on top, at the right. A trophy
+                   event's row opens its page, which has its dancers and placings. -->
+              <component
+                :is="g.trophyEvent ? RouterLink : 'button'"
+                v-bind="g.trophyEvent ? { to: { name: 'competition.trophyEvent', params: { competitionId, trophyEventId: g.id } } } : { type: 'button' }"
+                :class="['press-row focus-inset relative isolate flex min-h-14 w-full items-center gap-3 py-2 pl-4 text-left', g.posted && !g.trophyEvent ? 'pr-24' : 'pr-4']"
                 :style="g.mine.length ? { '--dc': g.mine[0].color ?? 'var(--primary)' } : undefined"
-                @click="openDraw($event, g.group, s.sd)"
+                @click="g.group && openDraw($event, g.group, s.sd)"
               >
                 <span v-if="g.mine.length" class="dancer-sash" aria-hidden="true" />
                 <span class="min-w-0 flex-1">
-                  <span class="block text-base font-semibold">{{ g.group.fullName }}</span>
-                  <span class="text-muted-foreground block text-sm">{{ g.count }} dancers</span>
+                  <span class="block text-base font-semibold">{{ g.label }}</span>
+                  <span v-if="g.count != null" class="text-muted-foreground block text-sm">{{ g.count }} dancers</span>
+                  <span v-else class="text-muted-foreground block text-sm">Dancers to be picked</span>
                   <MyDancerLine
                     v-for="m in g.mine"
                     :key="m.dancer.id"
@@ -265,13 +288,17 @@ const judging = computed(() => {
                   />
                 </span>
                 <span v-if="g.waiting" class="text-muted-foreground text-footnote shrink-0 font-medium">Results to come</span>
+                <span v-else-if="g.trophyEvent && g.posted" class="text-done-foreground text-footnote flex shrink-0 items-center gap-1 font-semibold">
+                  <Check class="size-4" stroke-width="2.75" /> Results
+                </span>
+                <ChevronRight v-else-if="g.trophyEvent" class="text-muted-foreground size-5 shrink-0" />
                 <span v-else-if="!g.posted" class="text-primary text-footnote shrink-0 font-medium">Dancing order</span>
-              </button>
+              </component>
               <!-- Once posted, the placings are a tap away; the row still opens the order. -->
               <RouterLink
-                v-if="g.posted"
+                v-if="g.posted && g.group"
                 :to="{ name: 'competition.group', params: { competitionId, groupId: g.group.id }, hash: `#dance-${s.sd.danceId}` }"
-                :aria-label="`${g.group.fullName} results`"
+                :aria-label="`${g.label} results`"
                 class="press text-done-foreground text-footnote absolute top-1/2 right-4 flex h-8 -translate-y-1/2 items-center gap-1 rounded-full font-semibold after:absolute after:-inset-x-3 after:-inset-y-1.5"
               >
                 <Check class="size-4" stroke-width="2.75" /> Results
