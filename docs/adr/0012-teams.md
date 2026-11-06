@@ -291,7 +291,8 @@ competition's rows typed as dancers in age groups for teams with
 fixes on a first try, then each miss pattern fixed and unit-tested), and
 writes teams.
 
-- **What it converts** (`web/scripts/convert-teams.ts`, 2026-11-05): rows in
+- **What it converts** (a one-off script run 2026-11-05, kept with its
+  backups in `scotdance-backups`): rows in
   age groups named for teams; elsewhere, rows listing two or more dancers
   (choreography's "Premier Group A" mixes solos and groups); solo rows with
   a routine typed into the name. What one row can't settle, all of

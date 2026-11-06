@@ -321,22 +321,11 @@ From the branch:
    these (`competitionPublishedChanged` and `sendLinkedPublishedAlerts` are
    ADR 0007's too). No reindex or backfill is needed.
 2. Merge to `next`.
-3. Convert production's old team rows (decision 8), after step 1's
-   functions are live (they link the members). Until it runs, an old team
-   shows as it did, as a dancer. In a new folder in `scotdance-backups`:
-   ```bash
-   firebase database:get /production/competitions:data --project firebase-scotdance --instance scotdance > competitions-data.before.json
-   firebase database:get /production/competitions --project firebase-scotdance --instance scotdance > competitions.before.json
-   (cd <branch>/web && node scripts/convert-teams.ts --data "$OLDPWD/competitions-data.before.json" --competitions "$OLDPWD/competitions.before.json" --fixes ~/Sites/@mismith/scotdance-backups/2026-11-teams-conversion/fixes.json --out "$OLDPWD")
-   ```
-   Read `report.html`, then write `applied.json` (one multi-path update;
-   `restore.json` puts it back):
-   ```bash
-   firebase database:update /production applied.json --project firebase-scotdance --instance scotdance
-   ```
-   A dry run on the 2026-11-04 copy: 1,377 rows made duets, trios and
-   groups and 182 solo routines tidied; the 6 it wasn't sure of were fixed
-   by hand (`fixes.json`, kept out of the repo for its names).
+3. Convert production's old team rows (decision 8). **Done 2026-11-05**:
+   1,377 rows made duets, trios and groups, 182 solo routines tidied, and
+   6 fixed by hand. The one-off script, its report and the before copies
+   and restore file are in `scotdance-backups/2026-11-teams-conversion`
+   (README there; the script ran from `575cf6f1`).
 
 ## Parked
 
