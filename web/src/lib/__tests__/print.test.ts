@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { printSource, type PrintSource } from '@/lib/print/source'
-import { ageGroupUnits, coverSheet, drawUnits, firstSessions, groupOrder, programUnits, scheduleUnits, timeAndNote } from '@/lib/print/program'
+import { aggregateUnits, ageGroupUnits, coverSheet, drawUnits, firstSessions, groupOrder, programUnits, scheduleUnits, timeAndNote } from '@/lib/print/program'
 import { platformUnits } from '@/lib/print/day'
 import { placesFor } from '@/lib/print/places'
 import { measured, paginate } from '@/lib/print/paginate'
@@ -153,6 +153,42 @@ describe('age group blocks', () => {
   it('names a trophy’s sponsor, by staff record or as typed', () => {
     expect(units[1].group).toMatchObject({ trophy: 'Lunan Trophy', sponsor: 'Prowse & Chowne' })
     expect(units[2].group).toMatchObject({ trophy: 'Challenge Cup', sponsor: 'Scottish Imports' })
+  })
+})
+
+describe('aggregates', () => {
+  // A trophy across the Beginner age groups, one sponsored by staff id, and one nobody can win yet.
+  const aggregates = {
+    ag: { name: 'Beginner Dancer of the Day', trophy: 'Day Cup', sponsor: 'sp', groupIds: { g7: true, g8: true }, _order: 0 },
+    an: { name: 'Unlinked', groupIds: {}, _order: 1 },
+  }
+  const withAggregates = () => source({ aggregates })
+
+  it('follows the age groups on a fresh page, saying who it is open to rather than listing dancers', () => {
+    const units = programUnits(withAggregates(), ['groups'], { places: 'six' })
+    expect(kinds(units)).toEqual(['ageGroup', 'draw', 'ageGroup', 'ageGroup', 'aggregate'])
+    expect(units[4]).toMatchObject({ key: 'a:ag', breakBefore: true })
+    expect((units[4] as UnitOf<'aggregate'>).aggregate).toEqual({
+      title: 'Beginner Dancer of the Day',
+      openTo: 'Beginner 7, 8 & 9',
+      places: 3,
+      trophy: 'Day Cup',
+      sponsor: 'Prowse & Chowne',
+    })
+  })
+
+  it('shares pages: only the first starts a new one', () => {
+    const units = programUnits(source({ aggregates: { ...aggregates, a2: { name: 'Most Points', groupIds: { g8: true }, _order: 2 } } }), ['groups'], { places: 'six' })
+    expect(units.filter((u) => u.kind === 'aggregate').map((u) => [u.key, !!u.breakBefore])).toEqual([['a:ag', true], ['a:a2', false]])
+  })
+
+  it('leaves out one with no age group switched on', () => {
+    expect(aggregateUnits(withAggregates(), 'six').map((u) => u.key)).toEqual(['a:ag'])
+  })
+
+  it('goes with the age groups: off with them, and none when there are none', () => {
+    expect(programUnits(withAggregates(), ['cover', 'schedule'], { places: 'six' }).some((u) => u.kind === 'aggregate')).toBe(false)
+    expect(aggregateUnits(source(), 'six')).toEqual([])
   })
 })
 
@@ -385,6 +421,15 @@ describe('the Word file', () => {
     expect(styles).toMatch(/w:asciiTheme="minorHAnsi"/)
     const footer = Object.keys(zip.files).find((f) => /^word\/footer\d+\.xml$/.test(f))!
     expect(await zip.file(footer)!.async('string')).toContain('PAGE')
+  })
+
+  it('writes an aggregate with who it is open to, a grid for its winners and its trophy', async () => {
+    const units = programUnits(source({ aggregates: { ag: { name: 'Beginner Dancer of the Day', trophy: 'Day Cup', groupIds: { g7: true } } } }), ['groups'], { places: 'six' })
+    const doc = await xml(await documentDocx(units, { ...opts, doc: 'program' }))
+    expect(doc).toContain('>Beginner Dancer of the Day<')
+    expect(doc).toContain('>Open to Beginner 7<')
+    expect(doc).toContain('>Winners<')
+    expect(doc).toContain('>Day Cup<')
   })
 
   it('leaves page numbers off when they’re switched off', async () => {

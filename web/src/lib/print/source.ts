@@ -4,6 +4,7 @@ import type {
   Competition,
   DrawsTree,
   EnrichedDance,
+  EnrichedAggregate,
   EnrichedDancer,
   EnrichedGroup,
   Platform,
@@ -23,6 +24,7 @@ export interface PrintSource {
   staff: StaffMember[]
   categories: Category[]
   groups: EnrichedGroup[]
+  aggregates: EnrichedAggregate[]
   dancers: EnrichedDancer[]
   dances: EnrichedDance[]
   results: ResultsTree
@@ -36,6 +38,7 @@ export interface PrintSource {
 export interface RawSections {
   categories?: unknown
   groups?: unknown
+  aggregates?: unknown
   dances?: unknown
   dancers?: unknown
   staff?: unknown
@@ -73,7 +76,7 @@ function normaliseDraws(draws: DrawsTree): DrawsTree {
 }
 
 export function printSource(competitionId: string, competition: Competition | null, raw: RawSections): PrintSource {
-  const people = toDancersBundle(raw.dancers, raw.groups, raw.categories)
+  const people = toDancersBundle(raw.dancers, raw.groups, raw.categories, raw.aggregates)
   const results = toResultsBundle(raw.dances, raw.results, raw.points)
   const schedule = toScheduleBundle(raw.schedule, raw.platforms, raw.draws)
   return {
@@ -82,6 +85,7 @@ export function printSource(competitionId: string, competition: Competition | nu
     staff: toStaff(raw.staff),
     categories: people.categories,
     groups: people.groups,
+    aggregates: people.aggregates,
     dancers: people.dancers,
     dances: results.dances,
     results: results.results,

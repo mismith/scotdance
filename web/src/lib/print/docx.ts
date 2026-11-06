@@ -132,6 +132,31 @@ export async function documentDocx(units: Unit[], opts: DocxOptions): Promise<Bl
     ]
   }
 
+  /** A grid to write placings in: a row per name, a column per place. */
+  function placings(names: string[], count: number, width: number, keep: Docx.IParagraphOptions): Block[] {
+    const places = Array.from({ length: count }, (_, i) => i + 1)
+    const header = new d.TableRow({
+      tableHeader: true,
+      children: [
+        cell([para([], keep)], { borders: { top: none, left: none, right: none, bottom: line } }),
+        ...places.map((p) =>
+          cell([para([run(String(p), { bold: true, size: 18 }), run(getOrdinalSuffix(p), { bold: true, size: 18, superScript: true })], { ...keep, alignment: d.AlignmentType.CENTER })], {
+            borders: { top: none, left: none, right: none, bottom: line },
+          }),
+        ),
+      ],
+    })
+    const body = names.map(
+      (name) =>
+        new d.TableRow({
+          cantSplit: true,
+          height: { value: 480, rule: d.HeightRule.ATLEAST },
+          children: [cell([para([run(name)], keep)], { verticalAlign: d.VerticalAlignTable.CENTER }), ...places.map(() => cell([para([], keep)]))],
+        }),
+    )
+    return [para([], { ...keep, spacing: { after: 160 } }), table([header, ...body], [32, ...places.map(() => 68 / places.length)], width)]
+  }
+
   function ageGroup(g: UnitOf<'ageGroup'>['group'], width: number): Block[] {
     const keep = { keepNext: true, keepLines: true }
     const count = `${g.dancers.length} ${g.dancers.length === 1 ? 'dancer' : 'dancers'}`
@@ -148,30 +173,7 @@ export async function documentDocx(units: Unit[], opts: DocxOptions): Promise<Bl
     }
     const rows = Array.from({ length: half }, (_, i) => new d.TableRow({ cantSplit: true, children: [...side(i), cell([para([], keep)]), ...side(i + half)] }))
     if (rows.length) blocks.push(table(rows, [6, 25, 16, 4, 6, 25, 16], width, { borders: noBorders }))
-    if (g.dances.length && g.places) {
-      const places = Array.from({ length: g.places }, (_, i) => i + 1)
-      const header = new d.TableRow({
-        tableHeader: true,
-        children: [
-          cell([para([], keep)], { borders: { top: none, left: none, right: none, bottom: line } }),
-          ...places.map((p) =>
-            cell([para([run(String(p), { bold: true, size: 18 }), run(getOrdinalSuffix(p), { bold: true, size: 18, superScript: true })], { ...keep, alignment: d.AlignmentType.CENTER })], {
-              borders: { top: none, left: none, right: none, bottom: line },
-            }),
-          ),
-        ],
-      })
-      const body = g.dances.map(
-        (name) =>
-          new d.TableRow({
-            cantSplit: true,
-            height: { value: 480, rule: d.HeightRule.ATLEAST },
-            children: [cell([para([run(name)], keep)], { verticalAlign: d.VerticalAlignTable.CENTER }), ...places.map(() => cell([para([], keep)]))],
-          }),
-      )
-      blocks.push(para([], { ...keep, spacing: { after: 160 } }))
-      blocks.push(table([header, ...body], [32, ...places.map(() => 68 / places.length)], width))
-    }
+    if (g.dances.length && g.places) blocks.push(...placings(g.dances, g.places, width, keep))
     if (g.overall) {
       // A line to write the winner on, as long as a name needs: a cell's
       // foot, which every app draws (not all draw a tab's leader).
@@ -248,6 +250,16 @@ export async function documentDocx(units: Unit[], opts: DocxOptions): Promise<Bl
     ]
   }
 
+  function aggregate(a: UnitOf<'aggregate'>['aggregate'], width: number): Block[] {
+    const keep = { keepNext: true, keepLines: true }
+    const blocks: Block[] = [headed(d.HeadingLevel.HEADING_2, a.title, [], width, { ...keep, border: rule(12) })]
+    if (a.openTo) blocks.push(para([run(`Open to ${a.openTo}`)], keep))
+    if (a.places) blocks.push(...placings(['Winners'], a.places, width, keep))
+    if (a.trophy) blocks.push(para([muted(`${a.trophy}${a.sponsor ? `, sponsored by ${a.sponsor}` : ''}`, 18)], { spacing: { before: 200 } }))
+    blocks.push(para([], { spacing: { after: 360 } }))
+    return blocks
+  }
+
   /** The units from `i`, as Word blocks; and how many units they used (a grid's rows, a draw's chunks). */
   async function render(i: number, width: number): Promise<[Block[], number]> {
     const u = units[i]
@@ -270,6 +282,8 @@ export async function documentDocx(units: Unit[], opts: DocxOptions): Promise<Bl
         return [[], 1]
       case 'ageGroup':
         return [ageGroup(u.group, width), 1]
+      case 'aggregate':
+        return [aggregate(u.aggregate, width), 1]
       case 'draw': {
         let j = i + 1
         while (units[j]?.kind === 'draw' && (units[j] as UnitOf<'draw'>).draw.group === u.draw.group && (units[j] as UnitOf<'draw'>).draw.from) j++

@@ -161,6 +161,37 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
     </p>
   </section>
 
+  <!-- An aggregate: who it's open to, a grid to write the winners in, its trophy -->
+  <section v-else-if="unit.kind === 'aggregate'" class="pb-[24pt] text-[10pt]">
+    <header class="mb-[6pt] border-b-[1.5pt] border-[#15181c] pb-[3pt]">
+      <h3 class="text-[14pt] leading-tight font-bold tracking-[-0.01em]">{{ unit.aggregate.title }}</h3>
+    </header>
+    <p v-if="unit.aggregate.openTo" class="leading-[1.5]">Open to {{ unit.aggregate.openTo }}</p>
+    <table v-if="unit.aggregate.places" class="mt-[12pt] w-full table-fixed border-collapse">
+      <colgroup>
+        <col class="w-[32%]" />
+        <col v-for="p in unit.aggregate.places" :key="p" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="pb-[3pt]"><span class="sr-only">Placing</span></th>
+          <th v-for="p in unit.aggregate.places" :key="p" class="pb-[3pt] text-center text-[9pt] font-semibold">
+            {{ p }}<span class="align-super text-[0.72em]">{{ getOrdinalSuffix(p) }}</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th :class="DANCE">Winners</th>
+          <td v-for="p in unit.aggregate.places" :key="p" :class="[CELL, 'h-[24pt]']" />
+        </tr>
+      </tbody>
+    </table>
+    <p v-if="unit.aggregate.trophy" :class="['mt-[10pt] text-[9pt]', MUTED]">
+      {{ unit.aggregate.trophy }}<template v-if="unit.aggregate.sponsor">, sponsored by {{ unit.aggregate.sponsor }}</template>
+    </p>
+  </section>
+
   <!-- A draw that differs dance by dance (a championship's) -->
   <section v-else-if="unit.kind === 'draw'" class="pb-[18pt]">
     <header class="mb-[8pt] flex items-baseline justify-between gap-[8pt] border-b-[1.5pt] border-[#15181c] pb-[3pt]">

@@ -12,7 +12,7 @@ import { WIDE_GRID, type CoverSheet, type GridCell, type GridRow, type PartId, t
 
 // The program: a cover, then each session's platform grid followed by its
 // age groups (each one's dancers, a grid to write the placings in, and its
-// trophy; a championship's draw before it). Laid out the way organisers'
+// trophy; a championship's draw before it), then the aggregates. Laid out the way organisers'
 // own programs are (Edmonton, Calgary, the SDCCS), from what's in Manage.
 
 /** A description's first line when it's a time ("8:30 am"), and the rest. */
@@ -248,6 +248,31 @@ export function ageGroupUnits(src: PrintSource, places: PlacesRule, groups: Enri
   })
 }
 
+/**
+ * Each aggregate with an age group switched on: its name, who it's open to
+ * (not a dancer list: they're the age groups' own), a grid to write the
+ * winners in, and its trophy. They're short, so they share pages, starting
+ * on a fresh one.
+ */
+export function aggregateUnits(src: PrintSource, places: PlacesRule): Unit[] {
+  const staffById = new Map(src.staff.map((m) => [m.id, m]))
+  return src.aggregates
+    .filter((a) => a.groups.length)
+    .map<Unit>((a, i) => ({
+      key: `a:${a.id}`,
+      part: 'groups',
+      kind: 'aggregate',
+      breakBefore: i === 0,
+      aggregate: {
+        title: a.fullName,
+        openTo: a.openTo,
+        places: placesFor(a.groups.reduce((n, g) => n + groupDancers(src, g.id).length, 0), places),
+        trophy: a.trophy?.trim() || undefined,
+        sponsor: sponsorName(a.sponsor, staffById),
+      },
+    }))
+}
+
 export interface ProgramOptions {
   places: PlacesRule
 }
@@ -267,5 +292,7 @@ export function programUnits(src: PrintSource, parts: PartId[], opts: ProgramOpt
     ...sessions(src).flatMap((s) => [...(on.has('schedule') ? sessionUnits(src, s) : []), ...groupsIn(s.id)]),
     // Any not on the schedule yet, at the end.
     ...groupsIn(undefined),
+    // Aggregates last: they span age groups, so they close the program.
+    ...(on.has('groups') ? aggregateUnits(src, opts.places) : []),
   ]
 }

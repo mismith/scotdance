@@ -120,13 +120,21 @@ function exportCsv() {
       for (const dancerId of pointed) rows.push(row(dancerId, 'Point'))
     }
   }
-  // Aggregates last: their name in the age group column, and no dance.
+  // Aggregates last: their name in the age group column, no dance, and (in
+  // a column only they need) the age group each dancer entered, since one
+  // aggregate's placings mix age groups.
+  const aggregateRows: string[][] = []
   for (const a of m.aggregates.value) {
     const p = parsePlacings(m.results.value[a.id]?.[OVERALL])
     for (const [i, e] of p.entries.entries()) {
       const d = m.dancersById.value.get(e.id)
-      rows.push(['Aggregate', a.label, '', String(placeAt(i, p) ?? ''), d?.num ?? '?', d?.firstName ?? '', d?.lastName ?? '', d?.location ?? ''])
+      aggregateRows.push(['Aggregate', a.label, '', String(placeAt(i, p) ?? ''), d?.num ?? '?', d?.firstName ?? '', d?.lastName ?? '', d?.location ?? '', d?.group?.label ?? ''])
     }
+  }
+  if (aggregateRows.length) {
+    rows[0].push('Their age group')
+    for (const r of rows.slice(1)) r.push('')
+    rows.push(...aggregateRows)
   }
   const csv = rows.map((r) => r.map((c) => (/[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c)).join(',')).join('\n')
   const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }))

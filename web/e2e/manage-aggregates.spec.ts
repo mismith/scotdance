@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import { expect, test, type Page } from '@playwright/test'
 import { dbGet } from './support/emulator'
 import { removeCompetition, seedCompetition, type SeededCompetition } from './support/seed'
@@ -92,6 +93,19 @@ test('enter its placings in Results, like an Overall, and see it entered', async
   // Back on the list it counts as entered.
   await page.goto(manage('/results'))
   await expect(page.getByRole('link', { name: /^Premier Dancer of the Day, entered/ })).toBeVisible()
+
+  // The spreadsheet lists it last, with the age group each winner entered.
+  await page.getByRole('button', { name: 'More for results' }).click()
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('dialog', { name: 'More for results' }).getByRole('button', { name: 'Download all results' }).click(),
+  ])
+  const rows = (await readFile((await download.path())!, 'utf8')).replace(/^\uFEFF/, '').split('\n')
+  expect(rows[0]).toBe('Category,Age group,Dance,Place,Number,First name,Last name,Location,Their age group')
+  expect(rows.slice(-2).map((r) => [r.split(',')[1], r.split(',')[3], r.split(',')[4], r.split(',').at(-1)])).toEqual([
+    ['Premier Dancer of the Day', '1', last.number, `Premier ${premier[2].name}`],
+    ['Premier Dancer of the Day', '2', first.number, `Premier ${premier[0].name}`],
+  ])
 })
 
 test('deleting one takes its placings, with Undo; deleting an age group takes it off the aggregate', async ({ page }) => {
