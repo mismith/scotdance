@@ -99,6 +99,32 @@ export interface EnrichedGroup extends Group {
   category?: Category
 }
 
+/**
+ * A trophy across age groups, like Dancer of the Day: one list of placings,
+ * picked by the organiser from the dancers in the age groups switched on.
+ * Its placings are kept with the age groups' at results[aggregateId][OVERALL_ID],
+ * in the same shape, so entry, alerts and medals work the same way.
+ */
+export interface Aggregate {
+  id: string
+  name?: string
+  /** The trophy's name, as on an age group. */
+  trophy?: string
+  /** Who sponsors it: a staff member's id, or a typed name. */
+  sponsor?: string
+  /** The age groups whose dancers can win it. */
+  groupIds?: Record<string, boolean>
+  _order?: number
+}
+
+export interface EnrichedAggregate extends Aggregate {
+  fullName: string
+  /** The age groups switched on, in the competition's order (ones since removed left out). */
+  groups: EnrichedGroup[]
+  /** Who can win it, said briefly: "All Premier · Intermediate 12 & Under 14". */
+  openTo: string
+}
+
 export interface Dancer {
   id: string
   firstName?: string

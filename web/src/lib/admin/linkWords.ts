@@ -24,7 +24,7 @@ const possessive = (name: string) => `${name}’${name.endsWith('s') ? '' : 's'}
 function losses(c: { sponsors: number; judging: number }) {
   return [
     c.judging && `${count(c.judging, 'dance')} ${c.judging === 1 ? 'loses' : 'lose'} a judge`,
-    c.sponsors && `${count(c.sponsors, 'age group')} ${c.sponsors === 1 ? 'loses its' : 'lose their'} sponsor`,
+    c.sponsors && `${count(c.sponsors, 'trophy', 'trophies')} ${c.sponsors === 1 ? 'loses its' : 'lose their'} sponsor`,
   ].filter(Boolean).join(' and ')
 }
 

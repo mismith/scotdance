@@ -12,9 +12,10 @@ import { useCompetitionLive } from '@/composables/useCompetitionLive'
 import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
 import { useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
-import { findGroupDances, groupHasPlaceholderDancers, isPosted } from '@/lib/results'
+import { AGGREGATE_RESULT, aggregatePosted } from '@/lib/aggregates'
+import { danceHasPlaceholder, findGroupDances, groupHasPlaceholderDancers, isPosted } from '@/lib/results'
 import { resultsCount } from '@/lib/resultsCount'
-import { OVERALL_ID, groupHasOverall, type EnrichedGroup } from '@/types/competition'
+import { OVERALL_ID, groupHasOverall, type EnrichedAggregate, type EnrichedGroup } from '@/types/competition'
 import EmptyState from '@/components/EmptyState.vue'
 import LiveDot from '@/components/LiveDot.vue'
 import Medal from '@/components/Medal.vue'
@@ -29,6 +30,7 @@ const {
   competitionId,
   categories,
   groups,
+  aggregates,
   dances,
   results,
   points,
@@ -120,7 +122,51 @@ const blocks = computed(() => {
   return out
 })
 
-const totals = computed(() => resultsCount(groups.value, dances.value, results.value))
+// Aggregates (Dancer of the Day and the like): one row each, after the age
+// groups. A followed dancer who can win one is on its row, with the cup if
+// they placed. Their placings stay off the age group rows above.
+interface AggregateRow {
+  aggregate: EnrichedAggregate
+  posted: number
+  unknown: boolean
+  mine: Row['mine']
+  /** A followed dancer can win it, placed or not (for Only my dancers’ age groups). */
+  yours: boolean
+}
+const aggregateRows = computed<AggregateRow[]>(() => {
+  if (resultsHidden.value) return []
+  const rows = aggregates.value.map<AggregateRow>((aggregate) => {
+    const eligible = [...followedByGroup.value].filter(([groupId]) => aggregate.groupIds?.[groupId]).flatMap(([, list]) => list)
+    // Only the ones who placed: most who could win one don't, and a line
+    // saying so under every aggregate would be noise. Someone in two of its
+    // age groups shows once, at their best place.
+    const best = new Map<string, Row['mine'][number]>()
+    for (const d of eligible) {
+      const status = dayFor(d).aggregates.find((s) => s.dance.id === aggregate.id)
+      if (status?.state !== 'placed' || status.place == null) continue
+      const person = d.dancerId ?? d.id
+      const kept = best.get(person)
+      if (kept && kept.medals[0].place <= status.place) continue
+      best.set(person, {
+        key: d.id,
+        name: d.firstName ?? d.fullName,
+        color: following.colorFor(d.dancerId),
+        medals: [{ id: AGGREGATE_RESULT, name: aggregate.fullName, place: status.place, tied: status.tied, dancerId: d.id }],
+      })
+    }
+    const mine = [...best.values()]
+    return {
+      aggregate,
+      posted: aggregatePosted(results.value, aggregate.id) ? 1 : 0,
+      unknown: danceHasPlaceholder(results.value, points.value, aggregate.id, AGGREGATE_RESULT),
+      mine,
+      yours: eligible.length > 0,
+    }
+  })
+  return mineOnly.value ? rows.filter((r) => r.yours) : rows
+})
+
+const totals = computed(() => resultsCount(groups.value, dances.value, results.value, aggregates.value))
 
 const anyFollowedHere = computed(() => followedByGroup.value.size > 0)
 const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
@@ -228,6 +274,51 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
                   </MyDancerLine>
                 </span>
                 <ResultsMark :posted="r.posted" :total="r.total" />
+                <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+              </RouterLink>
+            </li>
+          </ul>
+        </section>
+
+        <section v-if="aggregateRows.length" data-section="Aggregates">
+          <h2 class="text-muted-foreground text-callout py-2 font-semibold">Aggregates</h2>
+          <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
+            <li v-for="r in aggregateRows" :key="r.aggregate.id">
+              <RouterLink
+                :to="{ name: 'competition.aggregate', params: { competitionId, aggregateId: r.aggregate.id } }"
+                class="press-row focus-inset relative isolate flex min-h-14 items-center gap-3 py-2 pr-3 pl-4"
+                :style="r.mine.length ? { '--dc': r.mine[0].color ?? 'var(--primary)' } : undefined"
+              >
+                <span v-if="r.mine.length" class="dancer-sash" aria-hidden="true" />
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-base font-semibold">{{ r.aggregate.fullName }}</span>
+                  <span v-if="r.aggregate.openTo" class="text-muted-foreground line-clamp-2 block text-sm">{{ r.aggregate.openTo }}</span>
+                  <span v-if="r.unknown" class="text-muted-foreground mt-0.5 flex items-center gap-1 text-sm">
+                    <AlertTriangle class="size-3.5 shrink-0" aria-hidden="true" />
+                    Some placings couldn’t be matched to a dancer
+                  </span>
+                  <MyDancerLine
+                    v-for="m in r.mine"
+                    :key="m.key"
+                    :color="m.color"
+                    :name="m.name"
+                    class="mt-1"
+                  >
+                    <span class="flex items-center gap-1">
+                      <Medal
+                        v-for="x in m.medals"
+                        :key="x.id"
+                        :place="x.place"
+                        :tied="x.tied"
+                        :fresh="isFresh(r.aggregate.id, x.id, x.dancerId)"
+                        :dance="x.name"
+                        size="sm"
+                        trophy
+                      />
+                    </span>
+                  </MyDancerLine>
+                </span>
+                <ResultsMark :posted="r.posted" :total="1" />
                 <ChevronRight class="text-muted-foreground size-5 shrink-0" />
               </RouterLink>
             </li>

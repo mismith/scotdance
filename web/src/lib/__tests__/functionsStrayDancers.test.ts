@@ -29,6 +29,14 @@ describe('strayDancers', () => {
     expect(list.map((d) => d.id)).toEqual(['stray'])
   })
 
+  it('never lists an entry an aggregate’s placings name', () => {
+    const list = strayDancers(
+      { first: { number: 5 }, tied: { number: 6 }, stray: { number: 8 } },
+      { aggregateKey: { overall: ['reverse:3', 'first', 'tied:tie'] } },
+    )
+    expect(list.map((d) => d.id)).toEqual(['stray'])
+  })
+
   it('says which entry a leftover copy copies', () => {
     const list = strayDancers({
       real: { firstName: 'Adalia', lastName: 'Wambolt', number: 149, groupId: 'g1' },

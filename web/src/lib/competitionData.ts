@@ -1,15 +1,18 @@
 import { equalTo, orderByChild, query, ref as dbRef, type Query } from 'firebase/database'
 import { database } from '@/firebase'
 import { competitionChanged, editedCompetition, stampOf } from '@/lib/competitionChanged'
+import { enrichAggregates } from '@/lib/aggregates'
 import { getSavedAt, onReconnect, onValueSaved } from '@/lib/offline'
 import {
   danceFullName,
   dancerFullName,
   groupFullName,
+  type Aggregate,
   type Category,
   type Dance,
   type Dancer,
   type DrawsTree,
+  type EnrichedAggregate,
   type EnrichedDance,
   type EnrichedDancer,
   type EnrichedGroup,
@@ -36,6 +39,7 @@ type Section =
   | 'dancers'
   | 'groups'
   | 'categories'
+  | 'aggregates'
   | 'dances'
   | 'results'
   | 'points'
@@ -54,8 +58,13 @@ interface Part {
   q: Query
   stamp: Section
   key?: string
+  /** An extra: when it can't be read (no saved copy offline, or refused), it's empty rather than failing the rest. */
+  optional?: boolean
 }
 const sections = (id: string, names: Section[]): Part[] => names.map((s) => ({ q: sectionRef(id, s), stamp: s }))
+// Aggregates came after the rest, so a copy saved before then has none:
+// without them, the dancers still show.
+const aggregatesPart = (id: string): Part => ({ q: sectionRef(id, 'aggregates'), stamp: 'aggregates', optional: true })
 // One person's entries, found by the link back to their profile: Home needs
 // those, not everyone else's.
 function entriesOf(id: string, personId: string): Part {
@@ -90,6 +99,8 @@ export interface DancersBundle {
   dancers: EnrichedDancer[]
   groups: EnrichedGroup[]
   categories: Category[]
+  /** Trophies across age groups (lib/aggregates). */
+  aggregates: EnrichedAggregate[]
 }
 
 export interface ResultsBundle {
@@ -111,7 +122,7 @@ export interface ScheduleBundle {
 
 // --- Raw section values → what the screens use (and what Manage › Print lays out).
 
-export function toDancersBundle(dancersVal: unknown, groupsVal: unknown, categoriesVal: unknown): DancersBundle {
+export function toDancersBundle(dancersVal: unknown, groupsVal: unknown, categoriesVal: unknown, aggregatesVal?: unknown): DancersBundle {
   const rawDancers = snapshotToArray<Dancer>(dancersVal as Record<string, Dancer> | null)
   const rawGroups = snapshotToArray<Group>(groupsVal as Record<string, Group> | null)
   const rawCategories = snapshotToArray<Category>(categoriesVal as Record<string, Category> | null)
@@ -137,10 +148,14 @@ export function toDancersBundle(dancersVal: unknown, groupsVal: unknown, categor
       }
     })
 
+  const groups = [...groupsById.values()].sort(byDragOrder)
+  const categories = [...rawCategories].sort(byDragOrder)
+  const rawAggregates = snapshotToArray<Aggregate>(aggregatesVal as Record<string, Aggregate> | null).filter((a) => a && typeof a === 'object')
   return {
     dancers,
-    groups: [...groupsById.values()].sort(byDragOrder),
-    categories: [...rawCategories].sort(byDragOrder),
+    groups,
+    categories,
+    aggregates: enrichAggregates(rawAggregates.sort(byDragOrder), groups, categories),
   }
 }
 
@@ -209,21 +224,26 @@ function cached<T>(map: Map<string, Promise<T>>, id: string, load: () => Promise
 
 const readAll = async (id: string, parts: Part[]) => {
   const changed = await competitionChanged(id)
-  return Promise.all(parts.map((p) => getSavedAt(p.q, stampOf(changed, p.stamp), p.key).then((snap) => snap.val())))
+  return Promise.all(
+    parts.map((p) => {
+      const read = getSavedAt(p.q, stampOf(changed, p.stamp), p.key).then((snap) => snap.val())
+      return p.optional ? read.catch(() => null) : read
+    }),
+  )
 }
 
 export function fetchDancers(id: string): Promise<DancersBundle> {
   return cached(caches.dancers, id, async () => {
-    const [d, g, c] = await readAll(id, sections(id, ['dancers', 'groups', 'categories']))
-    return toDancersBundle(d, g, c)
+    const [d, g, c, a] = await readAll(id, [...sections(id, ['dancers', 'groups', 'categories']), aggregatesPart(id)])
+    return toDancersBundle(d, g, c, a)
   })
 }
 
 /** One person's entries (by their profile id), with the groups and categories. */
 export function fetchEntries(id: string, personId: string): Promise<DancersBundle> {
   return cached(caches.entries, `${id}/${personId}`, async () => {
-    const [d, g, c] = await readAll(id, [entriesOf(id, personId), ...sections(id, ['groups', 'categories'])])
-    return toDancersBundle(d, g, c)
+    const [d, g, c, a] = await readAll(id, [entriesOf(id, personId), ...sections(id, ['groups', 'categories']), aggregatesPart(id)])
+    return toDancersBundle(d, g, c, a)
   })
 }
 
@@ -273,15 +293,16 @@ type OnError = (e: Error) => void
 function watchParts(parts: Part[], cb: (values: unknown[]) => void, onError?: OnError) {
   const values: unknown[] = new Array(parts.length)
   const got = new Set<number>()
+  const arrived = (i: number, value: unknown) => {
+    values[i] = value
+    got.add(i)
+    if (got.size === parts.length) cb([...values])
+  }
   const offs = parts.map((p, i) =>
     onValueSaved(
       p.q,
-      (snap) => {
-        values[i] = snap.val()
-        got.add(i)
-        if (got.size === parts.length) cb([...values])
-      },
-      onError,
+      (snap) => arrived(i, snap.val()),
+      p.optional ? () => arrived(i, null) : onError,
       p.key,
     ),
   )
@@ -289,8 +310,8 @@ function watchParts(parts: Part[], cb: (values: unknown[]) => void, onError?: On
 }
 
 export function watchDancers(id: string, cb: (b: DancersBundle) => void, onError?: OnError) {
-  return watchParts(sections(id, ['dancers', 'groups', 'categories']), ([d, g, c]) => {
-    const b = toDancersBundle(d, g, c)
+  return watchParts([...sections(id, ['dancers', 'groups', 'categories']), aggregatesPart(id)], ([d, g, c, a]) => {
+    const b = toDancersBundle(d, g, c, a)
     caches.dancers.set(id, Promise.resolve(b))
     cb(b)
   }, onError)
@@ -298,8 +319,8 @@ export function watchDancers(id: string, cb: (b: DancersBundle) => void, onError
 
 /** One person's entries streaming, late ones included. */
 export function watchEntries(id: string, personId: string, cb: (b: DancersBundle) => void, onError?: OnError) {
-  return watchParts([entriesOf(id, personId), ...sections(id, ['groups', 'categories'])], ([d, g, c]) => {
-    const b = toDancersBundle(d, g, c)
+  return watchParts([entriesOf(id, personId), ...sections(id, ['groups', 'categories']), aggregatesPart(id)], ([d, g, c, a]) => {
+    const b = toDancersBundle(d, g, c, a)
     caches.entries.set(`${id}/${personId}`, Promise.resolve(b))
     cb(b)
   }, onError)

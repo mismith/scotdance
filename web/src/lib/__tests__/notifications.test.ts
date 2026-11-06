@@ -157,6 +157,16 @@ describe('messages', () => {
     expect(resultMessage({ ...fling, overall: true }, 'Iona').title).toBe('Overall results are in')
   })
 
+  it('says an aggregate placing, and that its results are in', () => {
+    const aggregate = { competitionName: 'Calgary Highland Games', aggregateName: 'Premier Dancer of the Day', overall: false }
+    expect(resultMessage(aggregate, 'Ailsa', 1)).toEqual({
+      title: 'Ailsa placed 1st',
+      body: 'Premier Dancer of the Day · Calgary Highland Games',
+    })
+    expect(resultMessage(aggregate, 'Iona')).toEqual({ title: 'Premier Dancer of the Day results are in', body: 'Calgary Highland Games' })
+    expect(resultMessage({ aggregateName: '  ', overall: false }, 'Iona').title).toBe('Aggregate results are in')
+  })
+
   it('copes with missing names', () => {
     expect(resultMessage({ ...fling, danceName: 'The Lilt' }, '  ', 3)).toEqual({ title: 'Your dancer placed 3rd', body: 'Lilt · Premier 12 & Under · Calgary Highland Games' })
     expect(resultMessage({ overall: false }, 'Ailsa').title).toBe('Dance results are in')
@@ -251,6 +261,100 @@ describe('result alerts', () => {
     expect(said()).toEqual([])
     await save({ 'competitions:data/c1/results/g1/overall': ['e1'] }, handler)
     expect(said()).toEqual(['u1: Ailsa placed 1st overall (Premier 12 & Under)', 'u2: Overall results are in (Premier 12 & Under)', 'u4: Overall results are in (Premier 12 & Under)'])
+  })
+
+  describe('aggregates', () => {
+    // Premier Dancer of the Day spans g1 (e1 e2 e3 e5) but not g2 (e4, followed by u1).
+    const aggregates = { agg1: { name: 'Premier Dancer of the Day', groupIds: { g1: true } }, agg2: { name: 'Overall Trophy', groupIds: { g1: true, g2: true } } }
+    const withAggregates = () => {
+      const data = seed()
+      data['competitions:data'].c1.aggregates = aggregates
+      return data
+    }
+    const overall = (id: string) => `competitions:data/c1/results/${id}/overall`
+
+    it('tells followers of placed dancers only, and says nothing to the rest of its age groups', async () => {
+      const { save, results, log, said } = setup(withAggregates())
+      await save({ [overall('agg1')]: ['e2', 'e1'] }, results())
+      // u4 follows Iona (unplaced), u3 has live results off, u5 all alerts: nothing for them.
+      expect(said()).toEqual([
+        'u1: Ailsa placed 2nd (Premier Dancer of the Day)',
+        'u2: Mairi placed 1st (Premier Dancer of the Day)',
+      ])
+      expect(log().find((m) => m.uid === 'u1')).toMatchObject({
+        body: 'Premier Dancer of the Day · Calgary Highland Games',
+        link: '/competitions/c1/results/aggregates/agg1',
+        kind: 'results',
+        competitionId: 'c1',
+      })
+    })
+
+    it('covers every age group it spans', async () => {
+      const { save, results, said } = setup(withAggregates())
+      await save({ [overall('agg2')]: ['e4', 'e1'] }, results())
+      // u1 follows both placed dancers: one alert for each.
+      expect(said()).toEqual(['u1: Ailsa placed 2nd (Overall Trophy)', 'u1: Kirsty placed 1st (Overall Trophy)'])
+    })
+
+    it('sends one alert for a person entered twice, at their best place', async () => {
+      const data = withAggregates()
+      data['competitions:data'].c1.dancers.e6 = { firstName: 'Ailsa', lastName: 'Grant', groupId: 'g2', dancerId: 'p1' }
+      const { save, results, said } = setup(data)
+      const handler = results()
+      await save({ [overall('agg2')]: ['e6', 'e2', 'e1'] }, handler)
+      expect(said()).toEqual(['u1: Ailsa placed 1st (Overall Trophy)', 'u2: Mairi placed 2nd (Overall Trophy)'])
+      // Their best place changing replaces it (the same alert on the phone), not a second for each entry.
+      await save({ [overall('agg2')]: ['e2', 'e1', 'e6'] }, handler)
+      expect(said().filter((m) => m.startsWith('u1:'))).toEqual([
+        'u1: Ailsa placed 1st (Overall Trophy)',
+        'u1: Ailsa placed 2nd (Overall Trophy)',
+      ])
+    })
+
+    it('queues nothing when nobody placed is followed', async () => {
+      const data = withAggregates()
+      data['competitions:data'].c1.aggregates.agg3 = { name: 'Senior Trophy', groupIds: { g1: true, g2: true } }
+      // Followed dancers are e1-e4 (not e5); only e5, unlinked, and a dancer in no age group place.
+      const queue: SettleTask[] = []
+      const { save, results, said } = setup(data)
+      await save({ [overall('agg3')]: ['e5'] }, results(true, queue))
+      expect(queue).toEqual([])
+      expect(said()).toEqual([])
+      // Someone outside its age groups, followed or not.
+      data['competitions:data'].c1.aggregates.agg4 = { name: 'Senior Trophy', groupIds: { g2: true } }
+      await save({ [overall('agg4')]: ['e1'] }, results(true, queue))
+      expect(queue).toEqual([])
+      expect(said()).toEqual([])
+    })
+
+    it('sends each placing once, and a changed one again', async () => {
+      const { save, results, said } = setup(withAggregates())
+      const handler = results()
+      await save({ [overall('agg1')]: ['e2', 'e1'] }, handler)
+      await save({ [overall('agg1')]: ['e2', 'e1', 'e3'] }, handler)
+      expect(said().filter((m) => m.startsWith('u1:'))).toEqual(['u1: Ailsa placed 2nd (Premier Dancer of the Day)'])
+      expect(said().filter((m) => m.startsWith('u3:'))).toEqual([])
+      await save({ [overall('agg1')]: ['e1', 'e2'] }, handler)
+      // The correction is a new alert (it replaces the first on the phone).
+      expect(said().filter((m) => m.startsWith('u1:'))).toEqual([
+        'u1: Ailsa placed 1st (Premier Dancer of the Day)',
+        'u1: Ailsa placed 2nd (Premier Dancer of the Day)',
+      ])
+    })
+
+    it('leaves an age group alone: same messages, same link, even beside an aggregate', async () => {
+      const { save, results, log, said } = setup(withAggregates())
+      await save({ [fling]: ['e2', 'e1'] }, results())
+      expect(said()).toEqual([
+        'u1: Ailsa placed 2nd (Highland Fling)',
+        'u2: Mairi placed 1st (Highland Fling)',
+        'u4: Highland Fling results are in (Premier 12 & Under)',
+      ])
+      expect(log().find((m) => m.uid === 'u1')).toMatchObject({
+        body: 'Highland Fling · Premier 12 & Under · Calgary Highland Games',
+        link: '/competitions/c1/results/g1#dance-fling',
+      })
+    })
   })
 
   it('sends each placing once, however often it is saved', async () => {

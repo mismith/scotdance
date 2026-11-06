@@ -1,10 +1,12 @@
 import { blocks, dances as scheduleDances, days, events, isSpacerId } from '@/lib/schedule'
+import { AGGREGATE_RESULT, aggregatesFor } from '@/lib/aggregates'
 import { CALLBACKS_ID, findGroupDances, getDancerPlace, isPosted } from '@/lib/results'
 import { daysFromToday } from '@/lib/format'
 import {
   OVERALL_ID,
   groupHasOverall,
   type DrawsTree,
+  type EnrichedAggregate,
   type EnrichedDance,
   type EnrichedDancer,
   type EnrichedGroup,
@@ -74,6 +76,12 @@ export interface DancerDay {
   phase: Phase
   dances: DanceStatus[]
   overall: DanceStatus | null
+  /**
+   * The aggregates their age group can win, in the organiser's order, after
+   * Overall. `dance` is the aggregate (its id, its name); `later` until its
+   * placings are posted, then placed or unplaced like any dance.
+   */
+  aggregates: DanceStatus[]
   /** null when callbacks haven't been posted for the group. */
   calledBack: boolean | null
   resultsIn: number
@@ -88,6 +96,8 @@ export interface DayBundle {
   draws: DrawsTree
   /** The competition's age groups: a schedule can still list deleted ones. */
   groups?: Array<{ id: string }>
+  /** Trophies across age groups (lib/aggregates), when the competition has any. */
+  aggregates?: Array<Pick<EnrichedAggregate, 'id' | 'fullName' | 'groupIds'>>
 }
 
 /**
@@ -206,6 +216,7 @@ export function dancerDay(
     phase,
     dances: [],
     overall: null,
+    aggregates: [],
     calledBack: null,
     resultsIn: 0,
   }
@@ -288,6 +299,23 @@ export function dancerDay(
     }
   }
 
+  // Their results sit at results[aggregateId].overall, in the age groups' shape.
+  const aggregates = aggregatesFor(bundle.aggregates ?? [], group.id).map<DanceStatus>((a) => {
+    const { place, tied, pointed } = getDancerPlace(dancer.id, a.id, AGGREGATE_RESULT, results, points)
+    const raw = results?.[a.id]?.[AGGREGATE_RESULT]
+    const posted = isPosted(raw)
+    return {
+      dance: { id: a.id, name: a.fullName, fullName: a.fullName },
+      state: posted ? (raw === false ? 'no-placings' : place != null ? 'placed' : 'unplaced') : phase === 'after' ? 'not-posted' : 'later',
+      place,
+      tied,
+      pointed,
+      slot: null,
+      drawPos: null,
+      drawSize: null,
+    }
+  })
+
   const callbacks = results?.[group.id]?.[CALLBACKS_ID]
   const calledBack = Array.isArray(callbacks) && callbacks.length ? callbacks.includes(dancer.id) : null
 
@@ -297,6 +325,7 @@ export function dancerDay(
     phase,
     dances: statuses,
     overall,
+    aggregates,
     calledBack,
     resultsIn: statuses.filter((s) => ['placed', 'unplaced', 'no-placings'].includes(s.state)).length,
   }
@@ -304,7 +333,7 @@ export function dancerDay(
 
 /** The best (lowest) placing across a day, for share cards and summaries. */
 export function bestPlacing(day: DancerDay): DanceStatus | null {
-  const placed = [...day.dances, ...(day.overall ? [day.overall] : [])].filter(
+  const placed = [...day.dances, ...(day.overall ? [day.overall] : []), ...day.aggregates].filter(
     (s) => s.state === 'placed' && s.place != null,
   )
   if (!placed.length) return null
@@ -367,9 +396,13 @@ export function compareDays(a: DancerDay[], b: DancerDay[]): number {
   return slotOrder(na) - slotOrder(nb) || (na?.drawPos ?? 99) - (nb?.drawPos ?? 99)
 }
 
-/** Every placing across their entries, in dancing order, Overall last. */
+/** Every placing across their entries, in dancing order, Overall then aggregates last. */
 export function placings(days: DancerDay[]): DanceStatus[] {
-  return [...days.flatMap((d) => d.dances), ...days.flatMap((d) => (d.overall ? [d.overall] : []))].filter(
+  return [
+    ...days.flatMap((d) => d.dances),
+    ...days.flatMap((d) => (d.overall ? [d.overall] : [])),
+    ...days.flatMap((d) => d.aggregates),
+  ].filter(
     (s) => s.state === 'placed' && s.place != null,
   )
 }

@@ -51,6 +51,27 @@ describe('fetchEntrySummary', () => {
       ],
       overall: { place: 2, tied: false },
       overallMissed: false,
+      aggregates: [],
+    })
+  })
+
+  it('adds the aggregates their age group can win, read narrowly', () => {
+    const c = seed({ fling: ['me'] })
+    data[`${c}/aggregates`] = {
+      b: { name: ' Most Points ', groupIds: { g: true }, _order: 2 },
+      a: { name: 'Premier Dancer of the Day', groupIds: { g: true, other: true }, _order: 1 },
+      none: { name: 'Not placed in', groupIds: { g: true }, _order: 3 },
+      elsewhere: { name: 'Other groups only', groupIds: { other: true } },
+    }
+    data[`${c}/results/a/overall`] = ['x', 'me:tie']
+    data[`${c}/results/b/overall`] = ['me']
+    data[`${c}/results/none/overall`] = ['x']
+    data[`${c}/results/elsewhere/overall`] = ['me']
+    return fetchEntrySummary(c, 'me').then((s) => {
+      expect(s?.aggregates).toEqual([
+        { id: 'a', name: 'Premier Dancer of the Day', place: 1, tied: true },
+        { id: 'b', name: 'Most Points', place: 1, tied: false },
+      ])
     })
   })
 

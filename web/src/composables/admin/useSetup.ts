@@ -1,3 +1,4 @@
+import { isWinnable } from '@/lib/aggregates'
 import { computed } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
@@ -42,9 +43,10 @@ export function useSetup() {
   const danceIds = (g: (typeof m.groups.value)[number]) => [CALLBACKS, ...m.groupDances(g.id).map((d) => d.id), ...(groupHasOverall(g) ? [OVERALL] : [])]
 
   // Results with a "?" stand-in (a number missed on the day): touch-ups to do.
-  const placeholders = computed(() =>
-    m.groups.value.flatMap((g) => danceIds(g).filter((id) => danceHasPlaceholder(m.results.value, m.points.value, g.id, id)).map((danceId) => ({ groupId: g.id, danceId }))),
-  )
+  const placeholders = computed(() => [
+    ...m.groups.value.flatMap((g) => danceIds(g).filter((id) => danceHasPlaceholder(m.results.value, m.points.value, g.id, id)).map((danceId) => ({ groupId: g.id, danceId }))),
+    ...m.aggregates.value.filter((a) => danceHasPlaceholder(m.results.value, m.points.value, a.id, OVERALL)).map((a) => ({ groupId: a.id, danceId: OVERALL })),
+  ])
 
   const status = computed<Record<string, StepStatus>>(() => {
     const c = m.competition.value
@@ -57,6 +59,11 @@ export function useSetup() {
       const ids = danceIds(g)
       total += ids.length
       entered += ids.filter((id) => danceState(m.results.value[g.id]?.[id]) !== 'todo').length
+    }
+    // Each aggregate is one more list to enter, once someone can win it.
+    for (const a of m.aggregates.value.filter(isWinnable)) {
+      total += 1
+      if (danceState(m.results.value[a.id]?.[OVERALL]) !== 'todo') entered += 1
     }
     const judges = m.judges.value.length
     const staff = m.staff.value.length
@@ -83,6 +90,12 @@ export function useSetup() {
         detail: !groups.length ? 'Or import them with your dancers' : withoutDances ? `${plural(withoutDances, 'age group has', 'age groups have')} no dances yet` : plural(groups.length, 'age group', 'age groups'),
         count: groups.length,
       },
+      // Optional: ticked once there is one, never the step to do next.
+      aggregates: {
+        done: m.aggregates.value.length > 0,
+        detail: m.aggregates.value.length ? plural(m.aggregates.value.length, 'aggregate', 'aggregates') : 'Optional',
+        count: m.aggregates.value.length,
+      },
       dancers: {
         done: m.dancers.value.length > 0 && !withoutGroup,
         detail: !m.dancers.value.length ? 'Import from Excel or Google Sheets' : withoutGroup ? `${plural(withoutGroup, 'dancer needs', 'dancers need')} an age group` : plural(m.dancers.value.length, 'dancer', 'dancers'),
@@ -100,7 +113,8 @@ export function useSetup() {
   /** Results needing a touch-up (not counted once the tab is hidden). */
   const toFix = computed(() => (m.resultsHidden.value ? 0 : placeholders.value.length))
 
-  const next = computed<ManageSection | null>(() => MANAGE_STEPS.find((s) => !status.value[s.id]?.done) ?? null)
+  // (Optional steps, like Aggregates, are never the one to do next.)
+  const next = computed<ManageSection | null>(() => MANAGE_STEPS.find((s) => !s.optional && !status.value[s.id]?.done) ?? null)
 
   /** What to do about a step that isn't done: the button that does it. */
   function action(id: string): { label: string; to: RouteLocationRaw } {
@@ -169,11 +183,14 @@ export function useSetup() {
     const slot = nextResult({
       groups: m.groups.value,
       dancesOf: m.groupDances,
+      aggregates: m.aggregates.value.filter(isWinnable),
       results: m.results.value,
       schedule: m.schedule.value,
       platforms: m.platforms.value as Platform[],
     })
     if (!slot) return null
+    const aggregate = m.aggregatesById.value.get(slot.groupId)
+    if (aggregate) return { label: aggregate.label, to: route('manage.results', { groupId: aggregate.id, danceId: OVERALL }) }
     const group = m.groupsById.value.get(slot.groupId)
     const dance = m.dancesById.value.get(slot.danceId)
     const what = slot.danceId === CALLBACKS ? 'Callbacks' : slot.danceId === OVERALL ? 'Overall' : (dance?.name?.trim() || dance?.label)

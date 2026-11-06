@@ -9,6 +9,7 @@ import NumberCard from '@/components/NumberCard.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import { useDancerRecord, type ListRow } from '@/composables/useDancerRecord'
+import type { EntrySummary } from '@/lib/entrySummary'
 import { useFollowing } from '@/composables/useFollowing'
 import { useHiddenAs } from '@/composables/useHiddenAs'
 import { useMeStore } from '@/stores/me'
@@ -41,13 +42,21 @@ const shown = computed(() =>
 // Every placing, best first, on one line on a phone: a narrow row keeps to
 // its best three (two beside an Overall trophy on the narrowest) and says how
 // many more, so it never passes for the whole story; a wide one shows them all.
+// An aggregate's cup, which follows Overall's, is one more placing in that count.
 const NARROW = '@max-[17.5rem]:hidden'
 const PHONE = '@max-[26rem]:hidden'
 function medals(cid: string) {
   const list = record.summaries.value[cid] ?? []
   const overall = list.map((s) => s.overall).find(Boolean)
   const placings = list.flatMap((s) => s.placings).sort((a, b) => a.place - b.place)
-  const n = placings.length
+  // One cup per aggregate, even when two of their age groups can win it.
+  const best = new Map<string, EntrySummary['aggregates'][number]>()
+  for (const a of list.flatMap((s) => s.aggregates ?? [])) if (!best.has(a.id) || a.place < best.get(a.id)!.place) best.set(a.id, a)
+  const aggregates = [...best.values()]
+  // Best first across both; a tie goes to the aggregate.
+  const pool: Array<{ place: number }> = [...aggregates, ...placings].sort((a, b) => a.place - b.place)
+  const hide = new Map(pool.map((m, i) => [m, i >= 3 ? PHONE : i === 2 && overall ? NARROW : '']))
+  const n = pool.length
   const more: Array<{ count: number; class: string }> = []
   if (overall && n > 2) more.push({ count: n - 2, class: '@min-[17.5rem]:hidden' })
   if (n > 3) more.push({ count: n - 3, class: overall ? 'hidden @min-[17.5rem]:inline @min-[26rem]:hidden' : '@min-[26rem]:hidden' })
@@ -55,7 +64,8 @@ function medals(cid: string) {
     overall,
     // Results are in and they weren't placed, so the row doesn't read as results still to come.
     unplaced: !n && !overall && list.some((s) => s.danced.length || s.overallMissed),
-    placings: placings.map((p, i) => ({ ...p, class: i >= 3 ? PHONE : i === 2 && overall ? NARROW : '' })),
+    placings: placings.map((p) => ({ ...p, class: hide.get(p) })),
+    aggregates: aggregates.map((a) => ({ ...a, class: hide.get(a) })),
     more,
     groups: list.map((s) => s.groupName).filter(Boolean) as string[],
   }
@@ -102,7 +112,7 @@ function medals(cid: string) {
             <span v-if="hiddenAs(r.competitionId, r.competition)" class="mt-0.5 flex"><VisibilityChip :visibility="hiddenAs(r.competitionId, r.competition)" /></span>
             <!-- The number they wore there, then what they won, pinned on as on their day card. -->
             <span
-              v-if="r.numbers.length || medals(r.competitionId).placings.length || medals(r.competitionId).overall"
+              v-if="r.numbers.length || medals(r.competitionId).placings.length || medals(r.competitionId).overall || medals(r.competitionId).aggregates.length"
               class="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1.5"
             >
               <NumberCard v-for="n in r.numbers" :key="n" :number="n" :color="color" size="xs" class="mr-1.5" />
@@ -127,6 +137,15 @@ function medals(cid: string) {
                 :place="medals(r.competitionId).overall!.place"
                 :tied="medals(r.competitionId).overall!.tied"
                 dance="Overall"
+                trophy
+              />
+              <Medal
+                v-for="a in medals(r.competitionId).aggregates"
+                :key="a.id"
+                :place="a.place"
+                :tied="a.tied"
+                :dance="a.name"
+                :class="a.class"
                 trophy
               />
             </span>

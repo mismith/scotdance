@@ -20,7 +20,13 @@ const props = defineProps<{
   placings: Placings
   dancersById: Map<string, MDancer>
   kind: 'callbacks' | 'dance' | 'overall'
+  /** Under each name, their age group instead of where they're from (an aggregate mixes age groups). */
+  byGroup?: boolean
 }>()
+const detail = (id: string) => {
+  const d = props.dancersById.get(id)
+  return props.byGroup ? d?.group?.label : d?.location
+}
 
 const emit = defineEmits<{
   /** Take out this dancer, at this index (in stored order). */
@@ -152,7 +158,7 @@ function onEnd(e: { oldIndex?: number; newIndex?: number }) {
           <NumberTile :num="dancersById.get(row.id)?.num" :unknown="unknown(row.id)" :data-tile="row.id" />
           <span class="min-w-0 flex-1">
             <span class="block truncate text-base font-semibold">{{ name(row.id) }}</span>
-            <span v-if="dancersById.get(row.id)?.location" class="text-muted-foreground block truncate text-sm">{{ dancersById.get(row.id)?.location }}</span>
+            <span v-if="detail(row.id)" class="text-muted-foreground block truncate text-sm">{{ detail(row.id) }}</span>
           </span>
         </button>
         <button

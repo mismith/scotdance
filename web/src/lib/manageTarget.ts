@@ -1,8 +1,9 @@
+import { AGGREGATE_RESULT } from '@/lib/aggregates'
 import type { RouteLocationNormalizedLoaded, RouteLocationRaw } from 'vue-router'
 
 // Where the pencil on a competition's page goes in Manage: the same thing,
 // to edit. A dancer opens that dancer, an age group's results open its
-// results (at the dance the link pointed to), a schedule event opens its
+// results (at the dance the link pointed to), an aggregate its placings, a schedule event opens its
 // day. Anything else opens Manage's overview.
 export function manageTarget(route: Pick<RouteLocationNormalizedLoaded, 'name' | 'params' | 'hash'>, competitionId: string): RouteLocationRaw {
   const p = (key: string) => (route.params[key] ? String(route.params[key]) : undefined)
@@ -20,6 +21,8 @@ export function manageTarget(route: Pick<RouteLocationNormalizedLoaded, 'name' |
       return { name: 'manage.results', params }
     case 'competition.group':
       return { name: 'manage.results', params: { ...params, groupId: p('groupId'), danceId: route.hash.match(/^#dance-(.+)$/)?.[1] } }
+    case 'competition.aggregate':
+      return { name: 'manage.results', params: { ...params, groupId: p('aggregateId'), danceId: AGGREGATE_RESULT } }
     default:
       return { name: 'manage', params }
   }

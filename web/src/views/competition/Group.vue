@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { Award, ChevronDown, CircleSlash, Clock, Hourglass, Trophy } from '@lucide/vue'
+import { Award, ChevronDown, ChevronRight, CircleSlash, Clock, Hourglass, Trophy } from '@lucide/vue'
 import { rowsMove } from '@/lib/settle'
 import EmptyState from '@/components/EmptyState.vue'
 import MyDancerLine from '@/components/MyDancerLine.vue'
+import ResultsMark from '@/components/ResultsMark.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
@@ -19,6 +20,7 @@ import JudgesSheetRow from '@/components/JudgesSheetRow.vue'
 import SheetViewer from '@/components/SheetViewer.vue'
 import { sheetPages } from '@/lib/sheets'
 import { useMorph } from '@/lib/morph'
+import { aggregatePosted, aggregatesFor } from '@/lib/aggregates'
 import {
   findGroupDancers,
   findGroupDances,
@@ -38,6 +40,7 @@ const {
   competitionId,
   competition,
   groups,
+  aggregates,
   dancers,
   dances,
   results,
@@ -143,6 +146,16 @@ const sections = computed(() =>
     state: stateByDance.value.get(dance.id) ?? null,
     sheet: sheetPages(sheets.value, groupId.value, dance.id),
   })),
+)
+
+// The aggregates this age group's dancers can win, each a link to its page.
+const groupAggregates = computed(() =>
+  resultsHidden.value
+    ? []
+    : aggregatesFor(aggregates.value, groupId.value).map((a) => ({
+        ...a,
+        posted: aggregatePosted(results.value, a.id) ? 1 : 0,
+      })),
 )
 
 // The judges' sheet open in the viewer: which dance's, so it follows any
@@ -370,6 +383,23 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
 
           <JudgesSheetRow v-if="s.sheet.length" :pages="s.sheet.length" @open="openSheet(s.dance.id)" />
         </div>
+      </section>
+
+      <!-- Trophies across age groups that this age group's dancers can win. -->
+      <section v-if="groupAggregates.length" class="space-y-1 pt-2">
+        <h2 class="text-heading">Aggregates</h2>
+        <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
+          <li v-for="a in groupAggregates" :key="a.id">
+            <RouterLink
+              :to="{ name: 'competition.aggregate', params: { competitionId, aggregateId: a.id } }"
+              class="press-row focus-inset flex min-h-12 items-center gap-3 py-2 pr-3 pl-4"
+            >
+              <span class="min-w-0 flex-1 truncate text-base font-semibold">{{ a.fullName }}</span>
+              <ResultsMark :posted="a.posted" :total="1" />
+              <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+            </RouterLink>
+          </li>
+        </ul>
       </section>
     </template>
     <SheetViewer

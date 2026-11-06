@@ -52,6 +52,14 @@ const sub = computed(() => (multi.value ? `${shown.value.length} age groups` : (
 const dances = computed(() => shown.value.flatMap((d) => d.dances.map((s) => ({ d, s }))))
 const won = computed(() => dances.value.filter(({ s }) => s.state === 'placed' && s.place != null))
 const overall = computed(() => shown.value.map((d) => ({ d, s: d.overall })).find(({ s }) => s?.state === 'placed' && s.place != null) ?? null)
+// Aggregates they placed in (a cup each, after Overall); one entry per aggregate
+// when two of a person's age groups can both win it.
+const wonAggregates = computed(() => {
+  const seen = new Set<string>()
+  return shown.value
+    .flatMap((d) => d.aggregates.map((s) => ({ d, s })))
+    .filter(({ s }) => s.state === 'placed' && s.place != null && !seen.has(s.dance.id) && !!seen.add(s.dance.id))
+})
 const points = computed(() => dances.value.filter(({ s }) => s.state === 'unplaced' && s.pointed).length)
 const notPlaced = computed(() => dances.value.filter(({ s }) => (s.state === 'unplaced' && !s.pointed) || s.state === 'no-placings').length)
 const upcoming = computed(() => dances.value.filter(({ s }) => s.state === 'upcoming'))
@@ -62,7 +70,7 @@ const waiting = computed(
     (!upcoming.value.length && shown.value.some((d) => d.overall?.state === 'later' && d.resultsIn > 0)),
 )
 // Placings, Overall or championship points: the ribbons say it.
-const placed = computed(() => won.value.length > 0 || !!overall.value || points.value > 0)
+const placed = computed(() => won.value.length > 0 || !!overall.value || wonAggregates.value.length > 0 || points.value > 0)
 // Callbacks while they're the news: "Called back" until placings come in;
 // "Not called back" (which says not placed too) unless they placed.
 const calledBack = computed(() => (multi.value || placed.value ? null : day.value.calledBack))
@@ -179,6 +187,16 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
             size="lg"
             trophy
           />
+          <Medal
+            v-for="{ d, s } in wonAggregates"
+            :key="`${d.dancer.id}:${s.dance.id}`"
+            :place="s.place"
+            :tied="s.tied"
+            :fresh="fresh === `${d.dancer.id}:${s.dance.id}`"
+            :dance="s.dance.fullName"
+            size="lg"
+            trophy
+          />
           <span v-if="points" class="bg-blue-paper text-primary ml-1.5 inline-flex h-8 items-center rounded-full px-3 text-sm font-semibold">
             {{ points === 1 ? 'Championship point' : `${points} championship points` }}
           </span>
@@ -190,7 +208,7 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
             <Hourglass class="size-3.5" stroke-width="2.4" aria-hidden="true" />
             Results to come
           </span>
-          <span v-if="settled && day.phase === 'today' && !won.length && !overall" class="text-muted-foreground text-sm">Every result is in</span>
+          <span v-if="settled && day.phase === 'today' && !won.length && !overall && !wonAggregates.length" class="text-muted-foreground text-sm">Every result is in</span>
         </span>
         <span v-if="nextFacts" class="text-callout col-span-full font-medium">{{ nextFacts }}</span>
       </RouterLink>
@@ -255,6 +273,17 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
                 trophy
               />
               <span v-else class="text-muted-foreground text-sm">After all dances</span>
+            </RouterLink>
+          </li>
+          <!-- Trophies across age groups they placed in, each opening its page.
+               Most who could win one don't, so the rest aren't listed. -->
+          <li v-for="s in d.aggregates.filter((x) => x.state === 'placed')" :key="s.dance.id">
+            <RouterLink
+              :to="{ name: 'competition.aggregate', params: { competitionId, aggregateId: s.dance.id } }"
+              :class="['press-row focus-inset', ROW, rowSize]"
+            >
+              <span :class="['min-w-0 flex-1 font-semibold break-words', lg ? 'text-base' : 'text-callout']">{{ s.dance.fullName }}</span>
+              <DanceStatusChip :status="s" :fresh="fresh === `${d.dancer.id}:${s.dance.id}`" trophy />
             </RouterLink>
           </li>
         </ul>

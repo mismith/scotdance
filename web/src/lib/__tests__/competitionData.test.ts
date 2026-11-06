@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const db: Record<string, unknown> = {}
 const listeners = new Map<string, Array<(snap: { val: () => unknown }) => void>>()
 let failReads = 0
+// Sections with no saved copy offline (or refused): their reads fail.
+const unreadable = new Set<string>()
 // The competition's last-changed stamps, and the stamp each section was read at.
 let changed: Record<string, number> | null = null
 const readAt: Array<[string, number | null]> = []
@@ -37,12 +39,17 @@ vi.mock('@/lib/offline', () => ({
       failReads--
       throw new Error('permission_denied')
     }
+    if (unreadable.has(section(r.path))) throw new Error('offline, not saved')
     readAt.push([r.where ? `${section(r.path)}?${r.where}` : section(r.path), version])
     savedAs.push(key)
     return { val: () => only(db[section(r.path)], r.where) ?? null }
   },
-  onValueSaved: (r: Ref, cb: (snap: { val: () => unknown }) => void) => {
+  onValueSaved: (r: Ref, cb: (snap: { val: () => unknown }) => void, onError?: (e: Error) => void) => {
     const key = section(r.path)
+    if (unreadable.has(key)) {
+      onError?.(new Error('offline, not saved'))
+      return () => {}
+    }
     const seen = (snap: { val: () => unknown }) => cb({ val: () => only(snap.val(), r.where) })
     listeners.set(key, [...(listeners.get(key) ?? []), seen])
     return () => listeners.set(key, (listeners.get(key) ?? []).filter((x) => x !== seen))
@@ -64,6 +71,7 @@ beforeEach(() => {
   for (const k of Object.keys(db)) delete db[k]
   listeners.clear()
   failReads = 0
+  unreadable.clear()
   changed = null
   readAt.length = 0
   savedAs.length = 0
@@ -126,12 +134,38 @@ describe('saved copies', () => {
       ['dancers', 5],
       ['groups', null], // not stamped yet: read as usual
       ['categories', 7],
+      ['aggregates', null],
     ])
   })
 
   it('stops going by stamps for a competition an organiser just edited here', () => {
     data.forgetCompetition('c-edited')
     expect(edited).toHaveBeenCalledWith('c-edited')
+  })
+})
+
+describe('aggregates, an extra', () => {
+  it('reads them with the dancers, ready to show', async () => {
+    db.groups = { g1: { name: '12 & Under 14', categoryId: 'p' } }
+    db.categories = { p: { name: 'Premier' } }
+    db.aggregates = { a1: { name: 'Dancer of the Day', groupIds: { g1: true } } }
+    const b = await data.fetchDancers(id())
+    expect(b.aggregates.map((a) => [a.fullName, a.openTo])).toEqual([['Dancer of the Day', 'Premier']])
+  })
+
+  it('never hold the dancers back when they can’t be read (a copy saved before them, offline)', async () => {
+    unreadable.add('aggregates')
+    db.dancers = { d1: { firstName: 'Isla' } }
+    const b = await data.fetchDancers(id())
+    expect(b.dancers.map((d) => d.fullName)).toEqual(['Isla'])
+    expect(b.aggregates).toEqual([])
+
+    const seen: string[][] = []
+    data.watchEntries(id(), 'p1', (x) => seen.push(x.dancers.map((d) => d.fullName)))
+    push('groups', null)
+    push('categories', null)
+    push('dancers', { e1: { firstName: 'Isla', dancerId: 'p1' } })
+    expect(seen).toEqual([['Isla']])
   })
 })
 
@@ -151,6 +185,7 @@ describe('one person’s entries', () => {
     data.watchEntries(id(), 'p1', (b) => seen.push(b.dancers.map((d) => d.fullName)))
     push('groups', null)
     push('categories', null)
+    push('aggregates', null)
     push('dancers', { e1: { firstName: 'Isla', dancerId: 'p1' }, e2: { firstName: 'Ava', dancerId: 'p2' } })
     push('dancers', { e1: { firstName: 'Isla', dancerId: 'p1' }, e3: { firstName: 'Late', dancerId: 'p1' } })
     expect(seen).toEqual([['Isla'], ['Isla', 'Late']])
@@ -186,6 +221,8 @@ describe('watch*', () => {
     push('groups', { g1: { name: '7 & 8' } })
     expect(seen).toEqual([])
     push('categories', null)
+    expect(seen).toEqual([])
+    push('aggregates', null)
     expect(seen).toEqual([['Isla']])
     // A late entry on the day.
     push('dancers', { d1: { firstName: 'Isla', groupId: 'g1' }, d2: { firstName: 'Late', groupId: 'g1' } })

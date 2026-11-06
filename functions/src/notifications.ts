@@ -170,6 +170,8 @@ export interface ResultContext {
   groupName?: string | null;
   danceName?: string | null;
   overall: boolean;
+  /** An aggregate's name, e.g. "Premier Dancer of the Day": its placings span age groups. */
+  aggregateName?: string | null;
 }
 
 /** A dance's name as people say it, without "the": "Highland Fling". */
@@ -186,6 +188,12 @@ function danceTitle(name: unknown) {
 export function resultMessage(ctx: ResultContext, firstName: string | null | undefined, place?: number) {
   const first = firstName?.trim() || 'Your dancer';
   const where = [ctx.groupName, ctx.competitionName].filter(Boolean).join(' · ');
+  if (ctx.aggregateName !== undefined) {
+    const name = ctx.aggregateName?.trim() || 'Aggregate';
+    return place
+      ? { title: `${first} placed ${ordinal(place)}`, body: [name, ctx.competitionName].filter(Boolean).join(' · ') }
+      : { title: `${name} results are in`, body: ctx.competitionName ?? '' };
+  }
   if (ctx.overall) {
     return {
       title: place ? `${first} placed ${ordinal(place)} overall` : 'Overall results are in',
@@ -408,6 +416,38 @@ async function entriesWithFollowers(db: Db, competitionId: string, groupId: stri
   );
 }
 
+/**
+ * Who a results key is about: an aggregate's name and everyone entered in any
+ * of its age groups, or (when the key is an age group) that group's entries.
+ * Aggregate ids are push keys, never an age group's.
+ */
+async function entriesFor(db: Db, competitionId: string, groupId: string) {
+  const aggregate = (await db.child(`competitions:data/${competitionId}/aggregates/${groupId}`).get()).val();
+  if (!aggregate || typeof aggregate !== 'object') {
+    return { aggregate: null, entries: await entriesWithFollowers(db, competitionId, groupId) };
+  }
+  const groupIds = Object.keys((aggregate as { groupIds?: Record<string, unknown> }).groupIds || {});
+  const lists = await Promise.all(groupIds.map((id) => entriesWithFollowers(db, competitionId, id)));
+  const byEntry = new Map(lists.flat().map((e) => [e.entryId, e]));
+  return { aggregate: aggregate as { name?: string }, entries: [...byEntry.values()] };
+}
+
+/**
+ * An aggregate's news is a win: only placed dancers, once per person (one
+ * entered in two age groups has two entries), at their best place.
+ */
+function placedPeople(entries: Awaited<ReturnType<typeof entriesWithFollowers>>, placings: Map<string, number>) {
+  const best = new Map<string, { entry: Entry; dancerId: string; place: number; followers: string[] }>();
+  entries.forEach(({ entryId, entry, followers }) => {
+    const place = placings.get(entryId);
+    const dancerId = entry.dancerId as string;
+    if (!place || !followers.length) return;
+    const seen = best.get(dancerId);
+    if (!seen || place < seen.place) best.set(dancerId, { entry, dancerId, place, followers });
+  });
+  return [...best.values()];
+}
+
 /** Published, and (outside the emulator, whose data is years old) around competition day. */
 async function liveCompetition(db: Db, competitionId: string, emulated: boolean) {
   const comp = (await db.child(`competitions/${competitionId}`).get()).val() || {};
@@ -433,8 +473,11 @@ export function getOnResultsWritten(db: Db, emulated: boolean, schedule: (task: 
     // Championship mode switched on before anyone's placed: nothing to say yet.
     if (!parsePlacings(after).size) return;
     if (!(await liveCompetition(db, competitionId, emulated))) return;
-    const entries = await entriesWithFollowers(db, competitionId, groupId);
-    if (!entries.some((e) => e.followers.length)) return;
+    const { aggregate, entries } = await entriesFor(db, competitionId, groupId);
+    const worthTelling = aggregate
+      ? placedPeople(entries, parsePlacings(after)).length > 0
+      : entries.some((e) => e.followers.length);
+    if (!worthTelling) return;
     await schedule({ competitionId, groupId, danceId, results: after });
   };
 }
@@ -442,7 +485,8 @@ export function getOnResultsWritten(db: Db, emulated: boolean, schedule: (task: 
 /**
  * A minute after a save: if the dance's results still stand as saved, its
  * followers hear. Each placed dancer's, their place; the rest of the age
- * group's, that results are in. Changed since, a later save's task has it.
+ * group's, that results are in. An aggregate's tell only the placed (once
+ * per person). Changed since, a later save's task has it.
  */
 export function getOnResultsSettled(db: Db, app: App, emulated: boolean) {
   return async ({ competitionId, groupId, danceId, results }: SettleTask) => {
@@ -454,24 +498,51 @@ export function getOnResultsSettled(db: Db, app: App, emulated: boolean) {
     if (!comp) return;
 
     const overall = danceId === OVERALL_ID;
-    const [entries, danceSnap, groupSnap] = await Promise.all([
-      entriesWithFollowers(db, competitionId, groupId),
-      overall ? Promise.resolve(null) : dataRef(`dances/${danceId}/name`).get(),
-      dataRef(`groups/${groupId}`).get(),
-    ]);
-    const group = groupSnap.val() || {};
-    const category = group.categoryId
-      ? (await dataRef(`categories/${group.categoryId}/name`).get()).val()
-      : null;
-    const context: ResultContext = {
-      competitionName: comp.name,
-      groupName: [category, group.name].filter(Boolean).join(' '),
-      danceName: danceSnap?.val(),
-      overall,
-    };
-    const link = `/competitions/${competitionId}/results/${groupId}#dance-${danceId}`;
+    const { aggregate, entries } = await entriesFor(db, competitionId, groupId);
+    let context: ResultContext;
+    let link: string;
+    if (aggregate) {
+      context = { competitionName: comp.name, aggregateName: aggregate.name ?? null, overall: false };
+      link = `/competitions/${competitionId}/results/aggregates/${groupId}`;
+    } else {
+      const [danceSnap, groupSnap] = await Promise.all([
+        overall ? Promise.resolve(null) : dataRef(`dances/${danceId}/name`).get(),
+        dataRef(`groups/${groupId}`).get(),
+      ]);
+      const group = groupSnap.val() || {};
+      const category = group.categoryId
+        ? (await dataRef(`categories/${group.categoryId}/name`).get()).val()
+        : null;
+      context = {
+        competitionName: comp.name,
+        groupName: [category, group.name].filter(Boolean).join(' '),
+        danceName: danceSnap?.val(),
+        overall,
+      };
+      link = `/competitions/${competitionId}/results/${groupId}#dance-${danceId}`;
+    }
 
     const wants = wanted(db, 'results');
+
+    if (aggregate) {
+      const people = await Promise.all(placedPeople(entries, placings).map(async ({ entry, dancerId, place, followers }) => {
+        const allowed = await Promise.all(followers.map(wants));
+        return followers
+          .filter((_, i) => allowed[i])
+          .map<Message>((uid) => ({
+            uid,
+            kind: 'results',
+            competitionId,
+            ...resultMessage(context, entry.firstName, place),
+            link,
+            // By person: their best place changing replaces the alert, never doubles it.
+            key: `${competitionId}/${groupId}/${danceId}/${uid}_${dancerId}`,
+            signature: String(place),
+          }));
+      }));
+      await deliver(db, app, people.flat(), emulated);
+      return;
+    }
 
     const perEntry = await Promise.all(
       entries.map(async ({ entryId, entry, followers }) => {

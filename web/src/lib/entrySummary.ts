@@ -1,7 +1,8 @@
 import { get, ref as dbRef } from 'firebase/database'
 import { database } from '@/firebase'
+import { AGGREGATE_RESULT, aggregatesFor, enrichAggregates } from '@/lib/aggregates'
 import { getDancerPlace, isPosted } from '@/lib/results'
-import { OVERALL_ID, groupFullName, type Category, type Dance, type Group } from '@/types/competition'
+import { OVERALL_ID, groupFullName, type Aggregate, type Category, type Dance, type Group } from '@/types/competition'
 
 // One competition entry's placings, read narrowly (the entry, its group, the
 // group's results, the dance list) rather than a whole competition, so a
@@ -22,6 +23,8 @@ export interface EntrySummary {
   overall: { place: number; tied: boolean } | null
   /** Overall results are posted and this entry wasn't placed in them. */
   overallMissed: boolean
+  /** Aggregates (trophies across age groups) they placed in, in the organiser's order. */
+  aggregates: Array<{ id: string; name: string; place: number; tied: boolean }>
 }
 
 const cache = new Map<string, Promise<EntrySummary | null>>()
@@ -34,11 +37,13 @@ export function fetchEntrySummary(competitionId: string, entryId: string): Promi
       try {
         const entry = await val<{ groupId?: string }>(`${competitionId}/dancers/${entryId}`)
         const groupId = entry?.groupId
-        if (!groupId) return { groupName: null, placings: [], danced: [], overall: null, overallMissed: false }
-        const [group, results, dances] = await Promise.all([
+        if (!groupId) return { groupName: null, placings: [], danced: [], overall: null, overallMissed: false, aggregates: [] }
+        const [group, results, dances, allAggregates] = await Promise.all([
           val<Group>(`${competitionId}/groups/${groupId}`),
           val<Record<string, unknown>>(`${competitionId}/results/${groupId}`),
           val<Record<string, Dance>>(`${competitionId}/dances`),
+          // An extra: without it (rules not out yet, say) the rest still shows.
+          val<Record<string, Aggregate>>(`${competitionId}/aggregates`).catch(() => null),
         ])
         const category = group?.categoryId
           ? await val<Category>(`${competitionId}/categories/${group.categoryId}`)
@@ -55,12 +60,26 @@ export function fetchEntrySummary(competitionId: string, entryId: string): Promi
         }
         placings.sort((a, b) => a.place - b.place)
         const o = getDancerPlace(entryId, groupId, OVERALL_ID, tree, {})
+        // Only the aggregates this age group can win have their placings read,
+        // in the organiser's order (no order last), as everywhere else.
+        const listed = Object.entries(allAggregates ?? {})
+          .filter(([, a]) => a && typeof a === 'object')
+          .map(([id, a]) => ({ ...a, id }))
+          .sort((a, b) => (a._order ?? Infinity) - (b._order ?? Infinity) || (a.id < b.id ? -1 : 1))
+        const open = enrichAggregates(aggregatesFor(listed, groupId), [], [])
+        const aggregates: EntrySummary['aggregates'] = []
+        const lists = await Promise.all(open.map((a) => val<string[]>(`${competitionId}/results/${a.id}/${AGGREGATE_RESULT}`).catch(() => null)))
+        open.forEach((a, i) => {
+          const r = getDancerPlace(entryId, a.id, AGGREGATE_RESULT, { [a.id]: { [AGGREGATE_RESULT]: lists[i] ?? [] } } as never, {})
+          if (r.place != null) aggregates.push({ id: a.id, name: a.fullName, place: r.place, tied: r.tied })
+        })
         return {
           groupName: group ? groupFullName({ ...group, id: groupId }, category ?? undefined) : null,
           placings,
           danced,
           overall: o.place != null ? { place: o.place, tied: o.tied } : null,
           overallMissed: o.place == null && isPosted(results?.[OVERALL_ID] as never),
+          aggregates,
         }
       } catch {
         // Offline or a hiccup: try again next time rather than keep nothing.

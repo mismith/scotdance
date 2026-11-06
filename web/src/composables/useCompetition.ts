@@ -30,6 +30,7 @@ import { nowMs, today } from '@/lib/now'
 import { useMeStore } from '@/stores/me'
 import {
   type Category,
+  type EnrichedAggregate,
   type Competition,
   type DrawsTree,
   type EnrichedDance,
@@ -59,6 +60,8 @@ interface CompetitionContext {
   dancers: Ref<EnrichedDancer[]>
   categories: Ref<Category[]>
   groups: Ref<EnrichedGroup[]>
+  /** Trophies across age groups, like Dancer of the Day (lib/aggregates). Loaded with the dancers. */
+  aggregates: Ref<EnrichedAggregate[]>
   loadDancers: () => Promise<void>
   dances: Ref<EnrichedDance[]>
   results: Ref<ResultsTree>
@@ -130,6 +133,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
   const dancers = ref<EnrichedDancer[]>([])
   const categories = ref<Category[]>([])
   const groups = ref<EnrichedGroup[]>([])
+  const aggregates = ref<EnrichedAggregate[]>([])
   const dances = ref<EnrichedDance[]>([])
   const results = ref<ResultsTree>({})
   const points = ref<PointsTree>({})
@@ -266,11 +270,13 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
       dancers.value = b.dancers
       groups.value = b.groups
       categories.value = b.categories
+      aggregates.value = b.aggregates
     },
     () => {
       dancers.value = []
       groups.value = []
       categories.value = []
+      aggregates.value = []
     },
   )
   // The first read is what was already there; later ones are news (their
@@ -350,6 +356,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     dancers.value = []
     categories.value = []
     groups.value = []
+    aggregates.value = []
     dances.value = []
     results.value = {}
     points.value = {}
@@ -411,6 +418,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     dancers,
     categories,
     groups,
+    aggregates,
     loadDancers: dancersSection.load,
     dances,
     results,

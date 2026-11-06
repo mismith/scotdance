@@ -1,5 +1,5 @@
 import type { Component } from 'vue'
-import { CalendarClock, Gavel, Info, Layers, Music, Printer, ShieldCheck, SquareStack, Trophy, Users, UsersRound } from '@lucide/vue'
+import { CalendarClock, Gavel, Info, Layers, Medal, Music, Printer, ShieldCheck, SquareStack, Trophy, Users, UsersRound } from '@lucide/vue'
 
 // The Manage sections, in the order a competition comes together: each step
 // builds on the ones before it (age groups need categories, the schedule
@@ -14,6 +14,8 @@ export interface ManageSection {
   icon: Component
   /** Short line under the title on the Manage home list. */
   blurb: string
+  /** Not needed to run a competition: never the step to do next. */
+  optional?: boolean
 }
 
 export const MANAGE_STEPS: ManageSection[] = [
@@ -22,6 +24,7 @@ export const MANAGE_STEPS: ManageSection[] = [
   { id: 'dances', route: 'manage.dances', title: 'Dances', icon: Music, blurb: 'The dances performed, with their steps' },
   { id: 'categories', route: 'manage.categories', title: 'Categories', icon: Layers, blurb: 'Primary, Beginner, Premier and so on' },
   { id: 'groups', route: 'manage.groups', title: 'Age groups', icon: UsersRound, blurb: 'Which dances each group does, and draws' },
+  { id: 'aggregates', route: 'manage.aggregates', title: 'Aggregates', icon: Medal, blurb: 'Dancer of the Day and other trophies across age groups', optional: true },
   { id: 'dancers', route: 'manage.dancers', title: 'Dancers', icon: Users, blurb: 'Entries and numbers, usually from Excel or Google Sheets' },
   { id: 'platforms', route: 'manage.platforms', title: 'Platforms', icon: SquareStack, blurb: 'Where dancing happens' },
   { id: 'schedule', route: 'manage.schedule', title: 'Schedule', icon: CalendarClock, blurb: 'Days, sessions, events and who dances where' },

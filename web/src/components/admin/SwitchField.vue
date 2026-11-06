@@ -10,6 +10,8 @@ import type { LinkPart } from '@/lib/linked'
 const props = defineProps<{
   modelValue: boolean
   label: string
+  /** Said before the label to screen readers only, when the label alone is ambiguous ("Premier" before "Under 7"). */
+  context?: string
   description?: string
   save: (on: boolean) => unknown
   disabled?: boolean
@@ -47,7 +49,7 @@ async function toggle(on: boolean) {
   <div>
     <label :class="['flex min-h-11 items-center gap-3 py-1.5', locked && !shared ? 'cursor-not-allowed' : 'cursor-pointer']" @click="onRow">
       <span :class="['min-w-0 flex-1', locked && !shared && 'opacity-(--disabled-opacity)']">
-        <span :id="`${id}-l`" class="block text-base font-medium">{{ label }}</span>
+        <span :id="`${id}-l`" class="block text-base font-medium"><span v-if="context" class="sr-only">{{ context }} </span>{{ label }}</span>
         <span v-if="description" :id="`${id}-d`" class="text-muted-foreground block text-sm whitespace-pre-line">{{ description }}</span>
       </span>
       <Switch

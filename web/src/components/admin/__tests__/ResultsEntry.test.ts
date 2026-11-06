@@ -46,7 +46,7 @@ function sample(results: RawData['results'] = { gB8: { callbacks: false } }): Ra
 let now = 0
 let wrapper: VueWrapper | null = null
 
-function setup(data: RawData, danceId = 'dFling') {
+function setup(data: RawData, danceId = 'dFling', groupId = 'gB8') {
   wrapper?.unmount()
   fakeDb.reset({ [NS]: { competitions: { c1: { name: 'Test' } }, 'competitions:data': { c1: data } } })
   const router = createRouter({
@@ -55,12 +55,13 @@ function setup(data: RawData, danceId = 'dFling') {
       { path: '/', component: { render: () => null } },
       { path: '/manage/:competitionId/results/:groupId?/:danceId?', name: 'manage.results', component: { render: () => null } },
       { path: '/manage/:competitionId/dancers', name: 'manage.dancers', component: { render: () => null } },
+      { path: '/manage/:competitionId/aggregates/:itemId?', name: 'manage.aggregates', component: { render: () => null } },
     ],
   })
   const Parent = defineComponent({
     setup() {
       provideManagedCompetition(ref('c1'))
-      return () => h(ResultsEntry, { groupId: 'gB8', danceId })
+      return () => h(ResultsEntry, { groupId, danceId })
     },
   })
   // Dragging itself is Sortable's (and the browser's): the list's own rows are what's tested.
@@ -70,7 +71,7 @@ function setup(data: RawData, danceId = 'dFling') {
   const buttons = () => w.findAll('button')
   return {
     w,
-    stored: (dance = danceId) => fakeDb.read(`${DATA}/results/gB8/${dance}`),
+    stored: (dance = danceId) => fakeDb.read(`${DATA}/results/${groupId}/${dance}`),
     /** A dancer's row in the list to tap, by number. */
     candidate: (num: string) => buttons().find((b) => b.attributes('aria-pressed') !== undefined && b.text().startsWith(num))!,
     button: (text: string) => buttons().find((b) => b.text().trim() === text)!,
@@ -252,5 +253,72 @@ describe('a dance waiting on callbacks', () => {
     expect(t.w.text()).not.toContain('Enter the callbacks first')
     expect(t.candidate('101').exists()).toBe(true)
     expect(t.lastToast()?.action?.label).toBe('Undo')
+  })
+})
+
+describe('an aggregate', () => {
+  // Dancer of the Day is open to two of three age groups; the third's dancer isn't on the list.
+  function withAggregate(results: RawData['results'] = {}): RawData {
+    const base = sample(null)
+    return {
+      ...base,
+      groups: { ...base.groups, gB10: { name: '10 & Under', categoryId: 'cBeg', _order: 1 }, gNov: { name: '12 & Under', categoryId: 'cBeg', _order: 2 } },
+      dancers: {
+        ...base.dancers,
+        d7: { number: '201', firstName: 'Catriona', lastName: 'Lamont', groupId: 'gB10' },
+        d8: { number: '301', firstName: 'Morag', lastName: 'Fraser', groupId: 'gNov' },
+      },
+      aggregates: { aDay: { name: 'Dancer of the Day', trophy: 'Quaich', groupIds: { gB8: true, gB10: true } } },
+      results,
+    }
+  }
+  const open = (results?: RawData['results']) => setup(withAggregate(results), 'overall', 'aDay')
+
+  it('lists the dancers of the age groups it is open to, each with their age group', () => {
+    const t = open()
+    expect(t.candidate('101').text()).toContain('Beginner 8 & Under')
+    expect(t.candidate('201').text()).toContain('Beginner 10 & Under')
+    expect(t.candidate('301')).toBeUndefined()
+  })
+
+  it('is headed by its name and who can win it', () => {
+    const t = open()
+    expect(t.w.find('h1').text()).toBe('Dancer of the Day')
+    expect(t.w.text()).toContain('Beginner 8 & Under, 10 & Under')
+  })
+
+  it('places dancers at once, with no callbacks first, and stores them with the others', async () => {
+    const t = open()
+    expect(t.w.text()).not.toContain('Enter the callbacks first')
+    await t.candidate('201').trigger('click')
+    await t.candidate('101').trigger('click')
+    await flushPromises()
+    expect(t.stored()).toEqual(['d7', 'd1'])
+    expect(t.lastToast()).toBeUndefined()
+  })
+
+  it('takes a placed dancer out again, with Undo, and keeps Lowest place first', async () => {
+    const t = open({ aDay: { overall: ['d7', 'd1'] } })
+    t.placed().vm.$emit('remove', 0, 'd7')
+    await flushPromises()
+    expect(t.stored()).toEqual(['d1'])
+    expect(t.lastToast()?.action?.label).toBe('Undo')
+    expect(t.w.text()).toContain('Lowest place first')
+  })
+
+  it('has no Points, judges’ sheet or callbacks, and no championship switch', () => {
+    const t = open()
+    const text = t.w.text()
+    expect(text).not.toContain('Points')
+    expect(text).not.toContain('judges’ sheet')
+    expect(text).not.toContain('Not run as a championship')
+    expect(text).not.toContain('Called back')
+  })
+
+  it('says to choose age groups when none are on', () => {
+    const data = withAggregate()
+    data.aggregates = { aDay: { name: 'Dancer of the Day' } }
+    const t = setup(data, 'overall', 'aDay')
+    expect(t.w.text()).toContain('Choose the age groups whose dancers can win it.')
   })
 })

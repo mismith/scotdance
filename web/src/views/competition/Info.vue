@@ -27,6 +27,7 @@ import { useOrganisations } from '@/composables/useOrganisations'
 import Button from '@/components/ui/Button.vue'
 import { staffEntityRef, staffMemberName, type StaffMember } from '@/types/competition'
 import type { DancerDay } from '@/lib/dancerDay'
+import { AGGREGATE_RESULT } from '@/lib/aggregates'
 import { resultsCount } from '@/lib/resultsCount'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useMeStore } from '@/stores/me'
@@ -64,6 +65,7 @@ const {
   dancers,
   loadDancers,
   groups,
+  aggregates,
   dances,
   results,
   loadResults,
@@ -215,7 +217,7 @@ const sessions = computed(() =>
 // everything for getting there (the map, Register); on the day, one venue
 // row and what's on; after, the results so far instead of the map.
 const mode = computed(() => phase.value)
-const posted = computed(() => resultsCount(groups.value, dances.value, results.value))
+const posted = computed(() => resultsCount(groups.value, dances.value, results.value, aggregates.value))
 // What's here, in figures: each opens where it's listed.
 const figures = computed(() => {
   const tab = (name: string) => ({ name, params: { competitionId: competitionId.value } })
@@ -238,6 +240,9 @@ function freshIn(days: DancerDay[]): string | null {
   for (const d of days)
     for (const s of [...d.dances, ...(d.overall ? [d.overall] : [])])
       if (s.state === 'placed' && isFresh(d.group?.id, s.dance.id, d.dancer.id)) return `${d.dancer.id}:${s.dance.id}`
+  for (const d of days)
+    for (const s of d.aggregates)
+      if (s.state === 'placed' && isFresh(s.dance.id, AGGREGATE_RESULT, d.dancer.id)) return `${d.dancer.id}:${s.dance.id}`
   return null
 }
 

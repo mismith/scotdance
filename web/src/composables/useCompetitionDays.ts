@@ -30,6 +30,7 @@ export function useCompetitionDays() {
     draws: c.draws.value,
     // So "group 2 of 3" skips age groups since deleted.
     groups: c.groups.value,
+    aggregates: c.aggregates.value,
   }))
 
   function dayFor(d: EnrichedDancer): DancerDay {

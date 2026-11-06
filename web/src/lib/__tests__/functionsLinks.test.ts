@@ -105,6 +105,17 @@ describe('planStaff', () => {
     expect(plan).toMatchObject({ count: 3, replacing: 2, blocked: [] })
   })
 
+  it('treats an aggregate’s sponsor like an age group’s', () => {
+    const data = seed()['competitions:data']
+    const aggregates = { a1: { name: 'Premier Dancer of the Day', sponsor: 'x1' }, a2: { name: 'Overall', sponsor: 'x2' }, a3: { name: 'Typed', sponsor: 'A typed name' } }
+    const plan = planStaff('sat', { from: data.fri.staff, to: data.sat.staff, groups: data.sat.groups, aggregates })
+    expect(plan.updates['competitions:data/sat/aggregates/a1/sponsor']).toBe('j1')
+    expect(plan.updates['competitions:data/sat/aggregates/a2/sponsor']).toBeNull()
+    expect('competitions:data/sat/aggregates/a3/sponsor' in plan.updates).toBe(false)
+    // g2 and a2 both sponsored by Iain.
+    expect(plan.cleared).toEqual([{ name: 'Iain Sutherland', sponsors: 2, judging: 0 }])
+  })
+
   it('moves championship points to the same judge, and won’t drop any', () => {
     const from = { j1: judge('Ailsa', 'Grant') }
     const moved = planStaff('sat', { from, to: { x1: judge('Ailsa', 'Grant') }, points: { g1: { fling: { x1: ['3', '7'] } } } })
@@ -351,6 +362,19 @@ describe('keeping them in step', () => {
     expect(read('competitions:data/sat/staff/j2')).toBeNull()
     expect(read('competitions:data/sat/groups/g1/sponsor')).toBeNull()
     expect(read('competitions:data/sat/schedule/days/d1/blocks/b1/events/e1/dances/i1/platforms/p1/orderedJudgeIds')).toEqual(['j1'])
+  })
+
+  it('takes one the primary deletes off the others’ aggregates too', async () => {
+    const { save, rtdb, read } = await linked()
+    rtdb.write({
+      'competitions:data/sat/aggregates/a1': { name: 'Premier Dancer of the Day', sponsor: 'j2', groupIds: { g1: true } },
+      'competitions:data/sat/aggregates/a2': { name: 'Overall', sponsor: 'j1', groupIds: { g1: true } },
+    })
+    rtdb.events.splice(0)
+    await save({ 'competitions:data/fri/staff/j2': null })
+    expect(read('competitions:data/sat/aggregates/a1/sponsor')).toBeNull()
+    expect(read('competitions:data/sat/aggregates/a1/name')).toBe('Premier Dancer of the Day')
+    expect(read('competitions:data/sat/aggregates/a2/sponsor')).toBe('j1')
   })
 
   it('leaves each one’s back-pointers alone, and doesn’t copy back-pointer changes', async () => {

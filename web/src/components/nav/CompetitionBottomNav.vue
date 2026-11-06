@@ -45,7 +45,7 @@ const TABS = [
     label: 'Results',
     icon: Trophy,
     to: 'competition.results',
-    matches: ['competition.results', 'competition.group'],
+    matches: ['competition.results', 'competition.group', 'competition.aggregate'],
   },
 ]
 
