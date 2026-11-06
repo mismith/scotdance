@@ -16,7 +16,7 @@ import { forgetCompetitionMeta } from '@/lib/competitionMeta'
 import { forgetCompetitionsList } from '@/composables/useCompetitions'
 import { newKey, write } from '@/lib/admin/write'
 import { at } from '@/lib/admin/collection'
-import { openToText } from '@/lib/aggregates'
+import { openToText } from '@/lib/trophyEvents'
 import { record, undo, type HistoryWriter } from '@/lib/admin/history'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
@@ -39,7 +39,7 @@ import {
 
 export interface RawCategory { name?: string; _order?: number }
 export interface RawGroup { name?: string; categoryId?: string; sponsor?: string; trophy?: string; notChampionship?: boolean; _order?: number }
-export interface RawAggregate { name?: string; trophy?: string; sponsor?: string; groupIds?: Record<string, boolean>; _order?: number }
+export interface RawTrophyEvent { name?: string; trophy?: string; sponsor?: string; groupIds?: Record<string, boolean>; _order?: number }
 export interface RawDance { name?: string; shortName?: string; steps?: string | number; groupIds?: Record<string, boolean>; _order?: number }
 export interface RawDancer {
   number?: string | number
@@ -77,7 +77,7 @@ export interface RawInvite {
 export interface RawData {
   categories?: Record<string, RawCategory>
   groups?: Record<string, RawGroup>
-  aggregates?: Record<string, RawAggregate>
+  trophyEvents?: Record<string, RawTrophyEvent>
   dances?: Record<string, RawDance>
   dancers?: Record<string, RawDancer>
   staff?: Record<string, RawStaff>
@@ -95,8 +95,8 @@ export type WithId<T> = T & { id: string }
 export interface MCategory extends WithId<RawCategory> { label: string }
 export interface MGroup extends WithId<RawGroup> { label: string; category?: MCategory }
 export interface MDance extends WithId<RawDance> { label: string }
-/** An aggregate: its age groups (in list order) and who can win it, said briefly (lib/aggregates). */
-export interface MAggregate extends WithId<RawAggregate> { label: string; groups: MGroup[]; openTo: string }
+/** A trophy event: its age groups (in list order) and who can win it, said briefly (lib/trophyEvents). */
+export interface MTrophyEvent extends WithId<RawTrophyEvent> { label: string; groups: MGroup[]; openTo: string }
 export interface MDancer extends WithId<RawDancer> { label: string; num: string; group?: MGroup }
 export interface MStaff extends WithId<RawStaff> { label: string }
 export interface MPlatform extends WithId<RawPlatform> { label: string }
@@ -204,17 +204,17 @@ export function createManagedCompetition(competitionId: Ref<string>) {
   )
   const groupsById = computed(() => new Map(groups.value.map((g) => [g.id, g])))
 
-  const aggregates = computed<MAggregate[]>(() =>
-    entries(raw.value.aggregates)
+  const trophyEvents = computed<MTrophyEvent[]>(() =>
+    entries(raw.value.trophyEvents)
       .sort(byOrder)
       .map((a) => ({
         ...a,
-        label: (a.name ?? '').trim() || 'Untitled aggregate',
+        label: (a.name ?? '').trim() || 'Untitled trophy event',
         groups: groups.value.filter((g) => a.groupIds?.[g.id]),
         openTo: openToText(a.groupIds, groups.value, categories.value),
       })),
   )
-  const aggregatesById = computed(() => new Map(aggregates.value.map((a) => [a.id, a])))
+  const trophyEventsById = computed(() => new Map(trophyEvents.value.map((a) => [a.id, a])))
 
   const dances = computed<MDance[]>(() =>
     entries(raw.value.dances)
@@ -263,9 +263,9 @@ export function createManagedCompetition(competitionId: Ref<string>) {
 
   const groupDancers = (groupId: string) => dancers.value.filter((d) => d.groupId === groupId)
   const groupDances = (groupId: string) => dances.value.filter((d) => d.groupIds?.[groupId])
-  /** The dancers who can win an aggregate: everyone in its age groups, by number. */
-  const aggregateDancers = (aggregateId: string) => {
-    const on = aggregatesById.value.get(aggregateId)?.groupIds
+  /** The dancers who can win a trophy event: everyone in its age groups, by number. */
+  const trophyEventDancers = (trophyEventId: string) => {
+    const on = trophyEventsById.value.get(trophyEventId)?.groupIds
     return on ? dancers.value.filter((d) => d.groupId && on[d.groupId]) : []
   }
 
@@ -337,8 +337,8 @@ export function createManagedCompetition(competitionId: Ref<string>) {
     categoriesById,
     groups,
     groupsById,
-    aggregates,
-    aggregatesById,
+    trophyEvents,
+    trophyEventsById,
     dances,
     dancesById,
     dancers,
@@ -357,7 +357,7 @@ export function createManagedCompetition(competitionId: Ref<string>) {
     invites,
     groupDancers,
     groupDances,
-    aggregateDancers,
+    trophyEventDancers,
     writeData,
     writeInfo,
     undoChange,

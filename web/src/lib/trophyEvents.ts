@@ -1,11 +1,11 @@
-import { OVERALL_ID, type Aggregate, type Category, type EnrichedAggregate, type ResultsTree } from '@/types/competition'
+import { OVERALL_ID, type TrophyEvent, type Category, type EnrichedTrophyEvent, type ResultsTree } from '@/types/competition'
 import { isPosted } from '@/lib/results'
 
-// Aggregates (Dancer of the Day and other trophies across age groups). Their
-// placings sit at results[aggregateId][AGGREGATE_RESULT]: aggregate ids are
+// Trophy events (Dancer of the Day and other trophies across age groups). Their
+// placings sit at results[trophyEventId][TROPHY_EVENT_RESULT]: trophy event ids are
 // push keys, so they never clash with an age group's.
 
-export const AGGREGATE_RESULT = OVERALL_ID
+export const TROPHY_EVENT_RESULT = OVERALL_ID
 
 interface GroupLike {
   id: string
@@ -48,26 +48,26 @@ export function openToText(groupIds: Record<string, boolean> | undefined, groups
   return parts.join(' · ')
 }
 
-/** Aggregates with their age groups and "Open to" line, in the organiser's order. */
-export function enrichAggregates<G extends GroupLike>(
-  raw: Aggregate[],
+/** Trophy events with their age groups and "Open to" line, in the organiser's order. */
+export function enrichTrophyEvents<G extends GroupLike>(
+  raw: TrophyEvent[],
   groups: G[],
   categories: Array<Pick<Category, 'id' | 'name'>>,
-): Array<Omit<EnrichedAggregate, 'groups'> & { groups: G[] }> {
+): Array<Omit<EnrichedTrophyEvent, 'groups'> & { groups: G[] }> {
   return raw.map((a) => ({
     ...a,
-    fullName: a.name?.trim() || 'Untitled aggregate',
+    fullName: a.name?.trim() || 'Untitled trophy event',
     groups: groups.filter((g) => a.groupIds?.[g.id]),
     openTo: openToText(a.groupIds, groups, categories),
   }))
 }
 
-/** The aggregates an age group's dancers can win. */
-export const aggregatesFor = <A extends Pick<Aggregate, 'groupIds'>>(aggregates: A[], groupId: string | undefined | null) =>
-  groupId ? aggregates.filter((a) => a.groupIds?.[groupId]) : []
+/** The trophy events an age group's dancers can win. */
+export const trophyEventsFor = <A extends Pick<TrophyEvent, 'groupIds'>>(trophyEvents: A[], groupId: string | undefined | null) =>
+  groupId ? trophyEvents.filter((a) => a.groupIds?.[groupId]) : []
 
 /** Its placings are up (or it's marked as having none). */
-export const aggregatePosted = (results: ResultsTree | null | undefined, aggregateId: string) => isPosted(results?.[aggregateId]?.[AGGREGATE_RESULT])
+export const trophyEventPosted = (results: ResultsTree | null | undefined, trophyEventId: string) => isPosted(results?.[trophyEventId]?.[TROPHY_EVENT_RESULT])
 
 /** It can be won: some age group is switched on. One with none isn't waited on (counts, "every result is in"). */
 export const isWinnable = (a: { groupIds?: Record<string, boolean> } & ({ groups?: unknown[] })) =>

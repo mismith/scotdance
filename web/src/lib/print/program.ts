@@ -12,7 +12,7 @@ import { WIDE_GRID, type CoverSheet, type GridCell, type GridRow, type PartId, t
 
 // The program: a cover, then each session's platform grid followed by its
 // age groups (each one's dancers, a grid to write the placings in, and its
-// trophy; a championship's draw before it), then the aggregates. Laid out the way organisers'
+// trophy; a championship's draw before it), then the trophy events. Laid out the way organisers'
 // own programs are (Edmonton, Calgary, the SDCCS), from what's in Manage.
 
 /** A description's first line when it's a time ("8:30 am"), and the rest. */
@@ -249,21 +249,21 @@ export function ageGroupUnits(src: PrintSource, places: PlacesRule, groups: Enri
 }
 
 /**
- * Each aggregate with an age group switched on: its name, who it's open to
+ * Each trophy event with an age group switched on: its name, who it's open to
  * (not a dancer list: they're the age groups' own), a grid to write the
  * winners in, and its trophy. They're short, so they share pages, starting
  * on a fresh one.
  */
-export function aggregateUnits(src: PrintSource, places: PlacesRule): Unit[] {
+export function trophyEventUnits(src: PrintSource, places: PlacesRule): Unit[] {
   const staffById = new Map(src.staff.map((m) => [m.id, m]))
-  return src.aggregates
+  return src.trophyEvents
     .filter((a) => a.groups.length)
     .map<Unit>((a, i) => ({
       key: `a:${a.id}`,
       part: 'groups',
-      kind: 'aggregate',
+      kind: 'trophyEvent',
       breakBefore: i === 0,
-      aggregate: {
+      trophyEvent: {
         title: a.fullName,
         openTo: a.openTo,
         places: placesFor(a.groups.reduce((n, g) => n + groupDancers(src, g.id).length, 0), places),
@@ -292,7 +292,7 @@ export function programUnits(src: PrintSource, parts: PartId[], opts: ProgramOpt
     ...sessions(src).flatMap((s) => [...(on.has('schedule') ? sessionUnits(src, s) : []), ...groupsIn(s.id)]),
     // Any not on the schedule yet, at the end.
     ...groupsIn(undefined),
-    // Aggregates last: they span age groups, so they close the program.
-    ...(on.has('groups') ? aggregateUnits(src, opts.places) : []),
+    // Trophy events last: they span age groups, so they close the program.
+    ...(on.has('groups') ? trophyEventUnits(src, opts.places) : []),
   ]
 }

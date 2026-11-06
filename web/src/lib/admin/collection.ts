@@ -49,7 +49,7 @@ export interface DeleteImpact {
 
 export interface CollectionSpec<T extends CollectionItem = CollectionItem> {
   /** Key under competitions:data/{id}. */
-  path: 'dancers' | 'groups' | 'aggregates' | 'categories' | 'dances' | 'platforms' | 'staff'
+  path: 'dancers' | 'groups' | 'trophyEvents' | 'categories' | 'dances' | 'platforms' | 'staff'
   /** Route names for the list and a selected item. */
   route: string
   singular: string

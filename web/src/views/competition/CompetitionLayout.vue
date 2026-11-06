@@ -77,7 +77,7 @@ const hiddenHere = computed(() => {
   const name = String(route.name ?? '')
   if (scheduleHidden.value && (name === 'competition.schedule' || name === 'competition.event'))
     return { title: 'No schedule here', what: 'its schedule' }
-  if (resultsHidden.value && (name === 'competition.results' || name === 'competition.group' || name === 'competition.aggregate'))
+  if (resultsHidden.value && (name === 'competition.results' || name === 'competition.group' || name === 'competition.trophyEvent'))
     return { title: 'No results here', what: 'its results' }
   return null
 })

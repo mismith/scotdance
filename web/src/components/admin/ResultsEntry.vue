@@ -52,8 +52,8 @@ import {
 // dancer out, moving one, replacing a "?" and changing Lowest place first
 // each offer Undo.
 //
-// An aggregate (Dancer of the Day…) is entered the same way: its groupId is
-// the aggregate's id, and its one list of placings is its Overall, picked
+// A trophy event (Dancer of the Day…) is entered the same way: its groupId is
+// the trophy event's id, and its one list of placings is its Overall, picked
 // from the dancers in the age groups it's open to (no callbacks or points).
 
 const props = defineProps<{ groupId: string; danceId: string }>()
@@ -63,16 +63,16 @@ const router = useRouter()
 const uid = useId()
 
 const group = computed(() => m.groupsById.value.get(props.groupId) ?? null)
-const aggregate = computed(() => m.aggregatesById.value.get(props.groupId) ?? null)
-const isAggregate = computed(() => !!aggregate.value)
-/** The age group or aggregate being entered. */
-const subject = computed(() => aggregate.value ?? group.value)
+const trophyEvent = computed(() => m.trophyEventsById.value.get(props.groupId) ?? null)
+const isTrophyEvent = computed(() => !!trophyEvent.value)
+/** The age group or trophy event being entered. */
+const subject = computed(() => trophyEvent.value ?? group.value)
 const isCallbacks = computed(() => props.danceId === CALLBACKS)
 const isOverall = computed(() => props.danceId === OVERALL)
 const isDance = computed(() => !isCallbacks.value && !isOverall.value)
 const kind = computed(() => (isCallbacks.value ? 'callbacks' : isOverall.value ? 'overall' : 'dance'))
 const danceName = computed(() =>
-  aggregate.value ? aggregate.value.label : isCallbacks.value ? 'Callbacks' : isOverall.value ? 'Overall' : (m.dancesById.value.get(props.danceId)?.label ?? 'Dance'),
+  trophyEvent.value ? trophyEvent.value.label : isCallbacks.value ? 'Callbacks' : isOverall.value ? 'Overall' : (m.dancesById.value.get(props.danceId)?.label ?? 'Dance'),
 )
 
 const path = computed(() => `results/${props.groupId}/${props.danceId}`)
@@ -89,7 +89,7 @@ const placings = computed<Placings>(() => parsePlacings(rawNow()))
 const markedNone = computed(() => rawNow() === false)
 // Said generally: it also covers a dance that didn't run, or an Overall
 // that wasn't given.
-const noneLabel = computed(() => (isCallbacks.value ? 'No callbacks' : isOverall.value && !isAggregate.value ? 'No overall' : 'No results'))
+const noneLabel = computed(() => (isCallbacks.value ? 'No callbacks' : isOverall.value && !isTrophyEvent.value ? 'No overall' : 'No results'))
 
 const TABS = [
   { value: 'placings', label: 'Placings' },
@@ -108,15 +108,15 @@ watch(
   },
 )
 
-const groupDancers = computed(() => (isAggregate.value ? m.aggregateDancers(props.groupId) : m.groupDancers(props.groupId)))
+const groupDancers = computed(() => (isTrophyEvent.value ? m.trophyEventDancers(props.groupId) : m.groupDancers(props.groupId)))
 // Dances and Overall place only the dancers called back, so callbacks come
 // first: until they're entered there's no one to place (a missed step, not
 // "everyone"). Marked "No callbacks" (there wasn't a callback round), it's
 // everyone in the age group.
 const callbacksRaw = computed(() => m.results.value[props.groupId]?.[CALLBACKS])
 const calledBackIds = computed(() => new Set(parsePlacings(callbacksRaw.value).entries.map((e) => e.id)))
-// (An aggregate has no callbacks: everyone it's open to can place.)
-const noCallbackRound = computed(() => isAggregate.value || callbacksRaw.value === false)
+// (A trophy event has no callbacks: everyone it's open to can place.)
+const noCallbackRound = computed(() => isTrophyEvent.value || callbacksRaw.value === false)
 const calledBack = computed(() =>
   noCallbackRound.value ? groupDancers.value : groupDancers.value.filter((d) => calledBackIds.value.has(d.id)),
 )
@@ -129,7 +129,7 @@ const pointedIds = computed(() => m.points.value[props.groupId]?.[props.danceId]
 const pointed = computed(() => new Set(pointedIds.value))
 // Primary has no championship points, as it has no overall. Any stored
 // anyway (by an older app) still show, so they can be taken away.
-const offersPoints = computed(() => !isAggregate.value && (!isPrimaryCategory(group.value?.category?.name) || pointedIds.value.length > 0))
+const offersPoints = computed(() => !isTrophyEvent.value && (!isPrimaryCategory(group.value?.category?.name) || pointedIds.value.length > 0))
 
 const who = (id: string) => (isPlaceholderId(id) ? '?' : (m.dancersById.value.get(id)?.num ?? '?'))
 
@@ -356,9 +356,9 @@ const rows = computed(() =>
 // age group in the running order (or list order with no schedule).
 const turns = computed(() => scheduleTurns(m.schedule.value, m.platforms.value))
 const next = computed(() => {
-  // An aggregate carries on to the next one.
-  if (aggregate.value) {
-    const list = m.aggregates.value
+  // A trophy event carries on to the next one.
+  if (trophyEvent.value) {
+    const list = m.trophyEvents.value
     const after = list[list.findIndex((a) => a.id === props.groupId) + 1]
     return after ? { groupId: after.id, danceId: OVERALL, label: after.label } : null
   }
@@ -374,8 +374,8 @@ const next = computed(() => {
   )
   const after = m.groupsById.value.get(ids[ids.indexOf(g.id) + 1] ?? '')
   if (after) return { groupId: after.id, danceId: CALLBACKS, label: `${after.label} · Callbacks` }
-  // After the last age group, the first aggregate.
-  const first = m.aggregates.value[0]
+  // After the last age group, the first trophy event.
+  const first = m.trophyEvents.value[0]
   return first ? { groupId: first.id, danceId: OVERALL, label: first.label } : null
 })
 
@@ -386,7 +386,7 @@ const live = computed(() =>
 )
 /** Another age group: where its results left off (callbacks to start). */
 function pickGroup(id: string) {
-  if (m.aggregatesById.value.has(id)) {
+  if (m.trophyEventsById.value.has(id)) {
     void router.replace({ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: id, danceId: OVERALL } })
     return
   }
@@ -427,7 +427,7 @@ watch(() => props.danceId, showCurrent)
       :placings="placings"
       :dancers-by-id="m.dancersById.value"
       :kind="kind"
-      :by-group="isAggregate"
+      :by-group="isTrophyEvent"
       @remove="remove"
       @tie="tie"
       @reorder="reorder"
@@ -453,26 +453,26 @@ watch(() => props.danceId, showCurrent)
         </label>
       </div>
     </template>
-    <p v-if="singleOverall" class="text-muted-foreground flex items-center gap-1.5 px-4 py-3 text-sm"><Trophy class="size-4" /> {{ isAggregate ? 'Winner' : 'Overall winner' }}</p>
+    <p v-if="singleOverall" class="text-muted-foreground flex items-center gap-1.5 px-4 py-3 text-sm"><Trophy class="size-4" /> {{ isTrophyEvent ? 'Winner' : 'Overall winner' }}</p>
   </DefinePlaced>
 
   <div v-if="subject" :class="['flex flex-col md:h-full', strip && 'pb-[calc(var(--notice-bottom)+4.5rem)]']">
     <header class="flex flex-col gap-3 border-b px-4 pt-4 pb-3">
       <div :class="['min-w-0', pickers && 'sr-only']">
         <h1 class="text-title truncate">{{ danceName }}</h1>
-        <p class="text-muted-foreground text-callout truncate">{{ aggregate ? aggregate.openTo : group?.label }}</p>
+        <p class="text-muted-foreground text-callout truncate">{{ trophyEvent ? trophyEvent.openTo : group?.label }}</p>
       </div>
       <div v-if="!isCallbacks && offersPoints || pickers" class="flex flex-wrap items-center gap-x-4 gap-y-3">
         <label v-if="pickers" class="relative max-w-full min-w-0">
-          <span class="sr-only">{{ m.aggregates.value.length ? 'Age group or aggregate' : 'Age group' }}</span>
+          <span class="sr-only">{{ m.trophyEvents.value.length ? 'Age group or trophy event' : 'Age group' }}</span>
           <select
             :value="groupId"
             class="surface press h-11 max-w-full appearance-none truncate rounded-full pr-10 pl-4 text-base font-semibold"
             @change="pickGroup(($event.target as HTMLSelectElement).value)"
           >
             <option v-for="g in m.groups.value" :key="g.id" :value="g.id">{{ g.label }}{{ live.has(g.id) ? ' · dancing now' : '' }}</option>
-            <optgroup v-if="m.aggregates.value.length" label="Aggregates">
-              <option v-for="a in m.aggregates.value" :key="a.id" :value="a.id">{{ a.label }}</option>
+            <optgroup v-if="m.trophyEvents.value.length" label="Trophy events">
+              <option v-for="a in m.trophyEvents.value" :key="a.id" :value="a.id">{{ a.label }}</option>
             </optgroup>
           </select>
           <ChevronDown class="text-muted-foreground pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2" aria-hidden="true" />
@@ -485,7 +485,7 @@ watch(() => props.danceId, showCurrent)
           </HelpTip>
         </div>
       </div>
-      <nav v-if="pickers && !isAggregate" ref="pills" aria-label="Dances" class="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
+      <nav v-if="pickers && !isTrophyEvent" ref="pills" aria-label="Dances" class="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
         <RouterLink
           v-for="r in rows"
           :key="r.id"
@@ -531,7 +531,7 @@ watch(() => props.danceId, showCurrent)
             :class="['transition-[opacity,filter] duration-(--dur-base) ease-standard', !canEdit && 'opacity-50 grayscale']"
           >
             <p class="text-muted-foreground px-4 pt-3 pb-2 text-sm">{{ instruction }}</p>
-            <p v-if="noCallbackRound && !isAggregate && !isCallbacks && tab === 'placings'" class="text-muted-foreground px-4 pb-2 text-sm">
+            <p v-if="noCallbackRound && !isTrophyEvent && !isCallbacks && tab === 'placings'" class="text-muted-foreground px-4 pb-2 text-sm">
               No callbacks: everyone in the age group can place.
             </p>
             <p v-if="placings.reverseFrom && tab === 'placings'" class="bg-blue-paper text-primary px-4 py-2.5 text-sm font-semibold">
@@ -549,8 +549,8 @@ watch(() => props.danceId, showCurrent)
                   <NumberTile :num="d.num" data-tile />
                   <span class="min-w-0 flex-1">
                     <span class="block truncate text-base font-semibold">{{ d.label }}</span>
-                    <!-- An aggregate mixes age groups: say which. -->
-                    <span v-if="isAggregate ? d.group : d.location" class="text-muted-foreground block truncate text-sm">{{ isAggregate ? d.group?.label : d.location }}</span>
+                    <!-- A trophy event mixes age groups: say which. -->
+                    <span v-if="isTrophyEvent ? d.group : d.location" class="text-muted-foreground block truncate text-sm">{{ isTrophyEvent ? d.group?.label : d.location }}</span>
                   </span>
                   <template v-if="placeOf(d.id)">
                     <CircleCheck v-if="isCallbacks" class="text-primary size-6 shrink-0" aria-label="Called back" />
@@ -591,14 +591,14 @@ watch(() => props.danceId, showCurrent)
             <Button :disabled="!canEdit" @click="markNoCallbackRound">No callback round</Button>
           </EmptyState>
           <EmptyState
-            v-else-if="aggregate"
+            v-else-if="trophyEvent"
             size="inline"
             :icon="Search"
             title="No dancers found"
             description="Choose the age groups whose dancers can win it."
           >
             <RouterLink
-              :to="{ name: 'manage.aggregates', params: { competitionId: m.competitionId.value, itemId: groupId } }"
+              :to="{ name: 'manage.trophyEvents', params: { competitionId: m.competitionId.value, itemId: groupId } }"
               class="text-primary text-base font-semibold"
               >Choose age groups ›</RouterLink
             >
@@ -609,7 +609,7 @@ watch(() => props.danceId, showCurrent)
         </div>
 
         <!-- Lowest place first (dances only) -->
-        <div v-if="(isDance || isAggregate) && tab === 'placings'" class="border-t px-4 py-2">
+        <div v-if="(isDance || isTrophyEvent) && tab === 'placings'" class="border-t px-4 py-2">
           <div class="flex min-h-12 flex-wrap items-center gap-x-2">
             <label class="flex min-h-11 items-center gap-3 font-medium">
               <Switch :model-value="championship" :disabled="!canEdit" @update:model-value="toggleChampionship" />
@@ -659,7 +659,7 @@ watch(() => props.danceId, showCurrent)
 
         <!-- The judges' sheet (dances and overall) -->
         <SheetField
-          v-if="!isCallbacks && !isAggregate && tab === 'placings'"
+          v-if="!isCallbacks && !isTrophyEvent && tab === 'placings'"
           :key="`${groupId}/${danceId}`"
           :group-id="groupId"
           :dance-id="danceId"

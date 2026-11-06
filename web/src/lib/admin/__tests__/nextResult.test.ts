@@ -58,24 +58,24 @@ describe('resultsOrder', () => {
   })
 })
 
-describe('aggregates', () => {
-  const withAggregates = (results: ResultsTree = {}, s: Schedule | null = schedule): ResultsWork => ({ ...work(results, s), aggregates: [{ id: 'dotd' }, { id: 'pts' }] })
+describe('trophy events', () => {
+  const withTrophyEvents = (results: ResultsTree = {}, s: Schedule | null = schedule): ResultsWork => ({ ...work(results, s), trophyEvents: [{ id: 'dotd' }, { id: 'pts' }] })
 
   it('come after every age group, in their own order', () => {
-    expect(keys(withAggregates()).slice(-3)).toEqual(['nov:overall', 'dotd:overall', 'pts:overall'])
-    expect(keys(withAggregates({}, null)).slice(-3)).toEqual(['nov:overall', 'dotd:overall', 'pts:overall'])
+    expect(keys(withTrophyEvents()).slice(-3)).toEqual(['nov:overall', 'dotd:overall', 'pts:overall'])
+    expect(keys(withTrophyEvents({}, null)).slice(-3)).toEqual(['nov:overall', 'dotd:overall', 'pts:overall'])
   })
 
   it('are what is next once the age groups are in', () => {
     const all = { pri: { callbacks: ['a'], fling: ['a'], sword: ['a'] }, nov: { callbacks: ['b'], fling: ['b'], sword: ['b'], overall: ['b'] } }
-    expect(nextResult(withAggregates(all))).toEqual({ groupId: 'dotd', danceId: 'overall' })
-    expect(nextResult(withAggregates({ ...all, dotd: { overall: ['b'] } }))).toEqual({ groupId: 'pts', danceId: 'overall' })
+    expect(nextResult(withTrophyEvents(all))).toEqual({ groupId: 'dotd', danceId: 'overall' })
+    expect(nextResult(withTrophyEvents({ ...all, dotd: { overall: ['b'] } }))).toEqual({ groupId: 'pts', danceId: 'overall' })
     // “None placed” counts as entered.
-    expect(nextResult(withAggregates({ ...all, dotd: { overall: ['b'] }, pts: { overall: false } }))).toBeNull()
+    expect(nextResult(withTrophyEvents({ ...all, dotd: { overall: ['b'] }, pts: { overall: false } }))).toBeNull()
   })
 
   it('never have callbacks', () => {
-    expect(keys(withAggregates()).filter((k) => k.startsWith('dotd') || k.startsWith('pts'))).toEqual(['dotd:overall', 'pts:overall'])
+    expect(keys(withTrophyEvents()).filter((k) => k.startsWith('dotd') || k.startsWith('pts'))).toEqual(['dotd:overall', 'pts:overall'])
   })
 })
 

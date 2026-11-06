@@ -13,14 +13,14 @@ describe('resultsCount', () => {
     expect(resultsCount(groups, dances, { g1: { fling: ['a'] } })).toEqual({ posted: 1, total: 2 })
   })
 
-  it('counts each aggregate once, posted when it has placings or none placed', () => {
-    const aggregates = [{ id: 'a1', groupIds: { g1: true } }, { id: 'a2', groupIds: { g1: true } }, { id: 'a3', groupIds: { g1: true } }]
+  it('counts each trophy event once, posted when it has placings or none placed', () => {
+    const trophyEvents = [{ id: 'a1', groupIds: { g1: true } }, { id: 'a2', groupIds: { g1: true } }, { id: 'a3', groupIds: { g1: true } }]
     const results: ResultsTree = { g1: { fling: ['a'], overall: ['a'] }, a1: { overall: ['a'] }, a2: { overall: false }, a3: { overall: ['reverse:3'] } }
-    expect(resultsCount(groups, dances, results, aggregates)).toEqual({ posted: 4, total: 5 })
+    expect(resultsCount(groups, dances, results, trophyEvents)).toEqual({ posted: 4, total: 5 })
   })
 
-  it('doesn’t wait on an aggregate nobody can win yet', () => {
-    const aggregates = [{ id: 'a1', groupIds: { g1: true } }, { id: 'a2' }, { id: 'a3', groups: [] }]
-    expect(resultsCount(groups, dances, { a1: { overall: ['a'] } }, aggregates)).toEqual({ posted: 1, total: 3 })
+  it('doesn’t wait on a trophy event nobody can win yet', () => {
+    const trophyEvents = [{ id: 'a1', groupIds: { g1: true } }, { id: 'a2' }, { id: 'a3', groups: [] }]
+    expect(resultsCount(groups, dances, { a1: { overall: ['a'] } }, trophyEvents)).toEqual({ posted: 1, total: 3 })
   })
 })

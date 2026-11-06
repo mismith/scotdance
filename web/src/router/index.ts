@@ -261,7 +261,7 @@ const routes: RouteRecordRaw[] = [
         meta: { manageParent: 'manage.groups', title: 'Draws' },
       },
       { path: 'groups/:itemId?', name: 'manage.groups', component: () => import('@/views/manage/Groups.vue') },
-      { path: 'aggregates/:itemId?', name: 'manage.aggregates', component: () => import('@/views/manage/Aggregates.vue') },
+      { path: 'trophy-events/:itemId?', name: 'manage.trophyEvents', component: () => import('@/views/manage/TrophyEvents.vue') },
       { path: 'categories/:itemId?', name: 'manage.categories', component: () => import('@/views/manage/Categories.vue') },
       { path: 'dances/:itemId?', name: 'manage.dances', component: () => import('@/views/manage/Dances.vue') },
       { path: 'platforms/:itemId?', name: 'manage.platforms', component: () => import('@/views/manage/Platforms.vue') },
@@ -322,11 +322,11 @@ const routes: RouteRecordRaw[] = [
         name: 'competition.results',
         component: () => import('@/views/competition/Results.vue'),
       },
-      // Trophies across age groups, like Dancer of the Day (lib/aggregates).
+      // Trophies across age groups, like Dancer of the Day (lib/trophyEvents).
       {
-        path: 'results/aggregates/:aggregateId',
-        name: 'competition.aggregate',
-        component: () => import('@/views/competition/Aggregate.vue'),
+        path: 'results/trophy-events/:trophyEventId',
+        name: 'competition.trophyEvent',
+        component: () => import('@/views/competition/TrophyEvent.vue'),
         meta: { noindex: true },
       },
       {

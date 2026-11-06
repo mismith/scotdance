@@ -127,7 +127,7 @@ useEventListener(window, 'keydown', (e: KeyboardEvent) => {
 // "View" opens the same part of the public page, where there is one.
 const PUBLIC: Record<string, string> = {
   'manage.results': 'competition.results',
-  'manage.aggregates': 'competition.results',
+  'manage.trophyEvents': 'competition.results',
   'manage.schedule': 'competition.schedule',
   'manage.dancers': 'competition.dancers',
 }

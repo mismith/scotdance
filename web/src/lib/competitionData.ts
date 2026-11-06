@@ -1,18 +1,18 @@
 import { equalTo, orderByChild, query, ref as dbRef, type Query } from 'firebase/database'
 import { database } from '@/firebase'
 import { competitionChanged, editedCompetition, stampOf } from '@/lib/competitionChanged'
-import { enrichAggregates } from '@/lib/aggregates'
+import { enrichTrophyEvents } from '@/lib/trophyEvents'
 import { getSavedAt, onReconnect, onValueSaved } from '@/lib/offline'
 import {
   danceFullName,
   dancerFullName,
   groupFullName,
-  type Aggregate,
+  type TrophyEvent,
   type Category,
   type Dance,
   type Dancer,
   type DrawsTree,
-  type EnrichedAggregate,
+  type EnrichedTrophyEvent,
   type EnrichedDance,
   type EnrichedDancer,
   type EnrichedGroup,
@@ -39,7 +39,7 @@ type Section =
   | 'dancers'
   | 'groups'
   | 'categories'
-  | 'aggregates'
+  | 'trophyEvents'
   | 'dances'
   | 'results'
   | 'points'
@@ -62,9 +62,9 @@ interface Part {
   optional?: boolean
 }
 const sections = (id: string, names: Section[]): Part[] => names.map((s) => ({ q: sectionRef(id, s), stamp: s }))
-// Aggregates came after the rest, so a copy saved before then has none:
+// Trophy events came after the rest, so a copy saved before then has none:
 // without them, the dancers still show.
-const aggregatesPart = (id: string): Part => ({ q: sectionRef(id, 'aggregates'), stamp: 'aggregates', optional: true })
+const trophyEventsPart = (id: string): Part => ({ q: sectionRef(id, 'trophyEvents'), stamp: 'trophyEvents', optional: true })
 // One person's entries, found by the link back to their profile: Home needs
 // those, not everyone else's.
 function entriesOf(id: string, personId: string): Part {
@@ -99,8 +99,8 @@ export interface DancersBundle {
   dancers: EnrichedDancer[]
   groups: EnrichedGroup[]
   categories: Category[]
-  /** Trophies across age groups (lib/aggregates). */
-  aggregates: EnrichedAggregate[]
+  /** Trophies across age groups (lib/trophyEvents). */
+  trophyEvents: EnrichedTrophyEvent[]
 }
 
 export interface ResultsBundle {
@@ -122,7 +122,7 @@ export interface ScheduleBundle {
 
 // --- Raw section values → what the screens use (and what Manage › Print lays out).
 
-export function toDancersBundle(dancersVal: unknown, groupsVal: unknown, categoriesVal: unknown, aggregatesVal?: unknown): DancersBundle {
+export function toDancersBundle(dancersVal: unknown, groupsVal: unknown, categoriesVal: unknown, trophyEventsVal?: unknown): DancersBundle {
   const rawDancers = snapshotToArray<Dancer>(dancersVal as Record<string, Dancer> | null)
   const rawGroups = snapshotToArray<Group>(groupsVal as Record<string, Group> | null)
   const rawCategories = snapshotToArray<Category>(categoriesVal as Record<string, Category> | null)
@@ -150,12 +150,12 @@ export function toDancersBundle(dancersVal: unknown, groupsVal: unknown, categor
 
   const groups = [...groupsById.values()].sort(byDragOrder)
   const categories = [...rawCategories].sort(byDragOrder)
-  const rawAggregates = snapshotToArray<Aggregate>(aggregatesVal as Record<string, Aggregate> | null).filter((a) => a && typeof a === 'object')
+  const rawTrophyEvents = snapshotToArray<TrophyEvent>(trophyEventsVal as Record<string, TrophyEvent> | null).filter((a) => a && typeof a === 'object')
   return {
     dancers,
     groups,
     categories,
-    aggregates: enrichAggregates(rawAggregates.sort(byDragOrder), groups, categories),
+    trophyEvents: enrichTrophyEvents(rawTrophyEvents.sort(byDragOrder), groups, categories),
   }
 }
 
@@ -234,7 +234,7 @@ const readAll = async (id: string, parts: Part[]) => {
 
 export function fetchDancers(id: string): Promise<DancersBundle> {
   return cached(caches.dancers, id, async () => {
-    const [d, g, c, a] = await readAll(id, [...sections(id, ['dancers', 'groups', 'categories']), aggregatesPart(id)])
+    const [d, g, c, a] = await readAll(id, [...sections(id, ['dancers', 'groups', 'categories']), trophyEventsPart(id)])
     return toDancersBundle(d, g, c, a)
   })
 }
@@ -242,7 +242,7 @@ export function fetchDancers(id: string): Promise<DancersBundle> {
 /** One person's entries (by their profile id), with the groups and categories. */
 export function fetchEntries(id: string, personId: string): Promise<DancersBundle> {
   return cached(caches.entries, `${id}/${personId}`, async () => {
-    const [d, g, c, a] = await readAll(id, [entriesOf(id, personId), ...sections(id, ['groups', 'categories']), aggregatesPart(id)])
+    const [d, g, c, a] = await readAll(id, [entriesOf(id, personId), ...sections(id, ['groups', 'categories']), trophyEventsPart(id)])
     return toDancersBundle(d, g, c, a)
   })
 }
@@ -310,7 +310,7 @@ function watchParts(parts: Part[], cb: (values: unknown[]) => void, onError?: On
 }
 
 export function watchDancers(id: string, cb: (b: DancersBundle) => void, onError?: OnError) {
-  return watchParts([...sections(id, ['dancers', 'groups', 'categories']), aggregatesPart(id)], ([d, g, c, a]) => {
+  return watchParts([...sections(id, ['dancers', 'groups', 'categories']), trophyEventsPart(id)], ([d, g, c, a]) => {
     const b = toDancersBundle(d, g, c, a)
     caches.dancers.set(id, Promise.resolve(b))
     cb(b)
@@ -319,7 +319,7 @@ export function watchDancers(id: string, cb: (b: DancersBundle) => void, onError
 
 /** One person's entries streaming, late ones included. */
 export function watchEntries(id: string, personId: string, cb: (b: DancersBundle) => void, onError?: OnError) {
-  return watchParts([entriesOf(id, personId), ...sections(id, ['groups', 'categories']), aggregatesPart(id)], ([d, g, c, a]) => {
+  return watchParts([entriesOf(id, personId), ...sections(id, ['groups', 'categories']), trophyEventsPart(id)], ([d, g, c, a]) => {
     const b = toDancersBundle(d, g, c, a)
     caches.entries.set(`${id}/${personId}`, Promise.resolve(b))
     cb(b)

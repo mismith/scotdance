@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { isWinnable } from '@/lib/aggregates'
+import { isWinnable } from '@/lib/trophyEvents'
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { ChevronDown, ChevronRight, CircleCheck, ClipboardList, Download, EyeOff, Plus, Trophy } from '@lucide/vue'
@@ -13,7 +13,7 @@ import Button from '@/components/ui/Button.vue'
 import { rowsOpen } from '@/lib/settle'
 import { useHideTab } from '@/composables/admin/useHideTab'
 import { useManageBack } from '@/composables/admin/useManageBack'
-import { useManagedCompetition, type MAggregate, type MGroup } from '@/composables/admin/useManagedCompetition'
+import { useManagedCompetition, type MTrophyEvent, type MGroup } from '@/composables/admin/useManagedCompetition'
 import { useSplit } from '@/composables/admin/useWide'
 import { canEdit } from '@/lib/admin/write'
 import { CALLBACKS, OVERALL, danceState, dancingNow, needsFixing, parsePlacings, placeAt, resultRows, scheduleTurns, stateLabel } from '@/lib/admin/results'
@@ -31,8 +31,8 @@ const danceId = computed(() => (route.params.danceId ? String(route.params.dance
 // Only enter results for what's listed: a removed dance (or an old link)
 // would otherwise save placings nobody can see.
 const openGroup = computed(() => (groupId.value ? (m.groupsById.value.get(groupId.value) ?? null) : null))
-// An aggregate has one list of placings (its Overall), opened the same way.
-const openAggregate = computed(() => (groupId.value ? (m.aggregatesById.value.get(groupId.value) ?? null) : null))
+// A trophy event has one list of placings (its Overall), opened the same way.
+const openTrophyEvent = computed(() => (groupId.value ? (m.trophyEventsById.value.get(groupId.value) ?? null) : null))
 
 // On tablets and laptops (md to xl) the list folds away while a dance is
 // open, so the dancers and Placed get the width; the entry's header picks
@@ -85,8 +85,8 @@ watch(groupId, (id) => {
   if (id && !isExpanded(id)) expanded.value = { ...expanded.value, [id]: true }
 })
 
-const aggregateState = (a: MAggregate) => stateOf(a.id, OVERALL)
-const aggregateDancers = (a: MAggregate) => m.aggregateDancers(a.id).length
+const trophyEventState = (a: MTrophyEvent) => stateOf(a.id, OVERALL)
+const trophyEventDancers = (a: MTrophyEvent) => m.trophyEventDancers(a.id).length
 
 const totals = computed(() => {
   let done = 0
@@ -96,10 +96,10 @@ const totals = computed(() => {
     done += p.done
     total += p.total
   }
-  // Each aggregate is one more list to enter, once someone can win it.
-  for (const a of m.aggregates.value.filter(isWinnable)) {
+  // Each trophy event is one more list to enter, once someone can win it.
+  for (const a of m.trophyEvents.value.filter(isWinnable)) {
     total += 1
-    if (aggregateState(a) !== 'todo') done += 1
+    if (trophyEventState(a) !== 'todo') done += 1
   }
   return { done, total }
 })
@@ -120,21 +120,21 @@ function exportCsv() {
       for (const dancerId of pointed) rows.push(row(dancerId, 'Point'))
     }
   }
-  // Aggregates last: their name in the age group column, no dance, and (in
+  // Trophy events last: their name in the age group column, no dance, and (in
   // a column only they need) the age group each dancer entered, since one
-  // aggregate's placings mix age groups.
-  const aggregateRows: string[][] = []
-  for (const a of m.aggregates.value) {
+  // trophy event's placings mix age groups.
+  const trophyEventRows: string[][] = []
+  for (const a of m.trophyEvents.value) {
     const p = parsePlacings(m.results.value[a.id]?.[OVERALL])
     for (const [i, e] of p.entries.entries()) {
       const d = m.dancersById.value.get(e.id)
-      aggregateRows.push(['Aggregate', a.label, '', String(placeAt(i, p) ?? ''), d?.num ?? '?', d?.firstName ?? '', d?.lastName ?? '', d?.location ?? '', d?.group?.label ?? ''])
+      trophyEventRows.push(['Trophy event', a.label, '', String(placeAt(i, p) ?? ''), d?.num ?? '?', d?.firstName ?? '', d?.lastName ?? '', d?.location ?? '', d?.group?.label ?? ''])
     }
   }
-  if (aggregateRows.length) {
+  if (trophyEventRows.length) {
     rows[0].push('Their age group')
     for (const r of rows.slice(1)) r.push('')
-    rows.push(...aggregateRows)
+    rows.push(...trophyEventRows)
   }
   const csv = rows.map((r) => r.map((c) => (/[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c)).join(',')).join('\n')
   const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }))
@@ -249,26 +249,26 @@ function exportCsv() {
           </li>
 
           <!-- Trophies across age groups: one list of placings each -->
-          <li v-if="m.aggregates.value.length" class="rows-engraved">
-            <h2 class="text-heading px-4 pt-4 pb-2">Aggregates</h2>
+          <li v-if="m.trophyEvents.value.length" class="rows-engraved">
+            <h2 class="text-heading px-4 pt-4 pb-2">Trophy events</h2>
             <ul class="rows-engraved">
-              <li v-for="a in m.aggregates.value" :key="a.id">
+              <li v-for="a in m.trophyEvents.value" :key="a.id">
                 <RouterLink
                   :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: a.id, danceId: OVERALL } }"
                   :replace="split"
                   :aria-current="groupId === a.id ? 'true' : undefined"
-                  :aria-label="`${a.label}, ${stateLabel(aggregateState(a), hasPlaceholder(a.id, OVERALL))}`"
+                  :aria-label="`${a.label}, ${stateLabel(trophyEventState(a), hasPlaceholder(a.id, OVERALL))}`"
                   :class="[
                     'press-row focus-inset flex min-h-14 items-center gap-3 px-4 py-2',
                     groupId === a.id ? 'bg-blue-paper' : hasPlaceholder(a.id, OVERALL) && 'bg-next/40',
                     hasPlaceholder(a.id, OVERALL) && 'relative bg-[repeating-linear-gradient(135deg,transparent_0_9px,color-mix(in_oklab,var(--next-foreground)_7%,transparent)_9px_11px)] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[repeating-linear-gradient(135deg,var(--next-foreground)_0_3px,transparent_3px_6px)]',
                   ]"
                 >
-                  <ResultStatus :state="aggregateState(a)" :fix="hasPlaceholder(a.id, OVERALL)" />
+                  <ResultStatus :state="trophyEventState(a)" :fix="hasPlaceholder(a.id, OVERALL)" />
                   <span class="min-w-0 flex-1">
                     <span class="text-callout block truncate font-medium">{{ a.label }}</span>
                     <span class="text-muted-foreground block truncate text-sm">
-                      {{ [`${aggregateDancers(a)} ${aggregateDancers(a) === 1 ? 'dancer' : 'dancers'}`, a.openTo].filter(Boolean).join(' · ') }}
+                      {{ [`${trophyEventDancers(a)} ${trophyEventDancers(a) === 1 ? 'dancer' : 'dancers'}`, a.openTo].filter(Boolean).join(' · ') }}
                     </span>
                   </span>
                   <Trophy class="text-muted-foreground size-4.5 shrink-0" />
@@ -287,14 +287,14 @@ function exportCsv() {
         <EmptyState
           v-if="!hideTab.hidden.value && m.groups.value.length"
           :icon="Trophy"
-          :title="m.aggregates.value.length ? 'Choose an age group or aggregate' : 'Choose an age group'"
-          :description="m.aggregates.value.length ? 'Enter callbacks, placings and points here, and who won each aggregate.' : 'Enter its callbacks, placings and points here.'"
+          :title="m.trophyEvents.value.length ? 'Choose an age group or trophy event' : 'Choose an age group'"
+          :description="m.trophyEvents.value.length ? 'Enter callbacks, placings and points here, and who won each trophy event.' : 'Enter its callbacks, placings and points here.'"
         />
       </div>
     </template>
 
     <template #detail>
-      <ResultsEntry v-if="openAggregate" :key="openAggregate.id" :group-id="openAggregate.id" :dance-id="OVERALL" />
+      <ResultsEntry v-if="openTrophyEvent" :key="openTrophyEvent.id" :group-id="openTrophyEvent.id" :dance-id="OVERALL" />
       <ResultsEntry v-else-if="openGroup && danceIds(openGroup).includes(danceId)" :key="openGroup.id" :group-id="openGroup.id" :dance-id="danceId" />
       <EmptyState v-else-if="openGroup" :icon="Trophy" title="This dance isn’t in this age group any more" description="Choose another from the list." />
       <EmptyState v-else :icon="Trophy" title="This age group isn’t here any more" description="Choose another from the list." />

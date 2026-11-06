@@ -157,14 +157,14 @@ describe('messages', () => {
     expect(resultMessage({ ...fling, overall: true }, 'Iona').title).toBe('Overall results are in')
   })
 
-  it('says an aggregate placing, and that its results are in', () => {
-    const aggregate = { competitionName: 'Calgary Highland Games', aggregateName: 'Premier Dancer of the Day', overall: false }
-    expect(resultMessage(aggregate, 'Ailsa', 1)).toEqual({
+  it('says a trophy event placing, and that its results are in', () => {
+    const trophyEvent = { competitionName: 'Calgary Highland Games', trophyEventName: 'Premier Dancer of the Day', overall: false }
+    expect(resultMessage(trophyEvent, 'Ailsa', 1)).toEqual({
       title: 'Ailsa placed 1st',
       body: 'Premier Dancer of the Day · Calgary Highland Games',
     })
-    expect(resultMessage(aggregate, 'Iona')).toEqual({ title: 'Premier Dancer of the Day results are in', body: 'Calgary Highland Games' })
-    expect(resultMessage({ aggregateName: '  ', overall: false }, 'Iona').title).toBe('Aggregate results are in')
+    expect(resultMessage(trophyEvent, 'Iona')).toEqual({ title: 'Premier Dancer of the Day results are in', body: 'Calgary Highland Games' })
+    expect(resultMessage({ trophyEventName: '  ', overall: false }, 'Iona').title).toBe('Trophy event results are in')
   })
 
   it('copes with missing names', () => {
@@ -263,18 +263,18 @@ describe('result alerts', () => {
     expect(said()).toEqual(['u1: Ailsa placed 1st overall (Premier 12 & Under)', 'u2: Overall results are in (Premier 12 & Under)', 'u4: Overall results are in (Premier 12 & Under)'])
   })
 
-  describe('aggregates', () => {
+  describe('trophy events', () => {
     // Premier Dancer of the Day spans g1 (e1 e2 e3 e5) but not g2 (e4, followed by u1).
-    const aggregates = { agg1: { name: 'Premier Dancer of the Day', groupIds: { g1: true } }, agg2: { name: 'Overall Trophy', groupIds: { g1: true, g2: true } } }
-    const withAggregates = () => {
+    const trophyEvents = { agg1: { name: 'Premier Dancer of the Day', groupIds: { g1: true } }, agg2: { name: 'Overall Trophy', groupIds: { g1: true, g2: true } } }
+    const withTrophyEvents = () => {
       const data = seed()
-      data['competitions:data'].c1.aggregates = aggregates
+      data['competitions:data'].c1.trophyEvents = trophyEvents
       return data
     }
     const overall = (id: string) => `competitions:data/c1/results/${id}/overall`
 
     it('tells followers of placed dancers only, and says nothing to the rest of its age groups', async () => {
-      const { save, results, log, said } = setup(withAggregates())
+      const { save, results, log, said } = setup(withTrophyEvents())
       await save({ [overall('agg1')]: ['e2', 'e1'] }, results())
       // u4 follows Iona (unplaced), u3 has live results off, u5 all alerts: nothing for them.
       expect(said()).toEqual([
@@ -283,21 +283,21 @@ describe('result alerts', () => {
       ])
       expect(log().find((m) => m.uid === 'u1')).toMatchObject({
         body: 'Premier Dancer of the Day · Calgary Highland Games',
-        link: '/competitions/c1/results/aggregates/agg1',
+        link: '/competitions/c1/results/trophy-events/agg1',
         kind: 'results',
         competitionId: 'c1',
       })
     })
 
     it('covers every age group it spans', async () => {
-      const { save, results, said } = setup(withAggregates())
+      const { save, results, said } = setup(withTrophyEvents())
       await save({ [overall('agg2')]: ['e4', 'e1'] }, results())
       // u1 follows both placed dancers: one alert for each.
       expect(said()).toEqual(['u1: Ailsa placed 2nd (Overall Trophy)', 'u1: Kirsty placed 1st (Overall Trophy)'])
     })
 
     it('sends one alert for a person entered twice, at their best place', async () => {
-      const data = withAggregates()
+      const data = withTrophyEvents()
       data['competitions:data'].c1.dancers.e6 = { firstName: 'Ailsa', lastName: 'Grant', groupId: 'g2', dancerId: 'p1' }
       const { save, results, said } = setup(data)
       const handler = results()
@@ -312,8 +312,8 @@ describe('result alerts', () => {
     })
 
     it('queues nothing when nobody placed is followed', async () => {
-      const data = withAggregates()
-      data['competitions:data'].c1.aggregates.agg3 = { name: 'Senior Trophy', groupIds: { g1: true, g2: true } }
+      const data = withTrophyEvents()
+      data['competitions:data'].c1.trophyEvents.agg3 = { name: 'Senior Trophy', groupIds: { g1: true, g2: true } }
       // Followed dancers are e1-e4 (not e5); only e5, unlinked, and a dancer in no age group place.
       const queue: SettleTask[] = []
       const { save, results, said } = setup(data)
@@ -321,14 +321,14 @@ describe('result alerts', () => {
       expect(queue).toEqual([])
       expect(said()).toEqual([])
       // Someone outside its age groups, followed or not.
-      data['competitions:data'].c1.aggregates.agg4 = { name: 'Senior Trophy', groupIds: { g2: true } }
+      data['competitions:data'].c1.trophyEvents.agg4 = { name: 'Senior Trophy', groupIds: { g2: true } }
       await save({ [overall('agg4')]: ['e1'] }, results(true, queue))
       expect(queue).toEqual([])
       expect(said()).toEqual([])
     })
 
     it('sends each placing once, and a changed one again', async () => {
-      const { save, results, said } = setup(withAggregates())
+      const { save, results, said } = setup(withTrophyEvents())
       const handler = results()
       await save({ [overall('agg1')]: ['e2', 'e1'] }, handler)
       await save({ [overall('agg1')]: ['e2', 'e1', 'e3'] }, handler)
@@ -342,8 +342,8 @@ describe('result alerts', () => {
       ])
     })
 
-    it('leaves an age group alone: same messages, same link, even beside an aggregate', async () => {
-      const { save, results, log, said } = setup(withAggregates())
+    it('leaves an age group alone: same messages, same link, even beside a trophy event', async () => {
+      const { save, results, log, said } = setup(withTrophyEvents())
       await save({ [fling]: ['e2', 'e1'] }, results())
       expect(said()).toEqual([
         'u1: Ailsa placed 2nd (Highland Fling)',

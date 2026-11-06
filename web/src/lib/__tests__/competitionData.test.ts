@@ -134,7 +134,7 @@ describe('saved copies', () => {
       ['dancers', 5],
       ['groups', null], // not stamped yet: read as usual
       ['categories', 7],
-      ['aggregates', null],
+      ['trophyEvents', null],
     ])
   })
 
@@ -144,21 +144,21 @@ describe('saved copies', () => {
   })
 })
 
-describe('aggregates, an extra', () => {
+describe('trophy events, an extra', () => {
   it('reads them with the dancers, ready to show', async () => {
     db.groups = { g1: { name: '12 & Under 14', categoryId: 'p' } }
     db.categories = { p: { name: 'Premier' } }
-    db.aggregates = { a1: { name: 'Dancer of the Day', groupIds: { g1: true } } }
+    db.trophyEvents = { a1: { name: 'Dancer of the Day', groupIds: { g1: true } } }
     const b = await data.fetchDancers(id())
-    expect(b.aggregates.map((a) => [a.fullName, a.openTo])).toEqual([['Dancer of the Day', 'Premier']])
+    expect(b.trophyEvents.map((a) => [a.fullName, a.openTo])).toEqual([['Dancer of the Day', 'Premier']])
   })
 
   it('never hold the dancers back when they can’t be read (a copy saved before them, offline)', async () => {
-    unreadable.add('aggregates')
+    unreadable.add('trophyEvents')
     db.dancers = { d1: { firstName: 'Isla' } }
     const b = await data.fetchDancers(id())
     expect(b.dancers.map((d) => d.fullName)).toEqual(['Isla'])
-    expect(b.aggregates).toEqual([])
+    expect(b.trophyEvents).toEqual([])
 
     const seen: string[][] = []
     data.watchEntries(id(), 'p1', (x) => seen.push(x.dancers.map((d) => d.fullName)))
@@ -185,7 +185,7 @@ describe('one person’s entries', () => {
     data.watchEntries(id(), 'p1', (b) => seen.push(b.dancers.map((d) => d.fullName)))
     push('groups', null)
     push('categories', null)
-    push('aggregates', null)
+    push('trophyEvents', null)
     push('dancers', { e1: { firstName: 'Isla', dancerId: 'p1' }, e2: { firstName: 'Ava', dancerId: 'p2' } })
     push('dancers', { e1: { firstName: 'Isla', dancerId: 'p1' }, e3: { firstName: 'Late', dancerId: 'p1' } })
     expect(seen).toEqual([['Isla'], ['Isla', 'Late']])
@@ -222,7 +222,7 @@ describe('watch*', () => {
     expect(seen).toEqual([])
     push('categories', null)
     expect(seen).toEqual([])
-    push('aggregates', null)
+    push('trophyEvents', null)
     expect(seen).toEqual([['Isla']])
     // A late entry on the day.
     push('dancers', { d1: { firstName: 'Isla', groupId: 'g1' }, d2: { firstName: 'Late', groupId: 'g1' } })

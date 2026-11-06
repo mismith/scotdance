@@ -14,7 +14,7 @@ describe('manageTarget', () => {
     expect(at('competition.results')).toEqual({ name: 'manage.results', params: { competitionId: 'c1' } })
     expect(at('competition.group', { groupId: 'g1' }, '#dance-fling')).toEqual({ name: 'manage.results', params: { competitionId: 'c1', groupId: 'g1', danceId: 'fling' } })
     expect(at('competition.group', { groupId: 'g1' })).toEqual({ name: 'manage.results', params: { competitionId: 'c1', groupId: 'g1', danceId: undefined } })
-    expect(at('competition.aggregate', { aggregateId: 'a1' })).toEqual({ name: 'manage.results', params: { competitionId: 'c1', groupId: 'a1', danceId: 'overall' } })
+    expect(at('competition.trophyEvent', { trophyEventId: 'a1' })).toEqual({ name: 'manage.results', params: { competitionId: 'c1', groupId: 'a1', danceId: 'overall' } })
   })
 
   it('opens the overview from anywhere else', () => {

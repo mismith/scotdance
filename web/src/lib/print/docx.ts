@@ -250,7 +250,7 @@ export async function documentDocx(units: Unit[], opts: DocxOptions): Promise<Bl
     ]
   }
 
-  function aggregate(a: UnitOf<'aggregate'>['aggregate'], width: number): Block[] {
+  function trophyEvent(a: UnitOf<'trophyEvent'>['trophyEvent'], width: number): Block[] {
     const keep = { keepNext: true, keepLines: true }
     const blocks: Block[] = [headed(d.HeadingLevel.HEADING_2, a.title, [], width, { ...keep, border: rule(12) })]
     if (a.openTo) blocks.push(para([run(`Open to ${a.openTo}`)], keep))
@@ -282,8 +282,8 @@ export async function documentDocx(units: Unit[], opts: DocxOptions): Promise<Bl
         return [[], 1]
       case 'ageGroup':
         return [ageGroup(u.group, width), 1]
-      case 'aggregate':
-        return [aggregate(u.aggregate, width), 1]
+      case 'trophyEvent':
+        return [trophyEvent(u.trophyEvent, width), 1]
       case 'draw': {
         let j = i + 1
         while (units[j]?.kind === 'draw' && (units[j] as UnitOf<'draw'>).draw.group === u.draw.group && (units[j] as UnitOf<'draw'>).draw.from) j++

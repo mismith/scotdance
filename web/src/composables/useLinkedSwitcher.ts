@@ -33,7 +33,7 @@ const TABS = ['competition.info', 'competition.dancers', 'competition.schedule',
 export const TAB_OF: Record<string, string> = {
   'competition.event': 'competition.schedule',
   'competition.group': 'competition.results',
-  'competition.aggregate': 'competition.results',
+  'competition.trophyEvent': 'competition.results',
   'competition.dancer': 'competition.dancers',
 }
 /** Finding a dancer in the other one gives up after this (no signal at the venue): Dancers instead. */

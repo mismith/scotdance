@@ -20,7 +20,7 @@ import JudgesSheetRow from '@/components/JudgesSheetRow.vue'
 import SheetViewer from '@/components/SheetViewer.vue'
 import { sheetPages } from '@/lib/sheets'
 import { useMorph } from '@/lib/morph'
-import { aggregatePosted, aggregatesFor } from '@/lib/aggregates'
+import { trophyEventPosted, trophyEventsFor } from '@/lib/trophyEvents'
 import {
   findGroupDancers,
   findGroupDances,
@@ -40,7 +40,7 @@ const {
   competitionId,
   competition,
   groups,
-  aggregates,
+  trophyEvents,
   dancers,
   dances,
   results,
@@ -148,13 +148,13 @@ const sections = computed(() =>
   })),
 )
 
-// The aggregates this age group's dancers can win, each a link to its page.
-const groupAggregates = computed(() =>
+// The trophy events this age group's dancers can win, each a link to its page.
+const groupTrophyEvents = computed(() =>
   resultsHidden.value
     ? []
-    : aggregatesFor(aggregates.value, groupId.value).map((a) => ({
+    : trophyEventsFor(trophyEvents.value, groupId.value).map((a) => ({
         ...a,
-        posted: aggregatePosted(results.value, a.id) ? 1 : 0,
+        posted: trophyEventPosted(results.value, a.id) ? 1 : 0,
       })),
 )
 
@@ -386,12 +386,12 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
       </section>
 
       <!-- Trophies across age groups that this age group's dancers can win. -->
-      <section v-if="groupAggregates.length" class="space-y-1 pt-2">
-        <h2 class="text-heading">Aggregates</h2>
+      <section v-if="groupTrophyEvents.length" class="space-y-1 pt-2">
+        <h2 class="text-heading">Trophy events</h2>
         <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
-          <li v-for="a in groupAggregates" :key="a.id">
+          <li v-for="a in groupTrophyEvents" :key="a.id">
             <RouterLink
-              :to="{ name: 'competition.aggregate', params: { competitionId, aggregateId: a.id } }"
+              :to="{ name: 'competition.trophyEvent', params: { competitionId, trophyEventId: a.id } }"
               class="press-row focus-inset flex min-h-12 items-center gap-3 py-2 pr-3 pl-4"
             >
               <span class="min-w-0 flex-1 truncate text-base font-semibold">{{ a.fullName }}</span>

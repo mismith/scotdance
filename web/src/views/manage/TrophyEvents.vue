@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import CollectionEditor from '@/components/admin/CollectionEditor.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
-import { useManagedCompetition, type MAggregate, type MGroup } from '@/composables/admin/useManagedCompetition'
+import { useManagedCompetition, type MTrophyEvent, type MGroup } from '@/composables/admin/useManagedCompetition'
 import type { CollectionSpec } from '@/lib/admin/collection'
 import { OVERALL, parsePlacings } from '@/lib/admin/results'
 
@@ -11,11 +11,11 @@ const m = useManagedCompetition()
 
 const PRESETS = ['Dancer of the Day', 'Most Points']
 
-const spec: CollectionSpec<MAggregate> = {
-  path: 'aggregates',
-  route: 'manage.aggregates',
-  singular: 'aggregate',
-  plural: 'aggregates',
+const spec: CollectionSpec<MTrophyEvent> = {
+  path: 'trophyEvents',
+  route: 'manage.trophyEvents',
+  singular: 'trophy event',
+  plural: 'trophy events',
   sortable: true,
   fields: [
     { key: 'name', label: 'Name', kind: 'text', required: true, placeholder: 'e.g. Premier Dancer of the Day' },
@@ -31,7 +31,7 @@ const spec: CollectionSpec<MAggregate> = {
       options: () => {
         const ids = new Set(m.staff.value.map((s) => s.id))
         const typed = [
-          ...new Set([...m.groups.value, ...m.aggregates.value].map((x) => x.sponsor?.trim()).filter((s): s is string => !!s && !ids.has(s))),
+          ...new Set([...m.groups.value, ...m.trophyEvents.value].map((x) => x.sponsor?.trim()).filter((s): s is string => !!s && !ids.has(s))),
         ]
         return [
           ...m.sponsors.value.map((s) => ({ value: s.id, label: s.label, group: typed.length ? 'Sponsors' : undefined })),
@@ -44,7 +44,7 @@ const spec: CollectionSpec<MAggregate> = {
   title: (a) => a.label,
   subtitle: (a) => {
     if (!a.openTo) return 'No age groups yet'
-    const n = m.aggregateDancers(a.id).length
+    const n = m.trophyEventDancers(a.id).length
     // Dancers first, as on age groups here and in Results.
     return `${n} ${n === 1 ? 'dancer' : 'dancers'} · ${a.openTo}`
   },
@@ -63,10 +63,10 @@ const spec: CollectionSpec<MAggregate> = {
     const warnings = placed ? [`${ids.length === 1 ? 'Its' : 'Their'} placings will be deleted too.`] : []
     return { updates, warnings }
   },
-  emptyHint: 'An aggregate is one trophy for dancers from several age groups, like Dancer of the Day. Choose who can win it here, then pick the winners in Results.',
+  emptyHint: 'A trophy event is one trophy for dancers from several age groups, like Dancer of the Day. Choose who can win it here, then pick the winners in Results.',
 }
 
-const items = computed(() => m.aggregates.value)
+const items = computed(() => m.trophyEvents.value)
 
 // Who can win: each category's age groups, with a switch for the whole
 // category as a shortcut. Only age groups are saved. Age groups without a
@@ -88,16 +88,16 @@ const blocks = computed<Block[]>(() => {
 
 const groupName = (g: MGroup) => g.name?.trim() || g.label
 
-function setGroup(a: MAggregate, g: MGroup, on: boolean) {
-  return m.writeData({ [`aggregates/${a.id}/groupIds/${g.id}`]: on || null }, `${on ? 'Added' : 'Removed'} ${g.label} ${on ? 'to' : 'from'} ${a.label}`)
+function setGroup(a: MTrophyEvent, g: MGroup, on: boolean) {
+  return m.writeData({ [`trophyEvents/${a.id}/groupIds/${g.id}`]: on || null }, `${on ? 'Added' : 'Removed'} ${g.label} ${on ? 'to' : 'from'} ${a.label}`)
 }
-function setBlock(a: MAggregate, b: Block, on: boolean) {
-  const updates = Object.fromEntries(b.groups.map((g) => [`aggregates/${a.id}/groupIds/${g.id}`, on || null]))
+function setBlock(a: MTrophyEvent, b: Block, on: boolean) {
+  const updates = Object.fromEntries(b.groups.map((g) => [`trophyEvents/${a.id}/groupIds/${g.id}`, on || null]))
   return m.writeData(updates, `${on ? 'Added' : 'Removed'} all ${b.name} ${on ? 'to' : 'from'} ${a.label}`)
 }
-const allOn = (a: MAggregate, b: Block) => b.groups.every((g) => !!a.groupIds?.[g.id])
+const allOn = (a: MTrophyEvent, b: Block) => b.groups.every((g) => !!a.groupIds?.[g.id])
 // Part of a category on: say how much, since its switch reads as off.
-const partly = (a: MAggregate, b: Block) => {
+const partly = (a: MTrophyEvent, b: Block) => {
   const n = b.groups.filter((g) => !!a.groupIds?.[g.id]).length
   return n && n < b.groups.length ? `${n} of its ${b.groups.length} age groups` : undefined
 }

@@ -119,7 +119,7 @@ function judgeLists(schedule: Json): Array<{ path: string; ids: string[] }> {
 
 export interface Cleared {
   name: string
-  /** Trophies it sponsored: age groups and aggregates. */
+  /** Trophies it sponsored: age groups and trophy events. */
   sponsors: number
   /** Dances it judged in the schedule. */
   judging: number
@@ -145,7 +145,7 @@ export function planStaff(to: string, data: {
   from: Record<string, Json> | null
   to: Record<string, Json> | null
   groups?: Record<string, Json> | null
-  aggregates?: Record<string, Json> | null
+  trophyEvents?: Record<string, Json> | null
   schedule?: Json
   points?: Record<string, Json> | null
 }): StaffPlan {
@@ -182,7 +182,7 @@ export function planStaff(to: string, data: {
     return cleared.get(id)!;
   };
 
-  for (const [section, trophies] of [['groups', data.groups], ['aggregates', data.aggregates]] as const) {
+  for (const [section, trophies] of [['groups', data.groups], ['trophyEvents', data.trophyEvents]] as const) {
     for (const [id, trophy] of Object.entries(trophies ?? {})) {
       const sponsor = trophy?.sponsor;
       if (typeof sponsor !== 'string' || !(sponsor in toStaff)) continue; // a typed name, or no one
@@ -266,10 +266,10 @@ async function planPart(db: Db, from: string, to: string, part: Part, records: M
   }
   const [fromStaff, toData] = await Promise.all([
     val(db, `competitions:data/${from}/staff`),
-    Promise.all(['staff', 'groups', 'aggregates', 'schedule', 'points'].map((k) => val(db, `competitions:data/${to}/${k}`))),
+    Promise.all(['staff', 'groups', 'trophyEvents', 'schedule', 'points'].map((k) => val(db, `competitions:data/${to}/${k}`))),
   ]);
-  const [toStaff, groups, aggregates, schedule, points] = toData;
-  const plan = planStaff(to, { from: fromStaff, to: toStaff, groups, aggregates, schedule, points });
+  const [toStaff, groups, trophyEvents, schedule, points] = toData;
+  const plan = planStaff(to, { from: fromStaff, to: toStaff, groups, trophyEvents, schedule, points });
   const { updates, blocked, ...staff } = plan;
   const fromName = (await record(from)).name || 'the main one';
   return {
@@ -569,10 +569,10 @@ export function getOnStaffWritten(db: Db) {
         // Gone: off its schedule there and off any trophy it sponsors, as
         // deleting one in Manage does.
         updates[path] = null;
-        const [groups, aggregates, schedule] = await Promise.all(
-          ['groups', 'aggregates', 'schedule'].map((k) => val(db, `competitions:data/${id}/${k}`)),
+        const [groups, trophyEvents, schedule] = await Promise.all(
+          ['groups', 'trophyEvents', 'schedule'].map((k) => val(db, `competitions:data/${id}/${k}`)),
         );
-        for (const [section, trophies] of [['groups', groups], ['aggregates', aggregates]] as const) {
+        for (const [section, trophies] of [['groups', groups], ['trophyEvents', trophyEvents]] as const) {
           for (const [trophyId, trophy] of Object.entries(trophies ?? {}) as [string, Json][]) {
             if (trophy?.sponsor === staffId) updates[`competitions:data/${id}/${section}/${trophyId}/sponsor`] = null;
           }

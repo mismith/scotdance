@@ -423,27 +423,27 @@ describe('a person’s day across entries', () => {
   })
 })
 
-describe('aggregates in a dancer’s day', () => {
+describe('trophy events in a dancer’s day', () => {
   const me = dancer('d1', g1, 107)
   const dotd = { id: 'agg1', fullName: 'Premier Dancer of the Day', groupIds: { g1: true } }
   const other = { id: 'agg2', fullName: 'Most Points', groupIds: { g2: true } }
   const day = (results: ResultsTree = {}, phase: 'before' | 'today' | 'after' = 'today') =>
-    dancerDay(me, bundle({ dances: [fling], results, aggregates: [dotd, other] }), phase)
+    dancerDay(me, bundle({ dances: [fling], results, trophyEvents: [dotd, other] }), phase)
 
-  it('lists only the aggregates their age group can win', () => {
-    expect(day().aggregates.map((s) => s.dance.id)).toEqual(['agg1'])
-    expect(day().aggregates[0].dance.fullName).toBe('Premier Dancer of the Day')
-    expect(dancerDay(me, bundle({ dances: [fling] }), 'today').aggregates).toEqual([])
+  it('lists only the trophy events their age group can win', () => {
+    expect(day().trophyEvents.map((s) => s.dance.id)).toEqual(['agg1'])
+    expect(day().trophyEvents[0].dance.fullName).toBe('Premier Dancer of the Day')
+    expect(dancerDay(me, bundle({ dances: [fling] }), 'today').trophyEvents).toEqual([])
   })
 
   it('is pending until its placings are posted, then placed or unplaced', () => {
-    expect(day().aggregates[0].state).toBe('later')
-    expect(day({}, 'after').aggregates[0].state).toBe('not-posted')
-    expect(day({ agg1: { overall: ['x', 'd1'] } }).aggregates[0]).toMatchObject({ state: 'placed', place: 2, tied: false })
-    expect(day({ agg1: { overall: ['d1', 'x:tie'] } }).aggregates[0]).toMatchObject({ state: 'placed', place: 1, tied: true })
-    expect(day({ agg1: { overall: ['x'] } }).aggregates[0]).toMatchObject({ state: 'unplaced', place: null })
-    expect(day({ agg1: { overall: false } }).aggregates[0].state).toBe('no-placings')
-    expect(day({ agg1: { overall: ['reverse:3'] } }).aggregates[0].state).toBe('later')
+    expect(day().trophyEvents[0].state).toBe('later')
+    expect(day({}, 'after').trophyEvents[0].state).toBe('not-posted')
+    expect(day({ agg1: { overall: ['x', 'd1'] } }).trophyEvents[0]).toMatchObject({ state: 'placed', place: 2, tied: false })
+    expect(day({ agg1: { overall: ['d1', 'x:tie'] } }).trophyEvents[0]).toMatchObject({ state: 'placed', place: 1, tied: true })
+    expect(day({ agg1: { overall: ['x'] } }).trophyEvents[0]).toMatchObject({ state: 'unplaced', place: null })
+    expect(day({ agg1: { overall: false } }).trophyEvents[0].state).toBe('no-placings')
+    expect(day({ agg1: { overall: ['reverse:3'] } }).trophyEvents[0].state).toBe('later')
   })
 
   it('doesn’t hold the day open, but counts as a placing after Overall', () => {

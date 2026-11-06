@@ -13,7 +13,7 @@ import DancerLookButton from '@/components/DancerLookButton.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import { AGGREGATE_RESULT } from '@/lib/aggregates'
+import { TROPHY_EVENT_RESULT } from '@/lib/trophyEvents'
 import { dancerPlace } from '@/lib/competitionInfo'
 import { heroTitle } from '@/lib/heroTitle'
 
@@ -56,8 +56,8 @@ const fresh = computed(() => {
     for (const s of [...e.dances, ...(e.overall ? [e.overall] : [])])
       if (s.state === 'placed' && isFresh(e.group?.id, s.dance.id, e.dancer.id)) return `${e.dancer.id}:${s.dance.id}`
   for (const e of entries.value)
-    for (const s of e.aggregates)
-      if (s.state === 'placed' && isFresh(s.dance.id, AGGREGATE_RESULT, e.dancer.id)) return `${e.dancer.id}:${s.dance.id}`
+    for (const s of e.trophyEvents)
+      if (s.state === 'placed' && isFresh(s.dance.id, TROPHY_EVENT_RESULT, e.dancer.id)) return `${e.dancer.id}:${s.dance.id}`
   return null
 })
 </script>

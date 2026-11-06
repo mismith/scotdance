@@ -48,12 +48,12 @@ const spec: CollectionSpec<MStaff> = {
     })
     const n = Object.keys(updates).length
     // And off any trophy they sponsor (stored by id), or its sponsor line would show the id.
-    // Age groups' and aggregates'.
+    // Age groups' and trophy events'.
     const groups = m.groups.value.filter((g) => g.sponsor && ids.includes(g.sponsor))
-    const aggregates = m.aggregates.value.filter((a) => a.sponsor && ids.includes(a.sponsor))
+    const trophyEvents = m.trophyEvents.value.filter((a) => a.sponsor && ids.includes(a.sponsor))
     for (const g of groups) updates[`groups/${g.id}/sponsor`] = null
-    for (const a of aggregates) updates[`aggregates/${a.id}/sponsor`] = null
-    const trophies = groups.length + aggregates.length
+    for (const a of trophyEvents) updates[`trophyEvents/${a.id}/sponsor`] = null
+    const trophies = groups.length + trophyEvents.length
     const warnings = []
     if (n) warnings.push(`They’re judging in ${n} ${n === 1 ? 'part' : 'parts'} of the schedule and will be taken off.`)
     if (trophies) warnings.push(`They sponsor ${trophies === 1 ? 'a trophy' : `${trophies} trophies`}, which will show no sponsor.`)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aggregatesFor, enrichAggregates, openToText } from '@/lib/aggregates'
+import { trophyEventsFor, enrichTrophyEvents, openToText } from '@/lib/trophyEvents'
 
 const categories = [
   { id: 'p', name: 'Premier' },
@@ -34,19 +34,19 @@ describe('openToText', () => {
   })
 })
 
-describe('enrichAggregates', () => {
+describe('enrichTrophyEvents', () => {
   it('adds its age groups in list order and a name to show', () => {
-    const [a] = enrichAggregates([{ id: 'a', groupIds: { p3: true, p1: true } }], groups, categories)
+    const [a] = enrichTrophyEvents([{ id: 'a', groupIds: { p3: true, p1: true } }], groups, categories)
     expect(a.groups.map((g) => g.id)).toEqual(['p1', 'p3'])
-    expect(a.fullName).toBe('Untitled aggregate')
+    expect(a.fullName).toBe('Untitled trophy event')
     expect(a.openTo).toBe('Premier 12 & Under 14, 16 & Over')
   })
 })
 
-describe('aggregatesFor', () => {
-  it('finds the aggregates an age group can win', () => {
+describe('trophyEventsFor', () => {
+  it('finds the trophy events an age group can win', () => {
     const list = [{ id: 'a', groupIds: { p1: true } }, { id: 'b', groupIds: { i1: true } }]
-    expect(aggregatesFor(list, 'p1').map((a) => a.id)).toEqual(['a'])
-    expect(aggregatesFor(list, null)).toEqual([])
+    expect(trophyEventsFor(list, 'p1').map((a) => a.id)).toEqual(['a'])
+    expect(trophyEventsFor(list, null)).toEqual([])
   })
 })

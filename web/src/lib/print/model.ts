@@ -52,8 +52,8 @@ export interface AgeGroupSheet {
   sponsor?: string
 }
 
-/** An aggregate: a trophy across age groups, with a grid to write its winners in. */
-export interface AggregateSheet {
+/** A trophy event: a trophy across age groups, with a grid to write its winners in. */
+export interface TrophyEventSheet {
   title: string
   /** Who can win it, said briefly ("All Premier · Intermediate 12 & Under 14"). */
   openTo: string
@@ -102,7 +102,7 @@ export type Unit = Base &
     | { kind: 'gridHead'; head: GridHead; continued?: boolean }
     | { kind: 'gridRow'; row: GridRow; columns: number }
     | { kind: 'ageGroup'; group: AgeGroupSheet }
-    | { kind: 'aggregate'; aggregate: AggregateSheet }
+    | { kind: 'trophyEvent'; trophyEvent: TrophyEventSheet }
     | { kind: 'draw'; draw: DrawSheet }
     | { kind: 'platformDance'; dance: PlatformDance }
   )

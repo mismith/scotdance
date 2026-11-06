@@ -55,7 +55,7 @@ function setup(data: RawData, danceId = 'dFling', groupId = 'gB8') {
       { path: '/', component: { render: () => null } },
       { path: '/manage/:competitionId/results/:groupId?/:danceId?', name: 'manage.results', component: { render: () => null } },
       { path: '/manage/:competitionId/dancers', name: 'manage.dancers', component: { render: () => null } },
-      { path: '/manage/:competitionId/aggregates/:itemId?', name: 'manage.aggregates', component: { render: () => null } },
+      { path: '/manage/:competitionId/trophy-events/:itemId?', name: 'manage.trophyEvents', component: { render: () => null } },
     ],
   })
   const Parent = defineComponent({
@@ -256,9 +256,9 @@ describe('a dance waiting on callbacks', () => {
   })
 })
 
-describe('an aggregate', () => {
+describe('a trophy event', () => {
   // Dancer of the Day is open to two of three age groups; the third's dancer isn't on the list.
-  function withAggregate(results: RawData['results'] = {}): RawData {
+  function withTrophyEvent(results: RawData['results'] = {}): RawData {
     const base = sample(null)
     return {
       ...base,
@@ -268,11 +268,11 @@ describe('an aggregate', () => {
         d7: { number: '201', firstName: 'Catriona', lastName: 'Lamont', groupId: 'gB10' },
         d8: { number: '301', firstName: 'Morag', lastName: 'Fraser', groupId: 'gNov' },
       },
-      aggregates: { aDay: { name: 'Dancer of the Day', trophy: 'Quaich', groupIds: { gB8: true, gB10: true } } },
+      trophyEvents: { aDay: { name: 'Dancer of the Day', trophy: 'Quaich', groupIds: { gB8: true, gB10: true } } },
       results,
     }
   }
-  const open = (results?: RawData['results']) => setup(withAggregate(results), 'overall', 'aDay')
+  const open = (results?: RawData['results']) => setup(withTrophyEvent(results), 'overall', 'aDay')
 
   it('lists the dancers of the age groups it is open to, each with their age group', () => {
     const t = open()
@@ -316,8 +316,8 @@ describe('an aggregate', () => {
   })
 
   it('says to choose age groups when none are on', () => {
-    const data = withAggregate()
-    data.aggregates = { aDay: { name: 'Dancer of the Day' } }
+    const data = withTrophyEvent()
+    data.trophyEvents = { aDay: { name: 'Dancer of the Day' } }
     const t = setup(data, 'overall', 'aDay')
     expect(t.w.text()).toContain('Choose the age groups whose dancers can win it.')
   })

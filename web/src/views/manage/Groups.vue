@@ -92,8 +92,8 @@ const spec: CollectionSpec<MGroup> = {
     for (const id of ids) {
       dancers += m.groupDancers(id).length
       for (const d of m.dances.value) if (d.groupIds?.[id]) updates[`dances/${d.id}/groupIds/${id}`] = null
-      // And off the aggregates it was open to.
-      for (const x of m.aggregates.value) if (x.groupIds?.[id]) updates[`aggregates/${x.id}/groupIds/${id}`] = null
+      // And off the trophy events it was open to.
+      for (const x of m.trophyEvents.value) if (x.groupIds?.[id]) updates[`trophyEvents/${x.id}/groupIds/${id}`] = null
       if (m.results.value[id]) {
         updates[`results/${id}`] = null
         hasResults = true

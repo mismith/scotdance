@@ -47,9 +47,9 @@ export function startLiveAlerts() {
         const f = card.focus
         if (!f || f.phase !== 'today') continue
         for (const day of f.days) {
-          const all = [...day.dances, ...(day.overall ? [day.overall] : []), ...day.aggregates]
+          const all = [...day.dances, ...(day.overall ? [day.overall] : []), ...day.trophyEvents]
           for (const s of all) {
-            const isAggregate = day.aggregates.includes(s)
+            const isTrophyEvent = day.trophyEvents.includes(s)
             const key = `${day.dancer.id}:${s.dance.id}`
             const sig = `${s.state}:${s.place ?? ''}`
             const before = seen.get(key)
@@ -59,8 +59,8 @@ export function startLiveAlerts() {
             if (!baselined.has(f.competitionId) || before === undefined) continue
             if (before === sig) continue
             if (!['placed', 'unplaced', 'no-placings'].includes(s.state)) continue
-            // Most who can win an aggregate don't: only a win is news.
-            if (isAggregate && s.state !== 'placed') continue
+            // Most who can win a trophy event don't: only a win is news.
+            if (isTrophyEvent && s.state !== 'placed') continue
             if (!favorites.hasAlerts('dancers', card.id)) continue
             const first = day.dancer.firstName || day.dancer.fullName
             const danceName = s.dance.id === 'overall' ? 'Overall' : s.dance.fullName || s.dance.name
@@ -68,15 +68,15 @@ export function startLiveAlerts() {
               id: `${key}:${sig}`,
               title:
                 s.state === 'placed' && s.place != null
-                  ? isAggregate
+                  ? isTrophyEvent
                     ? `${first} placed ${s.place}${getOrdinalSuffix(s.place)} in ${danceName}`
                     : s.dance.id === 'overall'
                       ? `${first} placed ${s.place}${getOrdinalSuffix(s.place)} overall`
                       : `${first} placed ${s.place}${getOrdinalSuffix(s.place)} in the ${danceName}`
                   : `Results are in for the ${danceName}`,
               subtitle: [day.group?.fullName, f.competition.name].filter(Boolean).join(' · '),
-              to: isAggregate
-                ? { name: 'competition.aggregate', params: { competitionId: f.competitionId, aggregateId: s.dance.id } }
+              to: isTrophyEvent
+                ? { name: 'competition.trophyEvent', params: { competitionId: f.competitionId, trophyEventId: s.dance.id } }
                 : {
                     name: 'competition.group',
                     params: { competitionId: f.competitionId, groupId: day.group?.id ?? '' },

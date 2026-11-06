@@ -146,7 +146,7 @@
           },
           "groups": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
           "categories": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
-          "aggregates": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED; trophies across age groups, like Dancer of the Day
+          "trophyEvents": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED; trophies across age groups, like Dancer of the Day
           "dances": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
           "platforms": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
           "schedule": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED

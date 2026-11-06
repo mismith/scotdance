@@ -14,37 +14,37 @@ import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
 import { oncePerPerson, useFollowing } from '@/composables/useFollowing'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
-import { AGGREGATE_RESULT } from '@/lib/aggregates'
+import { TROPHY_EVENT_RESULT } from '@/lib/trophyEvents'
 import { competitionPhase } from '@/lib/dancerDay'
 import { heroTitle } from '@/lib/heroTitle'
 import { useMorph } from '@/lib/morph'
 import { getDanceResults } from '@/lib/results'
 import { staffMemberName, type EnrichedDancer, type EnrichedGroup } from '@/types/competition'
 
-// One aggregate: a trophy across age groups, with its one list of placings
+// One trophy event: a trophy across age groups, with its one list of placings
 // (entered by the organiser, never worked out). The page is a short Group:
 // a header, then the list, with each dancer's own age group under their name
 // since the list mixes them.
 
 const route = useRoute()
 const setHeader = injectInfoHeaderSetter()
-const { competitionId, competition, groups, aggregates, dancers, results, schedule, staff, loadDancers, loadResults, loadSchedule, loadStaff, resultsHidden } =
+const { competitionId, competition, groups, trophyEvents, dancers, results, schedule, staff, loadDancers, loadResults, loadSchedule, loadStaff, resultsHidden } =
   useCompetition()
 const following = useFollowing()
 const isFresh = useFreshPlacings()
 
 onMounted(() => Promise.all([loadDancers(), loadResults(), loadSchedule(), loadStaff()]))
 
-const aggregateId = computed(() => String(route.params.aggregateId ?? ''))
-const aggregate = computed(() => aggregates.value.find((a) => a.id === aggregateId.value) ?? null)
+const trophyEventId = computed(() => String(route.params.trophyEventId ?? ''))
+const trophyEvent = computed(() => trophyEvents.value.find((a) => a.id === trophyEventId.value) ?? null)
 
-usePageTitle(() => [aggregate.value?.fullName, competition.value?.name])
+usePageTitle(() => [trophyEvent.value?.fullName, competition.value?.name])
 
 const phase = computed(() => competitionPhase(competition.value?.date, schedule.value))
 
 // Who can win it, and which of them are yours.
 const eligible = computed(() => {
-  const on = aggregate.value?.groupIds
+  const on = trophyEvent.value?.groupIds
   return dancers.value
     .filter((d) => d.group && on?.[d.group.id])
     .sort((a, b) => (a.number ?? Infinity) - (b.number ?? Infinity))
@@ -53,12 +53,12 @@ const followedHere = computed(() => oncePerPerson(eligible.value.filter((d) => f
 const colorOf = (d: EnrichedDancer | null) => (d && following.isFollowing(d) ? following.colorFor(d.dancerId) : null)
 const rowStyle = (d: EnrichedDancer | null) => (colorOf(d) ? following.paint(d!.dancerId) : undefined)
 
-const placings = computed(() => getDanceResults(aggregateId.value, AGGREGATE_RESULT, dancers.value, results.value))
+const placings = computed(() => getDanceResults(trophyEventId.value, TROPHY_EVENT_RESULT, dancers.value, results.value))
 
 // The trophy sponsor: a person under the competition's staff (tap for their
 // details), or a typed name.
 const sponsor = computed(() => {
-  const value = aggregate.value?.sponsor?.trim()
+  const value = trophyEvent.value?.sponsor?.trim()
   if (!value) return { name: '', member: null }
   const member = staff.value.find((m) => m.id === value) ?? null
   return { name: member ? staffMemberName(member) : value, member }
@@ -66,14 +66,14 @@ const sponsor = computed(() => {
 // What the row under the placings says: the sponsor over the trophy's name,
 // or the trophy alone (an age group's Overall words it the same way).
 const trophyLine = computed(() => {
-  const trophy = aggregate.value?.trophy?.trim()
+  const trophy = trophyEvent.value?.trophy?.trim()
   if (!sponsor.value.name) return 'Trophy'
   return !trophy ? 'Trophy sponsor' : /trophy/i.test(trophy) ? `${trophy} sponsor` : `${trophy} Trophy sponsor`
 })
 // A dancer's age group, without the category when every age group it's open
 // to shares one ("16 & Over", not "Premier 16 & Over" over and over).
 const oneCategory = computed(() => {
-  const ids = new Set(aggregate.value?.groups.map((g) => g.categoryId ?? '') ?? [])
+  const ids = new Set(trophyEvent.value?.groups.map((g) => g.categoryId ?? '') ?? [])
   return ids.size === 1
 })
 const groupLabel = (g: EnrichedGroup) => (oneCategory.value && g.name?.trim() ? g.name.trim() : g.fullName)
@@ -93,14 +93,14 @@ function openSponsor(e: MouseEvent) {
       <div class="space-y-2"><Skeleton class="h-8 w-1/2" /><Skeleton class="h-4 w-2/3" /></div>
       <Skeleton class="h-56 w-full rounded-2xl!" />
     </div>
-    <p v-else-if="!aggregate" class="text-muted-foreground py-6 text-base">
-      This aggregate isn’t listed any more. Go back to Results to see the current list.
+    <p v-else-if="!trophyEvent" class="text-muted-foreground py-6 text-base">
+      This trophy event isn’t listed any more. Go back to Results to see the current list.
     </p>
 
     <template v-else>
       <header :ref="setHeader" class="space-y-1 pt-0.5">
-        <h1 :class="heroTitle(aggregate.fullName)">{{ aggregate.fullName }}</h1>
-        <p v-if="aggregate.openTo" class="text-muted-foreground text-callout">Open to {{ aggregate.openTo }}</p>
+        <h1 :class="heroTitle(trophyEvent.fullName)">{{ trophyEvent.fullName }}</h1>
+        <p v-if="trophyEvent.openTo" class="text-muted-foreground text-callout">Open to {{ trophyEvent.openTo }}</p>
         <div v-if="followedHere.length" class="space-y-1 pt-1">
           <MyDancerLine
             v-for="d in followedHere"
@@ -124,8 +124,8 @@ function openSponsor(e: MouseEvent) {
         <div class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
           <div v-if="!placings.hasResults" class="text-muted-foreground flex items-start gap-3 px-4 py-4 text-base">
             <!-- Worded as an age group's Overall is. -->
-            <template v-if="placings.explicitlyEmpty">No results for this aggregate.</template>
-            <template v-else-if="phase === 'after'">No result was posted for this aggregate.</template>
+            <template v-if="placings.explicitlyEmpty">No results for this trophy event.</template>
+            <template v-else-if="phase === 'after'">No result was posted for this trophy event.</template>
             <template v-else>
               <Clock class="mt-0.5 size-5 shrink-0" />
               <span>Posted after all the dances are in.</span>
@@ -147,7 +147,7 @@ function openSponsor(e: MouseEvent) {
                 :class="['flex min-h-13 items-center gap-2.5 px-3 py-1.5', row.dancer && 'press-row focus-inset']"
               >
                 <span class="flex w-9 shrink-0 justify-center">
-                  <Medal :place="row.place" :tied="row.tied" :fresh="isFresh(aggregateId, AGGREGATE_RESULT, row.dancerId)" :dance="aggregate.fullName" />
+                  <Medal :place="row.place" :tied="row.tied" :fresh="isFresh(trophyEventId, TROPHY_EVENT_RESULT, row.dancerId)" :dance="trophyEvent.fullName" />
                 </span>
                 <template v-if="row.dancer">
                   <NumberCard :number="row.dancer.number" size="xs" :color="colorOf(row.dancer)" />
@@ -164,14 +164,14 @@ function openSponsor(e: MouseEvent) {
           <!-- Its trophy and who sponsors it, under the placings as on an age group's Overall. -->
           <component
             :is="sponsor.member ? 'button' : 'div'"
-            v-if="sponsor.name || aggregate.trophy"
+            v-if="sponsor.name || trophyEvent.trophy"
             :type="sponsor.member ? 'button' : undefined"
             :class="['flex w-full items-center gap-3 px-4 py-3 text-left', sponsor.member && 'press-row focus-inset']"
             @click="sponsor.member && openSponsor($event)"
           >
             <Award class="text-primary size-5 shrink-0" />
             <span class="min-w-0 flex-1">
-              <span class="block text-base font-semibold">{{ sponsor.name || aggregate.trophy }}</span>
+              <span class="block text-base font-semibold">{{ sponsor.name || trophyEvent.trophy }}</span>
               <span class="text-muted-foreground block text-sm">{{ trophyLine }}</span>
             </span>
           </component>

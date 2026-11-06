@@ -20,7 +20,7 @@ const props = defineProps<{
   placings: Placings
   dancersById: Map<string, MDancer>
   kind: 'callbacks' | 'dance' | 'overall'
-  /** Under each name, their age group instead of where they're from (an aggregate mixes age groups). */
+  /** Under each name, their age group instead of where they're from (a trophy event mixes age groups). */
   byGroup?: boolean
 }>()
 const detail = (id: string) => {

@@ -271,7 +271,7 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
           platforms: b.schedule.platforms,
           draws: b.schedule.draws,
           groups: mine.groups,
-          aggregates: mine.aggregates,
+          trophyEvents: mine.trophyEvents,
         }
         const span = competitionSpan(p.focusComp.date, b?.schedule.schedule)
         focus = {

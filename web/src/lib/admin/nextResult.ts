@@ -6,7 +6,7 @@ import { groupHasOverall, type Platform, type ResultsTree, type Schedule } from 
 // first thing not entered yet, in the order it's danced. That's the
 // schedule's order (each age group's callbacks before its first dance), then
 // whatever the schedule leaves out in age group order, overalls last, then
-// the aggregates (their one list each).
+// the trophy events (their one list each).
 
 interface Group {
   id: string
@@ -17,8 +17,8 @@ export interface ResultsWork {
   groups: Group[]
   /** An age group's dances, in order. */
   dancesOf: (groupId: string) => Array<{ id: string }>
-  /** Aggregates, entered after every age group. */
-  aggregates?: Array<{ id: string }>
+  /** Trophy events, entered after every age group. */
+  trophyEvents?: Array<{ id: string }>
   results: ResultsTree
   schedule: Schedule | null
   platforms: Platform[]
@@ -54,7 +54,7 @@ export function resultsOrder(w: ResultsWork): ResultSlot[] {
     for (const d of w.dancesOf(g.id)) add(g.id, d.id)
   }
   for (const g of w.groups) if (groupHasOverall(g)) add(g.id, OVERALL)
-  for (const a of w.aggregates ?? []) add(a.id, OVERALL)
+  for (const a of w.trophyEvents ?? []) add(a.id, OVERALL)
   return out
 }
 
