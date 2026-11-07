@@ -153,7 +153,7 @@ const title = computed(() => {
       if (loginStep.value === 'forgot') return 'Reset your password'
       return audience.value ? 'Sign in with ScotDance.app' : 'Sign in to ScotDance.app'
     case 'continue':
-      return `Continue to ${toolName.value}?`
+      return 'Sign in with ScotDance.app'
     case 'pick':
       return 'Which competition?'
     case 'sent':
