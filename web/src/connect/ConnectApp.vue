@@ -238,7 +238,7 @@ watch(step, (now, before) => {
         <div class="min-w-0">
           <h2 class="text-title">{{ title }}</h2>
           <p v-if="toolName && step !== 'unreadable'" class="text-muted-foreground text-sm">
-            {{ toolName }} gets your name and email address, nothing else.
+            {{ toolName }} gets your name and email address.
           </p>
           <p v-else-if="summary && step !== 'sent' && step !== 'unreadable'" class="text-muted-foreground truncate text-sm">
             {{ summary }}
