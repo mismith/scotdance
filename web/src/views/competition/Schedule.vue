@@ -171,10 +171,12 @@ async function openAtToday() {
       >
         <h3
           :data-section="[dayList.length > 1 ? d.relative ?? d.label : null, b.block.name || 'Session', b.time].filter(Boolean).join(' · ')"
-          class="text-muted-foreground text-callout flex items-baseline justify-between gap-2 py-2 font-semibold"
+          class="text-muted-foreground text-callout flex flex-wrap items-baseline justify-between gap-x-2 py-2 font-semibold"
         >
           <span class="truncate">{{ b.block.name || 'Session' }}</span>
-          <span v-if="b.time" class="shrink-0 font-medium tabular-nums">{{ b.time }}</span>
+          <!-- Usually a time ("9:30 am"), but organisers write sentences here
+               too: a long one wraps onto its own line, never widens the page. -->
+          <span v-if="b.time" class="min-w-0 font-medium tabular-nums">{{ b.time }}</span>
         </h3>
         <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
           <li v-for="e in b.events" :key="e.event.id">
