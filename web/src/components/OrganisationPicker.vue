@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
 import OrganisationMark from '@/components/OrganisationMark.vue'
 import SearchField from '@/components/admin/SearchField.vue'
+import { friendlyError } from '@/lib/admin/write'
 import { useOrganisations } from '@/composables/useOrganisations'
 import type { Morph } from '@/lib/morph'
 import { acronym, organisationKey, type OrganisationDraft } from '@/lib/organisationSuggestions'
@@ -36,12 +37,13 @@ const props = withDefaults(
     createOnly?: boolean
     /** Under the new organisation's fields, e.g. "You'll be its admin." */
     createHint?: string
+    /** Starts the new organisation. The sheet stays open, busy, until it's done, and shows what went wrong if it fails. */
+    onCreate?: (organisation: OrganisationDraft) => unknown
   }>(),
-  { prefill: null, search: '', title: 'Add an organisation', mine: () => [], mineLabel: 'Yours', chosen: () => [], any: false, creatable: true, createOnly: false, createHint: 'You’ll be its admin, and can add its logo and details.' },
+  { prefill: null, search: '', title: 'Add an organisation', mine: () => [], mineLabel: 'Yours', chosen: () => [], any: false, creatable: true, createOnly: false, createHint: 'You’ll be its admin, and can add its logo and details.', onCreate: undefined },
 )
 const emit = defineEmits<{
   pick: [organisation: OrganisationListItem]
-  create: [organisation: OrganisationDraft]
 }>()
 
 const o = useOrganisations()
@@ -88,20 +90,31 @@ const duplicateNote = computed(() => {
   if (props.any || props.mine.includes(org.id)) return `${org.name} is already on ScotDance.app, so this adds it.`
   return `${org.name} is already on ScotDance.app. Its admins can add this competition to it.`
 })
-function create() {
+const saving = ref(false)
+const saveError = ref('')
+async function create() {
+  if (saving.value) return
   if (duplicate.value) {
     if (props.any || props.mine.includes(duplicate.value.id)) pick(duplicate.value)
     return
   }
   const name = newName.value.trim()
   if (!name) return
-  emit('create', {
-    name,
-    shortName: newShort.value.trim(),
-    ...(newLocation.value.trim() ? { location: newLocation.value.trim() } : {}),
-    ...(newWebsite.value.trim() ? { website: newWebsite.value.trim() } : {}),
-  })
-  void props.morph.hide()
+  saving.value = true
+  saveError.value = ''
+  try {
+    await props.onCreate?.({
+      name,
+      shortName: newShort.value.trim(),
+      ...(newLocation.value.trim() ? { location: newLocation.value.trim() } : {}),
+      ...(newWebsite.value.trim() ? { website: newWebsite.value.trim() } : {}),
+    })
+    void props.morph.hide()
+  } catch (e) {
+    saveError.value = friendlyError(e)
+  } finally {
+    saving.value = false
+  }
 }
 function pick(org: OrganisationListItem) {
   if (!props.chosen.includes(org.id)) emit('pick', org)
@@ -113,6 +126,7 @@ watch(
     if (!open) return
     query.value = props.search
     creating.value = false
+    saveError.value = ''
     newName.value = ''
     newShort.value = ''
     shortEdited.value = false
@@ -168,9 +182,10 @@ const ROW = 'press-row focus-inset flex min-h-15 w-full items-center gap-3 px-4 
         <p class="text-muted-foreground text-sm">{{ createHint }}</p>
         <slot name="create-options" />
       </template>
+      <p v-if="saveError" class="text-destructive text-sm font-medium" role="alert">{{ saveError }}</p>
       <div class="flex gap-3">
-        <Button v-if="!createOnly" size="lg" @click="creating = false">Back</Button>
-        <Button type="submit" variant="primary" size="lg" class="flex-1" :disabled="!newName.trim() || (!!duplicate && !any && !mine.includes(duplicate.id))">{{ createOnly && duplicate ? 'Open' : 'Add' }}</Button>
+        <Button v-if="!createOnly" size="lg" :disabled="saving" @click="creating = false">Back</Button>
+        <Button type="submit" variant="primary" size="lg" class="flex-1" :busy="saving" :disabled="!newName.trim() || (!!duplicate && !any && !mine.includes(duplicate.id))">{{ createOnly && duplicate ? 'Open' : 'Add' }}</Button>
       </div>
     </form>
 

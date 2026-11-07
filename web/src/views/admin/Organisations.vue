@@ -68,14 +68,11 @@ const shownOrgs = computed(() => {
 })
 
 const starting = useMorph()
+// Errors show in the picker, which stays open until these are done.
 async function start({ name, shortName, website }: { name: string; shortName: string; website?: string }) {
-  try {
-    const id = await createOrganisation({ name, shortName, website, join: false })
-    toast(`Started ${name}`)
-    await router.push({ name: 'organisation.manage', params: { organisationId: id } })
-  } catch (e) {
-    toast(friendlyError(e), { tone: 'error' })
-  }
+  const id = await createOrganisation({ name, shortName, website, join: false })
+  toast(`Started ${name}`)
+  void router.push({ name: 'organisation.manage', params: { organisationId: id } })
 }
 
 // --- Tagging
@@ -182,14 +179,10 @@ async function addSelected(org: OrganisationListItem) {
   selected.clear()
 }
 async function createForSelected({ name, shortName }: { name: string; shortName: string }) {
-  try {
-    const id = await createOrganisation({ name, shortName, join: false })
-    // Named here: the list may not have the new one yet.
-    await tag(id, [...selected], true, organisationLabel({ name, shortName }))
-    selected.clear()
-  } catch (e) {
-    toast(friendlyError(e), { tone: 'error' })
-  }
+  const id = await createOrganisation({ name, shortName, join: false })
+  // Named here: the list may not have the new one yet.
+  await tag(id, [...selected], true, organisationLabel({ name, shortName }))
+  selected.clear()
 }
 // Organisations the competitions' names point to that aren't here yet:
 // started from what's known (the abbreviation, where they mostly are), and

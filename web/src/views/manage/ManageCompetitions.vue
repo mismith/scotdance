@@ -86,14 +86,11 @@ const { byOrganisation } = useOrganisationCompetitions()
 const myOrgs = computed(() => me.managedOrganisationIds.flatMap((id) => orgs.byId.value.get(id) ?? []))
 const comingUp = (id: string) => (byOrganisation.value.get(id) ?? []).filter((c) => competitionPhase(c.date) !== 'after').length
 const startingOrg = useMorph()
+// Errors show in the picker, which stays open until this is done.
 async function startOrg({ name, shortName, website }: { name: string; shortName: string; website?: string }) {
-  try {
-    const id = await createOrganisation({ name, shortName, website })
-    toast(`Started ${name}. Add its logo and competitions.`)
-    await router.push({ name: 'organisation.manage', params: { organisationId: id } })
-  } catch (e) {
-    toast(friendlyError(e), { tone: 'error' })
-  }
+  const id = await createOrganisation({ name, shortName, website })
+  toast(`Started ${name}. Add its logo and competitions.`)
+  void router.push({ name: 'organisation.manage', params: { organisationId: id } })
 }
 
 // --- Create (system admins)

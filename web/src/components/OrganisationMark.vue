@@ -8,8 +8,10 @@ const props = withDefaults(
   defineProps<{
     organisation: Pick<Organisation, 'name' | 'shortName' | 'image'>
     size?: 'xs' | 'sm' | 'lg'
+    /** Not added yet: a dashed outline of where it'd go. */
+    ghost?: boolean
   }>(),
-  { size: 'sm' },
+  { size: 'sm', ghost: false },
 )
 
 const SIZE = {
@@ -32,12 +34,16 @@ watch(
     v-if="organisation.image && !broken"
     :src="organisation.image"
     alt=""
-    :class="['shrink-0 bg-white object-contain ring-1 ring-black/5 dark:ring-white/10', SIZE[size], PAD[size]]"
+    :class="['shrink-0 bg-white object-contain ring-1 ring-black/5 dark:ring-white/10', SIZE[size], PAD[size], ghost && 'opacity-60']"
     @error="broken = true"
   />
   <span
     v-else
-    :class="['bg-blue-paper text-primary flex shrink-0 items-center justify-center font-bold tracking-[-0.02em]', SIZE[size]]"
+    :class="[
+      'flex shrink-0 items-center justify-center font-bold tracking-[-0.02em]',
+      ghost ? 'border-strong text-muted-foreground border-[1.5px] border-dashed' : 'bg-blue-paper text-primary',
+      SIZE[size],
+    ]"
     aria-hidden="true"
   >
     {{ organisationMark(organisation) }}

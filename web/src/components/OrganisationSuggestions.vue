@@ -27,13 +27,13 @@ const matches = computed(() => props.existing ? suggestions.value.existing.filte
     <p class="text-muted-foreground text-sm">Suggested from the competition’s name</p>
     <div class="rows-engraved">
       <button v-for="org in matches" :key="org.id" type="button" :disabled="disabled" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-2 text-left" @click="emit('pick', org)">
-        <OrganisationMark :organisation="org" />
-        <span class="min-w-0 flex-1"><span class="block text-base font-semibold">{{ org.name }}</span><span class="text-muted-foreground block text-sm">On ScotDance.app</span></span>
+        <OrganisationMark :organisation="org" ghost />
+        <span class="text-muted-foreground min-w-0 flex-1"><span class="block text-base">{{ org.name }}</span><span class="block text-sm">On ScotDance.app</span></span>
         <span :class="ADD">Add</span>
       </button>
       <button v-for="org in suggestions.fresh" :key="org.name" type="button" :disabled="disabled" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-2 text-left" @click="emit('create', { ...org, location }, $event)">
-        <OrganisationMark :organisation="org" />
-        <span class="min-w-0 flex-1"><span class="block text-base font-semibold">{{ org.name }}</span><span class="text-muted-foreground block text-sm">New organisation</span></span>
+        <OrganisationMark :organisation="org" ghost />
+        <span class="text-muted-foreground min-w-0 flex-1"><span class="block text-base">{{ org.name }}</span><span class="block text-sm">New organisation</span></span>
         <span :class="ADD">Add…</span>
       </button>
     </div>

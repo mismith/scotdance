@@ -234,7 +234,6 @@ const orgPrefill = ref<OrganisationDraft | null>(null)
 const orgSearch = computed(() => organisationSuggestions(c.value.name ?? '', orgs.organisations.value, linked.value.map((org) => org.id)).term)
 const grantSubmitter = ref(false)
 const submitter = ref<{ name: string } | null>(null)
-const creatingOrg = ref(false)
 watch(() => m.competitionId.value, () => {
   void pickingOrg.hide()
   orgPrefill.value = null
@@ -267,18 +266,10 @@ async function addOrganisation(org: OrganisationListItem) {
     toast(friendlyError(e), { tone: 'error' })
   }
 }
+// Errors show in the picker, which stays open until this is done.
 async function startOrganisation(draft: OrganisationDraft) {
-  if (creatingOrg.value) return
-  creatingOrg.value = true
-  const { name } = draft
-  try {
-    await createOrganisation({ ...draft, competitionId: m.competitionId.value, ...(me.isAdmin ? { join: false, grantSubmitter: grantSubmitter.value } : {}) })
-    toast(`Started ${name}${grantSubmitter.value ? ' and gave the submitter admin access' : ''}.`)
-  } catch (e) {
-    toast(friendlyError(e), { tone: 'error' })
-  } finally {
-    creatingOrg.value = false
-  }
+  await createOrganisation({ ...draft, competitionId: m.competitionId.value, ...(me.isAdmin ? { join: false, grantSubmitter: grantSubmitter.value } : {}) })
+  toast(`Started ${draft.name}${grantSubmitter.value ? ' and gave the submitter admin access' : ''}.`)
 }
 async function removeOrganisation(org: { id: string; name?: string }) {
   const message = `Took ${org.name ?? 'it'} off`
@@ -574,10 +565,10 @@ async function deleteCompetition() {
         <p v-else class="text-muted-foreground">Nothing yet</p>
         <OrganisationSuggestions
           :name="c.name ?? ''" :location="c.location" :chosen="linked.map((org) => org.id)"
-          :allowed="me.isAdmin ? undefined : me.managedOrganisationIds" :disabled="!canEdit || creatingOrg"
+          :allowed="me.isAdmin ? undefined : me.managedOrganisationIds" :disabled="!canEdit"
           @pick="addOrganisation" @create="suggestNewOrg"
         />
-        <Button :disabled="!canEdit || creatingOrg" @click="orgPrefill = null; grantSubmitter = false; pickingOrg.show($event)">
+        <Button :disabled="!canEdit" @click="orgPrefill = null; grantSubmitter = false; pickingOrg.show($event)">
           <component :is="linked.length ? Plus : Landmark" /> Add an organisation
         </Button>
         <OrganisationPicker
