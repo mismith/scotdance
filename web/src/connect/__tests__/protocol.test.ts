@@ -59,8 +59,8 @@ describe('audienceFor', () => {
     expect(audienceFor('challenge', 'https://splits.scotdance.app')).toBeNull()
     expect(audienceFor('challenge', 'https://scotdance.app')).toBeNull()
     expect(audienceFor('challenge', 'https://challenge.scotdance.app.evil.com')).toBeNull()
-    expect(audienceFor('studio', 'https://studio.scotdance.app')).toBe('studio')
-    expect(audienceFor('studio', 'https://challenge.scotdance.app')).toBeNull()
+    expect(audienceFor('binder', 'https://binder.scotdance.app')).toBe('binder')
+    expect(audienceFor('binder', 'https://challenge.scotdance.app')).toBeNull()
   })
 
   it('knows only its tools', () => {

@@ -9,7 +9,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 //
 // A compact JWT, HS256: { iss, aud, sub (uid), email, name, iat, exp, jti }.
 
-export const AUDIENCES = ['challenge', 'studio'] as const;
+export const AUDIENCES = ['challenge', 'binder'] as const;
 export type Audience = (typeof AUDIENCES)[number];
 export const ISSUER = 'https://scotdance.app';
 export const PASS_SECONDS = 120;
