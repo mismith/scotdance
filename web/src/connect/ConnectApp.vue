@@ -255,6 +255,8 @@ watch(step, (now, before) => {
       <LoginForm v-else-if="step === 'signin'" v-model:step="loginStep" />
 
       <div v-else-if="step === 'continue'" class="space-y-3">
+        <!-- Names aren't unique: show which account this is -->
+        <p v-if="me.displayName && me.email" class="text-muted-foreground text-callout text-center">Signed in as {{ me.email }}</p>
         <Button variant="primary" size="lg" block :busy="passing" @click="continueToTool">
           Continue as {{ me.displayName || me.email }}
         </Button>
