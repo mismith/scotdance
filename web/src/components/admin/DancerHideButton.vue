@@ -68,7 +68,7 @@ async function submit() {
       <span class="relative flex">
         <EyeOff v-if="hidden" class="size-5" aria-hidden="true" />
         <Eye v-else class="size-5" aria-hidden="true" />
-        <AdminMark ring="background" />
+        <AdminMark ring="background" system />
       </span>
     </button>
 

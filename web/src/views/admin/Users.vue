@@ -2,7 +2,8 @@
 import { computed, onScopeDispose, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { get, onValue } from 'firebase/database'
-import { ChevronRight, Plus, ShieldCheck, UserCog } from '@lucide/vue'
+import { ChevronRight, Plus, UserCog } from '@lucide/vue'
+import AdminMark from '@/components/AdminMark.vue'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -150,7 +151,7 @@ function pick(id: string) {
               <span class="block truncate text-base font-medium">{{ u.displayName || u.email || 'No name' }}</span>
               <span v-if="u.displayName && u.email" class="text-muted-foreground block truncate text-sm">{{ u.email }}</span>
             </span>
-            <ShieldCheck v-if="perms[u.id]?.admin" class="text-primary size-5 shrink-0" aria-label="System admin" />
+            <span v-if="perms[u.id]?.admin" class="flex" role="img" aria-label="System admin"><AdminMark inline system size="md" /></span>
             <span v-else-if="Object.keys(perms[u.id]?.competitions ?? {}).length" class="text-muted-foreground text-sm tabular-nums">{{ Object.keys(perms[u.id]?.competitions ?? {}).length }}</span>
             <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
           </RouterLink>

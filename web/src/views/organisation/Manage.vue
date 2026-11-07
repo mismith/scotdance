@@ -6,6 +6,7 @@ import { get } from 'firebase/database'
 import { ExternalLink, Eye, FileUp, Landmark, Lock, LogIn, Plus, Trash2 } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import SidebarBranch from '@/components/nav/SidebarBranch.vue'
+import AdminMark from '@/components/AdminMark.vue'
 import Button from '@/components/ui/Button.vue'
 import DateTile from '@/components/DateTile.vue'
 import Dialog from '@/components/Dialog.vue'
@@ -355,7 +356,7 @@ async function deleteOrganisation() {
         <section v-if="me.isAdmin" class="engraved-line space-y-3 pt-8">
           <h2 class="text-heading">Delete this organisation</h2>
           <p class="text-muted-foreground text-sm">Removes its page and takes it off every competition. The competitions stay.</p>
-          <Button class="text-destructive!" :disabled="!canEdit" @click="deleteOrganisation"><Trash2 /> Delete organisation</Button>
+          <Button class="text-destructive!" :disabled="!canEdit" @click="deleteOrganisation"><Trash2 /> Delete organisation <AdminMark inline system /></Button>
         </section>
       </div>
     </main>

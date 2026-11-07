@@ -4,6 +4,7 @@ import { get } from 'firebase/database'
 import { dataRef } from '@/firebase'
 import { RouterLink, useRouter } from 'vue-router'
 import { ChevronRight, ExternalLink, FileUp, Landmark, Lock, Plus, Trash2 } from '@lucide/vue'
+import AdminMark from '@/components/AdminMark.vue'
 import Button from '@/components/ui/Button.vue'
 import Checkbox from '@/components/ui/Checkbox.vue'
 import MovingList from '@/components/admin/MovingList.vue'
@@ -587,6 +588,7 @@ async function deleteCompetition() {
               <input v-model="grantSubmitter" type="checkbox" class="peer sr-only" />
               <Checkbox :checked="grantSubmitter" class="peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2" />
               <span>Give {{ submitter.name }} admin access to this organisation</span>
+              <AdminMark inline system />
             </label>
           </template>
         </OrganisationPicker>

@@ -5,18 +5,29 @@ import { Shield } from '@lucide/vue'
 // competitions they're an admin of. An outlined shield on a little disc at
 // the bottom right of an icon or date tile (whose wrapper is `relative`), the
 // disc in the colour it sits on (`ring`) so it stands apart from what it
-// overlaps.
+// overlaps. `system` fills the shield: what only system admins see. `inline`
+// drops the disc and sits in the flow, after a button's or row's words.
 withDefaults(
   defineProps<{
     size?: 'sm' | 'md'
     ring?: 'card' | 'background' | 'raised' | 'blue-paper'
+    system?: boolean
+    inline?: boolean
   }>(),
   { size: 'sm', ring: 'card' },
 )
 </script>
 
 <template>
+  <Shield
+    v-if="inline"
+    :class="['text-primary shrink-0', size === 'md' ? 'size-5!' : 'size-3.5!']"
+    :fill="system ? 'currentColor' : 'none'"
+    :stroke-width="2.5"
+    aria-hidden="true"
+  />
   <span
+    v-else
     :class="[
       'pointer-events-none absolute flex items-center justify-center rounded-full',
       size === 'md' ? '-right-2 -bottom-2 size-5' : '-right-1.5 -bottom-1.5 size-4',
@@ -32,6 +43,7 @@ withDefaults(
   >
     <Shield
       :class="['text-primary', size === 'md' ? 'size-3.5' : 'size-3']"
+      :fill="system ? 'currentColor' : 'none'"
       :stroke-width="2.5"
     />
   </span>

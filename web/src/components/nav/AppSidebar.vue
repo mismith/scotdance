@@ -102,7 +102,7 @@ const browse = [
           <div id="sidebar-manage" />
         </li>
         <li v-if="me.isAdmin">
-          <SidebarLink :to="{ name: 'admin' }" :icon="ServerCog" label="System admin" :state="state(name === 'admin', inAdmin)" admin />
+          <SidebarLink :to="{ name: 'admin' }" :icon="ServerCog" label="System admin" :state="state(name === 'admin', inAdmin)" admin="system" />
           <div id="sidebar-admin" />
         </li>
       </ul>

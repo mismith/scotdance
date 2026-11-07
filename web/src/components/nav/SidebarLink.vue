@@ -6,7 +6,8 @@ import AdminMark from '@/components/AdminMark.vue'
 // One row of the sidebar (nav/AppSidebar). `current` is the page you're on
 // (filled); `open` is a row on the way to it (its parent, or its parent's
 // parent), drawn in ink so the path down to where you are reads at a glance.
-// `admin` marks organiser and admin tools with the shield.
+// `admin` marks organiser and admin tools with the shield; `system`, the
+// filled one, marks what only system admins see.
 withDefaults(
   defineProps<{
     to: RouteLocationRaw
@@ -14,9 +15,9 @@ withDefaults(
     icon?: Component | null
     state?: 'current' | 'open' | null
     replace?: boolean
-    admin?: boolean
+    admin?: boolean | 'system'
   }>(),
-  { icon: null, state: null },
+  { icon: null, state: null, admin: false },
 )
 </script>
 
@@ -32,7 +33,7 @@ withDefaults(
   >
     <span v-if="icon" :class="['relative flex shrink-0', state ? 'text-primary' : 'text-muted-foreground']">
       <component :is="icon" class="size-5" aria-hidden="true" />
-      <AdminMark v-if="admin" :ring="state === 'current' ? 'blue-paper' : 'card'" />
+      <AdminMark v-if="admin" :system="admin === 'system'" :ring="state === 'current' ? 'blue-paper' : 'card'" />
     </span>
     <span class="line-clamp-2 min-w-0 flex-1 leading-snug">{{ label }}</span>
     <slot name="end" />

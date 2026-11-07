@@ -4,6 +4,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 import { ChevronRight, Landmark, LogIn, Plus, ShieldCheck } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
+import AdminMark from '@/components/AdminMark.vue'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -138,7 +139,7 @@ async function create() {
       <template v-else>
         <div class="flex flex-wrap gap-2">
           <Button v-if="me.isAdmin" variant="tonal" :disabled="!canEdit" @click="creating.show($event)">
-            <Plus /> New competition
+            <Plus /> New competition <AdminMark inline system />
           </Button>
           <Button v-else variant="tonal" :to="{ name: 'competitions.add' }">
             <Plus /> Add a competition

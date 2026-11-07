@@ -190,7 +190,7 @@ Density follows the visitor. The public app is spacious and glanceable for one-h
 One confident blue for action, a Scottish red kept for favourites, and a small set of state colours that only appear when they carry news.
 
 ### Primary
-- **Saltire Blue** (#0065bd; #62aaf0 at night): the flag's blue. Primary buttons, links, the selected tab, focus rings and the admin shield. One filled primary per view.
+- **Saltire Blue** (#0065bd; #62aaf0 at night): the flag's blue. Primary buttons, links, the selected tab, focus rings and the admin shield (outlined for organisers, filled for what only system admins see). One filled primary per view.
 
 ### Secondary
 - **Tartan Red** (#b0102c): favourites (the filled star), and the first dancer colour. Never a second action colour.

@@ -93,7 +93,7 @@ const row =
           <span class="relative flex text-muted-foreground"><ClipboardList class="size-5" /><AdminMark ring="raised" /></span> Manage
         </button>
         <button v-if="me.isAdmin" type="button" :class="row" :data-current="here({ name: 'admin' })" @click="go({ name: 'admin' })">
-          <span class="relative flex text-muted-foreground"><ServerCog class="size-5" /><AdminMark ring="raised" /></span> System admin
+          <span class="relative flex text-muted-foreground"><ServerCog class="size-5" /><AdminMark ring="raised" system /></span> System admin
         </button>
       </div>
     </nav>
