@@ -61,7 +61,7 @@ export function readItem(value: unknown): ToolItem | null {
  */
 export const TOOLS = {
   challenge: { name: 'Challenge', hostname: 'challenge.scotdance.app' },
-  studio: { name: 'Studio', hostname: 'studio.scotdance.app' },
+  studio: { name: 'ScotDance Binder', hostname: 'studio.scotdance.app' },
 } as const
 export type Audience = keyof typeof TOOLS
 
