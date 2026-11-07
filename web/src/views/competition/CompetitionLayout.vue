@@ -180,7 +180,6 @@ usePageTitle(() => [
       :fallback="{ to: { name: 'competitions' }, label: 'Competitions' }"
       :exit="exit"
       compact-back
-      :competition-id="competitionId"
       :title-menu="titleMenu"
     >
       <template #actions>
