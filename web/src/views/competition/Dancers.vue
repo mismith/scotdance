@@ -58,6 +58,25 @@ function pick(key: SortKey) {
   sortMenu.hide()
 }
 
+// Tap an age group's heading to fold it away, as in v3: parents close the
+// groups they don't need, one by one from the top, until theirs comes up.
+// Everything starts open; what you close is remembered per competition, so
+// it's still sorted when you come back mid-day. A search or "Only my dancers"
+// shows everyone, so a closed group never hides a match.
+const closedByCompetition = useLocalStorage<Record<string, string[]>>('dancers:closed', {})
+const closed = computed(() => new Set(closedByCompetition.value[competitionId.value] ?? []))
+const canCollapse = computed(() => sortBy.value === 'group' && sections.value.length > 1 && !query.value.trim() && !mineOnly.value)
+const isClosed = (key: string) => canCollapse.value && closed.value.has(key)
+function toggleClosed(key: string) {
+  selectionHaptic()
+  const next = new Set(closed.value)
+  if (!next.delete(key)) next.add(key)
+  const all = { ...closedByCompetition.value }
+  if (next.size) all[competitionId.value] = [...next]
+  else delete all[competitionId.value]
+  closedByCompetition.value = all
+}
+
 const num = (d: EnrichedDancer) => (d.number != null && Number.isFinite(d.number) ? d.number : Infinity)
 
 const matched = useCompetitionSearch(dancers, query)
@@ -215,52 +234,83 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         </p>
 
         <section v-for="s in sections" :key="s.key">
-          <h2
-            :data-section="s.label"
-            class="text-muted-foreground text-callout flex items-baseline justify-between gap-2 py-2 font-semibold"
-          >
-            <span class="truncate">{{ s.label }}</span>
-            <span class="shrink-0 font-medium tabular-nums">{{ s.rows.length }}</span>
-          </h2>
-          <!-- Off-screen sections skip rendering; their size estimate is exact
-               (rows × row height) so Back restores to the same dancer. -->
-          <ul
-            class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem] [content-visibility:auto]"
-            :style="{ containIntrinsicSize: `auto calc(${s.rows.length} * 3.75rem)` }"
-          >
-            <li
-              v-for="d in s.rows"
-              :key="d.id"
-              class="relative isolate flex items-center gap-1 pr-2"
-              :style="following.isFollowing(d) ? following.paint(following.followedIn(d)) : undefined"
+          <h2 :data-section="s.label" class="text-muted-foreground text-callout font-semibold">
+            <button
+              v-if="canCollapse"
+              type="button"
+              class="press focus-inset -mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center justify-between gap-2 rounded-xl px-2 text-left"
+              :aria-expanded="!isClosed(s.key)"
+              :aria-controls="`dancers-${s.key}`"
+              @click="toggleClosed(s.key)"
             >
-              <span v-if="following.isFollowing(d)" class="dancer-sash" aria-hidden="true" />
-              <RouterLink
-                :to="{ name: 'competition.dancer', params: { competitionId, dancerId: d.id } }"
-                class="press-row focus-inset flex min-h-15 min-w-0 flex-1 items-center gap-3 py-2 pl-4"
-              >
-                <NumberCard
-                  :number="d.number"
-                  size="xs"
-                  :color="following.isFollowing(d) ? following.colorFor(following.followedIn(d)) : null"
+              <span class="flex min-w-0 items-center gap-1">
+                <span class="truncate">{{ s.label }}</span>
+                <ChevronDown
+                  :class="[
+                    'ease-snappy size-4 shrink-0 transition-transform duration-(--dur-base) motion-reduce:transition-none',
+                    isClosed(s.key) && '-rotate-90',
+                  ]"
                 />
-                <span class="min-w-0">
-                  <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>
-                  <span class="text-muted-foreground block truncate text-sm">
-                    {{
-                      d.team
-                        ? (sortBy === 'group' ? entryLine(d) : [d.group?.fullName, entryLine(d, { location: false })].filter(Boolean).join(' · '))
-                        : sortBy === 'group'
-                          ? [entryLine(d, { location: false }), dancerPlace(d.location, d.group)].filter(Boolean).join(' · ')
-                          : d.group?.fullName
-                    }}
-                  </span>
-                </span>
-              </RouterLink>
-              <!-- A team isn't followed itself: following one of its dancers covers it. -->
-              <FollowButton v-if="!d.team" :dancer="d" />
-            </li>
-          </ul>
+              </span>
+              <span class="shrink-0 font-medium tabular-nums">{{ s.rows.length }}</span>
+            </button>
+            <span v-else class="flex items-baseline justify-between gap-2 py-2">
+              <span class="truncate">{{ s.label }}</span>
+              <span class="shrink-0 font-medium tabular-nums">{{ s.rows.length }}</span>
+            </span>
+          </h2>
+          <!-- A group folds away and opens smoothly, as About's answers do,
+               but quicker: the next heading slides up into your next tap. -->
+          <div
+            :id="`dancers-${s.key}`"
+            :inert="isClosed(s.key)"
+            :class="[
+              'ease-snappy -mx-4 grid transition-[grid-template-rows,opacity] duration-(--dur-base) motion-reduce:transition-none',
+              isClosed(s.key) ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr]',
+            ]"
+          >
+            <div class="min-h-0 overflow-hidden">
+              <!-- Off-screen sections skip rendering; their size estimate is exact
+                   (rows × row height) so Back restores to the same dancer. -->
+              <ul
+                class="rows-engraved [--inset:4.5rem] [--inset-end:1rem] [content-visibility:auto]"
+                :style="{ containIntrinsicSize: `auto calc(${s.rows.length} * 3.75rem)` }"
+              >
+                <li
+                  v-for="d in s.rows"
+                  :key="d.id"
+                  class="relative isolate flex items-center gap-1 pr-2"
+                  :style="following.isFollowing(d) ? following.paint(following.followedIn(d)) : undefined"
+                >
+                  <span v-if="following.isFollowing(d)" class="dancer-sash" aria-hidden="true" />
+                  <RouterLink
+                    :to="{ name: 'competition.dancer', params: { competitionId, dancerId: d.id } }"
+                    class="press-row focus-inset flex min-h-15 min-w-0 flex-1 items-center gap-3 py-2 pl-4"
+                  >
+                    <NumberCard
+                      :number="d.number"
+                      size="xs"
+                      :color="following.isFollowing(d) ? following.colorFor(following.followedIn(d)) : null"
+                    />
+                    <span class="min-w-0">
+                      <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>
+                      <span class="text-muted-foreground block truncate text-sm">
+                        {{
+                          d.team
+                            ? (sortBy === 'group' ? entryLine(d) : [d.group?.fullName, entryLine(d, { location: false })].filter(Boolean).join(' · '))
+                            : sortBy === 'group'
+                              ? [entryLine(d, { location: false }), dancerPlace(d.location, d.group)].filter(Boolean).join(' · ')
+                              : d.group?.fullName
+                        }}
+                      </span>
+                    </span>
+                  </RouterLink>
+                  <!-- A team isn't followed itself: following one of its dancers covers it. -->
+                  <FollowButton v-if="!d.team" :dancer="d" />
+                </li>
+              </ul>
+            </div>
+          </div>
         </section>
       </div>
     </Transition>
