@@ -289,7 +289,7 @@ function pickAllRegions(): void {
           >
             <button
               type="button"
-              class="field press flex h-12 w-full items-center gap-2 rounded-xl pr-2 pl-3 text-left"
+              class="field press ml-8 flex h-12 w-[calc(100%-2rem)] items-center gap-2 rounded-xl pr-2 pl-3 text-left"
               :aria-label="`Which ${regionsWord(country)}: ${narrowLabel}`"
               aria-haspopup="dialog"
               :aria-expanded="regionMenu.open"
