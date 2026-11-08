@@ -48,16 +48,18 @@ export interface BackfillSummary {
   }>;
 }
 
-async function geocode(address: string, apiKey: string): Promise<GeocodeHit | null> {
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+// `address=…` finds a place from its words; `latlng=…` names the place at a
+// map position.
+async function geocode(query: string, apiKey: string): Promise<GeocodeHit | null> {
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?${query}&key=${apiKey}`;
   const res = await fetch(url);
   if (!res.ok) {
-    console.error(`HTTP ${res.status} for "${address}"`);
+    console.error(`HTTP ${res.status} for "${query}"`);
     return null;
   }
   const body = (await res.json()) as GeocodeResponse;
   if (body.status !== 'OK' || body.results.length === 0) {
-    console.warn(`no result for "${address}" (status=${body.status})`);
+    console.warn(`no result for "${query}" (status=${body.status})`);
     return null;
   }
   const hit = body.results[0];
@@ -79,8 +81,16 @@ function buildQuery(c: Competition): string {
   return [c.venue, c.address, c.location].filter(Boolean).join(', ');
 }
 
-function alreadyGeocoded(c: Competition): boolean {
+function hasCoords(c: Competition): boolean {
   return Number.isFinite(c.lat) && Number.isFinite(c.lng);
+}
+
+// The v3 app's Submit kept a picked venue's position and country but not its
+// province (or state) and town, which Competitions filters by: those are
+// looked up from the position, and only what's missing is written.
+const PLACE_FIELDS = ['country', 'region', 'locality'] as const;
+function complete(c: Competition): boolean {
+  return hasCoords(c) && PLACE_FIELDS.every((f) => c[f]);
 }
 
 function sleep(ms: number): Promise<void> {
@@ -113,38 +123,35 @@ export async function runBackfillCoords(
 
   for (const id of ids) {
     const c = all[id];
-    if (alreadyGeocoded(c)) {
+    if (complete(c)) {
       summary.skipped += 1;
     } else {
-      const query = buildQuery(c);
+      const words = buildQuery(c);
+      const query = hasCoords(c) ? `latlng=${c.lat},${c.lng}` : words && `address=${encodeURIComponent(words)}`;
       if (!query) {
         summary.noQuery += 1;
       } else {
         const hit = await geocode(query, apiKey);
-        if (!hit) {
+        const update: Partial<Competition> = {
+          ...(!hasCoords(c) && hit && { lat: hit.lat, lng: hit.lng }),
+          ...Object.fromEntries(PLACE_FIELDS.filter((f) => !c[f] && hit?.[f]).map((f) => [f, hit![f]])),
+        };
+        if (!hit || !Object.keys(update).length) {
           summary.failed += 1;
         } else {
           if (summary.samples.length < MAX_SAMPLES) {
             summary.samples.push({
               id,
               name: c.name,
-              query,
-              lat: hit.lat,
-              lng: hit.lng,
-              country: hit.country,
-              region: hit.region,
-              locality: hit.locality,
+              query: words || query,
+              lat: update.lat ?? (c.lat as number),
+              lng: update.lng ?? (c.lng as number),
+              country: update.country ?? c.country ?? null,
+              region: update.region ?? c.region ?? null,
+              locality: update.locality ?? c.locality ?? null,
             });
           }
-          if (!dryRun) {
-            await competitionsRef.child(id).update({
-              lat: hit.lat,
-              lng: hit.lng,
-              country: hit.country,
-              region: hit.region,
-              locality: hit.locality,
-            });
-          }
+          if (!dryRun) await competitionsRef.child(id).update(update);
           summary.updated += 1;
         }
         await sleep(THROTTLE_MS);

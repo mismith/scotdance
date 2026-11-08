@@ -243,12 +243,12 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
 
     <section class="space-y-3">
       <div>
-        <h2 class="text-heading">Map positions</h2>
-        <p class="text-muted-foreground text-sm">Looks up the map position of competitions that don’t have one yet. Try a dry run first to see what it would change.</p>
+        <h2 class="text-heading">Places</h2>
+        <p class="text-muted-foreground text-sm">Fills in a competition’s map position, country, province or state, and town where any is missing, from its venue. What’s already there stays. Try a dry run first to see what it would change.</p>
       </div>
       <div class="flex flex-wrap gap-2">
         <Button :disabled="job('coords').running" @click="run('coords', 'backfillCoords', { dryRun: true })">Dry run</Button>
-        <Button variant="primary" :busy="job('coords').running" @click="run('coords', 'backfillCoords', { dryRun: false })">Update positions</Button>
+        <Button variant="primary" :busy="job('coords').running" @click="run('coords', 'backfillCoords', { dryRun: false })">Fill in places</Button>
       </div>
       <p v-if="job('coords').result" class="text-done-foreground text-sm">{{ job('coords').result }}</p>
       <ul v-if="job('coords').samples?.length" class="text-muted-foreground list-disc space-y-0.5 pl-5 text-sm">
