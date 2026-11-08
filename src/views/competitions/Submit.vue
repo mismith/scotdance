@@ -226,10 +226,13 @@ export default {
       if (!data.location) {
         data.location = fields.location;
       }
-      // coords + country are intrinsic to the chosen place: always overwrite
+      // coords, country, province/state and town are intrinsic to the chosen
+      // place: always overwrite (Competitions filters by them)
       data.lat = fields.lat;
       data.lng = fields.lng;
       data.country = fields.country;
+      data.region = fields.region;
+      data.locality = fields.locality;
 
       this.preview = {
         ...this.preview,
