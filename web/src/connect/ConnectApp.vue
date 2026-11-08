@@ -232,9 +232,7 @@ watch(step, (now, before) => {
   >
     <template #header>
       <div class="flex items-center gap-3">
-        <span class="bg-primary-fill flex size-10 shrink-0 items-center justify-center rounded-full text-white" aria-hidden="true">
-          <LogoMark class="size-7" />
-        </span>
+        <LogoMark frame="circle" class="bg-primary-fill size-10 shrink-0 rounded-full text-white" />
         <div class="min-w-0">
           <h2 class="text-title">{{ title }}</h2>
           <p v-if="toolName && step !== 'unreadable'" class="text-muted-foreground text-sm">

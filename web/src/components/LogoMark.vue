@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { CX, HEAD_R, LOGO, WIDTH, pose } from '@/lib/scott'
+import { CX, FRAME, HEAD_R, LOGO, WIDTH, pose } from '@/lib/scott'
 
 // The ScotDance mark: a Highland dancer mid split leap (Scott, lib/scott),
 // arms up and legs out, square-cut hands and feet, a dot for his head. Drawn
 // in currentColor, so it can be a watermark, an icon or a badge. He sits in
-// the middle of the mark's 512 box.
+// the middle of the mark's 512 box; `circle` frames him as the favicon does
+// (lib/scott FRAME), to fill a round badge edge to edge.
 
+const props = defineProps<{ frame?: 'circle' }>()
 const p = pose(0)
 const limbs = [...p.hands, ...p.legs.map((l) => l.foot)].map((q) => ({ x1: p.hip.x, y1: p.hip.y, x2: q.x, y2: q.y }))
-const viewBox = `${CX - 256} ${(LOGO.top + LOGO.bottom) / 2 - 256} 512 512`
+const side = (2 * LOGO.reach) / FRAME.circle.reach
+const viewBox =
+  props.frame === 'circle'
+    ? `${CX - side / 2} ${p.hip.y - side / 2} ${side} ${side}`
+    : `${CX - 256} ${(LOGO.top + LOGO.bottom) / 2 - 256} 512 512`
 </script>
 
 <template>
