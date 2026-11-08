@@ -11,7 +11,9 @@ import Button from '@/components/ui/Button.vue'
 // Whoever shows it titles it by `step`.
 export type LoginStep = 'signin' | 'register' | 'forgot'
 
-withDefaults(defineProps<{ benefits?: string[] }>(), { benefits: () => [] })
+// `holding` keeps the button busy after signing in, while whoever shows it
+// finishes the job (the connect sheet handing a tool its pass).
+withDefaults(defineProps<{ benefits?: string[]; holding?: boolean }>(), { benefits: () => [], holding: false })
 const step = defineModel<LoginStep>('step', { default: 'signin' })
 
 const auth = useAuthStore()
@@ -139,7 +141,7 @@ async function submit() {
       {{ infoMessage }}
     </p>
 
-    <Button type="submit" variant="primary" size="lg" block :busy="busy">
+    <Button type="submit" variant="primary" size="lg" block :busy="busy || holding">
       <template v-if="step === 'signin'">Sign in</template>
       <template v-else-if="step === 'register'">Create account</template>
       <template v-else>Send reset link</template>

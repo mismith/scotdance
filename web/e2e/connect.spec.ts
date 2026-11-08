@@ -152,14 +152,18 @@ test('Sign in with ScotDance.app hands Challenge a pass, and only your name and 
   await openTool(page, baseURL!, SIGN_IN)
 
   const s = sheet(page)
+  // Never a Continue button to tap after signing in: watch for one while it carries on
+  let sawContinue = false
+  void s.getByRole('button', { name: /^Continue as/ }).waitFor({ timeout: 15_000 }).then(() => (sawContinue = true), () => {})
   await expect(s.getByRole('heading', { name: 'Sign in with ScotDance.app' })).toBeVisible()
-  await expect(s.getByText('Challenge gets your name and email address, nothing else.')).toBeVisible()
+  await expect(s.getByText('Challenge gets your name and email address.')).toBeVisible()
   await s.getByRole('textbox', { name: 'Email address' }).fill(email)
   await s.getByLabel('Password', { exact: true }).fill('password')
   await s.getByLabel('Password', { exact: true }).press('Enter')
 
-  // Signing in here is the yes: it carries on by itself
+  // Signing in here is the yes: it carries on by itself, from the same screen
   await expect(page.locator('scotdance-connect')).toHaveCount(0)
+  expect(sawContinue).toBe(false)
   expect(asked).toEqual([{ data: { audience: 'challenge' } }])
   await expect.poll(() => result(page)).toEqual({ signedIn: true, pass: 'test-pass', uid: me, email, name: null })
 })
@@ -172,7 +176,7 @@ test('already signed in, a tool learns who you are only when you tap Continue', 
   await openTool(page, baseURL!, SIGN_IN)
 
   const s = sheet(page)
-  await expect(s.getByRole('heading', { name: 'Continue to Challenge?' })).toBeVisible()
+  await expect(s.getByRole('heading', { name: 'Sign in with ScotDance.app' })).toBeVisible()
   expect(asked).toEqual([])
   await s.getByRole('button', { name: `Continue as ${email}` }).click()
   await expect(page.locator('scotdance-connect')).toHaveCount(0)

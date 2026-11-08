@@ -140,7 +140,7 @@ const step = computed<Step>(() => {
   if (unreadable.value) return 'unreadable'
   if (sent.value) return 'sent'
   if (!auth.authReady) return 'loading'
-  if (!auth.isSignedIn) return 'signin'
+  if (!auth.isSignedIn || handingOff.value) return 'signin'
   if (audience.value) return 'continue'
   if (!competitions.value) return 'loading'
   return competitions.value.length ? 'pick' : 'none'
@@ -190,9 +190,11 @@ async function send(c: Option) {
 const addUrl = `${location.origin}/competitions/add`
 
 // For a tool: who you are, as a pass it can check (never this site's own
-// sign-in). Right after signing in here it carries on by itself; someone
+// sign-in). Right after signing in here it carries on by itself, the Sign in
+// button still busy, so nothing else shows before the sheet closes; someone
 // already signed in taps Continue, so a tool never learns who you are unasked.
 const passing = ref(false)
+const handingOff = ref(false)
 const passError = ref<string | null>(null)
 async function continueToTool() {
   if (!audience.value || !auth.user || passing.value) return
@@ -211,13 +213,21 @@ async function continueToTool() {
     open.value = false
   } catch {
     passError.value = 'That didn’t work. Check your connection and try again.'
+    handingOff.value = false
   } finally {
     passing.value = false
   }
 }
-watch(step, (now, before) => {
-  if (before === 'signin' && now === 'continue') void continueToTool()
-})
+// Signed in here just now (signed out before, not still loading): carry on.
+watch(
+  () => auth.user,
+  (now, before) => {
+    if (!now || before !== null || !audience.value || unreadable.value) return
+    handingOff.value = true
+    void continueToTool()
+  },
+  { flush: 'sync' },
+)
 </script>
 
 <template>
@@ -250,7 +260,7 @@ watch(step, (now, before) => {
         <LoaderCircle class="text-muted-foreground size-6 animate-spin" />
       </div>
 
-      <LoginForm v-else-if="step === 'signin'" v-model:step="loginStep" />
+      <LoginForm v-else-if="step === 'signin'" v-model:step="loginStep" :holding="handingOff" />
 
       <div v-else-if="step === 'continue'" class="space-y-3">
         <!-- Names aren't unique: show which account this is -->
