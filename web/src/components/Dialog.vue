@@ -135,30 +135,36 @@ function sync(open: boolean) {
 
 // A menu's tap outside: it closes as the finger lands, as an iOS menu does,
 // and the tap goes no further (the page under it isn't tapped too).
-let swallowClick = false
+// The click comes after the menu has started closing (and stopped listening
+// for presses), so it's caught by a listener of its own, which goes at that
+// click or at the next press, whichever comes first (a press that scrolled
+// never clicks, and mustn't eat the next tap).
+function swallowNextClick() {
+  const swallow = (e: MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    done()
+  }
+  const done = () => {
+    document.removeEventListener('click', swallow, true)
+    document.removeEventListener('pointerdown', done, true)
+  }
+  document.addEventListener('click', swallow, true)
+  // Added during this press's own dispatch, so it waits for the next one.
+  document.addEventListener('pointerdown', done, true)
+}
 function onOutsidePointerDown(e: PointerEvent) {
-  swallowClick = false
   const el = dialogRef.value
   if (!el || !shown.value || el.contains(e.target as Node)) return
-  swallowClick = true
+  swallowNextClick()
   emit('close')
-}
-function onOutsideClick(e: MouseEvent) {
-  if (!swallowClick) return
-  swallowClick = false
-  e.preventDefault()
-  e.stopPropagation()
 }
 watch(
   () => popover.value && shown.value && !leaving.value,
   (listening, _, onCleanup) => {
     if (!listening) return
     document.addEventListener('pointerdown', onOutsidePointerDown, true)
-    document.addEventListener('click', onOutsideClick, true)
-    onCleanup(() => {
-      document.removeEventListener('pointerdown', onOutsidePointerDown, true)
-      document.removeEventListener('click', onOutsideClick, true)
-    })
+    onCleanup(() => document.removeEventListener('pointerdown', onOutsidePointerDown, true))
   },
 )
 // Its page put away (kept alive, PageStack) while it's open: close it, so it
