@@ -25,7 +25,7 @@ import { getOnChange } from './changed';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
 import { runtimeConfig, geocodingApiKey, toolPassSecret } from './utility/config';
-import { getOnToolPass } from './toolPass';
+import { UNLINK_URLS, getOnToolPass, getOnUnlinkTool } from './toolPass';
 import { database, https } from './utility/triggers';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onTaskDispatched } from 'firebase-functions/v2/tasks';
@@ -112,6 +112,13 @@ export const linkCompetitions = https().onCall(Links.getOnLink(appConfig.db));
 
 // "Sign in with ScotDance.app" for its tools on other projects (Challenge; toolPass.ts, ADR 0015).
 export const toolPass = https({ secrets: [toolPassSecret] }).onCall(getOnToolPass(() => toolPassSecret.value(), appConfig.db));
+// Unlinking one signs them out of it (ADR 0017). In the emulator only a tool
+// named in TOOL_UNLINK_URL_<TOOL> (its own emulator) is called.
+export const unlinkTool = https({ secrets: [toolPassSecret] }).onCall(getOnUnlinkTool(
+  () => toolPassSecret.value(),
+  appConfig.db,
+  (tool) => (isEmulator() ? (process.env[`TOOL_UNLINK_URL_${tool.toUpperCase()}`] || null) : UNLINK_URLS[tool]),
+));
 export const competitionStaffSync = database().ref(`/${env}/competitions:data/{competitionId}/staff/{staffId}`)
   .onWrite(Links.getOnStaffWritten(appConfig.db));
 export const competitionDetailsSync = database().ref(`/${env}/competitions/{competitionId}`)

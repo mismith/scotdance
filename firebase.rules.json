@@ -272,6 +272,15 @@
           }
         }
       },
+      "users:tools": {
+        "$userId": {
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
+          // The tools they sign in to with ScotDance.app, written by toolPass
+          // (ADR 0017). Unlinking goes through unlinkTool; deleting their
+          // account clears it.
+          ".write": "auth !== null && auth.uid === $userId && !newData.exists()" // is REMOVING OWN
+        }
+      },
       "users:permissions": {
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF

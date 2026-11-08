@@ -174,6 +174,9 @@ export const useAuthStore = defineStore('auth', () => {
       }
     }
     const uid = u.uid
+    // Signed out of their other ScotDance tools too (ADR 0017); their work
+    // there stays.
+    await (await import('@/lib/tools')).unlinkEveryTool()
     // Their data goes first, in one write, while they're still signed in:
     // once the account is deleted the rules refuse these writes.
     await update(dbRef(database, NAMESPACE), {
@@ -183,6 +186,7 @@ export const useAuthStore = defineStore('auth', () => {
       [`users:dancerColors/${uid}`]: null,
       [`users:tokens/${uid}`]: null,
       [`users:inbox/${uid}`]: null,
+      [`users:tools/${uid}`]: null,
       [`users:permissions/${uid}`]: null,
     })
     await deleteUser(u)

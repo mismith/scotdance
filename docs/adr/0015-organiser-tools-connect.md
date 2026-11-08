@@ -102,4 +102,5 @@ Splits' Send button is the reference (`ExportSettingsDialog.vue` and
 - Safari's own password AutoFill inside the iframe is untested on devices.
 - `TOOL_PASS_SECRET` lives in both projects (`firebase functions:secrets:set`);
   changing it means setting both. Adding a tool: an `AUDIENCES` entry
-  (functions) and a `TOOLS` entry (protocol.ts) with its site.
+  (functions) and a `TOOLS` entry (protocol.ts) with its site, plus what
+  ADR 0017 needs to unlink it.

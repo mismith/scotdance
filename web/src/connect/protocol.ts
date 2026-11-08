@@ -60,8 +60,8 @@ export function readItem(value: unknown): ToolItem | null {
  * site while developing).
  */
 export const TOOLS = {
-  challenge: { name: 'Challenge', hostname: 'challenge.scotdance.app' },
-  binder: { name: 'ScotDance Binder', hostname: 'binder.scotdance.app' },
+  challenge: { name: 'Challenge', short: 'Challenge', hostname: 'challenge.scotdance.app', icon: '/img/tools/challenge.svg' },
+  binder: { name: 'ScotDance Binder', short: 'Binder', hostname: 'binder.scotdance.app', icon: '/img/tools/binder.svg' },
 } as const
 export type Audience = keyof typeof TOOLS
 

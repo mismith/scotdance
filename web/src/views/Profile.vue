@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onScopeDispose, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ChevronRight, Eye, EyeOff, LogOut } from '@lucide/vue'
+import { onValue } from 'firebase/database'
+import { ChevronRight, ExternalLink, Eye, EyeOff, LogOut } from '@lucide/vue'
+import { dataRef } from '@/firebase'
+import { confirm, toast } from '@/lib/admin/feedback'
+import { friendlyError } from '@/lib/admin/write'
+import { TOOLS, linkedTools, toolDate, unlinkTool, type Audience } from '@/lib/tools'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import MeAvatar from '@/components/MeAvatar.vue'
@@ -17,6 +22,40 @@ const router = useRouter()
 const roles = useRoles()
 const rolesLabel = computed(() => ROLES.filter((r) => roles.has(r.id)).map((r) => r.label).join(', ') || 'Not answered yet')
 
+
+// The ScotDance tools they sign in to with this account (ADR 0017)
+const toolLinks = ref<unknown>(null)
+let offTools: (() => void) | null = null
+watch(
+  () => auth.uid,
+  (uid) => {
+    offTools?.()
+    offTools = uid ? onValue(dataRef(`users:tools/${uid}`), (snap) => (toolLinks.value = snap.val())) : null
+  },
+  { immediate: true },
+)
+onScopeDispose(() => offTools?.())
+const tools = computed(() => linkedTools(toolLinks.value))
+const toolNames = computed(() => tools.value.map(({ tool }) => TOOLS[tool].short).join(' and '))
+const unlinking = ref<Audience | null>(null)
+async function unlink(tool: Audience) {
+  const { name, short } = TOOLS[tool]
+  const ok = await confirm({
+    title: `Unlink ${name}?`,
+    message: `You’ll be signed out of ${short} on every device within the hour. Your work there stays as it is. To use it again, sign in with ScotDance.app.`,
+    confirmLabel: `Unlink ${short}`,
+    destructive: true,
+  })
+  if (!ok) return
+  unlinking.value = tool
+  try {
+    await unlinkTool(tool)
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  } finally {
+    unlinking.value = null
+  }
+}
 
 // Display name (debounced save)
 const displayName = ref('')
@@ -201,6 +240,25 @@ const submitDisabled = computed(() => {
         </li>
       </ul>
 
+      <section v-if="tools.length" class="space-y-1">
+        <h2 class="text-heading">Tools</h2>
+        <p class="text-muted-foreground text-sm">Other ScotDance tools you sign in to with this account.</p>
+        <ul class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
+          <li v-for="{ tool, link } in tools" :key="tool" class="flex min-h-16 items-center gap-2 py-1 pr-2 pl-4">
+            <a :href="`https://${TOOLS[tool].hostname}`" target="_blank" rel="noopener" class="press-row focus-inset flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-xl">
+              <img :src="TOOLS[tool].icon" alt="" class="size-10 shrink-0 rounded-[0.625rem]" />
+              <span class="min-w-0 flex-1">
+                <span class="text-primary flex items-center gap-1 text-base font-semibold">
+                  <span class="truncate">{{ TOOLS[tool].name }}</span><ExternalLink class="size-3.5 shrink-0" aria-label="Opens in a new tab" />
+                </span>
+                <span v-if="link.signedInAt" class="text-muted-foreground block truncate text-sm">Signed in {{ toolDate(link.signedInAt) }}</span>
+              </span>
+            </a>
+            <Button variant="plain" class="text-destructive!" :busy="unlinking === tool" @click="unlink(tool)">Unlink</Button>
+          </li>
+        </ul>
+      </section>
+
       <div class="space-y-2">
         <Button size="lg" block @click="handleSignOut"><LogOut /> Sign out</Button>
         <button type="button" class="text-destructive press-row h-12 w-full rounded-full text-callout font-semibold" @click="openModal('delete')">
@@ -220,7 +278,7 @@ const submitDisabled = computed(() => {
       <form class="space-y-3 p-4 pb-[calc(1.5rem+var(--safe-bottom))]" @submit.prevent="submitModal">
         <p v-if="modal === 'delete'" class="text-base">
           This removes your account, your favourites and your settings. It can’t be undone. Competition results
-          aren’t affected.
+          aren’t affected.<template v-if="tools.length"> It also signs you out of {{ toolNames }}.</template>
         </p>
 
         <label v-if="modal === 'email'" class="block space-y-1.5">

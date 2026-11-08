@@ -14,6 +14,7 @@ import SearchField from '@/components/admin/SearchField.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import TextField from '@/components/admin/TextField.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
+import Segmented from '@/components/ui/Segmented.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import { useSplit } from '@/composables/admin/useWide'
 import { useCompetitions } from '@/composables/useCompetitions'
@@ -24,6 +25,7 @@ import { friendlyError, write } from '@/lib/admin/write'
 import { formatLongDate } from '@/lib/format'
 import { useMorph } from '@/lib/morph'
 import { useAuthStore } from '@/stores/auth'
+import { TOOLS, linkedTools, toolDate, unlinkTool, type Audience } from '@/lib/tools'
 
 // Accounts, and who can manage what. Granting access here writes the same
 // two records an accepted invite does.
@@ -56,6 +58,18 @@ get(dataRef('users'))
   .catch(() => (loadError.value = true))
   .finally(() => (loaded.value = true))
 
+// The ScotDance tools each signs in to with their account (ADR 0017)
+const toolLinks = ref<Record<string, unknown>>({})
+get(dataRef('users:tools'))
+  .then((snap) => (toolLinks.value = (snap.val() ?? {}) as Record<string, unknown>))
+  .catch(() => {})
+const toolsOf = (id: string) => linkedTools(toolLinks.value[id])
+const toolFilter = ref<'all' | Audience>('all')
+const toolOptions = [
+  { value: 'all' as const, label: 'All' },
+  ...(Object.keys(TOOLS) as Audience[]).map((value) => ({ value, label: TOOLS[value].short })),
+]
+
 const perms = ref<Record<string, Perms>>({})
 const off = onValue(dataRef('users:permissions'), (snap) => (perms.value = (snap.val() ?? {}) as Record<string, Perms>))
 onScopeDispose(off)
@@ -65,11 +79,16 @@ const competitionName = (id: string) => competitions.value.find((c) => c.id === 
 const hiddenAs = useHiddenAs()
 
 const query = ref('')
-const shown = computed(() => {
+const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
-  const list = q ? users.value.filter((u) => `${u.email ?? ''} ${u.displayName ?? ''}`.toLowerCase().includes(q)) : users.value
-  return list.slice(0, 200)
+  const tool = toolFilter.value
+  return users.value.filter(
+    (u) =>
+      (tool === 'all' || toolsOf(u.id).some((t) => t.tool === tool)) &&
+      (!q || `${u.email ?? ''} ${u.displayName ?? ''}`.toLowerCase().includes(q)),
+  )
 })
+const shown = computed(() => filtered.value.slice(0, 200))
 
 const uid = computed(() => (route.params.userId ? String(route.params.userId) : null))
 const current = computed(() => users.value.find((u) => u.id === uid.value) ?? null)
@@ -80,6 +99,34 @@ const managed = computed(() => Object.entries(currentPerms.value.competitions ??
 const saveName = (id: string) => async (v: string | null) => {
   await write({ [`users/${id}/displayName`]: v })
   users.value = users.value.map((u) => (u.id === id ? { ...u, displayName: v || undefined } : u))
+}
+
+const currentTools = computed(() => (uid.value ? toolsOf(uid.value) : []))
+const unlinking = ref<Audience | null>(null)
+async function unlink(tool: Audience) {
+  const user = current.value
+  if (!user) return
+  const { name, short } = TOOLS[tool]
+  const who = user.displayName || user.email || 'They'
+  const ok = await confirm({
+    title: `Unlink ${name}?`,
+    message: `${who} will be signed out of ${short} on every device within the hour. Their work there stays as it is.`,
+    confirmLabel: `Unlink ${short}`,
+    destructive: true,
+  })
+  if (!ok) return
+  unlinking.value = tool
+  try {
+    await unlinkTool(tool, user.id)
+    const rest = { ...(toolLinks.value[user.id] as Record<string, unknown>) }
+    delete rest[tool]
+    toolLinks.value = { ...toolLinks.value, [user.id]: rest }
+    toast(`Unlinked ${short}`)
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  } finally {
+    unlinking.value = null
+  }
 }
 
 const ROLE_NAMES: Record<string, string> = { parent: 'Parent', dancer: 'Dancer', teacher: 'Teacher', organizer: 'Organiser', judge: 'Judge', piper: 'Piper' }
@@ -133,7 +180,8 @@ function pick(id: string) {
   <MasterDetail :show-detail="!!uid">
     <template #list>
       <div class="paper sticky top-(--chrome-top) z-10 p-4 md:top-0">
-        <SectionHeader title="Users" :count="users.length || null">
+        <SectionHeader title="Users" :count="(toolFilter === 'all' && !query ? users.length : filtered.length) || null">
+          <Segmented v-model="toolFilter" label="Show" :options="toolOptions" />
           <SearchField v-model="query" label="Search users" placeholder="Search by email or name" />
         </SectionHeader>
       </div>
@@ -151,12 +199,15 @@ function pick(id: string) {
               <span class="block truncate text-base font-medium">{{ u.displayName || u.email || 'No name' }}</span>
               <span v-if="u.displayName && u.email" class="text-muted-foreground block truncate text-sm">{{ u.email }}</span>
             </span>
+            <span v-if="toolsOf(u.id).length" class="flex -space-x-1">
+              <img v-for="t in toolsOf(u.id)" :key="t.tool" :src="TOOLS[t.tool].icon" :alt="TOOLS[t.tool].name" class="ring-background size-5 rounded-[0.3rem] ring-2" />
+            </span>
             <span v-if="perms[u.id]?.admin" class="flex" role="img" aria-label="System admin"><AdminMark inline system size="md" /></span>
             <span v-else-if="Object.keys(perms[u.id]?.competitions ?? {}).length" class="text-muted-foreground text-sm tabular-nums">{{ Object.keys(perms[u.id]?.competitions ?? {}).length }}</span>
             <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
           </RouterLink>
         </li>
-        <li v-if="users.length > shown.length && !query" class="text-muted-foreground p-4 text-sm">Showing the first 200. Search to find someone.</li>
+        <li v-if="filtered.length > shown.length" class="text-muted-foreground p-4 text-sm">Showing the first 200. Search to find someone.</li>
       </ul>
     </template>
     <template #empty>
@@ -194,6 +245,20 @@ function pick(id: string) {
               <Plus /> Add a competition
             </Button>
           </div>
+        </section>
+
+        <section v-if="currentTools.length" class="space-y-2">
+          <h3 class="text-heading">Tools</h3>
+          <MovingList class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
+            <li v-for="{ tool, link } in currentTools" :key="tool" class="flex min-h-16 items-center gap-3 py-1 pr-2 pl-4">
+              <img :src="TOOLS[tool].icon" alt="" class="size-10 shrink-0 rounded-[0.625rem]" />
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-base font-medium">{{ TOOLS[tool].name }}</span>
+                <span class="text-muted-foreground block truncate text-sm">Since {{ toolDate(link.linkedAt) }} · last {{ toolDate(link.signedInAt) }}</span>
+              </span>
+              <Button variant="plain" class="text-destructive!" :busy="unlinking === tool" @click="unlink(tool)">Unlink</Button>
+            </li>
+          </MovingList>
         </section>
       </div>
       <EmptyState v-else-if="loaded" :icon="UserCog" title="This account isn’t here" />
