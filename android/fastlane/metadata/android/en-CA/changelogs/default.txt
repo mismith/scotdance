@@ -1,5 +1,5 @@
 What's new
-- Trophy events like Dancer of the Day, and team dances like choreographies
+- Fewer, tidier results notifications: one per dance, and one that updates when results come in quickly
 - Fixes and improvements
 
 Share your ideas from the More menu.
