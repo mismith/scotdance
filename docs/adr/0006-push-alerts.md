@@ -24,7 +24,7 @@ Each can be switched off; all start on.
 
 | Kind | When | Example |
 |---|---|---|
-| Results | A placing is posted for a favourite dancer (or "results are in", when they didn't place) | **Chloe placed 2nd** · Highland Fling · Beginner Under 7 · Foothills Fall Classic 2026 (or **Sword Dance results are in**) |
+| Results | A dance's placings are posted with a favourite dancer in it: one alert per person per dance, however many they follow ("results are in" only when none of theirs placed) | **Chloe placed 2nd** · Highland Fling · Beginner Under 7 · Foothills Fall Classic 2026 (or **Chloe 1st, Isla 3rd**, or **Sword Dance results are in**) |
 | Morning of | 06:00–06:59 where the competition is, on its day | **Foothills Fall Classic 2026 is today** · Chloe is dancing. Tap for platforms and dancing order. |
 | Dancer list is up | A competition with its alerts on (or one a favourite dancer is in) is published | **Foothills Fall Classic 2026 is live** · The dancer list and schedule are up. |
 
@@ -69,9 +69,17 @@ age group and competition go on the line under (Murray, 2026-10-03).
     passive (no sound; waits in Notification Centre). Relevance scores rank
     them in the summary. Android: a channel per kind at the matching
     importance, so people can tune each in the phone's settings.
-  - **A correction replaces what it corrects**: `apns-collapse-id` and the
-    Android tag are a hash of what it's about (that dancer, that dance), so
-    "placed 4th" then "placed 3rd" leaves one notification.
+  - **One per person per dance, and a newer one replaces it**:
+    `apns-collapse-id` and the Android tag are a hash of the person and the
+    dance, so "placed 4th" then "placed 3rd", or "results are in" then a
+    placing, leaves one notification. Following four dancers in an age group
+    used to mean four alerts a dance, with "results are in" beside the
+    placings (Murray, 2026-11-07, after a Regina competition's results
+    arrived as a wall of alerts).
+  - **An age group with one dance**: its Overall shares the dance's alert,
+    so the same placings aren't sent twice.
+  - **"Results are in" is a normal alert**, not Time Sensitive: only a
+    placing gets through Focus.
   - `thread-id` = the competition (iOS groups its alerts); icon
     `ic_stat_scott`, brand blue; an analytics label per kind for delivery
     numbers in the Firebase console.

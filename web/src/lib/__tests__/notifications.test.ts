@@ -214,6 +214,12 @@ describe('messages', () => {
     expect(collapseId(key)).toBe(collapseId(key))
   })
 
+  it('sends results none of theirs placed in as a normal alert, not Time Sensitive', () => {
+    const m = fcmMessage({ title: 'T', body: 'B', link: '/', competitionId: 'c1', kind: 'results', key: 'k', quiet: true }, ['fcm-1'])
+    expect(m.apns?.payload?.aps).toMatchObject({ 'interruption-level': 'active', 'relevance-score': 0.7 })
+    expect(m.android?.notification?.channelId).toBe('results')
+  })
+
   it('lets a dancer list going up wait quietly, on its own Android channel', () => {
     const m = fcmMessage({ title: 'T', body: 'B', link: '/competitions/c1/info', competitionId: 'c1', kind: 'published', key: 'c1/published/u1' }, ['fcm-1'])
     expect(m.apns?.payload?.aps).toEqual({ threadId: 'c1', 'interruption-level': 'passive', 'relevance-score': 0.4 })
@@ -293,10 +299,9 @@ describe('result alerts', () => {
     it('covers every age group it spans', async () => {
       const { save, results, said } = setup(withTrophyEvents())
       await save({ [overall('agg2')]: ['e4', 'e1'] }, results())
-      // u1 follows both placed dancers: one alert for each.
+      // u1 follows both placed dancers: one alert, by place.
       expect(said()).toEqual([
-        'u1: Ailsa placed 2nd (Overall Trophy)',
-        'u1: Kirsty placed 1st (Overall Trophy)',
+        'u1: Kirsty 1st, Ailsa 2nd (Overall Trophy)',
         'u2: Overall Trophy results are in (Calgary Highland Games)',
         'u4: Overall Trophy results are in (Calgary Highland Games)',
       ])
@@ -308,10 +313,9 @@ describe('result alerts', () => {
       const { save, results, said } = setup(data)
       const handler = results()
       await save({ [overall('agg2')]: ['e6', 'e2', 'e1'] }, handler)
-      // (u1 also follows Kirsty, not placed.)
+      // (u1 also follows Kirsty, not placed: no "results are in" beside it.)
       expect(said()).toEqual([
         'u1: Ailsa placed 1st (Overall Trophy)',
-        'u1: Overall Trophy results are in (Calgary Highland Games)',
         'u2: Mairi placed 2nd (Overall Trophy)',
         'u4: Overall Trophy results are in (Calgary Highland Games)',
       ])
@@ -341,7 +345,7 @@ describe('result alerts', () => {
       const { save, results, said } = setup(data)
       await save({ [overall('agg5')]: ['e4'] }, results())
       // Mairi (e2) and Iona (e3) weren't called back: their followers hear nothing.
-      expect(said()).toEqual(['u1: Kirsty placed 1st (Trophy Fling)', 'u1: Trophy Fling results are in (Calgary Highland Games)'])
+      expect(said()).toEqual(['u1: Kirsty placed 1st (Trophy Fling)'])
     })
 
     it('sends each placing once, and a changed one again', async () => {
@@ -371,6 +375,82 @@ describe('result alerts', () => {
         body: 'Highland Fling · Premier 12 & Under · Calgary Highland Games',
         link: '/competitions/c1/results/g1#dance-fling',
       })
+    })
+  })
+
+  describe('one alert per person per dance', () => {
+    // u1 follows Mairi and Iona too: three of theirs in g1.
+    const following = () => {
+      const data = seed()
+      data['dancers:followers'].p2.u1 = true
+      data['dancers:followers'].p3.u1 = true
+      return data
+    }
+
+    it('puts all of theirs in one, by place, leaving out those not placed', async () => {
+      const { save, results, log, said } = setup(following())
+      await save({ [fling]: ['e2', 'e1'] }, results())
+      expect(said().filter((m) => m.startsWith('u1:'))).toEqual(['u1: Mairi 1st, Ailsa 2nd (Highland Fling)'])
+      expect(log().find((m) => m.uid === 'u1')).toMatchObject({
+        body: 'Highland Fling · Premier 12 & Under · Calgary Highland Games',
+        link: '/competitions/c1/results/g1#dance-fling',
+      })
+    })
+
+    it('says results are in once, quietly, when none of theirs placed', async () => {
+      const { save, results, log, said } = setup(following())
+      await save({ [fling]: ['e5'] }, results())
+      expect(said().filter((m) => m.startsWith('u1:'))).toEqual(['u1: Highland Fling results are in (Premier 12 & Under)'])
+      expect(log().find((m) => m.uid === 'u1')?.quiet).toBe(true)
+    })
+
+    it('replaces "results are in" when one of theirs places later', async () => {
+      const { rtdb, save, results, log, said } = setup(following())
+      const handler = results()
+      await save({ [fling]: ['e5'] }, handler)
+      await save({ [fling]: ['e5', 'e3'] }, handler)
+      expect(said().filter((m) => m.startsWith('u1:'))).toEqual([
+        'u1: Highland Fling results are in (Premier 12 & Under)',
+        'u1: Iona placed 2nd (Highland Fling)',
+      ])
+      // One key per person (the same alert on the phone: the second replaces the first), and a placing breaks through.
+      expect(rtdb.read('notifications:sent/c1/g1/fling/u1')).toBe('e3:2')
+      expect(log().filter((m) => m.uid === 'u1').map((m) => !!m.quiet)).toEqual([true, false])
+    })
+
+    it('says overall placings together too', async () => {
+      const { save, results, said } = setup(following())
+      await save({ 'competitions:data/c1/results/g1/overall': ['e3', 'e1'] }, results())
+      expect(said().filter((m) => m.startsWith('u1:'))).toEqual(['u1: Overall: Iona 1st, Ailsa 2nd (Premier 12 & Under)'])
+    })
+  })
+
+  describe('an age group with one dance', () => {
+    const solo = () => {
+      const data = seed()
+      data['competitions:data'].c1.dances.choreo = { name: 'Choreography', groupIds: { g2: true } }
+      data['competitions:data'].c1.dances.fling.groupIds = { g1: true }
+      data['competitions:data'].c1.dances.sword.groupIds = { g1: true }
+      return data
+    }
+
+    it('sends Overall only when it says something the dance didn’t', async () => {
+      const { save, results, said } = setup(solo())
+      const handler = results()
+      await save({ 'competitions:data/c1/results/g2/choreo': ['e4'] }, handler)
+      await save({ 'competitions:data/c1/results/g2/overall': ['e4'] }, handler)
+      expect(said()).toEqual(['u1: Kirsty placed 1st (Choreography)'])
+      // A different overall place replaces it.
+      await save({ 'competitions:data/c1/results/g2/overall': ['e1', 'e4'] }, handler)
+      expect(said()).toEqual(['u1: Kirsty placed 1st (Choreography)', 'u1: Kirsty placed 2nd overall (Premier 13 & Over)'])
+    })
+
+    it('still sends Overall in an age group with several dances', async () => {
+      const { save, results, said } = setup(solo())
+      const handler = results()
+      await save({ [fling]: ['e1'] }, handler)
+      await save({ 'competitions:data/c1/results/g1/overall': ['e1'] }, handler)
+      expect(said().filter((m) => m.startsWith('u1:'))).toEqual(['u1: Ailsa placed 1st (Highland Fling)', 'u1: Ailsa placed 1st overall (Premier 12 & Under)'])
     })
   })
 
@@ -492,8 +572,7 @@ describe('team alerts (ADR 0012)', () => {
     const { save, results, log, said } = setup(withTeam())
     await save({ [sword]: ['t1', 'e4'] }, results())
     expect(said()).toEqual([
-      'u1: Ailsa’s trio placed 1st (Celtic Sisters)',
-      'u1: Kirsty placed 2nd (Sword Dance)',
+      'u1: Ailsa’s trio 1st, Kirsty 2nd (Sword Dance)',
       'u2: Mairi’s trio placed 1st (Celtic Sisters)',
       'u6: Ailsa and Mairi’s trio placed 1st (Celtic Sisters)',
       'u7: Eilidh’s trio placed 1st (Celtic Sisters)',

@@ -210,6 +210,13 @@ const listNames = (names: string[]) => (names.length > 1
   ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
   : names[0]);
 
+/** "Isla’s duet", "Isla and Mairi’s group". */
+function teamWho(firstNames: string[], size: number) {
+  const names = firstNames.map((n) => n.trim()).filter(Boolean);
+  const noun = ensemble(size);
+  return names.length ? `${listNames(names)}’s ${noun}` : `Your dancer’s ${noun}`;
+}
+
 /**
  * A team's result alert (ADR 0012), for someone following one or more of its
  * members: "Isla’s duet placed 1st", or "Isla and Mairi’s group…", with its
@@ -224,9 +231,7 @@ export function teamResultMessage(
   /** How many dance in it: a duet, a trio, or a group. */
   size = 0,
 ) {
-  const names = firstNames.map((n) => n.trim()).filter(Boolean);
-  const noun = ensemble(size);
-  const who = names.length ? `${listNames(names)}’s ${noun}` : `Your dancer’s ${noun}`;
+  const who = teamWho(firstNames, size);
   const where = [ctx.groupName, ctx.competitionName].filter(Boolean).join(' · ');
   if (!place) {
     return ctx.overall
@@ -239,6 +244,40 @@ export function teamResultMessage(
     body: [teamName, danceTitle(ctx.danceName), where].filter(Boolean).join(' · '),
   };
 }
+
+/** Someone a person follows in a dance: who, their place (if placed), and their alert were they the only one. */
+export interface Followed {
+  id: string;
+  who: string;
+  place?: number;
+  alone: { title: string; body: string };
+}
+
+/**
+ * A person's one alert for a dance (or overall, or a trophy event), however
+ * many they follow in it. Placed ones by place: "Mairi 1st, Ailsa 2nd".
+ * "Results are in" only when none of theirs placed. Just one placed (or
+ * followed) reads as that one's own alert.
+ */
+export function personResultMessage(ctx: ResultContext, followed: Followed[]) {
+  const placed = followed.filter((f) => f.place).sort((a, b) => (a.place as number) - (b.place as number));
+  if (placed.length === 1) return placed[0].alone;
+  if (!placed.length) return followed.length === 1 ? followed[0].alone : resultMessage(ctx, null);
+  const places = placed.map((f) => `${f.who} ${ordinal(f.place as number)}`).join(', ');
+  const where = [ctx.groupName, ctx.competitionName].filter(Boolean).join(' · ');
+  if (ctx.trophyEventName !== undefined) {
+    return { title: places, body: [ctx.trophyEventName?.trim() || 'Trophy event', ctx.competitionName].filter(Boolean).join(' · ') };
+  }
+  if (ctx.overall) return { title: `Overall: ${places}`, body: where };
+  return { title: places, body: [danceTitle(ctx.danceName), where].filter(Boolean).join(' · ') };
+}
+
+/** What a person's alert says, in short: who placed where, or that results are in. */
+export const placedSignature = (followed: Followed[]) => followed
+  .filter((f) => f.place)
+  .map((f) => `${f.id}:${f.place}`)
+  .sort()
+  .join(',') || 'in';
 
 /**
  * A competition alert: the morning of, or when it's published. `names` are
@@ -278,6 +317,8 @@ interface Message {
   key: string;
   /** What this message says, in short: the same signature isn't sent twice. */
   signature: string;
+  /** Interrupts less than its kind usually does: results in, but none of theirs placed. */
+  quiet?: boolean;
 }
 
 /**
@@ -298,10 +339,11 @@ export const collapseId = (key: string) => createHash('sha256').update(key).dige
 
 /** What FCM is sent for one message to a person's devices. */
 export function fcmMessage(
-  m: Pick<Message, 'title' | 'body' | 'link' | 'competitionId' | 'kind' | 'key'>,
+  m: Pick<Message, 'title' | 'body' | 'link' | 'competitionId' | 'kind' | 'key' | 'quiet'>,
   tokens: string[],
 ): MulticastMessage {
-  const { interruption, relevance } = DELIVERY[m.kind];
+  // Results in with none of theirs placed: a normal alert, as the morning of is.
+  const { interruption, relevance } = m.quiet ? DELIVERY.morning : DELIVERY[m.kind];
   // A correction (placed 4th, then 3rd) replaces the alert it corrects.
   const replaces = collapseId(m.key);
   return {
@@ -367,6 +409,7 @@ async function send(db: Db, app: App, m: Omit<Message, 'signature'>, emulated: b
       body: m.body,
       link: m.link,
       kind: m.kind,
+      ...(m.quiet && { quiet: true }),
       competitionId: m.competitionId,
       tokens: tokens.length,
       at: Date.now(),
@@ -535,9 +578,8 @@ export function getOnResultsWritten(db: Db, emulated: boolean, schedule: (task: 
 
 /**
  * A minute after a save: if the dance's results still stand as saved, its
- * followers hear. Each placed dancer's, their place; the rest of the age
- * group's (or of those dancing a trophy event, once per person), that
- * results are in. Changed since, a later save's task has it.
+ * followers hear, each person once: where theirs placed, or (none placed)
+ * that results are in. Changed since, a later save's task has it.
  */
 export function getOnResultsSettled(db: Db, app: App, emulated: boolean) {
   return async ({ competitionId, groupId, danceId, results }: SettleTask) => {
@@ -573,51 +615,66 @@ export function getOnResultsSettled(db: Db, app: App, emulated: boolean) {
       link = `/competitions/${competitionId}/results/${groupId}#dance-${danceId}`;
     }
 
+    // Each person's followed dancers (or teams) in it, by uid.
     const wants = wanted(db, 'results');
-
+    const byUid = new Map<string, Followed[]>();
+    const add = async (followers: string[], f: (uid: string) => Followed) => {
+      const allowed = await Promise.all(followers.map(wants));
+      followers.filter((_, i) => allowed[i]).forEach((uid) => byUid.set(uid, [...(byUid.get(uid) ?? []), f(uid)]));
+    };
     if (trophyEvent) {
-      const people = await Promise.all(byPerson(entries, placings).map(async ({ entry, dancerId, place, followers }) => {
-        const allowed = await Promise.all(followers.map(wants));
-        return followers
-          .filter((_, i) => allowed[i])
-          .map<Message>((uid) => ({
-            uid,
-            kind: 'results',
-            competitionId,
-            ...resultMessage(context, entry.firstName, place),
-            link,
-            // By person: their best place changing replaces the alert, never doubles it.
-            key: `${competitionId}/${groupId}/${danceId}/${uid}_${dancerId}`,
-            signature: String(place ?? 'in'),
-          }));
-      }));
-      await deliver(db, app, people.flat(), emulated);
-      return;
-    }
-
-    const perEntry = await Promise.all(
-      entries.map(async ({
+      // By person: one entered in two age groups counts once, at their best place.
+      await Promise.all(byPerson(entries, placings).map(({ entry, dancerId, place, followers }) => add(followers, () => ({
+        id: dancerId,
+        who: entry.firstName?.trim() || 'Your dancer',
+        place,
+        alone: resultMessage(context, entry.firstName, place),
+      }))));
+    } else {
+      await Promise.all(entries.map(({
         entryId, entry, followers, names,
       }) => {
-        const allowed = await Promise.all(followers.map(wants));
         const place = placings.get(entryId);
-        return followers
-          .filter((_, i) => allowed[i])
-          .map<Message>((uid) => ({
-          uid,
-          kind: 'results',
-          competitionId,
-          ...(isTeam(entry)
-            ? teamResultMessage(context, entryName(entry), names.get(uid) ?? [], place, teamMembers(entry).length)
-            : resultMessage(context, entry.firstName, place)),
-          link,
-          key: `${competitionId}/${groupId}/${danceId}/${uid}_${entryId}`,
-          signature: String(place ?? 'in'),
-        }));
-      }),
-    );
-    await deliver(db, app, perEntry.flat(), emulated);
+        const size = teamMembers(entry).length;
+        return add(followers, (uid) => (isTeam(entry)
+          ? {
+            id: entryId,
+            who: teamWho(names.get(uid) ?? [], size),
+            place,
+            alone: teamResultMessage(context, entryName(entry), names.get(uid) ?? [], place, size),
+          }
+          : {
+            id: entryId,
+            who: entry.firstName?.trim() || 'Your dancer',
+            place,
+            alone: resultMessage(context, entry.firstName, place),
+          }));
+      }));
+    }
+
+    // An age group with one dance: its Overall says the same, so it shares the
+    // dance's alert (sent once when they match, replacing it when they don't).
+    const about = overall && !trophyEvent ? (await onlyDance(dataRef, groupId)) ?? danceId : danceId;
+    const messages = [...byUid].map<Message>(([uid, followed]) => ({
+      uid,
+      kind: 'results',
+      competitionId,
+      ...personResultMessage(context, followed),
+      link,
+      // One per person: a newer one (another of theirs placed, a correction) replaces it.
+      key: `${competitionId}/${groupId}/${about}/${uid}`,
+      signature: placedSignature(followed),
+      ...(!followed.some((f) => f.place) && { quiet: true }),
+    }));
+    await deliver(db, app, messages, emulated);
   };
+}
+
+/** An age group's dance, when it has just one. */
+async function onlyDance(dataRef: (path: string) => Reference, groupId: string) {
+  const dances = Object.entries(((await dataRef('dances').get()).val() || {}) as Record<string, { groupIds?: Record<string, unknown> }>)
+    .filter(([, d]) => d?.groupIds?.[groupId]);
+  return dances.length === 1 ? dances[0][0] : null;
 }
 
 /**
