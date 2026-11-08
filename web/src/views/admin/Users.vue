@@ -67,7 +67,7 @@ const toolsOf = (id: string) => linkedTools(toolLinks.value[id])
 const toolFilter = ref<'all' | Audience>('all')
 const toolOptions = [
   { value: 'all' as const, label: 'All' },
-  ...(Object.keys(TOOLS) as Audience[]).map((value) => ({ value, label: TOOLS[value].short })),
+  ...(Object.keys(TOOLS) as Audience[]).map((value) => ({ value, label: TOOLS[value].name })),
 ]
 
 const perms = ref<Record<string, Perms>>({})
@@ -106,12 +106,12 @@ const unlinking = ref<Audience | null>(null)
 async function unlink(tool: Audience) {
   const user = current.value
   if (!user) return
-  const { name, short } = TOOLS[tool]
+  const { name } = TOOLS[tool]
   const who = user.displayName || user.email || 'They'
   const ok = await confirm({
     title: `Unlink ${name}?`,
-    message: `${who} will be signed out of ${short} on every device within the hour. Their work there stays as it is.`,
-    confirmLabel: `Unlink ${short}`,
+    message: `${who} will be signed out of ${name} on every device within the hour. Their work there stays as it is.`,
+    confirmLabel: `Unlink ${name}`,
     destructive: true,
   })
   if (!ok) return
@@ -121,7 +121,7 @@ async function unlink(tool: Audience) {
     const rest = { ...(toolLinks.value[user.id] as Record<string, unknown>) }
     delete rest[tool]
     toolLinks.value = { ...toolLinks.value, [user.id]: rest }
-    toast(`Unlinked ${short}`)
+    toast(`Unlinked ${name}`)
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   } finally {

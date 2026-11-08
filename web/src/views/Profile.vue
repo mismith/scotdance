@@ -36,14 +36,14 @@ watch(
 )
 onScopeDispose(() => offTools?.())
 const tools = computed(() => linkedTools(toolLinks.value))
-const toolNames = computed(() => tools.value.map(({ tool }) => TOOLS[tool].short).join(' and '))
+const toolNames = computed(() => tools.value.map(({ tool }) => TOOLS[tool].name).join(' and '))
 const unlinking = ref<Audience | null>(null)
 async function unlink(tool: Audience) {
-  const { name, short } = TOOLS[tool]
+  const { name } = TOOLS[tool]
   const ok = await confirm({
     title: `Unlink ${name}?`,
-    message: `You’ll be signed out of ${short} on every device within the hour. Your work there stays as it is. To use it again, sign in with ScotDance.app.`,
-    confirmLabel: `Unlink ${short}`,
+    message: `You’ll be signed out of ${name} on every device within the hour. Your work there stays as it is. To use it again, sign in with ScotDance.app.`,
+    confirmLabel: `Unlink ${name}`,
     destructive: true,
   })
   if (!ok) return
