@@ -80,6 +80,17 @@ age group and competition go on the line under (Murray, 2026-10-03).
     so the same placings aren't sent twice.
   - **"Results are in" is a normal alert**, not Time Sensitive: only a
     placing gets through Focus.
+  - **Results coming in quickly make one alert that updates**: the first
+    results alert in a while goes as usual; more for the same competition
+    within 5 minutes of the last replace it silently (passive on iOS; the
+    `results-quiet` channel on Android) with a summary, newest first:
+    **Jessica and Sophie placed** · Sword Dance: Jessica 1st, Sophie 3rd ·
+    Highland Fling: Jessica 2nd · … (six lines, then "and N more"). The run
+    is `notifications:summary/{competition}/{uid}`. Pace is the signal, not
+    the schedule: live, dances settle further apart than the window and each
+    sounds; an organiser catching up after the dancing posts one a minute.
+    A correction after the window comes as a new alert (Murray, 2026-11-07:
+    5 minutes, silent updates are fine).
   - `thread-id` = the competition (iOS groups its alerts); icon
     `ic_stat_scott`, brand blue; an analytics label per kind for delivery
     numbers in the Firebase console.

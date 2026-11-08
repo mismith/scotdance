@@ -319,6 +319,12 @@ interface Message {
   signature: string;
   /** Interrupts less than its kind usually does: results in, but none of theirs placed. */
   quiet?: boolean;
+  /** No sound, no banner: it updates an alert just had (a results summary). */
+  silent?: boolean;
+  /** What it replaces on the phone, when that's more than `key` (a results summary). */
+  replaces?: string;
+  /** Results: its line in a summary. */
+  line?: SummaryLine;
 }
 
 /**
@@ -334,18 +340,23 @@ const DELIVERY: Record<AlertKind, { interruption: string; relevance: number }> =
   published: { interruption: 'passive', relevance: 0.4 },
 };
 
+/** Android's channel for results summaries updating silently. */
+export const QUIET_RESULTS_CHANNEL = 'results-quiet';
+
 /** A short id for what a message is about: a newer one replaces it on the phone. */
 export const collapseId = (key: string) => createHash('sha256').update(key).digest('base64url');
 
 /** What FCM is sent for one message to a person's devices. */
 export function fcmMessage(
-  m: Pick<Message, 'title' | 'body' | 'link' | 'competitionId' | 'kind' | 'key' | 'quiet'>,
+  m: Pick<Message, 'title' | 'body' | 'link' | 'competitionId' | 'kind' | 'key' | 'quiet' | 'silent' | 'replaces'>,
   tokens: string[],
 ): MulticastMessage {
   // Results in with none of theirs placed: a normal alert, as the morning of is.
-  const { interruption, relevance } = m.quiet ? DELIVERY.morning : DELIVERY[m.kind];
+  // A summary updating one just had: as quiet as a dancer list going up.
+  const { interruption } = m.silent ? DELIVERY.published : m.quiet ? DELIVERY.morning : DELIVERY[m.kind];
+  const { relevance } = m.quiet ? DELIVERY.morning : DELIVERY[m.kind];
   // A correction (placed 4th, then 3rd) replaces the alert it corrects.
-  const replaces = collapseId(m.key);
+  const replaces = collapseId(m.replaces ?? m.key);
   return {
     tokens,
     notification: { title: m.title, body: m.body },
@@ -363,7 +374,9 @@ export function fcmMessage(
       },
     },
     // The icon is in the app's Android resources.
-    android: { notification: { channelId: m.kind, tag: replaces, icon: 'ic_stat_scott', color: '#0065bd' } },
+    // A silent summary goes on the quiet results channel, made by the app
+    // (useAlerts). An app from before it shows it on its default channel, with a sound.
+    android: { notification: { channelId: m.silent ? QUIET_RESULTS_CHANNEL : m.kind, tag: replaces, icon: 'ic_stat_scott', color: '#0065bd' } },
     // Delivery numbers per kind, in the Firebase console's messaging reports.
     fcmOptions: { analyticsLabel: m.kind },
   };
@@ -410,6 +423,7 @@ async function send(db: Db, app: App, m: Omit<Message, 'signature'>, emulated: b
       link: m.link,
       kind: m.kind,
       ...(m.quiet && { quiet: true }),
+      ...(m.silent && { silent: true }),
       competitionId: m.competitionId,
       tokens: tokens.length,
       at: Date.now(),
@@ -425,11 +439,12 @@ async function send(db: Db, app: App, m: Omit<Message, 'signature'>, emulated: b
   await Promise.all(dead.map((k) => db.child(`users:tokens/${m.uid}/${k}`).remove()));
 }
 
-async function deliverOne(db: Db, app: App, m: Message, emulated: boolean) {
+/** `shape` turns a claimed message into what's sent (a results summary). */
+async function deliverOne(db: Db, app: App, m: Message, emulated: boolean, shape?: (m: Message) => Promise<Message>) {
   const giveBack = await claim(db, m.key, m.signature);
   if (!giveBack) return;
   try {
-    await send(db, app, m, emulated);
+    await send(db, app, shape ? await shape(m) : m, emulated);
   } catch (e) {
     // Not sent (FCM unreachable, say): give the claim back, so a retry (the
     // results task's) sends it rather than finding it already sent.
@@ -438,8 +453,109 @@ async function deliverOne(db: Db, app: App, m: Message, emulated: boolean) {
   }
 }
 
-function deliver(db: Db, app: App, messages: Message[], emulated: boolean) {
-  return Promise.all(messages.map((m) => deliverOne(db, app, m, emulated)));
+function deliver(db: Db, app: App, messages: Message[], emulated: boolean, shape?: (m: Message) => Promise<Message>) {
+  return Promise.all(messages.map((m) => deliverOne(db, app, m, emulated, shape)));
+}
+
+/**
+ * Results coming in quickly (an organiser catching up after the dancing) come
+ * as one alert per competition that updates: more within this long of the
+ * last make no sound.
+ */
+const SUMMARY_WINDOW_MS = 5 * 60_000;
+/** Lines a summary shows; the rest are "and N more". */
+const SUMMARY_LINES = 6;
+
+/** One dance in a results summary. */
+export interface SummaryLine {
+  /** The age group, said when a summary spans more than one. */
+  group: string;
+  /** "Sword Dance", "Overall", "Premier Dancer of the Day". */
+  label: string;
+  /** "Jessica 1st, Sophie 3rd", or none placed. */
+  places: string;
+  /** Who placed, for the title. */
+  placed: string[];
+  link: string;
+  at: number;
+}
+
+/** A dance's line in a person's results summary. */
+export function summaryLine(ctx: ResultContext, followed: Followed[], link: string, at: number): SummaryLine {
+  const placed = followed.filter((f) => f.place).sort((a, b) => (a.place as number) - (b.place as number));
+  let label = danceTitle(ctx.danceName);
+  if (ctx.trophyEventName !== undefined) label = ctx.trophyEventName?.trim() || 'Trophy event';
+  else if (ctx.overall) label = 'Overall';
+  return {
+    group: ctx.groupName ?? '',
+    label,
+    places: placed.map((f) => `${f.who} ${ordinal(f.place as number)}`).join(', '),
+    placed: [...new Set(placed.map((f) => f.who))],
+    link,
+    at,
+  };
+}
+
+/**
+ * Several dances' results at once, newest first: "Jessica and Sophie placed",
+ * a line for each ("Sword Dance: Jessica 1st, Sophie 3rd"), then where.
+ */
+export function summaryMessage(lines: SummaryLine[], competitionName: string | null | undefined) {
+  const newest = [...lines].sort((a, b) => b.at - a.at);
+  const groups = [...new Set(newest.map((l) => l.group).filter(Boolean))];
+  // Names in the order they placed; a line read back from the database has no empty list.
+  const placed = [...new Set([...newest].reverse().flatMap((l) => l.placed ?? []))];
+  const shown = newest.slice(0, SUMMARY_LINES).map((l) => {
+    const label = groups.length > 1 && l.group && l.label !== l.group ? `${l.label}, ${l.group}` : l.label;
+    return `${label}: ${l.places || 'results are in'}`;
+  });
+  const more = newest.length - shown.length;
+  if (more) shown.push(`and ${more} more`);
+  return {
+    title: placed.length ? `${listNames(placed)} placed` : 'Results are in',
+    body: [...shown, [groups.length === 1 ? groups[0] : null, competitionName].filter(Boolean).join(' · ')].filter(Boolean).join('\n'),
+  };
+}
+
+interface Summary {
+  since: number;
+  last: number;
+  lines: Record<string, SummaryLine>;
+}
+
+/**
+ * Fits a claimed results alert into the person's run of them for the
+ * competition (notifications:summary/{competitionId}/{uid}): the first in a
+ * while goes as it is; more within the window replace it, silently, with a
+ * summary. Runs of a minute apart are an organiser catching up; live, dances
+ * are further apart than the window, and each alert sounds.
+ */
+function summarise(db: Db, competitionName: string | null | undefined, at: number) {
+  return async (m: Message): Promise<Message> => {
+    const line = m.line as SummaryLine;
+    // A dance's alert: its age group and dance (or Overall, sharing it).
+    const dance = m.key.split('/').slice(1, 3).join(':');
+    let run: Summary | null = null;
+    await db.child(`notifications:summary/${m.competitionId}/${m.uid}`).transaction((now: Summary | null) => {
+      const going = now && typeof now.last === 'number' && at - now.last < SUMMARY_WINDOW_MS;
+      run = going
+        ? { since: now.since, last: at, lines: { ...now.lines, [dance]: line } }
+        : { since: at, last: at, lines: { [dance]: line } };
+      return run;
+    });
+    const { since, lines } = run as unknown as Summary;
+    const replaces = `${m.competitionId}/results/${m.uid}/${since}`;
+    const all = Object.values(lines);
+    if (all.length === 1) return { ...m, replaces, ...(since !== at && { silent: true }) };
+    const links = new Set(all.map((l) => l.link.split('#')[0]));
+    return {
+      ...m,
+      ...summaryMessage(all, competitionName),
+      link: links.size === 1 ? [...links][0] : `/competitions/${m.competitionId}/results`,
+      replaces,
+      silent: true,
+    };
+  };
 }
 
 /** uid → whether they want this kind of alert (read once per uid). */
@@ -581,8 +697,9 @@ export function getOnResultsWritten(db: Db, emulated: boolean, schedule: (task: 
  * followers hear, each person once: where theirs placed, or (none placed)
  * that results are in. Changed since, a later save's task has it.
  */
-export function getOnResultsSettled(db: Db, app: App, emulated: boolean) {
+export function getOnResultsSettled(db: Db, app: App, emulated: boolean, now = () => Date.now()) {
   return async ({ competitionId, groupId, danceId, results }: SettleTask) => {
+    const at = now();
     const dataRef = (path: string) => db.child(`competitions:data/${competitionId}/${path}`);
     if (!same((await dataRef(`results/${groupId}/${danceId}`).get()).val(), results)) return;
     const placings = parsePlacings(results);
@@ -665,8 +782,9 @@ export function getOnResultsSettled(db: Db, app: App, emulated: boolean) {
       key: `${competitionId}/${groupId}/${about}/${uid}`,
       signature: placedSignature(followed),
       ...(!followed.some((f) => f.place) && { quiet: true }),
+      line: summaryLine(context, followed, link, at),
     }));
-    await deliver(db, app, messages, emulated);
+    await deliver(db, app, messages, emulated, summarise(db, comp.name, at));
   };
 }
 

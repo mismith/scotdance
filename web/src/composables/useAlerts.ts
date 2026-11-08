@@ -87,6 +87,11 @@ function start() {
     for (const k of ALERT_KINDS) {
       void plugin?.createChannel?.({ id: k.id, name: k.label, description: k.hint, importance: k.importance, visibility: 1 }).catch(() => {})
     }
+    // Results coming in quickly update one alert; the updates go here, without a
+    // sound (QUIET_RESULTS_CHANNEL in functions/src/notifications.ts).
+    void plugin
+      ?.createChannel?.({ id: 'results-quiet', name: 'Results, more coming in', description: 'Updates to a results alert, without a sound', importance: 2, visibility: 1 })
+      .catch(() => {})
   }
 
   // Your choices, live: they're the same on every phone.

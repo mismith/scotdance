@@ -86,7 +86,13 @@ function seed(): Json {
   }
 }
 
-function setup(data: Json = seed()) {
+/** A clock for results tasks: each one `gap` after the last (live pace: further apart than a summary's window). */
+const every = (gap: number) => {
+  let t = Date.parse('2026-07-04T18:00:00Z')
+  return () => (t += gap)
+}
+
+function setup(data: Json = seed(), clock = every(10 * 60_000)) {
   const rtdb = new FakeRtdb()
   rtdb.data = data
   rtdb.patterns = [RESULTS, PUBLISHED, DANCER_FAVORITES, COMPETITION_FAVORITES]
@@ -101,9 +107,9 @@ function setup(data: Json = seed()) {
    * The results trigger. Its minute's pause (a Cloud Task) runs straight
    * away, or with `queue`, waits there to be run by hand.
    */
-  const settled = getOnResultsSettled(db, app, true)
+  const settled = getOnResultsSettled(db, app, true, clock)
   const results = (emulated = true, queue?: SettleTask[]) => {
-    const send = getOnResultsSettled(db, app, emulated)
+    const send = getOnResultsSettled(db, app, emulated, clock)
     return getOnResultsWritten(db, emulated, async (task) => (queue ? queue.push(task) : send(task)))
   }
   const log = (): Json[] => Object.values(rtdb.read('notifications:log') ?? {})
@@ -218,6 +224,13 @@ describe('messages', () => {
     const m = fcmMessage({ title: 'T', body: 'B', link: '/', competitionId: 'c1', kind: 'results', key: 'k', quiet: true }, ['fcm-1'])
     expect(m.apns?.payload?.aps).toMatchObject({ 'interruption-level': 'active', 'relevance-score': 0.7 })
     expect(m.android?.notification?.channelId).toBe('results')
+  })
+
+  it('updates a results summary silently, replacing the alert it began as', () => {
+    const m = fcmMessage({ title: 'T', body: 'B', link: '/', competitionId: 'c1', kind: 'results', key: 'k', silent: true, replaces: 'run' }, ['fcm-1'])
+    expect(m.apns?.payload?.aps).toEqual({ threadId: 'c1', 'interruption-level': 'passive', 'relevance-score': 1 })
+    expect(m.apns?.headers?.['apns-collapse-id']).toBe(collapseId('run'))
+    expect(m.android?.notification).toMatchObject({ channelId: 'results-quiet', tag: collapseId('run') })
   })
 
   it('lets a dancer list going up wait quietly, on its own Android channel', () => {
@@ -451,6 +464,112 @@ describe('result alerts', () => {
       await save({ [fling]: ['e1'] }, handler)
       await save({ 'competitions:data/c1/results/g1/overall': ['e1'] }, handler)
       expect(said().filter((m) => m.startsWith('u1:'))).toEqual(['u1: Ailsa placed 1st (Highland Fling)', 'u1: Ailsa placed 1st overall (Premier 12 & Under)'])
+    })
+  })
+
+  describe('results coming in quickly (ADR 0006)', () => {
+    // u1 follows Ailsa and Iona in g1, and Kirsty in g2; u2 Mairi.
+    const data = () => {
+      const d = seed()
+      d['dancers:followers'].p3.u1 = true
+      return d
+    }
+    const minuteApart = () => every(60_000)
+    const u1 = (log: () => Json[]) => log().filter((m) => m.uid === 'u1')
+
+    it('sends the first as it is, then one summary that updates silently', async () => {
+      const { save, results, log } = setup(data(), minuteApart())
+      const handler = results()
+      await save({ [fling]: ['e1', 'e3'] }, handler)
+      await save({ 'competitions:data/c1/results/g1/sword': ['e2'] }, handler)
+      await save({ 'competitions:data/c1/results/g1/overall': ['e3', 'e1'] }, handler)
+      const sent = u1(log)
+      expect(sent.map((m) => [m.title, !!m.silent])).toEqual([
+        ['Ailsa 1st, Iona 2nd', false],
+        ['Ailsa and Iona placed', true],
+        ['Ailsa and Iona placed', true],
+      ])
+      expect(sent[2].body).toBe([
+        'Overall: Iona 1st, Ailsa 2nd',
+        'Sword Dance: results are in',
+        'Highland Fling: Ailsa 1st, Iona 2nd',
+        'Premier 12 & Under · Calgary Highland Games',
+      ].join('\n'))
+      // One age group: its results.
+      expect(sent[2].link).toBe('/competitions/c1/results/g1')
+    })
+
+    it('replaces the same alert all along', async () => {
+      const { rtdb, save, results } = setup(data(), minuteApart())
+      const handler = results()
+      await save({ [fling]: ['e1'] }, handler)
+      await save({ 'competitions:data/c1/results/g1/sword': ['e1'] }, handler)
+      const run = rtdb.read('notifications:summary/c1/u1')
+      expect(Object.keys(run.lines)).toEqual(['g1:fling', 'g1:sword'])
+      expect(run.last - run.since).toBe(60_000)
+    })
+
+    it('says which age group, when they’re from more than one', async () => {
+      const { save, results, log } = setup(data(), minuteApart())
+      const handler = results()
+      await save({ [fling]: ['e1'] }, handler)
+      await save({ 'competitions:data/c1/results/g2/sword': ['e4'] }, handler)
+      const [, summary] = u1(log)
+      expect(summary.title).toBe('Ailsa and Kirsty placed')
+      expect(summary.body).toBe([
+        'Sword Dance, Premier 13 & Over: Kirsty 1st',
+        'Highland Fling, Premier 12 & Under: Ailsa 1st',
+        'Calgary Highland Games',
+      ].join('\n'))
+      expect(summary.link).toBe('/competitions/c1/results')
+    })
+
+    it('keeps a dance’s line up to date, rather than adding another', async () => {
+      const { save, results, log } = setup(data(), minuteApart())
+      const handler = results()
+      await save({ [fling]: ['e2'] }, handler)
+      await save({ 'competitions:data/c1/results/g1/sword': ['e1'] }, handler)
+      await save({ [fling]: ['e3', 'e2'] }, handler)
+      expect(u1(log).at(-1)?.body.split('\n').slice(0, 2)).toEqual(['Highland Fling: Iona 1st', 'Sword Dance: Ailsa 1st'])
+    })
+
+    it('shows six lines, then how many more', async () => {
+      const d = data()
+      d['competitions:data'].c1.dances = Object.fromEntries(
+        ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((id) => [id, { name: `Dance ${id.toUpperCase()}` }]),
+      )
+      const { save, results, log } = setup(d, minuteApart())
+      const handler = results()
+      for (const id of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) await save({ [`competitions:data/c1/results/g1/${id}`]: ['e1'] }, handler)
+      const lines = u1(log).at(-1)?.body.split('\n')
+      expect(lines).toHaveLength(8)
+      expect(lines?.[0]).toBe('Dance H: Ailsa 1st')
+      expect(lines?.[6]).toBe('and 2 more')
+    })
+
+    it('sounds again after five quiet minutes, as a new alert', async () => {
+      const { rtdb, save, results, log } = setup(data(), every(6 * 60_000))
+      const handler = results()
+      await save({ [fling]: ['e1'] }, handler)
+      const first = rtdb.read('notifications:summary/c1/u1').since
+      await save({ 'competitions:data/c1/results/g1/sword': ['e3'] }, handler)
+      expect(u1(log).map((m) => [m.title, !!m.silent])).toEqual([
+        ['Ailsa placed 1st', false],
+        ['Iona placed 1st', false],
+      ])
+      expect(rtdb.read('notifications:summary/c1/u1').since).not.toBe(first)
+    })
+
+    it('keeps each person’s run apart', async () => {
+      const { save, results, log } = setup(data(), minuteApart())
+      const handler = results()
+      await save({ [fling]: ['e1'] }, handler)
+      await save({ 'competitions:data/c1/results/g1/sword': ['e2'] }, handler)
+      // u2's first is Sword Dance's (they had results are in for Fling, a minute before: a summary).
+      expect(log().filter((m) => m.uid === 'u2').map((m) => [m.title, !!m.silent])).toEqual([
+        ['Highland Fling results are in', false],
+        ['Mairi placed', true],
+      ])
     })
   })
 
