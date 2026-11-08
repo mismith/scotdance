@@ -82,10 +82,15 @@ can't act as you on ScotDance.app.
 
 The one thing a tool draws, its "Send to ScotDance.app" or "Sign in with
 ScotDance.app" button, is always ScotDance.app blue, whatever the tool's own
-theme: `#1a6fd0` fill, white bold label, normal letter-spacing, and Scott
-(the mark in `web/public/img/favicon.svg`) at 16px before the label. Splits'
-Send button is the reference (`ExportSettingsDialog.vue` and
-`ScotDanceMark.vue` in scotdance-splits); Challenge follows it.
+theme: a `#1a6fd0` pill 52px tall, white bold label, normal letter-spacing.
+Scott (the mark in `web/public/img/favicon.svg`) is big: 32px in the label
+colour, centred in the pill's round left end (10px in), then a 14px gap to
+the words and 26px padding on the right. On a full-width button Scott stays
+pinned 10px in and the words are centred in the space to his right (left
+padding = the pill height), so it doesn't look lopsided. The one exception is
+Binder, whose button is ink rather than blue, as blue clashes with its mint.
+Splits' Send button is the reference (`ExportSettingsDialog.vue` and
+`ScotDanceMark.vue` in scotdance-splits); Challenge and Binder follow it.
 
 ## Consequences
 
