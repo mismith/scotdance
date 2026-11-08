@@ -30,55 +30,6 @@ export interface PlaceSuggestion {
   distanceMeters?: number | null
 }
 
-export interface PickedRegion {
-  country: string | null
-  region: string | null
-  locality: string | null
-  label: string
-}
-
-export async function fetchRegionSuggestions(
-  input: string,
-  countryIso?: string | null,
-): Promise<PlaceSuggestion[]> {
-  const trimmed = input.trim()
-  if (!trimmed) return []
-  const { AutocompleteSuggestion, AutocompleteSessionToken } = await getPlacesLib()
-  if (!sessionToken) sessionToken = new AutocompleteSessionToken()
-  const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
-    input: trimmed,
-    sessionToken,
-    includedPrimaryTypes: ['country', 'administrative_area_level_1', 'locality'],
-    ...(countryIso ? { includedRegionCodes: [countryIso] } : {}),
-  })
-  return suggestions
-    .map((s) => s.placePrediction)
-    .filter((p): p is NonNullable<typeof p> => Boolean(p))
-    .map((p) => ({
-      placeId: p.placeId,
-      primaryText: p.mainText?.toString() ?? p.text?.toString() ?? '',
-      secondaryText: p.secondaryText?.toString() ?? '',
-    }))
-}
-
-export async function resolvePlace(placeId: string): Promise<PickedRegion | null> {
-  const { Place } = await getPlacesLib()
-  const place = new Place({ id: placeId })
-  await place.fetchFields({ fields: ['addressComponents', 'displayName'] })
-  const components = place.addressComponents ?? []
-  const find = (type: string) => components.find((c) => c.types.includes(type))
-  const country = find('country')?.shortText ?? null
-  const region = find('administrative_area_level_1')?.shortText ?? null
-  const locality = find('locality')?.shortText ?? null
-  const label =
-    [locality, region, country].filter(Boolean).join(', ') ||
-    place.displayName ||
-    ''
-  // Reset the session — Google bills per session, fresh one for next pick.
-  sessionToken = null
-  return { country, region, locality, label }
-}
-
 /** Places search is available (a Maps key is configured for this build). */
 export const placesAvailable = !!GOOGLE_MAPS_API_KEY
 

@@ -98,7 +98,7 @@ vi.mock('@/composables/useOrganisations', () => ({
   }),
 }))
 // The region Competitions is showing.
-const filter = { country: ref<string | null>('CA'), region: ref<string | null>(null) }
+const filter = { country: ref<string | null>('CA'), regions: ref<string[]>([]) }
 vi.mock('@/composables/useLocationFilter', () => ({ useLocationFilter: () => filter }))
 vi.mock('@/lib/locale', () => ({ guessUserCountry: () => null }))
 vi.mock('@/composables/usePageTitle', () => ({ usePageTitle: () => {} }))
@@ -221,7 +221,7 @@ beforeEach(() => {
   confirmAnswer.asked = []
   push.mockClear()
   filter.country.value = 'CA'
-  filter.region.value = null
+  filter.regions.value = []
   localStorage.clear()
   orgList.value = []
 })
@@ -286,7 +286,7 @@ describe('Add a competition', () => {
     expect(w.text()).toContain('Pick a country to continue.')
     w.unmount()
 
-    filter.region.value = 'Scotland'
+    filter.regions.value = ['Scotland']
     w = await begin()
     expect(w.find('[role=radio][aria-checked=true]').text()).toContain('Scotland')
   })
@@ -417,7 +417,7 @@ describe('Add a competition', () => {
 
   it('a venue typed and not picked goes as its name, in the country asked, with no map position', async () => {
     filter.country.value = 'GB'
-    filter.region.value = 'Scotland'
+    filter.regions.value = ['Scotland']
     const w = await begin()
     await cont(w)
     await pickDay(w, 5)

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
-import { Check, ChevronDown, Globe, Locate, MapPinned, X } from '@lucide/vue'
+import { Check, ChevronDown, ChevronsUpDown, Globe, Locate, MapPinned } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
 import { useMorph } from '@/lib/morph'
@@ -10,7 +10,8 @@ import { useLocationFilter, type LocationMode } from '@/composables/useLocationF
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import { countryFlag, countryName, isoFor } from '@/lib/flagEmoji'
 import { guessUserCountry } from '@/lib/locale'
-import { fetchRegionSuggestions, resolvePlace, type PlaceSuggestion } from '@/lib/maps'
+import { regionName, regionsWord } from '@/lib/regionNames'
+import { selectionHaptic } from '@/lib/haptics'
 
 const props = defineProps<{ competitions: CompetitionListItem[] }>()
 
@@ -18,7 +19,7 @@ const {
   mode,
   radius,
   country,
-  region,
+  regions,
   locality,
   coords,
   locationError,
@@ -30,6 +31,7 @@ const {
   setRadius,
   requestPosition,
   availableCountries,
+  availableRegions,
   MIN_RADIUS_KM,
   MAX_RADIUS_KM,
 } = useLocationFilter()
@@ -75,7 +77,7 @@ const compact = computed<CompactDisplay>(() => {
   if (mode.value === 'region') {
     // Narrowed beyond country → use the Region tab's own icon to signal
     // "specific zone within the country" rather than a misleading flag.
-    if (locality.value || region.value) return { kind: 'icon', icon: MapPinned }
+    if (locality.value || regions.value.length) return { kind: 'icon', icon: MapPinned }
     if (country.value) {
       const flag = countryFlag(country.value)
       if (flag) return { kind: 'flag', emoji: flag }
@@ -90,14 +92,15 @@ const compactLabel = computed(() => {
   // No position yet means nothing is filtered: don't claim a distance.
   if (mode.value === 'nearby') return coords.value ? `Within ${radius.value} km` : 'Near me'
   if (mode.value === 'region') {
-    if (locality.value || region.value) return locality.value || region.value
+    if (locality.value) return locality.value
+    if (regions.value.length) return pillRegions.value
     return country.value ? countryName(country.value) : 'Choose region'
   }
   return 'Everywhere'
 })
 
 const regionSummary = computed(() => {
-  const parts = [locality.value, region.value, country.value].filter(Boolean)
+  const parts = [locality.value, regions.value.length ? pickedLabel.value : null, country.value].filter(Boolean)
   return parts.join(', ')
 })
 
@@ -139,7 +142,7 @@ function select(id: LocationMode): void {
     if (!country.value) {
       const fallback = defaultRegionCountry()
       if (fallback) {
-        setRegion({ country: fallback, region: null, locality: null })
+        setRegion({ country: fallback })
         return
       }
     }
@@ -154,75 +157,54 @@ function select(id: LocationMode): void {
 // Region quick-picks: countries that actually exist in loaded comps, by count.
 const quickCountries = computed(() => availableCountries(props.competitions))
 
-// Narrow label = the part below country (locality, region). Country itself is
-// already conveyed by the highlighted quick-row pill, so it's omitted here.
-function buildNarrowLabel(loc: string | null, reg: string | null): string {
-  return [loc, reg].filter(Boolean).join(', ')
-}
-
 function pickCountry(value: string): void {
-  if (mode.value === 'region' && country.value === value && !region.value && !locality.value) {
+  if (mode.value === 'region' && country.value === value && !regions.value.length && !locality.value) {
     sheet.hide()
     return
   }
-  setRegion({ country: value, region: null, locality: null })
-  inputValue.value = ''
-  suggestions.value = []
+  setRegion({ country: value })
 }
 
-function clearNarrow(): void {
-  setRegion({ country: country.value, region: null, locality: null })
-  inputValue.value = ''
-  suggestions.value = []
+// The country's provinces (or states) that have competitions, A to Z, in a
+// menu under it: tick any number, or none for all of them. A town picked in
+// Search shows here too, until a province is ticked.
+const regionMenu = useMorph()
+const nameOf = (r: string) => regionName(country.value, r)
+const regionChoices = computed(() =>
+  [...new Set([...availableRegions(props.competitions, country.value), ...regions.value])].sort((a, b) =>
+    nameOf(a).localeCompare(nameOf(b)),
+  ),
+)
+const allRegions = computed(() => `All ${regionsWord(country.value)}`)
+// Alberta, Saskatchewan; Alberta + 2 for three or more.
+const pickedLabel = computed(() => {
+  const names = regions.value.map(nameOf).sort((a, b) => a.localeCompare(b))
+  return names.length < 3 ? names.join(', ') : `${names[0]} + ${names.length - 1}`
+})
+// The pill is short: one by name, more by code (AB, SK; AB, BC + 2 past three).
+const pillRegions = computed(() => {
+  const picked = [...regions.value].sort((a, b) => nameOf(a).localeCompare(nameOf(b)))
+  if (picked.length === 1) return nameOf(picked[0]!)
+  return picked.length <= 3 ? picked.join(', ') : `${picked.slice(0, 2).join(', ')} + ${picked.length - 2}`
+})
+const narrowLabel = computed(() => locality.value || (regions.value.length ? pickedLabel.value : allRegions.value))
+
+// It grows out of the arrows, not the whole field (wider than the menu), and
+// hangs under the field (its anchor).
+function openRegionMenu(e: MouseEvent): void {
+  const field = e.currentTarget as HTMLElement
+  regionMenu.show(field.querySelector<HTMLElement>('[data-grow-from]') ?? field)
 }
 
-// Region autocomplete state. Event-driven (not watch) so programmatic
-// updates — pick + Clear — don't re-trigger a search. Initialized from
-// persisted state so a returning user sees their current narrow selection.
-const inputValue = ref<string>(buildNarrowLabel(locality.value, region.value))
-const suggestions = ref<PlaceSuggestion[]>([])
-const searching = ref(false)
-let searchTimer: ReturnType<typeof setTimeout> | null = null
-
-function scheduleSearch(): void {
-  if (searchTimer) clearTimeout(searchTimer)
-  const q = inputValue.value.trim()
-  if (!q) {
-    suggestions.value = []
-    searching.value = false
-    return
-  }
-  searchTimer = setTimeout(async () => {
-    searching.value = true
-    try {
-      // Bias by country ISO if available — narrows to states/cities within
-      // the selected country instead of returning global matches.
-      const bias = isoFor(country.value)
-      suggestions.value = await fetchRegionSuggestions(q, bias)
-    } catch (e) {
-      console.error('[places]', e)
-      suggestions.value = []
-    } finally {
-      searching.value = false
-    }
-  }, 200)
+function toggleRegion(r: string): void {
+  selectionHaptic()
+  const picked = regions.value.includes(r) ? regions.value.filter((x) => x !== r) : [...regions.value, r]
+  setRegion({ country: country.value, regions: picked })
 }
-
-async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
-  try {
-    const picked = await resolvePlace(s.placeId)
-    if (!picked) return
-    setRegion({
-      country: picked.country,
-      region: picked.region,
-      locality: picked.locality,
-    })
-    inputValue.value = buildNarrowLabel(picked.locality, picked.region)
-    suggestions.value = []
-    sheet.hide()
-  } catch (e) {
-    console.error('[places]', e)
-  }
+function pickAllRegions(): void {
+  if (regions.value.length || locality.value) selectionHaptic()
+  setRegion({ country: country.value })
+  regionMenu.hide()
 }
 </script>
 
@@ -301,36 +283,59 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
             <span class="flex-1 text-base font-medium">{{ countryName(qc.value) }}</span>
             <Check v-if="mode === 'region' && country === qc.value" class="text-primary size-5" stroke-width="2.5" aria-hidden="true" />
           </button>
-          <div v-if="mode === 'region' && country === qc.value" :class="['space-y-2 pt-1 pb-4', inset]">
-            <label class="field flex h-12 items-center rounded-xl pr-1 pl-3">
-              <input
-                v-model="inputValue"
-                type="search"
-                placeholder="Narrow to a city or province"
-                aria-label="Narrow to a city or province"
-                autocomplete="off"
-                class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
-                @input="scheduleSearch"
-              />
-              <button
-                v-if="region || locality || inputValue"
-                type="button"
-                aria-label="Clear city or province"
-                class="text-muted-foreground press flex size-11 shrink-0 items-center justify-center rounded-full"
-                @click="clearNarrow"
-              >
-                <X class="size-5" />
-              </button>
-            </label>
-            <ul v-if="suggestions.length" class="rows-engraved [--inset:0.75rem] [--inset-end:0.75rem]">
-              <li v-for="s in suggestions" :key="s.placeId">
-                <button type="button" class="press-row focus-inset w-full px-3 py-2.5 text-left" @click="pickSuggestion(s)">
-                  <span class="block text-base font-medium">{{ s.primaryText }}</span>
-                  <span v-if="s.secondaryText" class="text-muted-foreground block text-sm">{{ s.secondaryText }}</span>
-                </button>
-              </li>
-            </ul>
-            <p v-else-if="searching" class="text-muted-foreground text-sm">Searching…</p>
+          <div
+            v-if="mode === 'region' && country === qc.value && (regionChoices.length > 1 || regions.length || locality)"
+            :class="['pt-1 pb-4', inset]"
+          >
+            <button
+              type="button"
+              class="field press flex h-12 w-full items-center gap-2 rounded-xl pr-2 pl-3 text-left"
+              :aria-label="`Which ${regionsWord(country)}: ${narrowLabel}`"
+              aria-haspopup="dialog"
+              :aria-expanded="regionMenu.open"
+              data-menu-anchor
+              @click="openRegionMenu"
+            >
+              <span class="min-w-0 flex-1 truncate text-base">{{ narrowLabel }}</span>
+              <span data-grow-from class="flex rounded-full">
+                <ChevronsUpDown class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+              </span>
+            </button>
+            <Dialog
+              :open="regionMenu.open"
+              :morph="regionMenu"
+              variant="dropdown"
+              :aria-label="`Which ${regionsWord(country)}`"
+              @close="regionMenu.hide()"
+            >
+              <ul role="group" :aria-label="`Which ${regionsWord(country)}`">
+                <!-- All of them, set apart from the ones to tick, as other menus split their groups. -->
+                <li class="mb-1.5 border-b pb-1.5">
+                  <button
+                    type="button"
+                    role="checkbox"
+                    :aria-checked="!regions.length && !locality"
+                    class="press-row focus-inset flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-base font-medium"
+                    @click="pickAllRegions"
+                  >
+                    <span class="min-w-0 flex-1">{{ allRegions }}</span>
+                    <Check v-if="!regions.length && !locality" class="text-primary size-5 shrink-0" stroke-width="2.5" aria-hidden="true" />
+                  </button>
+                </li>
+                <li v-for="r in regionChoices" :key="r">
+                  <button
+                    type="button"
+                    role="checkbox"
+                    :aria-checked="regions.includes(r)"
+                    class="press-row focus-inset flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-base font-medium"
+                    @click="toggleRegion(r)"
+                  >
+                    <span class="min-w-0 flex-1">{{ nameOf(r) }}</span>
+                    <Check v-if="regions.includes(r)" class="text-primary size-5 shrink-0" stroke-width="2.5" aria-hidden="true" />
+                  </button>
+                </li>
+              </ul>
+            </Dialog>
           </div>
         </li>
         <li>

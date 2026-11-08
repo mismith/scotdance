@@ -178,7 +178,7 @@ async function openLate(type: PersonType | 'venues', name: string, locality?: st
 function openArea(g: SearchPlaceGroup) {
   locationFilter.setRegion({
     country: g.country ?? null,
-    region: g.region ?? null,
+    regions: g.region ? [g.region] : [],
     locality: g.kind === 'locality' ? (g.locality ?? g.name) : null,
   })
   router.push({ name: 'competitions' })

@@ -19,7 +19,19 @@ const initialMode: LocationMode = initialCountry ? 'region' : 'worldwide'
 const mode = useLocalStorage<LocationMode>('competitions:location.mode', initialMode)
 const radius = useLocalStorage<number>('competitions:location.radius', DEFAULT_RADIUS_KM)
 const country = useLocalStorage<string | null>('competitions:location.country', initialCountry)
-const region = useLocalStorage<string | null>('competitions:location.region', null)
+// Any number of the country's provinces or states (none: all of it). Was one,
+// under `location.region`: carried over once.
+function oldRegion(): string[] {
+  try {
+    // Stored as the bare string (no JSON), and removed while it was null.
+    const old = localStorage.getItem('competitions:location.region')
+    localStorage.removeItem('competitions:location.region')
+    return old ? [old] : []
+  } catch {
+    return []
+  }
+}
+const regions = useLocalStorage<string[]>('competitions:location.regions', oldRegion())
 const locality = useLocalStorage<string | null>('competitions:location.locality', null)
 
 // Non-persistent: coords are tied to a fresh user gesture (iOS PWA rule).
@@ -109,12 +121,12 @@ export function useLocationFilter() {
   }
   function setRegion(parts?: {
     country?: string | null
-    region?: string | null
+    regions?: string[]
     locality?: string | null
   }): void {
     if (parts) {
       country.value = parts.country ?? null
-      region.value = parts.region ?? null
+      regions.value = parts.regions ?? []
       locality.value = parts.locality ?? null
     }
     mode.value = 'region'
@@ -146,6 +158,13 @@ export function useLocationFilter() {
       .sort((a, b) => b.count - a.count)
   }
 
+  // A country's provinces or states that have competitions, as stored (AB).
+  function availableRegions(comps: CompetitionListItem[], inCountry: string | null): string[] {
+    const found = new Set<string>()
+    for (const c of comps) if (c.country === inCountry && c.region) found.add(c.region)
+    return [...found]
+  }
+
   // Context-aware predicate. Defensive guards mean filters that point at
   // values absent from `comps` (e.g. TZ-guessed country before backfill) are
   // silently no-op'd, so first-time visitors don't land on an empty list.
@@ -169,15 +188,15 @@ export function useLocationFilter() {
     const has = (key: 'country' | 'region' | 'locality', val: string) =>
       comps.some((c) => c[key] === val)
     const effCountry = country.value && has('country', country.value) ? country.value : null
-    const effRegion = region.value && has('region', region.value) ? region.value : null
+    const effRegions = regions.value.filter((r) => has('region', r))
     const effLocality = locality.value && has('locality', locality.value) ? locality.value : null
-    const effectiveActive = Boolean(effCountry || effRegion || effLocality)
+    const effectiveActive = Boolean(effCountry || effRegions.length || effLocality)
     return {
       predicate(c: CompetitionListItem): boolean {
         // No country yet (e.g. a new submission without a venue): it could be
         // anywhere, so don't hide it behind the guessed default country.
         if (effCountry && c.country && c.country !== effCountry) return false
-        if (effRegion && c.region !== effRegion) return false
+        if (effRegions.length && !effRegions.includes(c.region as string)) return false
         if (effLocality && c.locality !== effLocality) return false
         return true
       },
@@ -189,7 +208,7 @@ export function useLocationFilter() {
     mode,
     radius,
     country,
-    region,
+    regions,
     locality,
     coords,
     locationError,
@@ -202,6 +221,7 @@ export function useLocationFilter() {
     requestPosition,
     filterFor,
     availableCountries,
+    availableRegions,
     isActive,
     MIN_RADIUS_KM,
     MAX_RADIUS_KM,

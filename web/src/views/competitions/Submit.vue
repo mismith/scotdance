@@ -89,7 +89,7 @@ const linkedTo = ref<{ id: string; name: string; date: string } | null>(null)
 const linking = ref(true)
 // The country Competitions is showing (or the phone's), to start on.
 const startingCountry = () =>
-  defaultCountry(filter.country.value ?? guessUserCountry(), filter.region.value)
+  defaultCountry(filter.country.value ?? guessUserCountry(), filter.regions.value.length === 1 ? filter.regions.value[0] : null)
 
 // The organisations it's run by or part of: ones already on ScotDance.app
 // (any; yours first, any other is checked when it's approved), or new ones,
