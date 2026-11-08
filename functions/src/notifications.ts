@@ -521,13 +521,16 @@ interface Summary {
   since: number;
   last: number;
   lines: Record<string, SummaryLine>;
+  /** A placing has sounded in this run. */
+  placingSounded?: boolean;
 }
 
 /**
  * Fits a claimed results alert into the person's run of them for the
  * competition (notifications:summary/{competitionId}/{uid}): the first in a
- * while goes as it is; more within the window replace it, silently, with a
- * summary. Runs of a minute apart are an organiser catching up; live, dances
+ * while goes as it is; more within the window replace it with a summary,
+ * silently, except the run's first placing (after "results are in"), which
+ * sounds. Runs of a minute apart are an organiser catching up; live, dances
  * are further apart than the window, and each alert sounds.
  */
 function summarise(db: Db, competitionName: string | null | undefined, at: number) {
@@ -535,25 +538,28 @@ function summarise(db: Db, competitionName: string | null | undefined, at: numbe
     const line = m.line as SummaryLine;
     // A dance's alert: its age group and dance (or Overall, sharing it).
     const dance = m.key.split('/').slice(1, 3).join(':');
+    const placing = !m.quiet;
     let run: Summary | null = null;
+    let sounds = true;
     await db.child(`notifications:summary/${m.competitionId}/${m.uid}`).transaction((now: Summary | null) => {
       const going = now && typeof now.last === 'number' && at - now.last < SUMMARY_WINDOW_MS;
+      sounds = !going || (placing && !now.placingSounded);
       run = going
-        ? { since: now.since, last: at, lines: { ...now.lines, [dance]: line } }
-        : { since: at, last: at, lines: { [dance]: line } };
+        ? { since: now.since, last: at, lines: { ...now.lines, [dance]: line }, placingSounded: !!now.placingSounded || (placing && sounds) }
+        : { since: at, last: at, lines: { [dance]: line }, placingSounded: placing };
       return run;
     });
     const { since, lines } = run as unknown as Summary;
     const replaces = `${m.competitionId}/results/${m.uid}/${since}`;
     const all = Object.values(lines);
-    if (all.length === 1) return { ...m, replaces, ...(since !== at && { silent: true }) };
+    if (all.length === 1) return { ...m, replaces, ...(!sounds && { silent: true }) };
     const links = new Set(all.map((l) => l.link.split('#')[0]));
     return {
       ...m,
       ...summaryMessage(all, competitionName),
       link: links.size === 1 ? [...links][0] : `/competitions/${m.competitionId}/results`,
       replaces,
-      silent: true,
+      ...(!sounds && { silent: true }),
     };
   };
 }

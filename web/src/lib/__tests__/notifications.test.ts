@@ -560,15 +560,39 @@ describe('result alerts', () => {
       expect(rtdb.read('notifications:summary/c1/u1').since).not.toBe(first)
     })
 
+    it('sounds for the run’s first placing, after "results are in", then goes quiet again', async () => {
+      const { save, results, log } = setup(data(), minuteApart())
+      const handler = results()
+      await save({ [fling]: ['e2'] }, handler)
+      await save({ 'competitions:data/c1/results/g1/sword': ['e1'] }, handler)
+      await save({ 'competitions:data/c1/results/g1/overall': ['e3'] }, handler)
+      expect(u1(log).map((m) => [m.title, !!m.silent, !!m.quiet])).toEqual([
+        ['Highland Fling results are in', false, true],
+        ['Ailsa placed', false, false],
+        ['Ailsa and Iona placed', true, false],
+      ])
+    })
+
+    it('sounds for a placing that corrects "results are in" in the same dance', async () => {
+      const { save, results, log } = setup(data(), minuteApart())
+      const handler = results()
+      await save({ [fling]: ['e2'] }, handler)
+      await save({ [fling]: ['e2', 'e3'] }, handler)
+      expect(u1(log).map((m) => [m.title, !!m.silent])).toEqual([
+        ['Highland Fling results are in', false],
+        ['Iona placed 2nd', false],
+      ])
+    })
+
     it('keeps each person’s run apart', async () => {
       const { save, results, log } = setup(data(), minuteApart())
       const handler = results()
       await save({ [fling]: ['e1'] }, handler)
       await save({ 'competitions:data/c1/results/g1/sword': ['e2'] }, handler)
-      // u2's first is Sword Dance's (they had results are in for Fling, a minute before: a summary).
+      // u2 had "results are in" for Fling: their first placing, a minute on, still sounds.
       expect(log().filter((m) => m.uid === 'u2').map((m) => [m.title, !!m.silent])).toEqual([
         ['Highland Fling results are in', false],
-        ['Mairi placed', true],
+        ['Mairi placed', false],
       ])
     })
   })

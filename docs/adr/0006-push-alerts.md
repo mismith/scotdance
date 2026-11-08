@@ -89,8 +89,14 @@ age group and competition go on the line under (Murray, 2026-10-03).
     is `notifications:summary/{competition}/{uid}`. Pace is the signal, not
     the schedule: live, dances settle further apart than the window and each
     sounds; an organiser catching up after the dancing posts one a minute.
-    A correction after the window comes as a new alert (Murray, 2026-11-07:
-    5 minutes, silent updates are fine).
+    The run's first placing still sounds, when all it had before was
+    "results are in". A correction after the window comes as a new alert
+    (Murray, 2026-11-07: 5 minutes, silent updates are fine).
+  - **Seen alerts come off the phone**: on the page an alert links to (an
+    age group's results, or a competition's for a summary across them), the
+    app removes it from the lock screen and Notification Centre, on opening
+    the page and on coming back to the front (`clearSeenAlerts`). Matched by
+    the link in the alert's data; Android may not keep it, and leaves them.
   - `thread-id` = the competition (iOS groups its alerts); icon
     `ic_stat_scott`, brand blue; an analytics label per kind for delivery
     numbers in the Firebase console.

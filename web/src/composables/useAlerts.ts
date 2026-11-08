@@ -36,8 +36,16 @@ interface MessagingPlugin {
   deleteToken(): Promise<void>
   addListener(event: 'notificationActionPerformed', cb: (e: { notification: { data?: { link?: string } } }) => void): Promise<{ remove: () => void }>
   addListener(event: 'tokenReceived', cb: (e: { token: string }) => void): Promise<{ remove: () => void }>
+  getDeliveredNotifications?(): Promise<{ notifications: DeliveredNotification[] }>
+  removeDeliveredNotifications?(o: { notifications: DeliveredNotification[] }): Promise<void>
   /** Android only. */
   createChannel?(o: { id: string; name: string; description?: string; importance?: 1 | 2 | 3 | 4 | 5; visibility?: -1 | 0 | 1 }): Promise<void>
+}
+/** A notification still on the phone; `data` holds what the server sent (its link), where the phone keeps it. */
+interface DeliveredNotification {
+  id?: string
+  tag?: string
+  data?: { link?: unknown } | null
 }
 type PermissionState = 'granted' | 'denied' | 'prompt' | 'prompt-with-rationale'
 export type PushState = 'unavailable' | 'off' | 'on' | 'blocked'
@@ -142,6 +150,35 @@ export function handleNotificationTaps(open: (link: string) => void) {
   void messaging()?.addListener('notificationActionPerformed', (e) => {
     const link = e.notification.data?.link
     if (link?.startsWith('/')) open(link)
+  })
+}
+
+/**
+ * Alerts still on the phone about the results you're looking at have been
+ * seen: they come off the lock screen and Notification Centre. Matched by
+ * link: an age group's alerts on its page, a summary across age groups on the
+ * competition's results. Android may not keep the link with a notification,
+ * so there it can leave them.
+ */
+export function clearSeenAlerts(path: string) {
+  const plugin = messaging()
+  if (!/^\/competitions\/[^/]+\/results/.test(path) || !plugin?.getDeliveredNotifications || !plugin.removeDeliveredNotifications) return
+  const seenHere = (n: DeliveredNotification) => typeof n.data?.link === 'string' && n.data.link.split('#')[0] === path
+  void plugin
+    .getDeliveredNotifications()
+    .then(({ notifications }) => {
+      const seen = notifications.filter(seenHere)
+      if (seen.length) return plugin.removeDeliveredNotifications?.({ notifications: seen })
+    })
+    .catch(() => {})
+}
+
+/** Clear seen alerts on every page change, and when the app comes back to the front. Call once, with the router. */
+export function clearAlertsOnView(router: { afterEach: (hook: (to: { path: string }) => void) => unknown; currentRoute: { value: { path: string } } }) {
+  if (!isNative) return
+  router.afterEach((to) => clearSeenAlerts(to.path))
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') clearSeenAlerts(router.currentRoute.value.path)
   })
 }
 
