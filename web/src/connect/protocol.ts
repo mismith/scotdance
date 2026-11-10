@@ -94,7 +94,7 @@ export function audienceFor(value: unknown, origin: string, { dev = false } = {}
 
 export type FromTool =
   | { channel: typeof CHANNEL; type: 'send'; item: unknown }
-  | { channel: typeof CHANNEL; type: 'signIn'; audience: unknown }
+  | { channel: typeof CHANNEL; type: 'signIn'; audience: unknown; register?: unknown }
 
 export type ToTool =
   | { type: 'hello' }

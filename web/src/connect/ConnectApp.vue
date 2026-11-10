@@ -53,6 +53,8 @@ function onMessage(e: MessageEvent) {
   if (e.data.type === 'signIn') {
     audience.value = audienceFor(e.data.audience, e.origin, { dev })
     unreadable.value = !audience.value
+    // Asked for from a tool's "Create one": the new-account form first (signed in already, they just continue)
+    if (e.data.register === true) loginStep.value = 'register'
   } else {
     item.value = readItem(e.data.item)
     unreadable.value = !item.value

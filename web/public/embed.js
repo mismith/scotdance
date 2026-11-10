@@ -7,6 +7,7 @@
  *
  *   const me = await ScotDance.signIn({ audience: 'challenge' })
  *   // → { signedIn: true, pass, uid, email, name } or { signedIn: false }
+ *   // { audience, register: true } opens on the new-account form, for a "Create one" button
  *
  * Opens ScotDance.app's own sheet over the page (connect.html, in a
  * full-window iframe). send: sign in if this browser isn't already, pick the
@@ -78,7 +79,10 @@
   }
 
   function signIn(options) {
-    return open({ type: 'signIn', audience: options && options.audience }, { signedIn: false })
+    const request = { type: 'signIn', audience: options && options.audience }
+    // A tool's "Create one" opens straight on the new-account form
+    if (options && options.register) request.register = true
+    return open(request, { signedIn: false })
   }
 
   function open(request, unfinished) {
