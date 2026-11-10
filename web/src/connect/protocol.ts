@@ -70,11 +70,14 @@ export const TOOLS = {
   challenge: {
     name: 'Challenge',
     icon: '/img/tools/challenge.svg',
+    /** Its home, where Account › Tools links */
+    hostname: 'challenge.scotdance.app',
     serves: (hostname: string) => hostname === 'challenge.scotdance.app',
   },
   binder: {
     name: 'Binder',
     icon: '/img/tools/binder.svg',
+    hostname: 'binder.scotdance.app',
     serves: (hostname: string) => hostname === 'binder.scotdance.app' || isStudioSite(hostname),
   },
 } as const
