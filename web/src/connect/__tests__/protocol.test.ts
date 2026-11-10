@@ -17,6 +17,17 @@ describe('isAllowedOrigin', () => {
     expect(isAllowedOrigin('https://scotdance.app/connect')).toBe(false)
   })
 
+  it('takes studios’ own sites on Binder, one name deep, over https', () => {
+    expect(isAllowedOrigin('https://cshd.scotdance.site')).toBe(true)
+    expect(isAllowedOrigin('https://glen-dance.scotdance.site')).toBe(true)
+    expect(isAllowedOrigin('http://cshd.scotdance.site')).toBe(false)
+    expect(isAllowedOrigin('https://scotdance.site')).toBe(false)
+    expect(isAllowedOrigin('https://a.b.scotdance.site')).toBe(false)
+    expect(isAllowedOrigin('https://-x.scotdance.site')).toBe(false)
+    expect(isAllowedOrigin('https://cshd.scotdance.site.evil.com')).toBe(false)
+    expect(isAllowedOrigin('https://cshdscotdance.site')).toBe(false)
+  })
+
   it('takes local sites only while developing', () => {
     expect(isAllowedOrigin('http://localhost:5190')).toBe(false)
     expect(isAllowedOrigin('http://localhost:5190', { dev: true })).toBe(true)
@@ -61,6 +72,10 @@ describe('audienceFor', () => {
     expect(audienceFor('challenge', 'https://challenge.scotdance.app.evil.com')).toBeNull()
     expect(audienceFor('binder', 'https://binder.scotdance.app')).toBe('binder')
     expect(audienceFor('binder', 'https://challenge.scotdance.app')).toBeNull()
+    expect(audienceFor('binder', 'https://cshd.scotdance.site')).toBe('binder')
+    expect(audienceFor('challenge', 'https://cshd.scotdance.site')).toBeNull()
+    expect(audienceFor('binder', 'http://cshd.scotdance.site')).toBeNull()
+    expect(audienceFor('binder', 'https://a.b.scotdance.site')).toBeNull()
   })
 
   it('knows only its tools', () => {

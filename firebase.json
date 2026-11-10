@@ -31,7 +31,7 @@
           "headers": [
             {
               "key": "Content-Security-Policy",
-              "value": "frame-ancestors https://scotdance.app https://*.scotdance.app"
+              "value": "frame-ancestors https://scotdance.app https://*.scotdance.app https://*.scotdance.site"
             }
           ]
         },
@@ -72,7 +72,7 @@
           "headers": [
             {
               "key": "Content-Security-Policy",
-              "value": "frame-ancestors https://scotdance.app https://*.scotdance.app"
+              "value": "frame-ancestors https://scotdance.app https://*.scotdance.app https://*.scotdance.site"
             }
           ]
         },

@@ -31,7 +31,12 @@ export interface ToolItem {
 const MAX_TEXT = 1_000_000
 const MAX_LABEL = 200
 
-/** Sites allowed to embed this page and hand it work: ScotDance.app's own, and local ones while developing. */
+/** A studio's own site on Binder (its ADR 0004): one label in Binder's slug shape, under scotdance.site. */
+const STUDIO_SITE = /^[a-z0-9][a-z0-9-]{0,28}[a-z0-9]\.scotdance\.site$/
+const isStudioSite = (hostname: string) => STUDIO_SITE.test(hostname)
+
+/** Sites allowed to embed this page and hand it work: ScotDance.app's own, studios' own sites on Binder, and local
+ * ones while developing. */
 export function isAllowedOrigin(origin: string, { dev = false } = {}): boolean {
   let url: URL
   try {
@@ -41,6 +46,7 @@ export function isAllowedOrigin(origin: string, { dev = false } = {}): boolean {
   }
   if (url.origin !== origin) return false
   if (url.protocol === 'https:' && (url.hostname === 'scotdance.app' || url.hostname.endsWith('.scotdance.app'))) return true
+  if (url.protocol === 'https:' && isStudioSite(url.hostname)) return true
   return dev && url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
 }
 
@@ -55,13 +61,22 @@ export function readItem(value: unknown): ToolItem | null {
 }
 
 /**
- * Tools that may ask who you are, each from its own site only: a pass for
+ * Tools that may ask who you are, each from its own sites only: a pass for
  * Challenge goes to challenge.scotdance.app and nowhere else (or a local
- * site while developing).
+ * site while developing). Binder's also goes to studios' own sites
+ * (<slug>.scotdance.site), where families sign in to the same Binder.
  */
 export const TOOLS = {
-  challenge: { name: 'Challenge', hostname: 'challenge.scotdance.app', icon: '/img/tools/challenge.svg' },
-  binder: { name: 'Binder', hostname: 'binder.scotdance.app', icon: '/img/tools/binder.svg' },
+  challenge: {
+    name: 'Challenge',
+    icon: '/img/tools/challenge.svg',
+    serves: (hostname: string) => hostname === 'challenge.scotdance.app',
+  },
+  binder: {
+    name: 'Binder',
+    icon: '/img/tools/binder.svg',
+    serves: (hostname: string) => hostname === 'binder.scotdance.app' || isStudioSite(hostname),
+  },
 } as const
 export type Audience = keyof typeof TOOLS
 
@@ -70,7 +85,7 @@ export function audienceFor(value: unknown, origin: string, { dev = false } = {}
   const audience = value as Audience
   if (!isAllowedOrigin(origin, { dev })) return null
   const { hostname, protocol } = new URL(origin)
-  if (protocol === 'https:' && hostname === TOOLS[audience].hostname) return audience
+  if (protocol === 'https:' && TOOLS[audience].serves(hostname)) return audience
   return dev && protocol === 'http:' ? audience : null
 }
 
