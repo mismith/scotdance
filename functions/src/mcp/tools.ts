@@ -7,6 +7,7 @@ import type { Access } from './types';
 import { dancersView, dancesView, DANCER_CAP, findView, resultsView, scheduleView, staffView } from './view';
 import { defineTool, READ, register, type Tool } from './toolkit';
 import { organisationTools } from './organisations';
+import { submitTools } from './submit';
 import { writeTools } from './writeTools';
 
 export { explain, READ, WRITE, REMOVE, defineTool, register, ToolError, type Tool } from './toolkit';
@@ -119,5 +120,5 @@ const tools = [
 /** Every tool, for one session. More are added to the list above. */
 export function registerTools(server: McpServer, access: Access, session: Session): void {
   void access;
-  for (const tool of [...tools, ...writeTools, ...organisationTools]) register(server, session, tool as Tool<z.ZodRawShape>);
+  for (const tool of [...tools, ...writeTools, ...organisationTools, ...submitTools]) register(server, session, tool as Tool<z.ZodRawShape>);
 }
