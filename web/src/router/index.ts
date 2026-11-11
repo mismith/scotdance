@@ -26,6 +26,8 @@ declare module 'vue-router' {
      * profile tabs). App skips GlobalBottomNav so the two don't stack.
      */
     ownsBottomNav?: boolean
+    /** No sidebar, bars or tab bar: the page shows only itself (the AI assistant consent page). */
+    bare?: boolean
     /**
      * Human-readable name for this route. Used as the page title fallback
      * and the back-pill label when navigating away. Routes with `icon` set
@@ -244,7 +246,7 @@ const routes: RouteRecordRaw[] = [
     path: '/connect-ai',
     name: 'connect-ai',
     component: () => import('@/views/Connect.vue'),
-    meta: { title: 'Connect an AI assistant', ownsBottomNav: true, noindex: true },
+    meta: { title: 'Connect an AI assistant', bare: true, noindex: true },
   },
   {
     path: '/competitions/:competitionId/manage',

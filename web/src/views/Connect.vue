@@ -2,9 +2,9 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { Bot, LoaderCircle, ShieldOff, TimerOff, TriangleAlert } from '@lucide/vue'
-import AppBar from '@/components/nav/AppBar.vue'
+import { Bot, Check, LoaderCircle, ShieldOff, TimerOff, TriangleAlert, X } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
+import LogoMark from '@/components/LogoMark.vue'
 import Button from '@/components/ui/Button.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { answerRequest, lookUpRequest, type AssistantRequest } from '@/lib/assistants'
@@ -48,6 +48,9 @@ onMounted(async () => {
 })
 watch(() => [authReady.value, auth.isSignedIn, requestId.value, me.accessKnown, me.canManageAny], load, { immediate: true })
 
+const can = ['Look up and change the competitions and organisations you manage']
+const cannot = ['Invite or remove admins', 'Delete a competition']
+
 const known = computed(() => asked.value?.known ?? false)
 const name = computed(() => asked.value?.client.name ?? '')
 const host = computed(() => asked.value?.client.host ?? '')
@@ -74,8 +77,11 @@ async function answer(deny?: true) {
 
 <template>
   <div class="flex min-h-dvh flex-col">
-    <AppBar title="Connect an AI assistant" show-title :fallback="{ to: { name: 'home' }, label: 'Home' }" />
-    <main class="mx-auto w-full max-w-lg flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-[calc(var(--chrome-bottom)+1.5rem)]">
+    <main class="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-[max(1.5rem,var(--safe-top))]">
+      <div class="text-title flex items-center justify-center gap-3 pt-4">
+        <LogoMark class="text-primary size-10" />
+        <span>ScotDance.app</span>
+      </div>
       <div v-if="state === 'loading'" class="flex justify-center py-20" role="status" aria-busy="true">
         <LoaderCircle class="text-muted-foreground size-8 animate-spin" />
       </div>
@@ -113,14 +119,23 @@ async function answer(deny?: true) {
         <EmptyState
           :icon="Bot"
           :title="known ? `Let ${name} manage your competitions?` : `Let ${host} manage your competitions?`"
-          description="This AI assistant can look up and change the competitions and organisations you manage, the same as you can. It can’t invite or remove admins, or delete a competition."
         >
+          <template #body>
+            <ul class="mx-auto w-full max-w-xs space-y-2 text-left text-base">
+              <li v-for="item in can" :key="item" class="flex items-start gap-2.5">
+                <Check class="text-primary mt-0.5 size-5 shrink-0" /><span><span class="sr-only">Can: </span>{{ item }}</span>
+              </li>
+              <li v-for="item in cannot" :key="item" class="text-muted-foreground flex items-start gap-2.5">
+                <X class="mt-0.5 size-5 shrink-0" /><span><span class="sr-only">Can’t: </span>{{ item }}</span>
+              </li>
+            </ul>
+          </template>
           <Button type="submit" variant="primary" size="lg" :busy="busy">Allow</Button>
           <Button variant="plain" size="lg" :disabled="busy" @click="answer(true)">Not now</Button>
           <template #footer>
             <span v-if="problem" class="text-destructive block font-medium" role="alert">{{ problem }}</span>
             <span v-if="!known" class="block font-medium">It calls itself “{{ name }}”. ScotDance.app doesn’t know it, so only allow it if you set it up yourself.</span>
-            <span class="block">You can see what it changed, and disconnect it, any time in Account.</span>
+            <span class="block">See its changes or disconnect it in Account.</span>
           </template>
         </EmptyState>
       </form>

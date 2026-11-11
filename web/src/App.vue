@@ -53,6 +53,10 @@ const showGlobalNav = computed(
   () => !route.matched.some((r) => r.meta.ownsBottomNav),
 )
 
+// Pages that are only themselves (the AI assistant consent page) opt out of
+// all the app's navigation with `meta.bare`: no sidebar, bars or tab bar.
+const bare = computed(() => route.matched.some((r) => r.meta.bare))
+
 // Appearance and text size preferences (Settings) live on <html>.
 useDisplayPrefs()
 
@@ -71,11 +75,11 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
 </script>
 
 <template>
-  <AppSidebar />
-  <div class="flex min-h-dvh flex-col pr-(--chrome-right) pl-(--chrome-left)">
+  <AppSidebar v-if="!bare" />
+  <div :class="['flex min-h-dvh flex-col', bare ? 'pr-(--safe-right) pl-(--safe-left)' : 'pr-(--chrome-right) pl-(--chrome-left)']">
     <PageStack />
 
-    <GlobalBottomNav v-if="showGlobalNav" />
+    <GlobalBottomNav v-if="showGlobalNav && !bare" />
   </div>
   <!-- The bars' frosted glass, one sheet each behind whichever page's bars
        are showing, so it doesn't come and go as pages slide. The top one is
@@ -85,6 +89,7 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
        its foot isn't a heavy band. The tab bar's rises from the foot of the
        screen to a third of the way up the pill. -->
   <div
+    v-if="!bare"
     :class="[
       'paper pointer-events-none fixed inset-x-chrome-0 top-0 z-30 h-[calc(var(--safe-top)+4.5rem)] transition-[opacity,backdrop-filter] duration-(--dur-base) [mask-image:linear-gradient(to_bottom,black_calc(100%-1rem),rgb(0_0_0/0.5)_calc(100%-0.75rem),rgb(0_0_0/0.2)_calc(100%-0.5rem),rgb(0_0_0/0.05)_calc(100%-0.25rem),transparent)]',
       !topBarFrosted && 'opacity-0 [backdrop-filter:none]!',
@@ -92,6 +97,7 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
     aria-hidden="true"
   />
   <div
+    v-if="!bare"
     class="paper pointer-events-none fixed inset-x-chrome-0 -bottom-10 z-30 hidden h-[calc(2.75rem+max(0.5rem,var(--safe-bottom))+2.5rem)] [mask-image:linear-gradient(to_bottom,transparent,black_0.75rem)] lg:hidden! [:root:has(:is([data-tabbar],[data-bar-copy=tabbar]))_&]:block"
     aria-hidden="true"
   />

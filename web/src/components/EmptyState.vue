@@ -43,6 +43,7 @@ withDefaults(
         {{ description }}
       </p>
     </div>
+    <slot name="body" />
     <!-- Stacked, the same width, so they line up however many there are. -->
     <div
       v-if="$slots.default"
