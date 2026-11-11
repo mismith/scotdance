@@ -51,6 +51,11 @@ Rules for `via: 'mcp'`:
   grants, as anyone's would.
 - It cannot write `users:permissions`, `competitions:permissions`, `users:tools`, `users:connections`, invites
   (making or accepting one), or delete a whole competition. Everything else a person with a grant can change, it can.
+- It cannot write the person's own account: `users/{uid}`, favourites, alerts off, push tokens, dancer colours, profile
+  views. Reading them is fine. What stays writable besides competition and organisation data: `users:inbox/{uid}` (a
+  later slice files dancer lists there for the person to preview in Import dancers), `competitions:submissions` (a
+  later slice adds competitions through it), and Storage uploads (create-only, size and type limited, for the staff,
+  link and sheet files a competition holds).
 - The sign-in records have no rule that gives a client access. (A system admin in person still reads and deletes
   under the tree-wide grant, though not write: `.validate` is false. What is there is hashes and pending requests.)
 - The callables behind the approval page and Account turn away a token with `via: 'mcp'`.

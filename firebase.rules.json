@@ -131,7 +131,7 @@
         "$uid": {
           "$day": {
             "$dancerId": {
-              ".write": "auth !== null && auth.uid === $uid", // is the ACCOUNT itself
+              ".write": "auth !== null && auth.token.via !== 'mcp' && auth.uid === $uid", // is the ACCOUNT itself (not an ASSISTANT)
               ".validate": "newData.val() === true && $day.matches(/^\\d{4}-\\d{2}-\\d{2}$/)" // TRUE, on a DAY
             }
           }
@@ -237,19 +237,19 @@
       "users": {
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF
-          ".write": "auth !== null && auth.uid === $userId" // is SELF
+          ".write": "auth !== null && auth.token.via !== 'mcp' && auth.uid === $userId" // is SELF
         }
       },
       "users:favorites": {
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF
-          ".write": "auth !== null && auth.uid === $userId" // is SELF
+          ".write": "auth !== null && auth.token.via !== 'mcp' && auth.uid === $userId" // is SELF
         }
       },
       "users:alertsOff": {
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF
-          ".write": "auth !== null && auth.uid === $userId", // is SELF
+          ".write": "auth !== null && auth.token.via !== 'mcp' && auth.uid === $userId", // is SELF
           // A favourite dancer with their alerts turned off (ADR 0008).
           "dancers": {
             "$dancerId": { ".validate": "newData.val() === true" }
@@ -260,13 +260,13 @@
       "users:tokens": {
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF
-          ".write": "auth !== null && auth.uid === $userId" // is SELF: device push tokens
+          ".write": "auth !== null && auth.token.via !== 'mcp' && auth.uid === $userId" // is SELF: device push tokens
         }
       },
       "users:dancerColors": {
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF
-          ".write": "auth !== null && auth.uid === $userId", // is SELF
+          ".write": "auth !== null && auth.token.via !== 'mcp' && auth.uid === $userId", // is SELF
           // A colour ('dancer-3' or '#rrggbb'), or a tartan woven in one: the
           // builder's sett (up to 14 stripes in 4 widths) and the colour of
           // each letter in it but K and W (see web/src/lib/tartan.ts).

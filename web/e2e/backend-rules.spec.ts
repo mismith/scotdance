@@ -294,6 +294,7 @@ test('an assistant gets its person’s own grants, never a system admin’s, and
   await dbSet(`users:tools/${org.uid}/binder`, { linkedAt: 1, signedInAt: 1 })
   await dbSet(`users:connections/${org.uid}/c1`, { id: 'c1', client: { id: 'x', name: 'Claude' }, scope: 'manage', createdAt: 1, lastUsedAt: 1 })
   await dbSet('oauth:tokens/hash1', { uid: org.uid, connection: 'c1', scope: 'manage', expiresAt: 1 })
+  const botSubmission = uid('rules-botsub')
   const orgBot = await assistant(org)
   const bossBot = await assistant(boss)
   try {
@@ -330,6 +331,26 @@ test('an assistant gets its person’s own grants, never a system admin’s, and
     await refused('read the sign-in records', as(orgBot, 'GET', 'oauth:tokens'))
     await refused('write a token', as(orgBot, 'PUT', 'oauth:tokens/forged', { uid: org.uid }))
 
+    // Their own account is theirs, not the assistant's: it can look, not touch
+    await allowed('the person writes their account record', as(org, 'PUT', `users/${org.uid}/scratch`, { at: 1 }))
+    await allowed('the person favourites a dancer', as(org, 'PUT', `users:favorites/${org.uid}/dancers/d1`, true))
+    await allowed('the person saves a push token', as(org, 'PUT', `users:tokens/${org.uid}/t1`, { at: 1 }))
+    await allowed('the person turns a dancer’s alerts off', as(org, 'PUT', `users:alertsOff/${org.uid}/dancers/d1`, true))
+    await allowed('the person picks a dancer’s colour', as(org, 'PUT', `users:dancerColors/${org.uid}/d1`, 'dancer-3'))
+    await allowed('assistant reads the record', as(orgBot, 'GET', `users/${org.uid}`))
+    await allowed('assistant reads the favourites', as(orgBot, 'GET', `users:favorites/${org.uid}`))
+    await refused('assistant writes the account record', as(orgBot, 'PUT', `users/${org.uid}/scratch`, { at: 2 }))
+    await refused('assistant writes the account record, at the top', as(orgBot, 'PATCH', '', { [`users/${org.uid}/scratch`]: { at: 2 } }))
+    await refused('assistant favourites a dancer', as(orgBot, 'PUT', `users:favorites/${org.uid}/dancers/d2`, true))
+    await refused('assistant saves a push token', as(orgBot, 'PUT', `users:tokens/${org.uid}/t2`, { at: 2 }))
+    await refused('assistant turns alerts off', as(orgBot, 'PUT', `users:alertsOff/${org.uid}/dancers/d2`, true))
+    await refused('assistant picks a colour', as(orgBot, 'PUT', `users:dancerColors/${org.uid}/d2`, 'dancer-4'))
+    await refused('assistant records a profile view', as(orgBot, 'PUT', `dancers:views/${org.uid}/2026-11-11/d1`, true))
+    await allowed('the person records a profile view', as(org, 'PUT', `dancers:views/${org.uid}/2026-11-11/d1`, true))
+    // Left open on purpose: Import dancers previews what an assistant files here, and a competition is added by submitting it
+    await allowed('assistant files a dancer list in the inbox', as(orgBot, 'PUT', `users:inbox/${org.uid}/bot-item`, { kind: 'dancers', source: 'assistant', name: 'List', text: 'a', sentAt: 1 }))
+    await allowed('assistant submits a competition', as(orgBot, 'PUT', `competitions:submissions/${botSubmission}`, { competition: { name: 'Rules bot sub', date: '2027-01-01', location: 'Calgary, AB' }, contact: { email: 'p@example.test' }, submitted: new Date().toISOString() }))
+
     // The person themselves: the same things stay theirs
     await allowed('the person invites', as(org, 'PUT', `competitions:data/${pub}/invites/person-invite`, { created: new Date().toISOString(), payload: { email: 'friend@example.test' } }))
     await allowed('the person reads the assistants connected', as(org, 'GET', `users:connections/${org.uid}`))
@@ -338,6 +359,10 @@ test('an assistant gets its person’s own grants, never a system admin’s, and
     await refused('the person writes a token', as(org, 'PUT', 'oauth:tokens/forged', { uid: org.uid }))
     await allowed('the person deletes a competition of theirs', as(boss, 'DELETE', `competitions/${scratch}`))
   } finally {
+    await dbRemove(`competitions:submissions/${botSubmission}`)
+    await dbRemove(`users:inbox/${org.uid}`)
+    await dbRemove(`users:tokens/${org.uid}`)
+    await dbRemove(`dancers:views/${org.uid}`)
     await dbRemove(`competitions:data/${pub}/invites/person-invite`)
     await dbRemove(`competitions/${scratch}`)
     await dbRemove(`users:tools/${org.uid}`)
