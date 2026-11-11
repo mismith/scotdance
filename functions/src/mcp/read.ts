@@ -74,3 +74,16 @@ export async function readCompetition(session: Session, competitionId: string, n
     throw refused(error, competitionId);
   }
 }
+
+export { assertManages };
+
+/** Which parts of this competition follow a primary one (ADR 0007), and the primary's name */
+export async function readLinkLocks(session: Session, competitionId: string): Promise<{ sync: Record<string, boolean>; primary: string }> {
+  const sync = ((await session.read(`competitionLinks:sync/${competitionId}`)) ?? {}) as Record<string, unknown>;
+  const synced = Object.fromEntries(Object.entries(sync).map(([k, v]) => [k, v === true]));
+  if (!Object.values(synced).some(Boolean)) return { sync: synced, primary: '' };
+  const linkId = await session.read(`competitionLinks:of/${competitionId}`);
+  const link = typeof linkId === 'string' ? ((await session.read(`competitionLinks/${linkId}`)) as { primary?: string } | null) : null;
+  const name = link?.primary ? await session.read(`competitions/${link.primary}/name`) : null;
+  return { sync: synced, primary: typeof name === 'string' && name ? name : 'the primary competition' };
+}

@@ -146,7 +146,7 @@ export class NotFound extends ToolError {}
 // ---------- get_competition
 
 /** What each part of a linked competition covers, as the app words it (ADR 0007) */
-const SYNC_PARTS: Record<string, string> = {
+export const SYNC_PARTS: Record<string, string> = {
   about: 'description and logo',
   venue: 'venue, address and place',
   registration: 'registration address and dates',

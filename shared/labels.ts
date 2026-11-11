@@ -69,3 +69,7 @@ export function namer(data: RawData) {
     },
   };
 }
+
+/** A Championship, Pre-Championship or Premiership class, going by its names (not plain "Premier"). */
+export const isChampionshipName = (...names: Array<string | null | undefined>) =>
+  names.some((n) => /\b(pre[- ]?)?championships?\b|\bpremiership\b/i.test(n ?? ""));
