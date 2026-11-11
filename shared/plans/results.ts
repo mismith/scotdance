@@ -238,3 +238,15 @@ export function planPoint(
     gave: i < 0,
   };
 }
+
+/** Set the dancers who got a championship point in one dance (`[]`: none). Not a toggle, as a tap is. */
+export function planSetPoints(
+  state: CompetitionState,
+  groupId: string,
+  danceId: string,
+  ids: string[],
+): Plan {
+  return plan(`Set the championship points in ${resultName(state, groupId, danceId)}`, {
+    [`points/${groupId}/${danceId}/combined`]: ids.length ? ids : null,
+  });
+}

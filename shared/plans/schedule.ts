@@ -409,3 +409,123 @@ export const moveRow = (
   b.dances ??= {};
   insertAt(b.dances, d, row, index);
 };
+
+// --- Whole days
+
+/**
+ * Can this age group (or danced trophy event) go in a cell of this dance's row? A dance no age group has switched on
+ * takes any; a trophy event only goes in its own dance. The builder offers exactly these.
+ */
+export function isEligible(
+  data: Pick<CompetitionState["data"], "dances" | "trophyEvents">,
+  danceId: string | undefined,
+  groupId: string,
+): boolean {
+  const trophyEvent = data.trophyEvents?.[groupId];
+  if (trophyEvent) return !!danceId && trophyEvent.danceId === danceId;
+  const groups = danceId ? data.dances?.[danceId]?.groupIds : undefined;
+  return !groups || !Object.values(groups).some(Boolean) || !!groups[groupId];
+}
+
+/** A platform's cell, as ids */
+export interface CellSpec {
+  groupIds: string[];
+  judgeIds: string[];
+}
+/** A row: a dance (danceId) or a line of its own (name); platform cells only for a dance */
+export interface RowSpec {
+  id?: string;
+  danceId?: string;
+  name?: string;
+  description?: string;
+  cells: Record<string, CellSpec>;
+}
+export interface EventSpec {
+  id?: string;
+  name: string;
+  description?: string;
+  rows: RowSpec[];
+}
+export interface SessionSpec {
+  id?: string;
+  name: string;
+  description?: string;
+  events: EventSpec[];
+}
+export interface DaySpec {
+  name?: string;
+  date?: string;
+  description?: string;
+  /** Left out: the day's sessions stay as they are */
+  sessions?: SessionSpec[];
+}
+
+/**
+ * Put a day's sessions, events, rows and cells exactly as given (ids kept where given, new ones made for the rest;
+ * anything not listed goes), numbering siblings in the order given. A day not found is made, named and dated as
+ * "Add day" would. Fields the builder doesn't touch on a record that stays are kept. Returns the day's id.
+ */
+export function replaceDay(
+  s: RawSchedule,
+  env: Pick<ScheduleEnv, "newId" | "competitionDate">,
+  dayId: string | null,
+  spec: DaySpec,
+): string {
+  let id = dayId && s.days?.[dayId] ? dayId : null;
+  if (!id) {
+    id = dayId ?? env.newId();
+    addDay(s, id, nextDay(s, env.competitionDate));
+  }
+  const day = s.days![id];
+  if (spec.date !== undefined) setDayDate(s, id, spec.date);
+  if (spec.name !== undefined) day.name = spec.name;
+  if (spec.description !== undefined) {
+    if (spec.description) day.description = spec.description;
+    else delete day.description;
+  }
+
+  const text = (rec: { description?: string }, v: string | undefined) => {
+    if (v) rec.description = v;
+    else delete rec.description;
+  };
+  if (!spec.sessions) return id;
+  const blocks: Record<string, SBlock> = {};
+  spec.sessions.forEach((sp, i) => {
+    const bid = sp.id ?? env.newId();
+    const prev = day.blocks?.[bid];
+    const block: SBlock = { ...prev, order: i, name: sp.name };
+    text(block, sp.description);
+    const events: Record<string, SEvent> = {};
+    sp.events.forEach((ep, j) => {
+      const eid = ep.id ?? env.newId();
+      const event: SEvent = { ...prev?.events?.[eid], order: j, name: ep.name };
+      text(event, ep.description);
+      const dances: Record<string, SDance> = {};
+      ep.rows.forEach((rp, k) => {
+        const rid = rp.id ?? env.newId();
+        const row: SDance = { ...prev?.events?.[eid]?.dances?.[rid], order: k };
+        delete row.danceId;
+        delete row.name;
+        if (rp.danceId) row.danceId = rp.danceId;
+        else row.name = rp.name ?? "";
+        text(row, rp.description);
+        const platforms: Record<string, Assignment> = {};
+        for (const [pid, cell] of Object.entries(rp.cells)) {
+          platforms[pid] = {
+            ...prev?.events?.[eid]?.dances?.[rid]?.platforms?.[pid],
+            orderedGroupIds: [...cell.groupIds],
+            orderedJudgeIds: [...cell.judgeIds],
+          };
+        }
+        row.platforms = platforms;
+        dances[rid] = row;
+      });
+      event.dances = dances;
+      events[eid] = event;
+    });
+    block.events = events;
+    blocks[bid] = block;
+  });
+  day.blocks = blocks;
+  return id;
+}

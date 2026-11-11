@@ -22,6 +22,7 @@ export interface Parts {
   platforms?: unknown;
   schedule?: unknown;
   results?: unknown;
+  points?: unknown;
   draws?: unknown;
 }
 
@@ -349,8 +350,8 @@ export function scheduleView(parts: Parts, day?: string): Json {
   const platformNames = named(m.platforms, (p) => p.name);
   const danceNames = named(m.dances, (d) => d.label);
   const ids = (v: unknown) => (Array.isArray(v) ? v : Object.values(rec(v))).filter((x) => x != null && x !== '').map(String);
-  // Gaps left between age groups on a platform have all-digit ids
-  const realIds = (v: unknown) => ids(v).filter((id) => !/^\d+$/.test(id));
+  // A gap left between age groups on a platform has an all-digit id. Kept, so what is read can be saved back as it was.
+  const refs = (v: unknown, from: Map<string, string>) => ids(v).map((id) => (/^\d+$/.test(id) ? { id, gap: true } : ref(id, from)));
   let days = ordered(rec(parts.schedule).days, 'order');
   if (day) days = [pick(days, day, (d) => `${str(d.name)} ${isoDate(d.date) ?? ''}`.trim() || d.id, 'day')];
   return compact({
@@ -359,7 +360,7 @@ export function scheduleView(parts: Parts, day?: string): Json {
       name: str(d.name),
       date: isoDate(d.date),
       description: str(d.description),
-      blocks: ordered(d.blocks, 'order').map((b) => ({
+      sessions: ordered(d.blocks, 'order').map((b) => ({
         id: b.id,
         name: str(b.name),
         description: str(b.description),
@@ -369,14 +370,16 @@ export function scheduleView(parts: Parts, day?: string): Json {
           description: str(e.description),
           dances: ordered(e.dances, 'order').map((sd) => ({
             id: sd.id,
-            name: str(sd.name) || (sd.danceId ? danceNames.get(str(sd.danceId)) : undefined),
+            // A dance row names its dance; any other row (Registration, March Past) has its own name
             danceId: str(sd.danceId),
+            dance: sd.danceId ? danceNames.get(str(sd.danceId)) ?? null : undefined,
+            name: sd.danceId ? undefined : str(sd.name),
             description: str(sd.description),
             platforms: Object.entries(rec(sd.platforms)).map(([pid, p]) => ({
               id: pid,
               name: platformNames.get(pid) ?? null,
-              ageGroups: realIds(rec(p).orderedGroupIds).map((id) => ref(id, names)),
-              judges: realIds(rec(p).orderedJudgeIds).map((id) => ref(id, staffNames)),
+              ageGroups: refs(rec(p).orderedGroupIds, names),
+              judges: refs(rec(p).orderedJudgeIds, staffNames),
             })),
           })),
         })),
@@ -395,15 +398,24 @@ const isPlaceholder = (id: string) => /^\d+$/.test(id);
 type Raw = unknown;
 
 /** A list of placings, resolved to numbers and names */
-function placed(raw: Raw, byId: Map<string, Model['dancers'][number]>): Json {
+export function placed(raw: Raw, byId: Map<string, Model['dancers'][number]>): Json {
   if (raw === false) return { state: 'no results', meaning: 'Marked as having no results (none placed).' };
   if (!Array.isArray(raw) || !raw.length) return { state: 'not entered' };
   const places = parsePlacings(raw);
   const reverse = typeof raw[0] === 'string' && raw[0].startsWith('reverse:') ? Number.parseInt(raw[0].slice(8), 10) : null;
   const counts = new Map<number, number>();
   for (const p of places.values()) counts.set(p, (counts.get(p) ?? 0) + 1);
+  const numbers: Array<string | string[]> = [];
+  let last: number | null = null;
   const rows = [...places.entries()].map(([id, place]) => {
     const d = byId.get(id);
+    // The same list save_results takes: in the order listed, a tie as an inner list
+    const tag = d?.number ?? (isPlaceholder(id) ? '?' : id);
+    if (numbers.length && place === last) {
+      const before = numbers[numbers.length - 1];
+      numbers[numbers.length - 1] = Array.isArray(before) ? [...before, tag] : [before, tag];
+    } else numbers.push(tag);
+    last = place;
     return {
       place,
       tied: (counts.get(place) ?? 0) > 1 ? true : undefined,
@@ -417,12 +429,13 @@ function placed(raw: Raw, byId: Map<string, Model['dancers'][number]>): Json {
   return compact({
     state: rows.some((x) => x.standIn) ? 'entered, with a ? to fix' : 'entered',
     reversedFrom: reverse && reverse > 0 ? reverse : undefined,
+    numbers,
     placings: rows,
   });
 }
 
 /** A list of callbacks (who danced on), by number */
-function called(raw: Raw, byId: Map<string, Model['dancers'][number]>): Json {
+export function called(raw: Raw, byId: Map<string, Model['dancers'][number]>): Json {
   if (raw === false) return { state: 'no results', meaning: 'Marked “No callbacks”.' };
   if (!Array.isArray(raw) || !raw.length) return { state: 'not entered' };
   const ids = [...parsePlacings(raw).keys()];
@@ -430,7 +443,7 @@ function called(raw: Raw, byId: Map<string, Model['dancers'][number]>): Json {
     .map((id) => ({ id, d: byId.get(id) }))
     .sort((a, b) => compareNumbers(a.d?.number ?? '~', b.d?.number ?? '~'))
     .map(({ id, d }) => ({ number: d?.number, name: d?.name, entryId: d ? id : undefined, standIn: !d && isPlaceholder(id) ? true : undefined, missing: !d && !isPlaceholder(id) ? true : undefined }));
-  return compact({ state: 'entered', called: rows });
+  return compact({ state: 'entered', numbers: rows.map((r) => r.number ?? (r.standIn ? '?' : '')), called: rows });
 }
 
 /** Placings rows listed in one answer before the rest are only summarised */
@@ -439,6 +452,7 @@ export const RESULT_ROW_CAP = 400;
 export const RESULT_KEY = [
   '“state”: entered, no results (the organiser marked none placed), or not entered yet.',
   '“tied”: shares the place with another. “reversedFrom”: places were announced from that place up to 1st (championships).',
+  '“numbers” is the placing order exactly as save_results takes it (a tie is an inner list; with reversedFrom, in the order announced).',
   '“standIn”: a ? the organiser typed for a dancer not yet matched, to fix in Manage; “missing”: the entry has been removed.',
 ].join(' ');
 

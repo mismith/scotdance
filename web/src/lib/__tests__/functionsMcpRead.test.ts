@@ -131,14 +131,16 @@ describe('get_staff and get_schedule', () => {
     assert.deepEqual(out.pipers.map((j: Json) => j.id), ['s3'])
     assert.deepEqual(out.platforms.map((p: Json) => p.name), ['Platform A', 'Platform B'])
   })
-  test('the schedule resolves names, drops gaps, and can be narrowed to a day', () => {
+  test('the schedule resolves names, keeps gaps, and can be narrowed to a day', () => {
     const out = scheduleView(parts) as Json
     assert.deepEqual(out.days.map((d: Json) => d.name), ['Saturday', 'Sunday'])
-    const dance = out.days[0].blocks[0].events[0].dances[0]
-    assert.equal(dance.name, 'Highland Fling (4)')
+    const dance = out.days[0].sessions[0].events[0].dances[0]
+    assert.equal(dance.dance, 'Highland Fling (4)')
+    assert.equal(dance.name, undefined)
     const [a, b] = dance.platforms
-    assert.deepEqual(a.ageGroups.map((g: Json) => g.id), ['g2', 'g3', 't1'])
-    assert.equal(a.ageGroups[2].name, 'Dancer of the Day (trophy event)')
+    assert.deepEqual(a.ageGroups.map((g: Json) => g.id), ['g2', '1731000000000', 'g3', 't1'])
+    assert.equal(a.ageGroups[1].gap, true)
+    assert.equal(a.ageGroups[3].name, 'Dancer of the Day (trophy event)')
     assert.deepEqual(a.judges, [{ id: 's1', name: 'Aileen Robertson' }])
     assert.equal(b.name, 'Platform B')
     assert.deepEqual((scheduleView(parts, 'sunday') as Json).days.map((d: Json) => d.id), ['day2'])
