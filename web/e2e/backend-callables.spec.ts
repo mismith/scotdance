@@ -37,8 +37,12 @@ test('the callables are found', () => {
 })
 
 test('a system admin in person is let in to a system admin utility, and their assistant is turned away from every callable', async () => {
-  const person = await callFunction('findCapitals', {}, boss)
-  expect(person.status, JSON.stringify(person.error)).toBe(200)
+  // (A cheap one: the check passes, then it finds there is no such competition. Not one that scans every competition: the functions emulator has one worker.)
+  const person = await callFunction('sendMorningSummary', { competitionId: 'no-such-competition' }, boss)
+  expect(person.error?.status, JSON.stringify(person.error)).not.toBe('PERMISSION_DENIED')
+  const stranger = await account(`${uid('callables-stranger')}@example.test`)
+  const refusedStranger = await callFunction('sendMorningSummary', { competitionId: 'no-such-competition' }, stranger)
+  expect(refusedStranger.error?.status).toBe('PERMISSION_DENIED')
 
   for (const name of CALLABLES) {
     const answer = await callFunction(name, { audience: 'challenge', competitionId: 'x', request: 'x', name: 'x' }, bossBot)
