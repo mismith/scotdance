@@ -36,6 +36,8 @@ export class DatabaseError extends Error {
 export interface Session {
   uid: string;
   connection: string;
+  /** The assistant's name, as it named itself (shown in the change log) */
+  client: string;
   read(path: string, query?: Query): Promise<unknown>;
   write(path: string, value: unknown): Promise<void>;
   /** Several writes at once, by path (null removes), atomically */
@@ -112,6 +114,7 @@ export function sessionFor(deps: Deps, access: Access): Session {
   return {
     uid: access.uid,
     connection: access.connection,
+    client: access.client.name,
     read: (path, query) => call('GET', path, undefined, query),
     write: async (path, value) => { await call('PUT', path, value); },
     update: async (values) => { await call('PATCH', '', values); },

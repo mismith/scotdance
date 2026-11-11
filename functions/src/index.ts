@@ -29,6 +29,7 @@ import { UNLINK_URLS, getOnToolPass, getOnUnlinkTool } from './toolPass';
 import { database, https, request } from './utility/triggers';
 import { mcpApp } from './mcp/app';
 import * as AssistantConnections from './oauth/callables';
+import { sweepChanges } from './mcp/changes';
 import { runtime as oauthRuntime } from './oauth/runtime';
 import { rtdbStore } from './oauth/store';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
@@ -137,10 +138,12 @@ export const mcp = request({ timeoutSeconds: 60, memory: '512MiB' }).onRequest((
 export const connectionRequest = https().onCall(AssistantConnections.onConnectionRequest);
 export const approveConnection = https().onCall(AssistantConnections.onApproveConnection);
 export const endConnection = https().onCall(AssistantConnections.onEndConnection);
-// The database keeps records until told otherwise: clear what has expired once a day.
-export const sweepOauth = onSchedule({ schedule: '17 4 * * *', timeZone: 'UTC' }, async () => {
+// The database keeps records until told otherwise: once a day, clear the sign-in records that have expired and the
+// change-log entries older than 60 days.
+export const sweepAssistants = onSchedule({ schedule: '17 4 * * *', timeZone: 'UTC' }, async () => {
   const swept = await AssistantConnections.sweepExpired();
-  console.log(`[oauth] swept ${swept} expired records`);
+  const changes = await sweepChanges(appConfig.db);
+  console.log(`[assistants] swept ${swept} expired sign-in records and ${changes} old changes`);
 });
 export const competitionStaffSync =database().ref(`/${env}/competitions:data/{competitionId}/staff/{staffId}`)
   .onWrite(Links.getOnStaffWritten(appConfig.db));

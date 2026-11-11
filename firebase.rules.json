@@ -98,6 +98,32 @@
         // When each part of a competition last changed (stamped by functions), so the app re-uses what it has
         "$competitionId": { ".read": true }
       },
+      // The change log (ADR 0018): what an assistant changed in a competition, with each value before and after, so it can be undone.
+      // Written in the same update as the change. People who manage the competition read it; there is no screen for it.
+      "competitions:changes": {
+        "$competitionId": {
+          ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // has PERMISSION
+          ".indexOn": ["at"],
+          "$changeId": {
+            // An ASSISTANT with PERMISSION makes entries (never rewrites one); it can only add the mark that says one was undone
+            ".write": "auth.token.via === 'mcp' && !data.exists() && newData.exists() && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION, MAKING one
+            ".validate": "newData.hasChildren(['at', 'uid', 'tool', 'summary', 'paths']) && newData.child('uid').val() === auth.uid", // by THEM
+            "at": { ".validate": "newData.isNumber()" },
+            "uid": { ".validate": "newData.isString()" },
+            "connection": { ".validate": "newData.isString()" },
+            "client": { ".validate": "newData.isString()" },
+            "tool": { ".validate": "newData.isString()" },
+            "summary": { ".validate": "newData.isString()" },
+            "undoOf": { ".validate": "newData.isString()" },
+            "paths": { ".validate": "newData.hasChildren()" },
+            "undone": {
+              ".write": "auth.token.via === 'mcp' && data.parent().exists() && !data.exists() && newData.exists() && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION, MARKING an entry once
+              ".validate": "newData.hasChildren(['at', 'by', 'change']) && newData.child('by').val() === auth.uid"
+            },
+            "$other": { ".validate": false }
+          }
+        }
+      },
       "judges": {
         "$id": { ".read": true } // one at a time: the whole tree is too big to hand out
       },

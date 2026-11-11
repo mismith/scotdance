@@ -373,6 +373,49 @@ test('an assistant gets its person’s own grants, never a system admin’s, and
   }
 })
 
+// The assistants' change log (ADR 0018): written with the change by an assistant that manages the competition, read by
+// the people who manage it, never rewritten, and only ever marked undone.
+test('the change log: an assistant makes entries and marks them undone; only managers read; nobody rewrites', async () => {
+  const orgBot = await assistant(org)
+  const strangerBot = await assistant(stranger)
+  const entry = (extra: Record<string, unknown> = {}) => ({
+    at: { '.sv': 'timestamp' },
+    uid: org.uid,
+    tool: 'save_dancers',
+    summary: 'Added Rules Fourth',
+    paths: [{ path: `competitions:data/${pub}/dancers/d4/number`, after: '4' }],
+    ...extra,
+  })
+  const base = `competitions:changes/${pub}`
+  try {
+    // In the same update as the change, as the tools write it
+    await allowed('an assistant writes a change and its entry together', as(orgBot, 'PATCH', '', { [`competitions:data/${pub}/dancers/d4`]: { number: '4', firstName: 'Rules', lastName: 'Fourth' }, [`${base}/e1`]: entry() }))
+    await refused('an assistant writes an entry for someone else', as(orgBot, 'PUT', `${base}/e2`, entry({ uid: stranger.uid })))
+    await refused('an assistant writes an entry without what it changed', as(orgBot, 'PUT', `${base}/e3`, { at: { '.sv': 'timestamp' }, uid: org.uid, tool: 't', summary: 's' }))
+    await refused('an assistant writes an entry with something extra', as(orgBot, 'PUT', `${base}/e4`, entry({ extra: 1 })))
+    await refused('an assistant writes an entry for a competition it does not manage', as(orgBot, 'PUT', `competitions:changes/${priv}-none/e5`, entry()))
+    await refused('a stranger’s assistant writes an entry', as(strangerBot, 'PUT', `${base}/e6`, entry({ uid: stranger.uid })))
+    await refused('a person writes an entry directly', as(org, 'PUT', `${base}/e7`, entry()))
+    await refused('an assistant rewrites an entry', as(orgBot, 'PUT', `${base}/e1`, entry({ summary: 'Something else' })))
+    await refused('an assistant changes an entry’s paths', as(orgBot, 'PUT', `${base}/e1/paths`, [{ path: `competitions:data/${pub}/dancers/d1`, after: null }]))
+    await refused('an assistant deletes an entry', as(orgBot, 'DELETE', `${base}/e1`))
+    // Marking undone, once, by themselves, with the undo in the same update
+    await refused('a mark by someone else', as(orgBot, 'PUT', `${base}/e1/undone`, { at: { '.sv': 'timestamp' }, by: stranger.uid, change: 'e8' }))
+    await allowed('an assistant marks an entry undone, with the undo entry', as(orgBot, 'PATCH', '', { [`${base}/e1/undone`]: { at: { '.sv': 'timestamp' }, by: org.uid, change: 'e8' }, [`${base}/e8`]: entry({ tool: 'undo_change', undoOf: 'e1', summary: 'Undid: Added Rules Fourth' }), [`competitions:data/${pub}/dancers/d4`]: null }))
+    await refused('and marks it again', as(orgBot, 'PUT', `${base}/e1/undone`, { at: { '.sv': 'timestamp' }, by: org.uid, change: 'e9' }))
+    // Reading
+    await allowed('a person who manages it reads the log', as(org, 'GET', base))
+    await allowed('their assistant reads it', as(orgBot, 'GET', base))
+    await refused('a stranger reads the log', as(stranger, 'GET', base))
+    await refused('a stranger’s assistant reads the log', as(strangerBot, 'GET', base))
+    await refused('a signed-out read', as(null, 'GET', base))
+    await refused('a parent writes it', as(parent, 'PUT', `${base}/e10`, entry()))
+  } finally {
+    await dbRemove(`competitions:changes/${pub}`)
+    await dbRemove(`competitions:data/${pub}/dancers/d4`)
+  }
+})
+
 test('known competitions: read when signed in, written only by functions, and how their reads went for system admins only', async () => {
   const key = `sdc:2027-10-23:${uid('rules-known')}`
   await dbSet(`knownCompetitions/${key}`, { source: 'sdc', date: '2027-10-23', name: 'Rules Fall Classic', country: 'CA', fetched: '2026-10-12T07:00:00.000Z' })
