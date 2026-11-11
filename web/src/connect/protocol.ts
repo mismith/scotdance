@@ -85,6 +85,8 @@ export const TOOLS = {
     icon: '/img/tools/entries.svg',
     hostname: 'entries.scotdance.app',
     serves: (hostname: string) => hostname === 'entries.scotdance.app',
+    /** What its pass says beyond a name and email (functions/src/toolPass.ts), as the sign-in sheet puts it */
+    alsoGets: 'the organisations you run',
   },
 } as const
 export type Audience = keyof typeof TOOLS

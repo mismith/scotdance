@@ -37,6 +37,11 @@ const item = ref<ToolItem | null>(null)
 const mode = ref<'send' | 'signIn' | null>(null)
 const audience = ref<Audience | null>(null)
 const toolName = computed(() => (audience.value ? TOOLS[audience.value].name : null))
+// The sheet says everything the pass carries: a name and email for every tool, and more for a tool that gets more
+const toolGets = computed(() => {
+  const tool: { alsoGets?: string } | null = audience.value ? TOOLS[audience.value] : null
+  return tool?.alsoGets ? `your name, email address and ${tool.alsoGets}` : 'your name and email address'
+})
 const unreadable = ref(false)
 const open = ref(false)
 
@@ -248,7 +253,7 @@ watch(
         <div class="min-w-0">
           <h2 class="text-title">{{ title }}</h2>
           <p v-if="toolName && step !== 'unreadable'" class="text-muted-foreground text-sm">
-            {{ toolName }} gets your name and email address.
+            {{ toolName }} gets {{ toolGets }}.
           </p>
           <p v-else-if="summary && step !== 'sent' && step !== 'unreadable'" class="text-muted-foreground truncate text-sm">
             {{ summary }}
