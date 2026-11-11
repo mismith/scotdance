@@ -89,7 +89,7 @@ const tools = [
     description:
       'Results: for each age group its callbacks, each dance’s placings and its overall, and trophy events’ placings, '
       + 'with dancers as number and name. Shows ties, reversed order, and “no results” or ? marks. Without ageGroup or '
-      + 'trophyEvent it lists as many age groups as fit and summarises the rest. Pass draws to include dancing order.',
+      + 'trophyEvent it lists as many age groups as fit and summarises the rest. Pass draws to include dancing order. Each dance and overall also says how many pages of judges’ sheet it has and gives the link where the organiser adds one in the app (you cannot upload it yourself: give them the link).',
     input: {
       competition: competitionId,
       ageGroup: z.string().optional().describe('An age group’s id or name, to read only it'),
@@ -98,8 +98,8 @@ const tools = [
     },
     annotations: READ,
     run: async ({ competition, ageGroup, trophyEvent, draws }, session) => {
-      const wanted: Part[] = ['categories', 'groups', 'dances', 'trophyEvents', 'dancers', 'results', ...(draws ? (['draws'] as Part[]) : [])];
-      return resultsView(await loadParts(session, competition, wanted), { ageGroup, trophyEvent, draws });
+      const wanted: Part[] = ['categories', 'groups', 'dances', 'trophyEvents', 'dancers', 'results', 'sheets', ...(draws ? (['draws'] as Part[]) : [])];
+      return resultsView(await loadParts(session, competition, wanted), { ageGroup, trophyEvent, draws, competition });
     },
   }),
   defineTool({

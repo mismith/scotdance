@@ -1,3 +1,5 @@
+import { drawList } from '../../../shared/plans';
+import { issuer } from './config';
 import { ToolError } from './errors';
 import { parsePlacings } from '../notifications';
 import { entryName, isTeam, memberName, teamMembers, type EntryRecord } from '../utility/entries';
@@ -24,6 +26,7 @@ export interface Parts {
   results?: unknown;
   points?: unknown;
   draws?: unknown;
+  sheets?: unknown;
 }
 
 /** A stored value as a plain object (a list that came back as an array is one keyed by position) */
@@ -454,14 +457,20 @@ export const RESULT_KEY = [
   '“tied”: shares the place with another. “reversedFrom”: places were announced from that place up to 1st (championships).',
   '“numbers” is the placing order exactly as save_results takes it (a tie is an inner list; with reversedFrom, in the order announced).',
   '“standIn”: a ? the organiser typed for a dancer not yet matched, to fix in Manage; “missing”: the entry has been removed.',
+  '“judgesSheet”: how many pages of the judges’ sheet that row has, and addInApp, the link to give the organiser to add it (a person uploads the picture in the app; an assistant cannot).',
 ].join(' ');
 
-export function resultsView(parts: Parts, opts: { ageGroup?: string; trophyEvent?: string; draws?: boolean }): Json {
+export function resultsView(parts: Parts, opts: { ageGroup?: string; trophyEvent?: string; draws?: boolean; competition?: string }): Json {
   if (parts.results === false) return { resultsTabHidden: true, note: 'The results tab is hidden for this competition.' };
   const m = model(parts);
   const results = rec(parts.results);
   const draws = rec(parts.draws);
+  const sheets = rec(parts.sheets);
   const byId = new Map(m.dancers.map((d) => [d.id, d]));
+  /** Where the organiser adds this row's judges' sheet in the app (an assistant cannot upload the picture), and how many pages it has */
+  const sheetFor = (groupId: string, row: string) => opts.competition
+    ? { pages: Object.keys(rec(rec(sheets[groupId])[row])).length, addInApp: `${issuer()}/competitions/${opts.competition}/manage/results/${groupId}/${row}` }
+    : undefined;
 
   const forGroup = (g: Model['groups'][number]) => {
     const mine = rec(results[g.id]);
@@ -476,9 +485,10 @@ export function resultsView(parts: Parts, opts: { ageGroup?: string; trophyEvent
         id: d.id,
         name: d.label,
         ...placed(mine[d.id], byId),
-        draw: opts.draws && Array.isArray(rec(draws[g.id])[d.id]) ? (rec(draws[g.id])[d.id] as unknown[]).map(String) : undefined,
+        draw: opts.draws && rec(draws[g.id])[d.id] != null ? drawList(rec(draws[g.id])[d.id]) : undefined,
+        judgesSheet: sheetFor(g.id, d.id),
       })),
-      overall: hasOverall ? placed(mine[OVERALL], byId) : undefined,
+      overall: hasOverall ? { ...placed(mine[OVERALL], byId), judgesSheet: sheetFor(g.id, OVERALL) } : undefined,
     };
   };
   const forTrophy = (t: Model['trophyEvents'][number]) => {

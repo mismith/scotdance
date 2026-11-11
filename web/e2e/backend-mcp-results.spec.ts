@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { dbGet, dbRemove, ensureUser, grantCompetition, signIn, uid } from './support/emulator'
+import { dbGet, dbRemove, dbSet, ensureUser, grantCompetition, signIn, uid } from './support/emulator'
 import { retry } from './support/retry'
 import { removeCompetition, seedCompetition, type SeededCompetition } from './support/seed'
 
@@ -8,7 +8,11 @@ import { removeCompetition, seedCompetition, type SeededCompetition } from './su
 // is refused in a sentence.
 
 test.skip(({ isMobile }) => isMobile, 'Functions only: no need to run per device')
-test.describe.configure({ mode: 'serial' })
+// The functions emulator runs one worker (--inspect-functions: see .github/workflows/e2e.yml), so every request to a function, even
+// a route that does nothing, waits behind whatever triggers other tests have set off. Measured under a full run, `mcp`'s
+// well-known route (no database, no token) answered in 5 ms when quiet and took up to 51 s at the worst; it is not the tools' work.
+// So these specs allow for the queue instead of the default 30 s.
+test.describe.configure({ mode: 'serial', timeout: 180_000 })
 
 const OFFSET = Number(process.env.E2E_EMULATOR_PORT_OFFSET ?? 0)
 const MCP = `http://127.0.0.1:${5001 + OFFSET}/firebase-scotdance/us-central1/mcp/mcp`
@@ -44,6 +48,7 @@ test.afterAll(async () => {
     await retry(() => removeCompetition(comp.id))
     await dbRemove(`competitions:changes/${comp.id}`)
   }
+  await dbRemove(`users:changes/${person}`)
   await dbRemove(`users:permissions/${person}`)
 })
 
@@ -203,4 +208,34 @@ test('save_schedule builds a day the public schedule shows, sends back unchanged
 
   expect((await call('undo_change', { competition: comp.id, change: out.data.change })).isError).toBe(false)
   expect(Object.keys((await dbGet<Json>(data('schedule/days'))) ?? {})).not.toContain(dayId)
+})
+
+test('every change is in the person’s index (marked undone with its undo), get_results links the judges’ sheet, and an old gap in a draw is not shown', async () => {
+  const g = group('22')
+  const [fling] = comp.dances
+  const n = numbersOf(g.id)
+  const out = await call('save_results', { competition: comp.id, rows: [{ ageGroup: g.id, row: 'Highland Fling', numbers: [n[0]] }] })
+  expect(out.isError, out.text).toBe(false)
+  const index = async () => Object.values((await dbGet<Record<string, Record<string, Json>>>(`users:changes/${person}`)) ?? {}).flatMap((c) => Object.entries(c))
+  const mine = (await index()).find(([id]) => id === out.data.change)![1]
+  expect(mine).toMatchObject({ scope: 'competitions', scopeId: comp.id })
+  expect(typeof mine.at).toBe('number')
+  expect(mine.undone).toBeUndefined()
+
+  const undo = await call('undo_change', { competition: comp.id, change: out.data.change })
+  expect(undo.isError, undo.text).toBe(false)
+  const after = await index()
+  expect(typeof after.find(([id]) => id === out.data.change)![1].undone).toBe('number')
+  expect(after.find(([id]) => id === undo.data.change)![1]).toMatchObject({ undoOf: out.data.change })
+
+  // A judges' sheet cannot be uploaded by an assistant: it gives the link where the organiser does
+  const read = await call('get_results', { competition: comp.id, ageGroup: g.id })
+  const sheet = read.data.ageGroups[0].dances[0].judgesSheet
+  expect(sheet.pages).toBe(0)
+  expect(sheet.addInApp).toMatch(new RegExp(`/competitions/${comp.id}/manage/results/${g.id}/${fling.id}$`))
+
+  // A draw that an old admin left with holes is read as the app reads it
+  await dbSet(data(`draws/${g.id}/${fling.id}`), { 0: n[1], 2: n[0], 3: '' })
+  const draws = await call('get_results', { competition: comp.id, ageGroup: g.id, draws: true })
+  expect(draws.data.ageGroups[0].dances[0].draw).toEqual([n[1], n[0]])
 })

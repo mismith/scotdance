@@ -183,6 +183,21 @@ describe('get_results', () => {
     assert.equal(group('g2').dances[0].draw, undefined)
     assert.deepEqual(group('g2', { draws: true }).dances[0].draw, ['12', '9', '10', '11'])
   })
+  test('a gap in an old draw is not a feature: left out, as the app does, even when the draw came back sparse', () => {
+    const sparse = { ...parts, draws: { g2: { d1: { 0: '12', 2: '10', 3: '', 4: '11' } } } }
+    const out = ((resultsView(sparse, { ageGroup: 'g2', draws: true }) as Json).ageGroups[0]) as Json
+    assert.deepEqual(out.dances[0].draw, ['12', '10', '11'])
+    const holes = { ...parts, draws: { g2: { d1: ['12', null, '', '9'] } } }
+    assert.deepEqual((((resultsView(holes, { ageGroup: 'g2', draws: true }) as Json).ageGroups[0]) as Json).dances[0].draw, ['12', '9'])
+  })
+  test('each dance and overall gives where to add its judges’ sheet, and how many pages it has', () => {
+    const withSheet = { ...parts, sheets: { g2: { d1: { p1: { url: 'x' }, p2: { url: 'y' } } } } }
+    const g = ((resultsView(withSheet, { ageGroup: 'g2', competition: 'c1' }) as Json).ageGroups[0]) as Json
+    assert.match(g.dances[0].judgesSheet.addInApp, /\/competitions\/c1\/manage\/results\/g2\/d1$/)
+    assert.equal(g.dances[0].judgesSheet.pages, 2)
+    assert.match(g.overall.judgesSheet.addInApp, /\/manage\/results\/g2\/overall$/)
+    assert.equal(g.overall.judgesSheet.pages, 0)
+  })
   test('with no filter it lists age groups, and past the cap summarises the rest', () => {
     const all = resultsView(parts, {}) as Json
     assert.equal(all.ageGroups.length, 3)

@@ -19,11 +19,19 @@ export function compareNumbers(a: string, b: string) {
 /** Reels are danced together in number order, so they aren't shuffled. */
 export const isReel = (d: { name?: string }) => /(^|\s)reel(\s|$)/i.test(d.name ?? "");
 
-/** A draw as stored: the old admin saved draws cell by cell, so it can have gaps (and come back as an object when sparse). */
-export function storedDraw(state: CompetitionState, groupId: string, danceId: string): string[] {
-  const v: unknown = drawsOf(state.data)[groupId]?.[danceId];
+/**
+ * One dance's draw as a list of numbers. The old admin saved draws cell by cell, so a stored draw can have gaps
+ * (and come back as an object when sparse). A gap is not a feature: the app never writes or shows one (the draw
+ * dialog skips it, Manage drops it on the next save), so it is left out here too.
+ */
+export function drawList(v: unknown): string[] {
   const list: unknown[] = Array.isArray(v) ? v : v && typeof v === "object" ? Object.values(v) : [];
   return list.filter((n) => n != null && n !== "").map((n) => String(n));
+}
+
+/** A draw as stored, read as the app reads it (see drawList). */
+export function storedDraw(state: CompetitionState, groupId: string, danceId: string): string[] {
+  return drawList(drawsOf(state.data)[groupId]?.[danceId]);
 }
 
 /** The age group's dances (as it does them) and the numbers of its dancers. */
