@@ -81,6 +81,8 @@ export class Work {
   readonly info: Updates = {};
   readonly created: Created[] = [];
   readonly warnings: string[] = [];
+  /** The organiser said two trophy events (or two staff) may share a name */
+  allowSameName = false;
 
   constructor(original: CompetitionState, readonly newId: () => string = pushId) {
     this.state = structuredClone(original);
@@ -353,15 +355,30 @@ export function existing(work: Work, kind: CollectionKind, id: string) {
   return item;
 }
 
-function refuseTwin(work: Work, kind: CollectionKind, label: string) {
-  const twin = items(work, kind).find((i) => fold(i.label) === fold(label));
-  if (twin) {
-    // A dance's label is its name and steps, so the same dance at other steps is not a twin
-    const other = kind === 'dances' ? 'give this one different steps or a different name' : 'give this one a different name';
-    throw new ToolError(
-      `There is already a ${KINDS[kind].singular} called “${twin.label}” (id ${twin.id}). Pass that id to change it, or ${other}.`,
-    );
+/** The kinds of record two of which can legitimately share a name, when told so (`allowSameName`) */
+const MAY_SHARE_A_NAME = new Set<CollectionKind>(['trophyEvents', 'staff']);
+const OVERRIDE = 'or pass allowSameName: true if two really are called that';
+
+/**
+ * Refuses a record that would be an exact twin of another: the usual sign of a retried call adding it twice. Adding
+ * gives the existing one's id; `except` is the record being renamed (it is not its own twin).
+ */
+function refuseTwin(work: Work, kind: CollectionKind, label: string, except?: string, what: string = KINDS[kind].singular) {
+  if (MAY_SHARE_A_NAME.has(kind) && work.allowSameName) return;
+  const twin = items(work, kind).find((i) => i.id !== except && fold(i.label) === fold(label));
+  if (!twin) return;
+  const override = MAY_SHARE_A_NAME.has(kind) ? `, ${OVERRIDE}` : '';
+  if (except) {
+    throw new ToolError(`That would make this ${what} an exact twin of the ${what} “${twin.label}” (id ${twin.id}). Give it a different ${kind === 'dances' ? 'name or steps' : 'name'}${override}.`);
   }
+  // A dance's label is its name and steps, so the same dance at other steps is not a twin
+  const other = kind === 'dances' ? 'give this one different steps or a different name' : 'give this one a different name';
+  throw new ToolError(`There is already a ${what} called “${twin.label}” (id ${twin.id}). Pass that id to change it, or ${other}${override}.`);
+}
+
+/** After a change to an existing record's name (or steps): it must not have become a twin of another */
+function recheckTwin(work: Work, kind: CollectionKind, id: string) {
+  refuseTwin(work, kind, labelOf(work, kind, existing(work, kind, id)), id);
 }
 
 /** A sponsor, by staff id or name; stored by id as the app does */
@@ -386,7 +403,10 @@ function groupSet(work: Work, which: 'all' | Ref[] | undefined): Set<string> | u
 function saveCategory(work: Work, c: NonNullable<DancesInput['categories']>[number]) {
   if (c.id) {
     existing(work, 'categories', c.id);
-    if (c.name !== undefined) work.apply(planSetField(work.state, 'categories', c.id, 'name', must(c.name, 'The name'), 'Name'));
+    if (c.name !== undefined) {
+      work.apply(planSetField(work.state, 'categories', c.id, 'name', must(c.name, 'The name'), 'Name'));
+      recheckTwin(work, 'categories', c.id);
+    }
     return;
   }
   const name = must(c.name, 'A category’s name');
@@ -409,6 +429,11 @@ function saveAgeGroup(work: Work, g: NonNullable<DancesInput['ageGroups']>[numbe
     if (g.trophy !== undefined) fields.push(['trophy', text(g.trophy), 'Trophy']);
     if (sponsor !== undefined) fields.push(['sponsor', sponsor, 'Trophy sponsor']);
     for (const [key, value, label] of fields) work.apply(planSetField(work.state, 'groups', id, key, value, label));
+    if (fields.some(([key]) => key === 'categoryId' || key === 'name')) {
+      const group = existing(work, 'groups', id);
+      const twin = list(work, 'groups').find((x) => x.id !== id && x.categoryId === group.categoryId && fold(String(x.name ?? '')) === fold(String(group.name ?? '')));
+      if (twin) throw new ToolError(`That would make this age group an exact twin of “${labelOf(work, 'groups', twin)}” (id ${twin.id}). Give it a different name or category.`);
+    }
   } else {
     if (!categoryId) throw new ToolError('A new age group needs its category (a category’s id or name; add categories first).');
     const name = text(g.name) ?? '';
@@ -438,6 +463,7 @@ function saveDance(work: Work, d: NonNullable<DancesInput['dances']>[number]) {
     if (d.name !== undefined) work.apply(planSetField(work.state, 'dances', id, 'name', must(d.name, 'The name'), 'Name'));
     if (steps !== undefined) work.apply(planSetField(work.state, 'dances', id, 'steps', steps, 'Steps'));
     if (d.shortName !== undefined) work.apply(planSetField(work.state, 'dances', id, 'shortName', text(d.shortName), 'Short name'));
+    if (d.name !== undefined || steps !== undefined) recheckTwin(work, 'dances', id);
     if (wanted) {
       const dance = existing(work, 'dances', id);
       for (const g of items(work, 'groups')) {
@@ -466,7 +492,10 @@ function saveTrophyEvent(work: Work, t: NonNullable<DancesInput['trophyEvents']>
   let id = t.id;
   if (id) {
     existing(work, 'trophyEvents', id);
-    if (t.name !== undefined) work.apply(planSetField(work.state, 'trophyEvents', id, 'name', must(t.name, 'The name'), 'Name'));
+    if (t.name !== undefined) {
+      work.apply(planSetField(work.state, 'trophyEvents', id, 'name', must(t.name, 'The name'), 'Name'));
+      recheckTwin(work, 'trophyEvents', id);
+    }
     if (t.trophy !== undefined) work.apply(planSetField(work.state, 'trophyEvents', id, 'trophy', text(t.trophy), 'Trophy'));
     if (sponsor !== undefined) work.apply(planSetField(work.state, 'trophyEvents', id, 'sponsor', sponsor, 'Trophy sponsor'));
     if (danceId !== undefined) work.apply(planSetField(work.state, 'trophyEvents', id, 'danceId', danceId, 'Dance'));
@@ -612,6 +641,21 @@ export interface StaffInput {
   platforms?: Array<{ id?: string; name?: string; description?: string | null }>;
 }
 
+/** Two people with the same role and full name: refused unless the organiser said they are two people (`allowSameName`) */
+function refuseStaffTwin(work: Work, id: string | null, role?: string, name?: string) {
+  if (work.allowSameName) return;
+  const self = id ? existing(work, 'staff', id) : null;
+  const theRole = role ?? String(self?.type ?? '');
+  const theName = name ?? labelOf(work, 'staff', self!);
+  const twin = list(work, 'staff').find((x) => x.id !== id && x.type === theRole && fold(labelOf(work, 'staff', x)) === fold(theName));
+  if (!twin) return;
+  throw new ToolError(
+    id
+      ? `That would make this ${theRole} an exact twin of “${labelOf(work, 'staff', twin)}” (id ${twin.id}). Give them a different name, ${OVERRIDE}.`
+      : `There is already a ${theRole} called “${labelOf(work, 'staff', twin)}” (id ${twin.id}). Pass that id to change them, ${OVERRIDE}.`,
+  );
+}
+
 export function planStaff(work: Work, input: StaffInput): string[] {
   const said: string[] = [];
   for (const s of input.staff ?? []) {
@@ -624,6 +668,7 @@ export function planStaff(work: Work, input: StaffInput): string[] {
         ['location', text(s.location), 'Location'], ['description', text(s.description), 'About'], ['website', web, 'Website'],
       ];
       for (const [key, value, label] of fields) if (value !== undefined) work.apply(planSetField(work.state, 'staff', s.id, key, value, label));
+      if (s.role !== undefined || s.firstName !== undefined || s.lastName !== undefined) refuseStaffTwin(work, s.id);
       continue;
     }
     if (!s.role) throw new ToolError('A new staff member needs a role: Judge, Piper, Volunteer or Sponsor.');
@@ -631,10 +676,7 @@ export function planStaff(work: Work, input: StaffInput): string[] {
       Object.entries({ type: s.role, firstName: text(s.firstName), lastName: text(s.lastName), location: text(s.location), description: text(s.description), website: web }).filter(([, v]) => v),
     ) as Record<string, string>;
     if (!record.firstName && !record.lastName) work.warnings.push(`A ${s.role} was added with no name.`);
-    const twin = list(work, 'staff').find((x) => x.type === s.role && fold(labelOf(work, 'staff', x)) === fold(`${record.firstName ?? ''} ${record.lastName ?? ''}`));
-    if (twin && (record.firstName || record.lastName)) {
-      throw new ToolError(`There is already a ${s.role} called “${labelOf(work, 'staff', twin)}” (id ${twin.id}). Pass that id to change them.`);
-    }
+    if (record.firstName || record.lastName) refuseStaffTwin(work, null, s.role, `${record.firstName ?? ''} ${record.lastName ?? ''}`);
     const id = work.newId();
     work.apply(planAdd(work.state, 'staff', id, record, record));
     work.made(s.role.toLowerCase(), id, labelOf(work, 'staff', existing(work, 'staff', id)));
@@ -644,12 +686,15 @@ export function planStaff(work: Work, input: StaffInput): string[] {
   for (const p of input.platforms ?? []) {
     if (p.id) {
       existing(work, 'platforms', p.id);
-      if (p.name !== undefined) work.apply(planSetField(work.state, 'platforms', p.id, 'name', must(p.name, 'The name'), 'Name'));
+      if (p.name !== undefined) {
+        work.apply(planSetField(work.state, 'platforms', p.id, 'name', must(p.name, 'The name'), 'Name'));
+        recheckTwin(work, 'platforms', p.id);
+      }
       if (p.description !== undefined) work.apply(planSetField(work.state, 'platforms', p.id, 'description', text(p.description), 'Description'));
       continue;
     }
     const name = must(p.name, 'A platform’s name');
-    refuseTwin(work, 'platforms', `Platform ${name}`);
+    refuseTwin(work, 'platforms', name);
     const record = Object.fromEntries(Object.entries({ name, description: text(p.description) }).filter(([, v]) => v)) as Record<string, string>;
     const id = work.newId();
     work.apply(planAdd(work.state, 'platforms', id, record, record));

@@ -53,9 +53,11 @@ async function change(
   tool: string,
   sections: readonly string[],
   plan: (work: Work) => string[],
+  allowSameName = false,
 ): Promise<Json> {
   const loaded = await loadState(session, competitionId, sections);
   const work = new Work(loaded.state);
+  work.allowSameName = allowSameName;
   const said = plan(work);
   return answer(await finish(session, competitionId, tool, loaded, work, say(said, 'Nothing to change.')));
 }
@@ -181,6 +183,7 @@ const tools = [
           ageGroups: agePick.describe('“all”, or the age groups whose dancers can win it'),
         }))
         .optional(),
+      allowSameName: z.boolean().optional().describe('Only when the organiser says two trophy events really share a name. Without it a trophy event with the name of an existing one (added, or by renaming) is refused, which stops a retried call adding it twice.'),
       order: z
         .object({
           categories: z.array(z.string()).optional(),
@@ -191,8 +194,8 @@ const tools = [
         .optional(),
     },
     annotations: WRITE,
-    run: ({ competition: c, ...input }, session) =>
-      change(session, c, 'save_dances', WRITE_PARTS, (work) => planDances(work, input)),
+    run: ({ competition: c, allowSameName, ...input }, session) =>
+      change(session, c, 'save_dances', WRITE_PARTS, (work) => planDances(work, input), allowSameName),
   }),
   defineTool({
     name: 'save_dancers',
@@ -244,14 +247,15 @@ const tools = [
         }))
         .max(MAX_RECORDS)
         .optional(),
+      allowSameName: z.boolean().optional().describe('Only when the organiser says two people with the same role and name really are two people. Without it a second one (added, or by renaming) is refused, which stops a retried call adding them twice.'),
       platforms: z
         .array(z.object({ id: id('A platform'), name: z.string().optional(), description: clearable('Where it is') }))
         .max(MAX_RECORDS)
         .optional(),
     },
     annotations: WRITE,
-    run: ({ competition: c, ...input }, session) =>
-      change(session, c, 'save_staff', WRITE_PARTS, (work) => planStaff(work, input)),
+    run: ({ competition: c, allowSameName, ...input }, session) =>
+      change(session, c, 'save_staff', WRITE_PARTS, (work) => planStaff(work, input), allowSameName),
   }),
   defineTool({
     name: 'remove',
