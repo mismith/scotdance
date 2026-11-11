@@ -1,6 +1,6 @@
 # ADR-0018: Assistants manage competitions through MCP
 
-Status: Accepted (slice 4: sign-in, read tools, write tools, and results, draws and the schedule)
+Status: Accepted (slice 5: sign-in, read tools, write tools, results, draws and the schedule, organisations, adding a competition)
 Date: 2026-11-11
 
 ## Context
@@ -52,12 +52,11 @@ Rules for `via: 'mcp'`:
 - It cannot write `users:permissions`, `competitions:permissions`, `users:tools`, `users:connections`, invites
   (making or accepting one), or delete a whole competition. Everything else a person with a grant can change, it can.
 - It cannot write the person's own account: `users/{uid}`, favourites, alerts off, push tokens, dancer colours, profile
-  views. Reading them is fine. What stays writable besides competition and organisation data: `users:inbox/{uid}` (`draft_dancers` files dancer lists there for the person to preview in Import dancers), `competitions:submissions` (a
-  later slice adds competitions through it), and Storage uploads (create-only, size and type limited, for the staff,
+  views. Reading them is fine. What stays writable besides competition and organisation data: `users:inbox/{uid}` (`draft_dancers` files dancer lists there for the person to preview in Import dancers), `competitions:submissions` (`add_competition` files a competition through it, §11), and Storage uploads (create-only, size and type limited, for the staff,
   link and sheet files a competition holds).
 - The sign-in records have no rule that gives a client access. (A system admin in person still reads and deletes
   under the tree-wide grant, though not write: `.validate` is false. What is there is hashes and pending requests.)
-- The callables behind the approval page and Account turn away a token with `via: 'mcp'`.
+- The callables behind the approval page and Account turn away a token with `via: 'mcp'` (and so does every other callable: §10).
 
 ### 4. Tools
 
@@ -101,13 +100,16 @@ its id (an assistant retrying a call would otherwise add it twice).
 Write tools: `update_competition`, `set_visibility`, `save_dances` (categories, age groups, dances, trophy events,
 "not run as a championship", order), `save_dancers` (up to 200 entries; no id adds, an id corrects), `save_staff`
 (staff and platforms), `remove` (any of those, by id), `draft_dancers` (§8), `save_results`, `save_draws`,
-`save_schedule` (§9), `get_changes`, `undo_change`. Not here, by design: invites, admins, organisations,
-deleting a competition, uploads.
+`save_schedule` (§9), `update_organisation`, `create_organisation` (§10), `add_competition` (§11), `get_changes`, `undo_change`.
+Not here, by design: invites, admins, deleting a competition, uploads.
 
 A dance is a twin only when its name and steps both match (“Highland Fling” at 4 and at 6 steps is normal in one
 competition). Other twins refused: a category by name; an age group by name within its category; a trophy event by
-name; staff by role and full name; a platform by name. Not changed: a trophy event shared by two age-group sets under
-one name, or two staff with the same name, would have to be told apart by id or by editing the existing one.
+name; staff by role and full name; a platform by name. The same check applies when an existing record is renamed (or
+its dance's steps changed) into a twin of another; a change that does not touch the name is never refused for twins
+already there. Two trophy events, or two staff with the same role and name, can be legitimate: `allowSameName: true`
+on `save_dances` / `save_staff` (named in the refusal) lets them through, and the instructions say to pass it only when
+the organiser says they really are two. The others have no override.
 
 - Text is stored exactly as given (trimmed, as the app's fields trim). The server never tidies names, capitals or
   steps; that is shown to the organiser on the front end. It refuses, in a sentence, what a form would refuse.
@@ -184,3 +186,91 @@ Judges; no duplicates in a cell. A schedule is one record to the change log, so 
 day). `get_schedule` renamed its `blocks` to `sessions` and a dance row's `name` to `dance` (`name` is for rows that are not dances).
 
 Linked competitions share only staff, details and visibility (ADR 0007), none of which these three tools write.
+
+### 10. Callables, organisations and linking
+
+**Callables.** An assistant session holds a real Firebase ID token for its owner (marked `via: 'mcp'`), so anything that
+accepts an ID token accepts it. Audit (2026-11-11):
+
+- Every callable in `functions/src/index.ts` (the system admin utilities behind `ensureAdmin`, `searchDancers` and
+  `searchAll`, which widen their results for an admin, `linkCompetitions`, `createOrganisation`, `toolPass`, `unlinkTool`,
+  the three connection callables) used to run for such a token. Only the connection callables turned it away; for the
+  rest, `ensureAdmin` and the others checked `users:permissions/{uid}/admin`, which a system admin's assistant had.
+  So a system admin's assistant could run a backfill or reindex, and any assistant could mint a tool pass.
+- Now `https()` in `utility/triggers.ts` (the wrapper every callable goes through) turns a `via: 'mcp'` token away before
+  the handler runs, unless the callable opts in with `{ assistants: true }`. None does. `ensureAdmin` and
+  `createOrganisation` also refuse to treat an assistant as a system admin, in case a callable is ever opted in.
+  `backend-callables.spec.ts` calls every callable (found by reading `index.ts`) with a system admin's assistant token and expects
+  `PERMISSION_DENIED`, and the same admin in person is let through; `functionsCallableGuard.test.ts` covers the wrapper,
+  `ensureAdmin` and `toolPass`, and fails if a callable opts in.
+- Other places a token is accepted: the one HTTP function (`mcp`) takes its own OAuth tokens, never an ID token. Storage
+  rules take any signed-in user for create-only, size- and type-limited uploads, so an assistant token can upload a file (no tool does;
+  nothing it uploads is linked from anywhere without a database write the rules govern). Firebase Auth's own account endpoints
+  (change email or password, delete the account) accept any ID token for its account: the token lives only in the `mcp`
+  function's memory (50 minutes) and is used only to read and write the database, but it is the reason the token must never
+  be handed to a client.
+
+**Organisations.** `get_organisations` lists the ones the person is an admin of, with their competitions (from a year ago;
+competitions name their organisations, so it reads those from a date on). `update_organisation` does what the Manage page does:
+name, short name, where it is based, website, description, links (never uploads or the logo), and `addCompetitions` /
+`removeCompetitions` by id (the rules' `competitions/{cid}/organisations/{oid}` write, which an organisation's admin may do
+for any competition, as the app lets them; a competition that takes its organisations from a primary is refused with the
+primary's name). Admins and invites are not reachable. The change log for these is `organisations:changes/{organisationId}/{changeId}`:
+the same entry, rules (read by the organisation's admins; written by an assistant that is one, with the change, never rewritten) and sweep as a
+competition's. A competition added or removed is logged on the organisation, not the competition. `get_changes` and
+`undo_change` take `organisation` instead of `competition`. `create_organisation` starts one with the person as admin and
+cannot be undone: making an organisation and its admin takes the Admin SDK, so the tool calls `createOrganisation`'s handler
+in the `mcp` function with the person's uid and `via: 'mcp'` (the callable itself stays closed to assistants). The handler
+makes the same checks (they must manage a competition or organisation; the competition named must be theirs; dedup is by full name, a short
+name may be shared) and, for an assistant, none of the system admin shortcuts (`join: false`, `grantSubmitter`). The tool refuses
+text longer than the callable keeps rather than letting it be cut short.
+
+**Linked competitions: not built.** `linkCompetitions` (link, unlink, primary, sync a part, dry run) acts through the Admin SDK on
+several competitions at once, with a system admin shortcut, and what it does is not undoable by the change log: linking
+copies the primary's staff and details over the other competition's own (staff is a whole list, replaced), and triggers
+then keep copying every later edit. Unlinking keeps what was copied, so it does not put anything back. It could be reached
+the way `create_organisation` is, with a dry-run the assistant must show first, but a dry run only previews; the loss is not
+recoverable, so it stays in the app, where Manage shows the preview and asks.
+
+### 11. Adding a competition
+
+`add_competition` files `competitions:submissions/{id}` as the person, through the rules (a submission needs only a signed-in
+user), with the same fields as the Add a competition form (country, date, name, town, venue, space, address, registration
+number, organisations that already exist, their name, a note for the reviewer, "comes as is"). The submission trigger sees the
+person as the submitter (verified in the emulator over REST with the ID token), approves a tidy one on arrival, which makes the
+competition and the person its admin, or holds it with its reasons. The tool reads what the form would and does not write what the
+trigger writes.
+
+- Checks: the form's (name, a real date, a town) and the rules' (`competitions:submissions` `.validate`). Nothing else is refused: a
+  name in capitals or a date that has passed is sent and held for review, as the form sends them.
+- Registration numbers are saved as the form's preview shows them (`tidyRegistration`, the server's copy), and the reply says so.
+- Duplicates: as the form does after the date, it looks at competitions on that day (a day either side) in that country; one with a name,
+  venue and town alike (`sameCompetition`, shared with the form in `shared/knownCompetitions.ts`) refuses the call, naming it, unless the
+  organiser says it is another (`notTheOneAlreadyHere`). Others that day are listed in the reply. A listed competition (ADR 0009) that
+  matches fills a venue, address or organisations left out, never one given.
+- Venue: the form's place lookup is Google Places in the browser, billed per use, which a function should not run. The submission
+  carries the country (and a UK nation's region) as the form puts it. When the venue and town are one the app already knows (the `venues:index`
+  the form uses for a known competition), the pin and locality come from that venue. Otherwise there is no pin, the reply says so, and the
+  organiser adds one in Details (or a system admin's `backfillCoords` geocodes it).
+- The reply says whether it was added (the tool waits up to 30 s, 50 s in the emulator, 8 s when the checks already show a person must look, for the
+  competition to appear among the person's own, since the submission itself cannot be read back) with its id and a link to
+  Manage, or sent and waiting, with the checks it will likely fail, in the app's words ("usually approved overnight"; an
+  email follows either way).
+- Not undoable, and not editable until approved: the tool's description and the instructions say to confirm every detail and show the
+  line to accept first. A second day of the same event is `sameWeekendAs` (the first submission's id), which the trigger turns into a link
+  once both are approved.
+
+### 12. Every tool, and what assistants cannot do
+
+Read: `get_competitions`, `get_competition`, `get_dances`, `get_dancers`, `get_staff`, `get_schedule`, `get_results`, `find`,
+`get_organisations`, `get_changes`.
+Write: `update_competition`, `set_visibility`, `save_dances`, `save_dancers`, `save_staff`, `remove`, `save_results`, `save_draws`,
+`save_schedule`, `draft_dancers` (files a list for the organiser to import; changes nothing), `update_organisation`,
+`undo_change`, and two that cannot be undone: `create_organisation`, `add_competition`.
+
+Assistants cannot: invite, remove or promote admins or organisers (competitions or organisations); delete a competition or an
+organisation; upload anything (photos, logos, link files, judges' sheets) or remove judges' sheets; link, unlink or re-share linked
+competitions; approve or reject submissions or edit a submission after sending it; call any callable; use any system admin
+tool, even for a system admin (their assistant has only the competitions and organisations they were made an admin of); touch the
+person's own account (favourites, alerts, push tokens, dancer colours), connections, tool links or sign-in records; or read or
+change anything about a competition or organisation the person does not manage.
