@@ -188,6 +188,7 @@ export const useAuthStore = defineStore('auth', () => {
       [`users:dancerColors/${uid}`]: null,
       [`users:tokens/${uid}`]: null,
       [`users:inbox/${uid}`]: null,
+      [`users:changes/${uid}`]: null,
       [`users:tools/${uid}`]: null,
       [`users:permissions/${uid}`]: null,
     })

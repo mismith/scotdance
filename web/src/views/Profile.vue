@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import MeAvatar from '@/components/MeAvatar.vue'
 import Dialog from '@/components/Dialog.vue'
+import AssistantChanges from '@/components/AssistantChanges.vue'
 import { useMorph } from '@/lib/morph'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
@@ -58,7 +59,7 @@ async function unlink(tool: Audience) {
   }
 }
 
-// The assistants (Claude, ChatGPT) they've connected to manage their competitions (ADR 0018)
+// The AI assistants (Claude, ChatGPT) they've connected to manage their competitions (ADR 0018)
 const connectionRecords = ref<unknown>(null)
 let offConnections: (() => void) | null = null
 watch(
@@ -73,7 +74,7 @@ onScopeDispose(() => offConnections?.())
 const assistants = computed(() => connectionsFrom(connectionRecords.value))
 const disconnecting = ref<string | null>(null)
 async function disconnectAssistant(c: Connection) {
-  const name = c.client?.name || 'this assistant'
+  const name = c.client?.name || 'this AI assistant'
   const ok = await confirm({
     title: `Disconnect ${name}?`,
     message: `It stops working with your account straight away. To use it again, connect it again.`,
@@ -89,6 +90,12 @@ async function disconnectAssistant(c: Connection) {
   } finally {
     disconnecting.value = null
   }
+}
+const changesFor = ref<Connection | null>(null)
+const changesOpen = ref(false)
+function showChanges(c: Connection) {
+  changesFor.value = c
+  changesOpen.value = true
 }
 const connectOpen = ref(false)
 const addressCopied = ref(false)
@@ -305,23 +312,24 @@ const submitDisabled = computed(() => {
       </section>
 
       <section v-if="me.canManageAny || assistants.length" class="space-y-1">
-        <h2 class="text-heading">Assistants</h2>
-        <p class="text-muted-foreground text-sm">Claude, ChatGPT and other assistants that manage your competitions for you.</p>
+        <h2 class="text-heading">AI assistants</h2>
+        <p class="text-muted-foreground text-sm">Claude, ChatGPT and other AI assistants that manage your competitions for you. Tap one to see what it changed.</p>
         <ul v-if="assistants.length" class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
-          <li v-for="c in assistants" :key="c.id" class="flex min-h-16 items-center gap-2 py-1 pr-2 pl-4">
-            <div class="flex min-w-0 flex-1 items-center gap-3">
+          <li v-for="c in assistants" :key="c.id" class="flex min-h-16 items-center gap-1 py-1 pr-2">
+            <button type="button" :aria-label="`What ${c.client?.name || 'this AI assistant'} changed`" class="press-row focus-inset flex min-h-14 min-w-0 flex-1 items-center gap-3 py-1 pr-1 pl-4 text-left" @click="showChanges(c)">
               <span class="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-[0.625rem]"><Bot class="size-5" /></span>
               <span class="min-w-0 flex-1">
-                <span class="block truncate text-base font-semibold">{{ c.client?.name || 'An assistant' }}</span>
+                <span class="block truncate text-base font-semibold">{{ c.client?.name || 'An AI assistant' }}</span>
                 <span class="text-muted-foreground block truncate text-sm">
                   Connected {{ connectionDate(c.createdAt) }}<template v-if="c.lastUsedAt && connectionDate(c.lastUsedAt) !== connectionDate(c.createdAt)"> · Last used {{ connectionDate(c.lastUsedAt) }}</template>
                 </span>
               </span>
-            </div>
+              <ChevronRight class="text-muted-foreground/70 size-5 shrink-0" />
+            </button>
             <Button variant="plain" class="text-destructive!" :busy="disconnecting === c.id" @click="disconnectAssistant(c)">Disconnect</Button>
           </li>
         </ul>
-        <div class="pt-1"><Button @click="connectOpen = true"><Plus /> Connect an assistant</Button></div>
+        <div class="pt-1"><Button @click="connectOpen = true"><Plus /> Connect an AI assistant</Button></div>
       </section>
 
       <div class="space-y-2">
@@ -333,7 +341,7 @@ const submitDisabled = computed(() => {
     </main>
 
     <Dialog :open="connectOpen" variant="sheet" @close="connectOpen = false">
-      <template #header><h2 class="text-title">Connect an assistant</h2></template>
+      <template #header><h2 class="text-title">Connect an AI assistant</h2></template>
       <div class="space-y-3 p-4 pb-[calc(1.5rem+var(--safe-bottom))]">
         <p class="text-base">
           In Claude or ChatGPT, add a custom connector with this address. It brings you back here to allow it.
@@ -348,6 +356,8 @@ const submitDisabled = computed(() => {
         <Button size="lg" block @click="connectOpen = false">Done</Button>
       </div>
     </Dialog>
+
+    <AssistantChanges v-if="changesFor" :open="changesOpen" :connection="changesFor.id" :name="changesFor.client?.name || 'this AI assistant'" @close="changesOpen = false" />
 
     <Dialog :open="sheet.open" :morph="sheet" variant="sheet" @close="closeModal">
       <template #header>

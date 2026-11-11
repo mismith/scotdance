@@ -416,6 +416,41 @@ test('the change log: an assistant makes entries and marks them undone; only man
   }
 })
 
+// The per-person index of those changes (ADR 0018): an assistant adds its person's own entries, and marks one undone once; only the
+// person reads them; nobody else writes, rewrites or deletes. Deleting their account clears it.
+test('the change index: an assistant adds its own person’s entries; only that person reads; a person can clear their own', async () => {
+  const orgBot = await assistant(org)
+  const strangerBot = await assistant(stranger)
+  const base = `users:changes/${org.uid}/conn1`
+  const item = (extra: Record<string, unknown> = {}) => ({ at: { '.sv': 'timestamp' }, scope: 'competitions', scopeId: pub, summary: 'Added Rules Fourth', ...extra })
+  try {
+    await allowed('an assistant adds an entry', as(orgBot, 'PUT', `${base}/i1`, item()))
+    await allowed('for an organisation', as(orgBot, 'PUT', `${base}/i2`, item({ scope: 'organisations', scopeId: 'o1' })))
+    await allowed('with an undo', as(orgBot, 'PUT', `${base}/i3`, item({ undoOf: 'i1', summary: 'Undid: Added Rules Fourth' })))
+    await refused('an entry for another person', as(orgBot, 'PUT', `users:changes/${stranger.uid}/conn1/i4`, item()))
+    await refused('a stranger’s assistant writes into this person’s', as(strangerBot, 'PUT', `${base}/i5`, item()))
+    await refused('a person writes an entry directly', as(org, 'PUT', `${base}/i6`, item()))
+    await refused('an entry without what it needs', as(orgBot, 'PUT', `${base}/i7`, { at: { '.sv': 'timestamp' }, summary: 's' }))
+    await refused('an entry for something that is not a competition or organisation', as(orgBot, 'PUT', `${base}/i8`, item({ scope: 'users' })))
+    await refused('an entry with something extra', as(orgBot, 'PUT', `${base}/i9`, item({ extra: 1 })))
+    await refused('rewrites an entry', as(orgBot, 'PUT', `${base}/i1`, item({ summary: 'Something else' })))
+    await refused('deletes an entry', as(orgBot, 'DELETE', `${base}/i1`))
+    await allowed('marks its own undone', as(orgBot, 'PUT', `${base}/i1/undone`, { '.sv': 'timestamp' }))
+    await refused('and marks it again', as(orgBot, 'PUT', `${base}/i1/undone`, { '.sv': 'timestamp' }))
+    await refused('marks one that is not there', as(orgBot, 'PUT', `${base}/i99/undone`, { '.sv': 'timestamp' }))
+    await refused('a stranger’s assistant marks it', as(strangerBot, 'PUT', `${base}/i2/undone`, { '.sv': 'timestamp' }))
+    await allowed('the person reads their entries', as(org, 'GET', base))
+    await allowed('their assistant reads its own person’s (it checks an entry is there before marking it undone)', as(orgBot, 'GET', `${base}/i1`))
+    await refused('a stranger’s assistant reads it', as(strangerBot, 'GET', base))
+    await refused('a stranger reads it', as(stranger, 'GET', base))
+    await refused('a signed-out read', as(null, 'GET', base))
+    await refused('an assistant clears the index', as(orgBot, 'DELETE', `users:changes/${org.uid}`))
+    await allowed('the person clears their own (deleting their account)', as(org, 'DELETE', `users:changes/${org.uid}`))
+  } finally {
+    await dbRemove(`users:changes/${org.uid}`)
+  }
+})
+
 // Organisations (ADR 0018): an assistant edits an organisation its person is an admin of, and puts it on competitions, through
 // the same rules as the Manage page; its change log is the organisation's, written with the change by that assistant only.
 test('an organisation’s assistant: the page and its competitions, a change log of its own, never its admins', async () => {

@@ -150,6 +150,32 @@
           }
         }
       },
+      // An index of those changes for each person (ADR 0018), written in the same update as each entry: `{connection}/{change}` =
+      // { at, scope, scopeId, summary, undoOf?, undone? }. Account lists from it what each assistant changed lately. Only the person
+      // reads it; an assistant session only adds to it (and marks one of its own undone). Removing their own is deleting their account.
+      "users:changes": {
+        "$userId": {
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
+          ".write": "auth !== null && auth.token.via !== 'mcp' && auth.uid === $userId && !newData.exists()", // is REMOVING OWN (not an ASSISTANT)
+          "$connectionId": {
+            ".indexOn": ["at"],
+            "$changeId": {
+              ".write": "auth.token.via === 'mcp' && auth.uid === $userId && !data.exists() && newData.exists()", // an ASSISTANT, making its OWN
+              ".validate": "newData.hasChildren(['at', 'scope', 'scopeId', 'summary'])",
+              "at": { ".validate": "newData.isNumber()" },
+              "scope": { ".validate": "newData.val() === 'competitions' || newData.val() === 'organisations'" },
+              "scopeId": { ".validate": "newData.isString()" },
+              "summary": { ".validate": "newData.isString()" },
+              "undoOf": { ".validate": "newData.isString()" },
+              "undone": {
+                ".write": "auth.token.via === 'mcp' && auth.uid === $userId && data.parent().exists() && !data.exists() && newData.exists()", // an ASSISTANT, MARKING its OWN once
+                ".validate": "newData.isNumber()"
+              },
+              "$other": { ".validate": false }
+            }
+          }
+        }
+      },
       "judges": {
         "$id": { ".read": true } // one at a time: the whole tree is too big to hand out
       },

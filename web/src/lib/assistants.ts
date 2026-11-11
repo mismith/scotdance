@@ -1,8 +1,9 @@
 import { httpsCallable } from 'firebase/functions'
-import { functions, useEmulators } from '@/firebase'
+import { get, limitToLast, orderByChild, query } from 'firebase/database'
+import { dataRef, functions, useEmulators } from '@/firebase'
 import { formatMonthDay, formatShortDate, isSameDay } from '@/lib/format'
 
-// The assistants (Claude, ChatGPT) a person has connected to their account (ADR 0018): the page where they allow
+// The AI assistants (Claude, ChatGPT) a person has connected to their account (ADR 0018): the page where they allow
 // one, and Account's list of what is connected. `users:connections/{uid}/{id}` holds who, when and last used; the
 // functions do the rest.
 
@@ -78,4 +79,54 @@ export async function disconnect(connection: string) {
 /** Every connection, when deleting an account: the account goes either way. */
 export async function disconnectEveryAssistant() {
   await httpsCallable(functions, 'endConnection')({}).catch(() => {})
+}
+
+/**
+ * One change an assistant made, from the person's index (`users:changes/{uid}/{connection}/{change}`, written in the same
+ * update as the change; functions/src/mcp/changes.ts). `scope` says where the full entry lives, so Undo could be added here.
+ */
+export interface Change {
+  id: string
+  at: number
+  scope: 'competitions' | 'organisations'
+  scopeId: string
+  summary: string
+  /** It is an undo of another change */
+  undoOf?: string
+  /** When it was undone */
+  undone?: number
+}
+
+/** How many changes the sheet shows at first, and more each time */
+export const CHANGES_PAGE = 20
+
+/** The index's value as a list, newest first; anything that isn't a change is skipped. */
+export function changesFrom(value: unknown): Change[] {
+  const all = (value && typeof value === 'object' ? value : {}) as Record<string, Partial<Omit<Change, 'id'>>>
+  return Object.entries(all)
+    .filter(([, c]) => c && typeof c.at === 'number' && typeof c.summary === 'string' && (c.scope === 'competitions' || c.scope === 'organisations') && typeof c.scopeId === 'string')
+    .map(([id, c]) => ({ ...(c as Omit<Change, 'id'>), id }))
+    .sort((a, b) => b.at - a.at)
+}
+
+/** The latest `limit` changes one connection made. */
+export async function loadChanges(uid: string, connection: string, limit: number): Promise<Change[]> {
+  const snap = await get(query(dataRef(`users:changes/${uid}/${connection}`), orderByChild('at'), limitToLast(limit)))
+  return changesFrom(snap.val())
+}
+
+/** What each competition or organisation in the changes is called (by `${scope}/${id}`); gone ones are left out. */
+export async function namesOf(changes: Change[]): Promise<Record<string, string>> {
+  const keys = [...new Set(changes.map((c) => `${c.scope}/${c.scopeId}`))]
+  const found = await Promise.all(
+    keys.map(async (key) => {
+      try {
+        const name = (await get(dataRef(`${key}/name`))).val()
+        return [key, typeof name === 'string' ? name : ''] as const
+      } catch {
+        return [key, ''] as const
+      }
+    }),
+  )
+  return Object.fromEntries(found.filter(([, name]) => name))
 }

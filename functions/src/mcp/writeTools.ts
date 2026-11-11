@@ -469,7 +469,7 @@ const tools = [
     title: 'Get recent changes',
     description:
       'What assistants changed in a competition (pass competition) or in an organisation and the competitions it has (pass organisation) recently, newest first: id, when, '
-      + 'which tool, a one-line summary, and whether it was undone. Kept 60 days.',
+      + 'which tool, a one-line summary, and whether it was undone. Kept 30 days.',
     input: { competition: competition.optional(), organisation: organisationRef.optional(), limit: z.number().int().min(1).max(30).optional() },
     annotations: READ,
     run: async ({ competition: c, organisation: o, limit }, session) => {

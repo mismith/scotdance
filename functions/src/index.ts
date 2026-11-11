@@ -139,7 +139,7 @@ export const connectionRequest = https().onCall(AssistantConnections.onConnectio
 export const approveConnection = https().onCall(AssistantConnections.onApproveConnection);
 export const endConnection = https().onCall(AssistantConnections.onEndConnection);
 // The database keeps records until told otherwise: once a day, clear the sign-in records that have expired and the
-// change-log entries older than 60 days.
+// change-log entries (and their per-person index) older than 30 days.
 export const sweepAssistants = onSchedule({ schedule: '17 4 * * *', timeZone: 'UTC' }, async () => {
   const swept = await AssistantConnections.sweepExpired();
   const changes = await sweepChanges(appConfig.db);

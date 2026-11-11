@@ -1,6 +1,6 @@
-# ADR-0018: Assistants manage competitions through MCP
+# ADR-0018: AI assistants manage competitions through MCP
 
-Status: Accepted (slice 5: sign-in, read tools, write tools, results, draws and the schedule, organisations, adding a competition)
+Status: Accepted (slice 6: sign-in, read tools, write tools, results, draws and the schedule, organisations, adding a competition, the Account change list)
 Date: 2026-11-11
 
 ## Context
@@ -79,10 +79,14 @@ first take the competition id.
 
 ### 5. Account and approval
 
-`/connect-assistant?request=<id>` (outside Manage; not `/connect`, which dev servers answer with the tools’ `connect.html`): signed out, the app's own sign-in; then one screen naming the assistant
-with Allow or Not now. Account lists connected assistants (name, connected, last used) with Disconnect, and the
-address to paste into a custom connector. Both only for people who manage something. Deleting an account ends its
-connections.
+`/connect-ai?request=<id>` (outside Manage; not `/connect`, which dev servers answer with the tools’ `connect.html`): signed out, the app's own sign-in; then one screen naming the assistant
+with Allow or Not now. Account's section is called **AI assistants** (people don't take "assistants" alone to mean AI; the same word is used on the approval page, the
+sheets, confirmations and errors; files, data paths, functions and tool names keep their names). It lists connected AI assistants (name,
+connected, last used) with Disconnect, and the address to paste into a custom connector. Tapping an assistant opens a sheet of what it changed
+lately (§13). The section and the approval are only for people who manage a competition or organisation, or are system admins: the section shows
+for them (or when a connection already exists); the page says so to anyone else, and `approveConnection` refuses them too (permission-denied,
+checked against `users:permissions/{uid}`), so skipping the page does not get round it. Saying no is open to anyone. Deleting an account ends its
+connections and clears its change index.
 
 ### 6. Shared plans
 
@@ -128,7 +132,7 @@ the organiser says they really are two. The others have no override.
   values were changed since. The undo is logged as a change of its own and marks the original undone, in one
   update. An undo can't itself be undone (make the change again). Read-then-write isn't a transaction, so an edit in
   the same instant can be overwritten: a window of milliseconds, on a competition one person runs.
-- Entries are kept 60 days; `sweepAssistants` deletes older ones.
+- Entries (and the per-person index, §13) are kept 30 days; `sweepAssistants` deletes older ones.
 - A part a linked competition takes from its primary can't be changed: the tool says which part and names the
   primary, and the database rules refuse it anyway.
 - A removal that would delete judges' sheets (their files go with them, for good) is refused: it can't be undone,
@@ -262,15 +266,43 @@ trigger writes.
 
 ### 12. Every tool, and what assistants cannot do
 
-Read: `get_competitions`, `get_competition`, `get_dances`, `get_dancers`, `get_staff`, `get_schedule`, `get_results`, `find`,
+Read: `get_competitions`, `get_competition`, `get_dances`, `get_dancers`, `get_staff`, `get_schedule`, `get_results` (with each row's judges' sheet link, §14), `find`,
 `get_organisations`, `get_changes`.
 Write: `update_competition`, `set_visibility`, `save_dances`, `save_dancers`, `save_staff`, `remove`, `save_results`, `save_draws`,
 `save_schedule`, `draft_dancers` (files a list for the organiser to import; changes nothing), `update_organisation`,
 `undo_change`, and two that cannot be undone: `create_organisation`, `add_competition`.
 
-Assistants cannot: invite, remove or promote admins or organisers (competitions or organisations); delete a competition or an
+AI assistants cannot: invite, remove or promote admins or organisers (competitions or organisations); delete a competition or an
 organisation; upload anything (photos, logos, link files, judges' sheets) or remove judges' sheets; link, unlink or re-share linked
 competitions; approve or reject submissions or edit a submission after sending it; call any callable; use any system admin
 tool, even for a system admin (their assistant has only the competitions and organisations they were made an admin of); touch the
 person's own account (favourites, alerts, push tokens, dancer colours), connections, tool links or sign-in records; or read or
 change anything about a competition or organisation the person does not manage.
+
+### 13. What an assistant changed, in Account
+
+The full entries live in each competition's and organisation's log, which is the right place for undo but a poor one for "what did this
+assistant do lately": a person manages many. So each change also writes a small index entry in the **same atomic update**:
+
+    users:changes/{uid}/{connectionId}/{changeId} = { at, scope: 'competitions'|'organisations', scopeId, summary, undoOf?, undone? }
+
+`scope` and `scopeId` say where the full entry is (`{scope}:changes/{scopeId}/{changeId}`), so an Undo button could be added to the sheet later.
+`undone` (a time) is kept in step when the person's assistant undoes their own change; an undo is itself an entry with `undoOf`. Keyed by
+connection so the sheet reads one assistant's latest with an `at` index and `limitToLast`, and "show more" raises the limit (20 at a time).
+Rules: the person reads it (their assistant session can too, since `undo_change` checks an entry is there before marking it; nobody else);
+an assistant session may add its person's own entries, validated, never rewrite or delete one, and set `undone` once; the person may delete
+the whole of it (deleting their account). A change another person's assistant undoes is not marked in the first person's index (it cannot
+write there): the original entry in the log is. Changes made before the index existed are not listed.
+
+The sheet (`AssistantChanges.vue`) is view only: summary, which competition or organisation (by name, read from the public record; "gone"
+for one deleted), when, and whether it was undone. Undo is done by asking the assistant. Entries, and the index, are kept 30 days.
+
+### 14. Judges' sheets, draws
+
+- An assistant cannot upload a judges' sheet (a connector has no way to receive a file). `get_results` gives each dance and overall a
+  `judgesSheet: { pages, addInApp }`, where `addInApp` is the link to that age group and row in Manage › Results (`/competitions/{id}/manage/results/{ageGroupId}/{danceId|overall}`),
+  and the instructions tell the assistant to hand it to the organiser.
+- A "gap" in a draw is not a feature of the app. The old admin saved draws cell by cell and could leave empty cells; the app skips them
+  when it shows a draw and drops them on the next save, and never writes one. `save_draws` therefore sets no gap, and `get_results` reads a draw
+  as the app does (`drawList` in `shared/plans/draws.ts`, also used by `storedDraw`): gaps left out, a sparse draw read in order. A gap between
+  age groups is a schedule feature, and `save_schedule` already takes it (`{ gap: true }`).

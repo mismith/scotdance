@@ -22,6 +22,20 @@ export const logRoot = (kind: Scope['kind']) => (kind === 'competition' ? 'compe
 const logPath = (x: string | Scope) => `${logRoot(scopeOf(x).kind)}/${scopeOf(x).id}`;
 export const LOG_ROOTS = ['competitions:changes', 'organisations:changes'] as const;
 
+/**
+ * A small index per person, written in the same update as each entry, so Account can list what an assistant changed
+ * without reading every competition's and organisation's log:
+ *
+ *   users:changes/{uid}/{connectionId}/{changeId} = { at, scope, scopeId, summary, undoOf?, undone? }
+ *
+ * `scope` is `competitions` or `organisations` (where the full entry lives, at `{scope}:changes/{scopeId}/{changeId}`).
+ * `undone` (a time) is kept in step when the person who made the change undoes it. The person reads it; an assistant
+ * session only writes it.
+ */
+export const INDEX_ROOT = 'users:changes';
+const indexPath = (uid: string, connection: string, change: string) => `${INDEX_ROOT}/${uid}/${connection}/${change}`;
+const scopeName = (scope: Scope) => (scope.kind === 'competition' ? 'competitions' : 'organisations');
+
 export type Updates = Record<string, unknown>;
 
 export interface PathChange {
@@ -50,7 +64,7 @@ export const MAX_RECORDS = 200;
 /** And its entry, as JSON, may be this big: it holds every value before and after */
 export const MAX_ENTRY_BYTES = 500_000;
 /** How long entries are kept */
-export const KEEP_DAYS = 60;
+export const KEEP_DAYS = 30;
 
 const SERVER_TIME = { '.sv': 'timestamp' };
 
@@ -265,6 +279,7 @@ async function commitPaths(session: Session, scope: Scope, change: Prepared, rec
   const values: Updates = {};
   for (const [path, value] of writes) values[path] = value;
   values[`${logPath(scope)}/${id}`] = entry;
+  values[indexPath(session.uid, session.connection, id)] = { at: SERVER_TIME, scope: scopeName(scope), scopeId: scope.id, summary: change.summary };
   try {
     await session.update(values);
   } catch (error) {
@@ -365,6 +380,11 @@ export async function undoChange(
   };
   values[`${logPath(scope)}/${id}`] = undo;
   values[`${logPath(scope)}/${changeId}/undone`] = { at: SERVER_TIME, by: session.uid, change: id };
+  values[indexPath(session.uid, session.connection, id)] = { at: SERVER_TIME, scope: scopeName(scope), scopeId: scope.id, summary: undo.summary, undoOf: changeId };
+  // The index mark is kept in step only for the person's own change (it is theirs to write, and there is none for a change made before the index existed)
+  if (entry.uid === session.uid && entry.connection && (await session.read(indexPath(entry.uid, entry.connection, changeId)))) {
+    values[`${indexPath(entry.uid, entry.connection, changeId)}/undone`] = SERVER_TIME;
+  }
   try {
     await session.update(values);
   } catch (error) {
@@ -445,5 +465,35 @@ export async function sweepChanges(root: Reference, now: number = Date.now(), pa
       if (keys.length < pageSize) break;
     }
   }
+  // The per-person index: users:changes/{uid}/{connection}/{change}
+  const base = root.child(INDEX_ROOT);
+  let after: string | undefined;
+  for (;;) {
+    let query = base.orderByKey().limitToFirst(pageSize);
+    if (after !== undefined) query = query.startAfter(after);
+    const page = ((await query.get()).val() as Record<string, Record<string, Record<string, { at?: unknown }>>> | null) ?? {};
+    const keys = Object.keys(page);
+    if (!keys.length) break;
+    const old = expiredIndexEntries(page, cutoff);
+    for (let i = 0; i < old.length; i += 400) {
+      await root.update(Object.fromEntries(old.slice(i, i + 400).map((p) => [p, null])));
+    }
+    swept += old.length;
+    after = keys[keys.length - 1];
+    if (keys.length < pageSize) break;
+  }
   return swept;
+}
+
+/** Which index entries (`users:changes/{uid}/{connection}/{change}`) are older than the cutoff */
+export function expiredIndexEntries(all: Record<string, Record<string, Record<string, { at?: unknown }> | null> | null>, cutoff: number): string[] {
+  const out: string[] = [];
+  for (const [uid, connections] of Object.entries(all)) {
+    for (const [connection, entries] of Object.entries(connections ?? {})) {
+      for (const [id, entry] of Object.entries(entries ?? {})) {
+        if (typeof entry?.at === 'number' && entry.at < cutoff) out.push(indexPath(uid, connection, id));
+      }
+    }
+  }
+  return out;
 }

@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'vitest'
 import type { Reference } from 'firebase-admin/database'
-import { commitChange, expiredEntries, sweepChanges, MAX_RECORDS, recentChanges, same, stored, undoChange, type ChangeEntry } from '../../../../functions/src/mcp/changes'
+import { commitChange, expiredEntries, expiredIndexEntries, KEEP_DAYS, sweepChanges, MAX_RECORDS, recentChanges, same, stored, undoChange, type ChangeEntry } from '../../../../functions/src/mcp/changes'
 import { draftCsv, fileDraft } from '../../../../functions/src/mcp/draft'
 import { pushId } from '../../../../functions/src/mcp/ids'
 import { type Session } from '../../../../functions/src/mcp/session'
@@ -151,7 +151,33 @@ describe('the change log', () => {
     assert.ok(rows.every((r) => r.when))
   })
 
-  test('entries older than 60 days are found', () => {
+  test('a change writes its index entry in the same update, and undo marks it', async () => {
+    const db = fakeSession(competition())
+    const made = await change(db, { 'dancers/a/firstName': 'Isla Rose' })
+    const index = db.tree['users:changes'].u1[db.session.connection]
+    assert.deepEqual(index[made!.id], { at: db.tree['competitions:changes'].c1[made!.id].at, scope: 'competitions', scopeId: 'c1', summary: 'Did it' })
+    const undone = await undoChange(db.session, 'c1', made!.id, ids)
+    assert.equal(typeof index[made!.id].undone, 'number', 'the original is marked undone')
+    assert.deepEqual(index[undone.undoneBy], { at: db.tree['competitions:changes'].c1[undone.undoneBy].at, scope: 'competitions', scopeId: 'c1', summary: 'Undid: Did it', undoOf: made!.id })
+  })
+
+  test('a change made before the index existed is undone without it', async () => {
+    const db = fakeSession(competition())
+    const made = await change(db, { 'dancers/a/firstName': 'Isla Rose' })
+    delete db.tree['users:changes'].u1[db.session.connection][made!.id]
+    await undoChange(db.session, 'c1', made!.id, ids)
+    assert.equal(db.tree['users:changes'].u1[db.session.connection][made!.id], undefined)
+    assert.equal(db.tree['competitions:data'].c1.dancers.a.firstName, 'Isla')
+  })
+
+  test('entries are kept 30 days, and old index entries are found', () => {
+    assert.equal(KEEP_DAYS, 30)
+    const day = 86_400_000
+    const old = expiredIndexEntries({ u1: { conn: { a: { at: 1 * day }, b: { at: 100 * day } }, gone: null }, u2: null }, 70 * day)
+    assert.deepEqual(old, ['users:changes/u1/conn/a'])
+  })
+
+  test('entries older than the cutoff are found', () => {
     const day = 86_400_000
     const old = expiredEntries({ c1: { a: { at: 1 * day }, b: { at: 100 * day } }, c2: null }, 70 * day)
     assert.deepEqual(old, ['competitions:changes/c1/a'])
@@ -159,7 +185,7 @@ describe('the change log', () => {
 })
 
 describe('sweeping the log', () => {
-  test('pages through the competitions and deletes only entries past 60 days', async () => {
+  test('pages through the competitions and deletes only entries past 30 days', async () => {
     const day = 86_400_000
     const now = 100 * day
     const log: Json = {}
