@@ -190,18 +190,18 @@ export async function finish(session: Session, competition: string, tool: string
 
 // ---------- checks the app's forms make
 
-const trim = (v: unknown) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
+export const trim = (v: unknown) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 
 /** A field's value as the app saves it: trimmed text, or null to clear */
-const text = (v: string | number | null | undefined): string | null | undefined => (v === undefined ? undefined : v === null ? null : trim(v) || null);
+export const text = (v: string | number | null | undefined): string | null | undefined => (v === undefined ? undefined : v === null ? null : trim(v) || null);
 
-function must(value: string | null | undefined, what: string): string {
+export function must(value: string | null | undefined, what: string): string {
   const v = text(value);
   if (!v) throw new ToolError(`${what} can’t be empty.`);
   return v;
 }
 
-function realDate(v: string, withTime: boolean): boolean {
+export function realDate(v: string, withTime: boolean): boolean {
   const m = (withTime ? /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/ : /^(\d{4})-(\d{2})-(\d{2})$/).exec(v);
   if (!m) return false;
   const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
@@ -342,12 +342,12 @@ export interface DancesInput {
   order?: { categories?: Ref[]; ageGroups?: Ref[]; dances?: Ref[]; trophyEvents?: Ref[] };
 }
 
-const list = (work: Work, kind: CollectionKind) => entriesOf(work.state.data[kind] as Record<string, Rec> | undefined) as Array<Rec & { id: string }>;
-const labelOf = (work: Work, kind: CollectionKind, item: Rec & { id: string }) => titleOf(work.state.data, kind, item);
-const items = (work: Work, kind: CollectionKind) => list(work, kind).map((i) => ({ id: i.id, label: labelOf(work, kind, i) }));
-const find = (work: Work, kind: CollectionKind, given: string, what = KINDS[kind].singular) => pick(items(work, kind), given, (i) => i.label, what);
+export const list = (work: Work, kind: CollectionKind) => entriesOf(work.state.data[kind] as Record<string, Rec> | undefined) as Array<Rec & { id: string }>;
+export const labelOf = (work: Work, kind: CollectionKind, item: Rec & { id: string }) => titleOf(work.state.data, kind, item);
+export const items = (work: Work, kind: CollectionKind) => list(work, kind).map((i) => ({ id: i.id, label: labelOf(work, kind, i) }));
+export const find = (work: Work, kind: CollectionKind, given: string, what = KINDS[kind].singular) => pick(items(work, kind), given, (i) => i.label, what);
 
-function existing(work: Work, kind: CollectionKind, id: string) {
+export function existing(work: Work, kind: CollectionKind, id: string) {
   const item = list(work, kind).find((i) => i.id === id);
   if (!item) throw new ToolError(`There is no ${KINDS[kind].singular} with the id ${id}. Leave the id out to add one.`);
   return item;

@@ -6,6 +6,7 @@ import { commitChange, expiredEntries, sweepChanges, MAX_RECORDS, recentChanges,
 import { draftCsv, fileDraft } from '../../../../functions/src/mcp/draft'
 import { pushId } from '../../../../functions/src/mcp/ids'
 import { DatabaseError, type Query, type Session } from '../../../../functions/src/mcp/session'
+import { resultsView, scheduleView } from '../../../../functions/src/mcp/view'
 import { writeTools } from '../../../../functions/src/mcp/writeTools'
 import { explain } from '../../../../functions/src/mcp/toolkit'
 import { entriesOf as importEntries, gridFromText, parseGrid } from '../admin/importDancers'
@@ -548,3 +549,272 @@ describe('get_changes', () => {
     assert.ok(changes.every((c: Json) => c.id && c.summary))
   })
 })
+
+// ---------- results, draws, schedule
+
+/** Two age groups with dances, callbacks possible, a team, a trophy event of each kind */
+const full = (extra: Json = {}) => {
+  const base = competition()
+  const data = base['competitions:data'].c1
+  data.dances = {
+    d1: { name: 'Highland Fling', steps: '4', _order: 0, groupIds: { g1: true, g2: true } },
+    d2: { name: 'Reel', _order: 1, groupIds: { g1: true } },
+    d3: { name: 'Sword', _order: 2, groupIds: { g2: true } },
+  }
+  data.dancers = {
+    a: { number: '101', firstName: 'Isla', lastName: 'Grant', groupId: 'g1' },
+    b: { number: '102', firstName: 'Ava', lastName: 'Reid', groupId: 'g1' },
+    c: { number: '103', firstName: 'Mia', lastName: 'Cox', groupId: 'g1' },
+    t: { number: '104', team: true, title: 'The Pair', groupId: 'g1', members: { m1: { firstName: 'Zoe', _order: 0 }, m2: { firstName: 'Kit', _order: 1 } } },
+    e: { number: '201', firstName: 'Eve', lastName: 'Cole', groupId: 'g2' },
+    f: { number: '202', firstName: 'Fay', lastName: 'Dunn', groupId: 'g2' },
+    h: { number: '203', firstName: 'Hope', lastName: 'Ewart', groupId: 'g2' },
+    i: { number: '201', firstName: 'Ida', lastName: 'Fox', groupId: 'g1' },
+  }
+  data.categories.cat3 = { name: 'Primary', _order: 2 }
+  data.groups.g3 = { name: '8 & Under', categoryId: 'cat3', _order: 2 }
+  data.trophyEvents = {
+    te1: { name: 'Dancer of the Day', groupIds: { g1: true, g2: true }, _order: 0 },
+    te2: { name: 'Trophy Fling', danceId: 'd1', groupIds: { g1: true }, _order: 1 },
+  }
+  data.staff.s3 = { type: 'Judge', firstName: 'Bruce', lastName: 'Mackay', _order: 2 }
+  data.platforms.p2 = { name: 'B', _order: 1 }
+  Object.assign(data, extra)
+  return base
+}
+const results = (db: ReturnType<typeof fakeSession>) => db.tree['competitions:data'].c1.results
+
+describe('save_results', () => {
+  test('saves ties in order, with names read back, and get_results gives the same list', async () => {
+    const db = fakeSession(full())
+    const out = await call(db.session, 'save_results', { competition: 'c1', rows: [
+      { ageGroup: 'g1', row: 'callbacks', numbers: ['101', 102, '103', '104'] },
+      { ageGroup: '9 & 10', row: 'Highland Fling', numbers: ['104', ['102', '101'], '103'] },
+    ] })
+    assert.deepEqual(results(db).g1.d1, ['t', 'b', 'a:tie', 'c'])
+    assert.deepEqual(results(db).g1.callbacks, ['a', 'b', 'c', 't'])
+    assert.ok(out.change)
+    const fling = out.saved.find((r: Json) => r.row === 'Highland Fling (4)')
+    assert.deepEqual(fling.numbers, ['104', ['102', '101'], '103'])
+    assert.deepEqual(fling.placings.map((p: Json) => [p.place, p.number, p.name]), [[1, '104', 'Zoe & Kit'], [2, '102', 'Ava Reid'], [2, '101', 'Isla Grant'], [4, '103', 'Mia Cox']].map(([a, b]) => [a, b, fling.placings.find((p: Json) => p.number === b).name]))
+    // The read tool gives the list in the shape save_results takes
+    const parts = Object.fromEntries(Object.entries(db.tree['competitions:data'].c1)) as never
+    const read = resultsView(parts, { ageGroup: 'g1' }) as Json
+    assert.deepEqual(read.ageGroups[0].dances[0].numbers, fling.numbers)
+    assert.deepEqual(read.ageGroups[0].callbacks.numbers, ['101', '102', '103', '104'])
+  })
+
+  test('a championship announced from the bottom, and the overall', async () => {
+    const db = fakeSession(full())
+    await call(db.session, 'save_results', { competition: 'c1', rows: [
+      { ageGroup: 'g2', row: 'callbacks', numbers: ['201', '202', '203'] },
+      { ageGroup: 'g2', row: 'overall', numbers: ['203', '202', '201'], reversedFrom: 3 },
+    ] })
+    assert.deepEqual(results(db).g2.overall, ['reverse:3', 'h', 'f', 'e'])
+    const read = resultsView(db.tree['competitions:data'].c1, { ageGroup: 'g2' }) as Json
+    assert.equal(read.ageGroups[0].overall.reversedFrom, 3)
+    assert.deepEqual(read.ageGroups[0].overall.placings.map((p: Json) => [p.number, p.place]), [['203', 3], ['202', 2], ['201', 1]])
+    // reversedFrom alone changes just the mode; a tie in reverse
+    await call(db.session, 'save_results', { competition: 'c1', rows: [{ ageGroup: 'g2', row: 'overall', numbers: ['203', ['202', '201']], reversedFrom: 3 }] })
+    assert.deepEqual(results(db).g2.overall, ['reverse:3', 'h', 'f', 'e:tie'])
+    await call(db.session, 'save_results', { competition: 'c1', rows: [{ ageGroup: 'g2', row: 'overall', reversedFrom: null }] })
+    assert.deepEqual(results(db).g2.overall, ['h', 'f', 'e:tie'])
+  })
+
+  test('no results, no callback round, clearing, and points', async () => {
+    const db = fakeSession(full())
+    await call(db.session, 'save_results', { competition: 'c1', rows: [
+      { ageGroup: 'g1', row: 'callbacks', noResults: true },
+      { ageGroup: 'g1', row: 'Reel', noResults: true },
+      { ageGroup: 'g2', row: 'callbacks', numbers: ['201', '202'] },
+      { ageGroup: 'g2', row: 'Sword', numbers: ['202'], points: ['201'] },
+    ] })
+    assert.equal(results(db).g1.callbacks, false)
+    assert.equal(results(db).g1.d2, false)
+    assert.deepEqual(db.tree['competitions:data'].c1.points.g2.d3.combined, ['e'])
+    // with no callback round anyone can be placed
+    await call(db.session, 'save_results', { competition: 'c1', rows: [{ ageGroup: 'g1', row: 'Reel', numbers: ['103'] }] })
+    assert.deepEqual(results(db).g1.d2, ['c'])
+    await call(db.session, 'save_results', { competition: 'c1', rows: [{ ageGroup: 'g1', row: 'Reel', numbers: [] }] })
+    assert.equal(results(db).g1.d2, undefined)
+    await refused(call(db.session, 'save_results', { competition: 'c1', rows: [{ ageGroup: 'g2', row: 'Sword', numbers: ['201'], points: ['201'] }] }), /placed and given a point/)
+  })
+
+  test('trophy events: placings across the age groups they are open to, callbacks only when danced', async () => {
+    const db = fakeSession(full())
+    await refused(call(db.session, 'save_results', { competition: 'c1', rows: [{ trophyEvent: 'Dancer of the Day', row: 'overall', numbers: ['201'] }] }), /Number 201 is in more than one.*Give the entry id/)
+    await call(db.session, 'save_results', { competition: 'c1', rows: [{ trophyEvent: 'Dancer of the Day', row: 'overall', numbers: ['e', '101', 'f'] }] })
+    assert.deepEqual(results(db).te1.overall, ['e', 'a', 'f'])
+    await refused(call(db.session, 'save_results', { competition: 'c1', rows: [{ trophyEvent: 'te1', row: 'callbacks', numbers: ['e'] }] }), /isn’t danced on its own/)
+    await refused(call(db.session, 'save_results', { competition: 'c1', rows: [{ trophyEvent: 'te2', row: 'overall', numbers: ['202'] }] }), /not an entry in Trophy Fling/)
+    const out = await call(db.session, 'save_results', { competition: 'c1', rows: [{ trophyEvent: 'te2', row: 'callbacks', numbers: ['101', '102'] }, { trophyEvent: 'te2', row: 'overall', numbers: ['102', '101'] }] })
+    assert.deepEqual(results(db).te2, { callbacks: ['a', 'b'], overall: ['b', 'a'] })
+    assert.equal(out.saved[1].row, 'placings')
+  })
+
+  test('refuses, in sentences, what the app would not let through', async () => {
+    const db = fakeSession(full())
+    const r = (row: Json) => call(db.session, 'save_results', { competition: 'c1', rows: [row] })
+    await refused(r({ ageGroup: 'g1', row: 'Highland Fling', numbers: ['999'] }), /999 is not an entry in Premier 9 & 10 Years/)
+    await refused(r({ ageGroup: 'g1', row: 'Highland Fling', numbers: ['101', ['102', '101']] }), /placed twice/)
+    await refused(r({ ageGroup: 'g1', row: 'Sword', numbers: ['101'] }), /doesn’t dance Sword.*Championship 12 & Over/)
+    await refused(r({ ageGroup: 'g3', row: 'overall', numbers: ['101'] }), /Primary 8 & Under has no overall/)
+    await refused(r({ ageGroup: 'g1', row: 'Highland Fling', numbers: ['?'] }), /allowStandIns/)
+    await refused(r({ ageGroup: 'g1', row: 'callbacks', numbers: [['101', '102']] }), /no ties/)
+    await refused(r({ ageGroup: 'g1', row: 'Highland Fling', numbers: ['101', '102', '103', '104'], reversedFrom: 3 }), /4 dancers listed but reversedFrom is 3/)
+    await refused(r({ row: 'Highland Fling', numbers: [] }), /ageGroup or trophyEvent/)
+    await refused(r({ ageGroup: 'g1', row: 'Highland Fling' }), /say what to save/)
+    assert.equal(db.updates.length, 0)
+    // callbacks entered: only those called back place
+    await r({ ageGroup: 'g1', row: 'callbacks', numbers: ['101'] })
+    await refused(r({ ageGroup: 'g1', row: 'Highland Fling', numbers: ['101', '102'] }), /102 wasn’t called back/)
+  })
+
+  test('a ? stand-in only when asked, and it is a fresh number each time', async () => {
+    const db = fakeSession(full())
+    const out = await call(db.session, 'save_results', { competition: 'c1', rows: [{ ageGroup: 'g1', row: 'Highland Fling', numbers: ['101', '?', '?'], allowStandIns: true }] })
+    const stored = results(db).g1.d1 as string[]
+    assert.equal(stored[0], 'a')
+    assert.ok(/^\d+$/.test(stored[1]) && /^\d+$/.test(stored[2]) && stored[1] !== stored[2])
+    assert.ok(out.warnings.some((w: string) => /no callbacks entered/.test(w)))
+    assert.deepEqual(out.saved[0].numbers, ['101', '?', '?'])
+  })
+
+  test('the Results tab hidden, and undo restores the earlier placings', async () => {
+    const hidden = fakeSession(full({ results: false }))
+    await refused(call(hidden.session, 'save_results', { competition: 'c1', rows: [{ ageGroup: 'g1', row: 'callbacks', numbers: ['101'] }] }), /Results tab is hidden/)
+    const db = fakeSession(full({ results: { g1: { callbacks: ['a', 'b'], d1: ['a', 'b'] } } }))
+    const out = await call(db.session, 'save_results', { competition: 'c1', rows: [{ ageGroup: 'g1', row: 'Highland Fling', numbers: ['102', '101'] }] })
+    assert.deepEqual(results(db).g1.d1, ['b', 'a'])
+    await call(db.session, 'undo_change', { competition: 'c1', change: out.change })
+    assert.deepEqual(results(db).g1.d1, ['a', 'b'])
+    const same = await call(db.session, 'save_results', { competition: 'c1', rows: [{ ageGroup: 'g1', row: 'Highland Fling', numbers: ['101', '102'] }] })
+    assert.equal(same.change, undefined)
+  })
+})
+
+describe('save_draws', () => {
+  test('sets an explicit order, numbers order, strays and missing, and clears', async () => {
+    const db = fakeSession(full({ draws: { g1: { d1: ['101', '999'] } } }))
+    const draws = () => db.tree['competitions:data'].c1.draws
+    const out = await call(db.session, 'save_draws', { competition: 'c1', draws: [{ ageGroup: 'g1', dance: 'Highland Fling', order: ['103', '101', '102'] }] })
+    assert.deepEqual(draws().g1.d1, ['103', '101', '102'])
+    assert.match(out.warnings[0], /2 entries are not in the draw yet \(104, 201\)/)
+    assert.deepEqual(out.saved[0].order, ['103', '101', '102'])
+    await call(db.session, 'save_draws', { competition: 'c1', draws: [{ ageGroup: 'g1', dance: 'Highland Fling', action: 'numberOrder' }] })
+    assert.deepEqual(draws().g1.d1, ['101', '102', '103', '104', '201'])
+    await call(db.session, 'save_draws', { competition: 'c1', draws: [{ ageGroup: 'g1', dance: 'Highland Fling', order: ['101'] }, { ageGroup: 'g2', dance: 'Sword', order: [] }] })
+    await call(db.session, 'save_draws', { competition: 'c1', draws: [{ ageGroup: 'g1', dance: 'Highland Fling', action: 'addMissing' }] })
+    assert.deepEqual(draws().g1.d1, ['101', '102', '103', '104', '201'])
+    await call(db.session, 'save_draws', { competition: 'c1', draws: [{ ageGroup: 'g1', dance: 'all', action: 'clear' }] })
+    assert.equal(draws()?.g1, undefined)
+  })
+
+  test('shuffles with everyone in, and reels stay in number order', async () => {
+    const db = fakeSession(full())
+    const draws = () => db.tree['competitions:data'].c1.draws.g1
+    await call(db.session, 'save_draws', { competition: 'c1', draws: [{ ageGroup: 'g1', dance: 'all', action: 'shuffle' }] })
+    assert.deepEqual([...draws().d1].sort(), ['101', '102', '103', '104', '201'])
+    assert.deepEqual(draws().d2, ['101', '102', '103', '104', '201'])
+    db.tree['competitions:data'].c1.draws.g1.d2 = ['104']
+    const out = await call(db.session, 'save_draws', { competition: 'c1', draws: [{ ageGroup: 'g1', dance: 'Reel', action: 'shuffle' }] })
+    assert.deepEqual(draws().d2, ['101', '102', '103', '104', '201'])
+    assert.match(out.warnings[0], /reel/)
+    // two entries can share a number across age groups: the draw is for one age group
+    await call(db.session, 'save_draws', { competition: 'c1', draws: [{ ageGroup: 'g1', dance: 'Highland Fling', action: 'shuffle' }] })
+    assert.equal(draws().d1.length, 5)
+  })
+
+  test('refuses numbers that are not entries, doubles, and dances the age group does not do', async () => {
+    const db = fakeSession(full())
+    const r = (row: Json) => call(db.session, 'save_draws', { competition: 'c1', draws: [row] })
+    await refused(r({ ageGroup: 'g1', dance: 'Highland Fling', order: ['101', '500'] }), /500 is not an entry in Premier 9 & 10 Years/)
+    await refused(r({ ageGroup: 'g1', dance: 'Highland Fling', order: ['101', '101'] }), /in the draw twice/)
+    await refused(r({ ageGroup: 'g1', dance: 'Sword', action: 'shuffle' }), /doesn’t dance Sword/)
+    await refused(r({ ageGroup: 'g1', dance: 'all' }), /give an order/)
+    await refused(r({ ageGroup: 'g1', dance: 'all', order: ['101'] }), /one dance/)
+    assert.equal(db.updates.length, 0)
+  })
+})
+
+describe('save_schedule', () => {
+  const day = (): Json => ({
+    name: 'Saturday', date: '2026-04-11',
+    sessions: [
+      { name: 'Morning', events: [
+        { name: 'Registration', description: '8:30 am', dances: [{ name: 'Check-in' }] },
+        { name: 'Premier', description: '9:00 am', dances: [
+          { danceId: 'd1', platforms: [{ platform: 'A', ageGroups: ['g1', 'gap', '9 & 10'].slice(0, 2), judges: ['Aileen Robertson'] }, { id: 'p2', ageGroups: ['Trophy Fling'], judges: ['s3'] }] },
+          { dance: 'Reel', platforms: [{ id: 'p1', ageGroups: ['g1'] }] },
+        ] },
+      ] },
+      { name: 'Afternoon', events: [{ name: 'Results' }] },
+    ],
+  })
+
+  test('builds a whole day, and what it saved reads back and sends back unchanged', async () => {
+    const db = fakeSession(full())
+    const out = await call(db.session, 'save_schedule', { competition: 'c1', days: [day()] })
+    assert.match(out.summary, /Added Saturday \(2 sessions, 3 events, 3 rows\)/)
+    const saved = db.tree['competitions:data'].c1.schedule.days
+    const [dayId] = Object.keys(saved)
+    const blocks = Object.values(saved[dayId].blocks) as Json[]
+    assert.deepEqual(blocks.map((b) => [b.name, b.order]), [['Morning', 0], ['Afternoon', 1]])
+    const rows = Object.values((Object.values(blocks[0].events)[1] as Json).dances) as Json[]
+    assert.deepEqual(rows.map((r) => [r.danceId, r.order]), [['d1', 0], ['d2', 1]])
+    assert.deepEqual(rows[0].platforms.p1, { orderedGroupIds: ['g1', rows[0].platforms.p1.orderedGroupIds[1]], orderedJudgeIds: ['s2'] })
+    assert.ok(/^\d+$/.test(rows[0].platforms.p1.orderedGroupIds[1]), 'a gap')
+    assert.deepEqual(rows[0].platforms.p2, { orderedGroupIds: ['te2'], orderedJudgeIds: ['s3'] })
+    // read, send back as it was read: nothing changes
+    const read = scheduleView(db.tree['competitions:data'].c1, undefined) as Json
+    assert.equal(read.days[0].sessions[0].events[1].dances[0].dance, 'Highland Fling (4)')
+    const again = await call(db.session, 'save_schedule', { competition: 'c1', days: read.days })
+    assert.equal(again.change, undefined, JSON.stringify(again))
+    // and undo takes the day away
+    await call(db.session, 'undo_change', { competition: 'c1', change: out.change })
+    assert.equal(db.tree['competitions:data'].c1.schedule, undefined)
+  })
+
+  test('replaces what it is given: ids kept, the rest removed, days not sent untouched', async () => {
+    const db = fakeSession(full())
+    await call(db.session, 'save_schedule', { competition: 'c1', days: [day(), { name: 'Sunday', date: '2026-04-12', sessions: [{ name: 'All day', events: [{ name: 'Open' }] }] }] })
+    const read = scheduleView(db.tree['competitions:data'].c1, undefined) as Json
+    assert.deepEqual(read.days.map((d: Json) => d.name), ['Saturday', 'Sunday'])
+    const sat = read.days[0]
+    const morning = sat.sessions[0]
+    const out = await call(db.session, 'save_schedule', { competition: 'c1', days: [{ date: '2026-04-11', sessions: [{ id: morning.id, name: 'Morning', events: [{ id: morning.events[1].id, name: 'Premier', dances: [{ id: morning.events[1].dances[1].id, danceId: 'd2' }] }] }] }] })
+    assert.match(out.warnings[0], /Saturday: 1 session that was there before.*removed/)
+    const after = scheduleView(db.tree['competitions:data'].c1, undefined) as Json
+    assert.equal(after.days.length, 2)
+    assert.equal(after.days[0].sessions.length, 1)
+    assert.deepEqual(after.days[0].sessions[0].events.map((e: Json) => e.name), ['Premier'])
+    assert.equal(after.days[0].sessions[0].events[0].dances.length, 1)
+    assert.equal(after.days[1].sessions[0].name, 'All day')
+    // no sessions given: the day keeps its own
+    await call(db.session, 'save_schedule', { competition: 'c1', days: [{ id: after.days[0].id, name: 'Saturday 11th' }] })
+    const renamed = scheduleView(db.tree['competitions:data'].c1, undefined) as Json
+    assert.equal(renamed.days[0].name, 'Saturday 11th')
+    assert.equal(renamed.days[0].sessions.length, 1)
+  })
+
+  test('refuses what the builder would not allow, in sentences', async () => {
+    const db = fakeSession(full())
+    const r = (platforms: Json[], row: Json = { danceId: 'd2' }) => call(db.session, 'save_schedule', { competition: 'c1', days: [{ name: 'Sat', sessions: [{ name: 'AM', events: [{ name: 'E', dances: [{ ...row, platforms }] }] }] }] })
+    await refused(r([{ platform: 'A', ageGroups: ['Championship'] }]), /Championship 12 & Over doesn’t dance Reel/)
+    await refused(r([{ platform: 'A', ageGroups: ['te1'] }]), /There is no age group|No age group matches|trophy/i)
+    await refused(r([{ platform: 'A', ageGroups: ['te2'] }]), /trophy event danced as its own dance, so it only goes with that dance, not Reel/)
+    await refused(r([{ platform: 'A', judges: ['Sponsor'] }]), /No judge matches/)
+    await refused(r([{ platform: 'A', ageGroups: ['g1', 'g1'] }]), /in this cell twice/)
+    await refused(r([{ platform: 'Z' }]), /No platform matches “Z”/)
+    await refused(r([{ platform: 'A' }, { id: 'p1' }]), /listed twice/)
+    await refused(r([{ platform: 'A', ageGroups: ['g1'] }], { name: 'Lunch' }), /only a dance has platforms/)
+    await refused(r([], { danceId: 'nope' }), /No dance matches/)
+    await refused(call(db.session, 'save_schedule', { competition: 'c1', days: [{ name: 'Sat', date: '2026-13-40' }] }), /is not a date/)
+    await refused(call(db.session, 'save_schedule', { competition: 'c1', days: [{ id: 'x' }] }), /no day with the id x/)
+    await refused(call(db.session, 'save_schedule', { competition: 'c1', days: [{ name: 'Sat', sessions: [{ id: 'x', name: 'AM' }] }] }), /no session with the id x/)
+    await refused(call(hiddenSchedule(), 'save_schedule', { competition: 'c1', days: [{ name: 'Sat' }] }), /Schedule tab is hidden/)
+    assert.equal(db.updates.length, 0)
+  })
+})
+
+const hiddenSchedule = () => fakeSession(full({ schedule: false })).session

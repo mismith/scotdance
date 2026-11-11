@@ -246,7 +246,7 @@ describe('the MCP endpoint', () => {
   test('the read tools are read-only; the write tools are not, and the ones that delete say so', async () => {
     const { tools } = (await result(await rpc('tools/list'))) as { tools: Array<Json> }
     const reads = ['get_competitions', 'get_competition', 'get_dances', 'get_dancers', 'get_staff', 'get_schedule', 'get_results', 'find', 'get_changes']
-    const writes = ['update_competition', 'set_visibility', 'save_dances', 'save_dancers', 'save_staff', 'remove', 'draft_dancers', 'undo_change']
+    const writes = ['update_competition', 'set_visibility', 'save_dances', 'save_dancers', 'save_staff', 'save_results', 'save_draws', 'save_schedule', 'remove', 'draft_dancers', 'undo_change']
     assert.deepEqual(tools.map((t) => t.name).sort(), [...reads, ...writes].sort())
     const by = (name: string) => tools.find((t) => t.name === name) as Json
     for (const name of reads) assert.equal((by(name).annotations as Json).readOnlyHint, true, `${name} is read-only`)
@@ -254,6 +254,9 @@ describe('the MCP endpoint', () => {
     assert.equal((by('remove').annotations as Json).destructiveHint, true)
     assert.equal((by('undo_change').annotations as Json).destructiveHint, true)
     assert.equal((by('set_visibility').annotations as Json).idempotentHint, false)
+    // Results alert followers: not read-only, not idempotent, and it says so
+    assert.equal((by('save_results').annotations as Json).idempotentHint, false)
+    assert.match(String(by('save_results').description), /LIVE AND PUBLIC AT ONCE.*push alert/)
     for (const tool of tools) {
       const props = (tool.inputSchema as Json).properties as Json
       assert.equal('competition' in props, tool.name !== 'get_competitions', tool.name)

@@ -1,6 +1,6 @@
 # ADR-0018: Assistants manage competitions through MCP
 
-Status: Accepted (slice 3: sign-in, read tools, and write tools for the simple sections)
+Status: Accepted (slice 4: sign-in, read tools, write tools, and results, draws and the schedule)
 Date: 2026-11-11
 
 ## Context
@@ -100,9 +100,14 @@ its id (an assistant retrying a call would otherwise add it twice).
 
 Write tools: `update_competition`, `set_visibility`, `save_dances` (categories, age groups, dances, trophy events,
 "not run as a championship", order), `save_dancers` (up to 200 entries; no id adds, an id corrects), `save_staff`
-(staff and platforms), `remove` (any of those, by id), `draft_dancers` (§8), `get_changes`, `undo_change`.
-Results, draws and the schedule come in a later slice. Not here, by design: invites, admins, organisations,
+(staff and platforms), `remove` (any of those, by id), `draft_dancers` (§8), `save_results`, `save_draws`,
+`save_schedule` (§9), `get_changes`, `undo_change`. Not here, by design: invites, admins, organisations,
 deleting a competition, uploads.
+
+A dance is a twin only when its name and steps both match (“Highland Fling” at 4 and at 6 steps is normal in one
+competition). Other twins refused: a category by name; an age group by name within its category; a trophy event by
+name; staff by role and full name; a platform by name. Not changed: a trophy event shared by two age-group sets under
+one name, or two staff with the same name, would have to be told apart by id or by editing the existing one.
 
 - Text is stored exactly as given (trimmed, as the app's fields trim). The server never tidies names, capitals or
   steps; that is shown to the organiser on the front end. It refuses, in a sentence, what a form would refuse.
@@ -140,3 +145,42 @@ is a row per dancer with the same number and age group). Nothing in the competit
 made. The result gives the page (`/competitions/{id}/manage/dancers/import?inbox={item}`) where the organiser
 checks the preview and presses Import, which matches by number, makes missing age groups and tidies as it always
 does. Up to 1,500 entries.
+
+### 9. Results, draws and the schedule
+
+All three go through the same `shared/plans` functions as the Results, Draws and Schedule screens (extended with
+`planSetPoints`, `isEligible` and `replaceDay`, which the screens' behaviour does not depend on).
+
+**`save_results`**: rows of `{ ageGroup | trophyEvent, row, numbers, reversedFrom, noResults, points, allowStandIns }`.
+`row` is `callbacks`, `overall`, or a dance the age group dances (a trophy event has `callbacks`, only if danced, and
+`overall`, its placings). `numbers` is the placing order by entry number, 1st first, a tie as an inner list
+(`["101", ["105","99"], "150"]`); with `reversedFrom: 6` it is in the order announced, lowest place first. Callbacks are
+a flat list. `get_results` gives each row's `numbers` in exactly this shape. Saving a row replaces it (an empty list
+clears it; leaving `numbers` out changes only `reversedFrom` or `points`). Refused in a sentence: a number that is not an
+entry in the age group (for a trophy event: the groups it is open to; an ambiguous number needs the entry id), a dancer
+placed twice, a dance the age group does not dance, an overall for Primary, `reversedFrom` smaller than the list, ties in
+callbacks, anyone not called back once callbacks are entered (as the app only offers those dancers), someone both placed
+and given a point. A `?` is accepted only with `allowStandIns: true`. A warning says when callbacks are not entered yet.
+Writes are applied callbacks first, so a dance can follow its callbacks in one call.
+
+*Alerts.* A results write on a published competition is public at once. `notifyFollowersOnResult` (index.ts) queues a
+task for each dance or overall (and trophy event) row with a follower of a dancer in it, which runs after 60 s and sends
+only if the row still holds what was saved; only on competition day ±1 day, and callbacks and points never alert. So the
+instructions tell the assistant to read the placings back and get a yes first (unless given the exact placings), and to
+correct a wrong save at once: a corrected save inside the minute means the wrong alert is never sent. An alert already
+sent is not recalled: a correction replaces it (one per person per dance, keyed on the person), and an
+`undo_change` is such a correction (it restores the earlier placings; an undo that leaves the row empty queues nothing).
+
+**`save_draws`**: rows of `{ ageGroup, dance | "all", order | action }`; `order` is entry numbers (replaces the draw, `[]`
+clears), `action` is `shuffle`, `numberOrder`, `clear`, `addMissing`, `removeStrays`. Shuffling follows
+`planShuffleAll`: reels are danced in number order, so a reel shuffled alone is put in number order with a warning.
+
+**`save_schedule`**: whole days in the shape `get_schedule` returns (days › sessions › events › dances › platforms, each
+with `ageGroups` and `judges`; a gap between age groups is `{ gap: true }`). A day sent is saved exactly as described:
+what it leaves out goes (said in a warning; ids given are kept), days not sent are untouched, and a day without
+`sessions` keeps its own. A day is found by id, else date, else name, else added. Only a dance row has platforms; an age
+group only goes with a dance it dances and a danced trophy event only with its own dance (`isEligible`); judges must be
+Judges; no duplicates in a cell. A schedule is one record to the change log, so only the 500 KB limit applies (split by
+day). `get_schedule` renamed its `blocks` to `sessions` and a dance row's `name` to `dance` (`name` is for rows that are not dances).
+
+Linked competitions share only staff, details and visibility (ADR 0007), none of which these three tools write.
