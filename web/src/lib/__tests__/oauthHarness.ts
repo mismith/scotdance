@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { createServer, type Server } from 'node:http'
+import { createRequire } from 'node:module'
 import type { AddressInfo } from 'node:net'
-import express from 'express'
 import { forgetClients } from '../../../../functions/src/oauth/cimd'
 import { knownHosts } from '../../../../functions/src/oauth/known'
 import { oauthRouter } from '../../../../functions/src/oauth/index'
@@ -10,6 +10,9 @@ import { runtime } from '../../../../functions/src/oauth/runtime'
 
 // Scaffolding for the functions' OAuth tests: a fake database and clock, a client-document server, and the OAuth
 // router on a real port. (Binder's, with the Realtime Database in place of Firestore.)
+
+// Express is the functions' dependency, not web's: load the copy the code under test uses (web has none to find).
+const express = createRequire(new URL('../../../../functions/package.json', import.meta.url))('express')
 
 export const ORIGIN = 'https://next.example.com'
 export const RESOURCE = `${ORIGIN}/mcp`
