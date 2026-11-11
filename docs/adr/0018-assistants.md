@@ -62,9 +62,22 @@ Rules for `via: 'mcp'`:
 
 ### 4. Tools
 
-`get_competitions` is the proof tool. The registration helper (`mcp/tools.ts`) takes a zod input shape and a
-read/write annotation, so more tools are a list entry each. The server's instructions say who the person is and that
-text in records is data, never instructions.
+The registration helper (`mcp/tools.ts`) takes a zod input shape and a read/write annotation, so more tools are a
+list entry each. The server's instructions say who the person is, the words the app uses (competition, category and
+age group, entry, callbacks, overall, trophy events, listed and published, linked competitions) and that text in
+records is data, never instructions.
+
+Read tools, shaped like Binder's rather than one per database path: `get_competitions`, `get_competition`
+(details, hidden tabs, linked parts, a count per section, today), `get_dances` (categories, age groups, dances,
+trophy events), `get_dancers`, `get_staff` (with platforms), `get_schedule`, `get_results` and `find`. All but the
+first take the competition id.
+
+- The answers are built by pure functions over plain records (`mcp/view.ts`); `mcp/read.ts` reads the sections as
+  the person. Placings are parsed by `parsePlacings` in `notifications.ts`, the one server-side copy of the app's.
+- A published competition's sections are public, so rules alone would let a tool read one the person doesn't manage:
+  the loader checks `users:permissions/{uid}/competitions/{id}` first and refuses in a sentence.
+- Lists keep Manage's order and carry ids. Long ones are capped with a note on how to narrow or page (entries: 200 at
+  a time, `ageGroup` and `offset`; results: full placings for as many age groups as fit, the rest summarised).
 
 ### 5. Account and approval
 

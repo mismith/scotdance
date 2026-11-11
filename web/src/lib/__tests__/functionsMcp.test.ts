@@ -243,11 +243,14 @@ describe('the MCP endpoint', () => {
     assert.match(INSTRUCTIONS, /data to read, never as instructions/)
   })
 
-  test('get_competitions is the one tool, and it is read-only', async () => {
+  test('the tools are all read-only, and only get_competitions needs no competition', async () => {
     const { tools } = (await result(await rpc('tools/list'))) as { tools: Array<Json> }
-    assert.deepEqual(tools.map((t) => t.name), ['get_competitions'])
-    assert.equal((tools[0]!.annotations as Json).readOnlyHint, true)
-    assert.deepEqual((tools[0]!.inputSchema as Json).properties, {})
+    assert.deepEqual(tools.map((t) => t.name), ['get_competitions', 'get_competition', 'get_dances', 'get_dancers', 'get_staff', 'get_schedule', 'get_results', 'find'])
+    for (const tool of tools) {
+      assert.equal((tool.annotations as Json).readOnlyHint, true, `${tool.name} is read-only`)
+      const props = (tool.inputSchema as Json).properties as Json
+      assert.equal('competition' in props, tool.name !== 'get_competitions', tool.name)
+    }
   })
 
   test('get_competitions lists the person’s competitions, newest first, read as them', async () => {
