@@ -1,5 +1,5 @@
 import { runtime } from '../oauth/runtime';
-import { emulated, endpoints } from './config';
+import { emulated, endpoints, issuer } from './config';
 import type { Access } from './types';
 
 /**
@@ -72,7 +72,8 @@ async function signIn(deps: Deps, access: Access): Promise<string> {
   const custom = await deps.auth.createCustomToken(access.uid, { via: 'mcp', scope: access.scope });
   const res = await runtime.fetch(endpoints().signIn, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    // The web key only answers requests from the app's own pages, so say whose page this is for
+    headers: { 'Content-Type': 'application/json', Referer: `${issuer()}/` },
     body: JSON.stringify({ token: custom, returnSecureToken: true }),
   });
   const body = (await res.json().catch(() => ({}))) as { idToken?: string };
