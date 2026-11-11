@@ -117,7 +117,7 @@ const tools = [
       + 'Age groups name their category (id or name, added earlier in the same call is fine), trophy, sponsor (a Sponsor from save_staff) and '
       + 'notChampionship (only for championship age groups). A dance lists the age groups that dance it (“all”, or a list; it replaces '
       + 'who dances it). A trophy event lists the age groups that can win it. “order” puts the ids named first, in that order. '
-      + 'Names and steps are saved exactly as given: “Highland Fling” with steps “4”. A second one with the same name is refused.',
+      + 'Names and steps are saved exactly as given: “Highland Fling” with steps “4”. The same dance at different steps (“Highland Fling” 4 and 6) is normal and fine; only the same name AND steps together is refused as a duplicate.',
     input: {
       competition,
       categories: z.array(z.object({ id: id('A category'), name: z.string().optional() })).optional(),

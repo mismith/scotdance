@@ -356,8 +356,10 @@ function existing(work: Work, kind: CollectionKind, id: string) {
 function refuseTwin(work: Work, kind: CollectionKind, label: string) {
   const twin = items(work, kind).find((i) => fold(i.label) === fold(label));
   if (twin) {
+    // A dance's label is its name and steps, so the same dance at other steps is not a twin
+    const other = kind === 'dances' ? 'give this one different steps or a different name' : 'give this one a different name';
     throw new ToolError(
-      `There is already a ${KINDS[kind].singular} called “${twin.label}” (id ${twin.id}). Pass that id to change it, or give this one a different name.`,
+      `There is already a ${KINDS[kind].singular} called “${twin.label}” (id ${twin.id}). Pass that id to change it, or ${other}.`,
     );
   }
 }

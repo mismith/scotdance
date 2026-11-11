@@ -353,7 +353,12 @@ describe('save_dances', () => {
   test('refuses twins, unknown references and sponsors who are not there', async () => {
     const db = fakeSession(competition())
     await refused(call(db.session, 'save_dances', { competition: 'c1', categories: [{ name: 'premier' }] }), /already a category called “Premier” \(id cat1\)/)
-    await refused(call(db.session, 'save_dances', { competition: 'c1', dances: [{ name: 'Highland Fling', steps: 4 }] }), /already a dance called/)
+    await refused(call(db.session, 'save_dances', { competition: 'c1', dances: [{ name: 'Highland Fling', steps: 4 }] }), /already a dance called “Highland Fling \(4\)”.*different steps/)
+    // The same dance at other steps is a different dance
+    const six = await call(db.session, 'save_dances', { competition: 'c1', dances: [{ name: 'Highland Fling', steps: 6 }, { name: 'Highland Fling' }] })
+    assert.equal(six.created.length, 2)
+    await refused(call(db.session, 'save_dances', { competition: 'c1', dances: [{ name: 'highland fling', steps: '6' }] }), /already a dance called/)
+    db.updates.length = 0
     await refused(call(db.session, 'save_dances', { competition: 'c1', ageGroups: [{ category: 'Juvenile', name: 'x' }] }), /No category matches “Juvenile”/)
     await refused(call(db.session, 'save_dances', { competition: 'c1', ageGroups: [{ id: 'g1', sponsor: 'Nobody' }] }), /No sponsor matches “Nobody”/)
     await refused(call(db.session, 'save_dances', { competition: 'c1', dances: [{ id: 'zzz', name: 'x' }] }), /no dance with the id zzz/)
