@@ -56,7 +56,9 @@ test('shuffle every dance, by number, clear, and undo', async ({ page }) => {
   await card.getByRole('button', { name: 'Clear' }).click()
   await expect.poll(() => draw(group.id, fling.id)).toBeNull()
   await expect(card.getByText('No draw set.')).toBeVisible()
-  // The newest toast's Undo.
+  // The Clear toast shows once the server has acked it (not when "No draw set." does): wait for it, then
+  // its Undo is the newest, not the Shuffle toast's.
+  await expect(page.getByText('Cleared Highland Fling (4)')).toBeVisible()
   await page.getByRole('button', { name: 'Undo', exact: true }).last().click()
   await expect.poll(() => draw(group.id, fling.id)).toEqual(numbers)
 
