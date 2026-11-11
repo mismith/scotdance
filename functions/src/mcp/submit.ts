@@ -4,7 +4,7 @@ import { addDays, inCountry, near, sameCompetition } from '../../../shared/known
 import { tidyRegistration, yearOf } from '../registration';
 import { reviewReasons } from '../review';
 import { venueKey } from '../utility/entityConfigs';
-import { issuer } from './config';
+import { emulated, issuer } from './config';
 import { ToolError } from './errors';
 import { pushId } from './ids';
 import type { Session } from './session';
@@ -50,7 +50,8 @@ export interface Timing {
   newId: () => string;
 }
 
-const REAL: Timing = { waitMs: 30_000, intervalMs: 1_500, sleep: (ms) => new Promise((r) => setTimeout(r, ms)), now: Date.now, newId: pushId };
+// (Production's trigger answers in a second or two; the emulator's can take half a minute)
+const REAL: Timing = { waitMs: emulated() ? 50_000 : 30_000, intervalMs: 1_500, sleep: (ms) => new Promise((r) => setTimeout(r, ms)), now: Date.now, newId: pushId };
 
 /** A country the way the form picks it: its code (`CA`, `GB-SCT`), or its name in English */
 export function countryOf(given: string): { code: string; iso: string; region: string | null; name: string } {
@@ -186,6 +187,18 @@ export async function addCompetition(session: Session, input: AddCompetitionInpu
     origin: issuer(),
   };
 
+  // What a person would look at (the checks the trigger makes, as far as they can be told from here): when something is
+  // sure to need a look, there is no point waiting long for an approval
+  const mine = (await session.read(`users:permissions/${session.uid}/organisations`)) as Rec | null;
+  const allOrganisations = organisations.length ? rows(await session.read('organisations')) : [];
+  const reasons = reviewReasons({ competition, contact: { email }, organisations: submission.organisations, submittedBy: session.uid }, {
+    today: new Date(t.now()).toISOString().slice(0, 10),
+    competitions: onTheDay.map((c) => str(c.name)),
+    submissions: [],
+    unclaimed: organisations.filter((o) => mine?.[o] !== true).map((o) => str(allOrganisations.find((x) => x.id === o)?.name)),
+  });
+  const waitMs = reasons.length ? Math.min(t.waitMs, 8_000) : t.waitMs;
+
   const before = await managed(session);
   const id = t.newId();
   try {
@@ -203,7 +216,7 @@ export async function addCompetition(session: Session, input: AddCompetitionInpu
     for (const cid of [...now].filter((c) => !before.has(c))) {
       if ((await session.read(`competitions/${cid}/submissionId`)) === id) added = cid;
     }
-    if (added || t.now() - start >= t.waitMs) break;
+    if (added || t.now() - start >= waitMs) break;
   }
 
   const common = {
@@ -227,12 +240,6 @@ export async function addCompetition(session: Session, input: AddCompetitionInpu
       ...common,
     };
   }
-  const reasons = reviewReasons({ competition, contact: { email }, organisations: submission.organisations, submittedBy: session.uid }, {
-    today: new Date(t.now()).toISOString().slice(0, 10),
-    competitions: onTheDay.map((c) => str(c.name)),
-    submissions: [],
-    unclaimed: [],
-  });
   return {
     summary: `Sent. “${name}” isn’t approved yet. It’s usually approved overnight, and they get an email at ${email} with a link to start adding the details.`,
     ...common,

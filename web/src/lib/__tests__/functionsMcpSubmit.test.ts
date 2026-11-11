@@ -80,6 +80,21 @@ describe('add_competition', () => {
     expect(db.tree['competitions:submissions'].sub1.competition.name).toBe('PRAIRIE SPRING CHAMPIONSHIPS')
   })
 
+  it('does not wait long for an approval that a person has to give', async () => {
+    let sleeps = 0
+    const slow = (db: ReturnType<typeof fakeSession>) => {
+      const t = timing(db, false)
+      return { ...t, waitMs: 60_000, intervalMs: 1_000, sleep: async () => { sleeps++; await t.sleep() } }
+    }
+    const db = fakeSession(world())
+    await addCompetition(db.session, input({ name: 'PRAIRIE SPRING CHAMPIONSHIPS' }), { ...slow(db), now: (() => { let c = Date.UTC(2026, 10, 11); return () => (c += 1_000) })() })
+    expect(sleeps).toBeLessThanOrEqual(9)
+    // An organisation they don’t run is one of the reasons
+    const other = fakeSession(world())
+    const out = await addCompetition(other.session, input({ organisations: ['o2'] }), timing(other, false))
+    expect(out.likelyWaitingBecause).toEqual(['It lists it under Prairie Games Society, though they’re not one of its admins'])
+  })
+
   it('saves the registration number as the form’s preview would, and says so', async () => {
     const db = fakeSession(world())
     const tidy = await addCompetition(db.session, input({ registrationNumber: 'C-AB-CO-27-1234 ' }), timing(db, true))
