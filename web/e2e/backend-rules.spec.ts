@@ -416,6 +416,65 @@ test('the change log: an assistant makes entries and marks them undone; only man
   }
 })
 
+// Organisations (ADR 0018): an assistant edits an organisation its person is an admin of, and puts it on competitions, through
+// the same rules as the Manage page; its change log is the organisation's, written with the change by that assistant only.
+test('an organisation’s assistant: the page and its competitions, a change log of its own, never its admins', async () => {
+  const oid = uid('rules-org')
+  const other = uid('rules-org-other')
+  const orgBot = await assistant(org)
+  const strangerBot = await assistant(stranger)
+  const base = `organisations:changes/${oid}`
+  const entry = (extra: Record<string, unknown> = {}) => ({
+    at: { '.sv': 'timestamp' },
+    uid: org.uid,
+    tool: 'update_organisation',
+    summary: 'Changed location',
+    paths: [{ path: `organisations/${oid}/location`, before: 'A', after: 'B' }],
+    ...extra,
+  })
+  await dbSet(`organisations/${oid}`, { name: 'Rules Society', location: 'A' })
+  await dbSet(`organisations/${other}`, { name: 'Someone Else' })
+  await dbSet(`users:permissions/${org.uid}/organisations/${oid}`, true)
+  await dbSet(`organisations:permissions/${oid}/users/${org.uid}`, true)
+  try {
+    await allowed('their assistant edits the organisation’s page, with the log entry in one write', as(orgBot, 'PATCH', '', { [`organisations/${oid}/location`]: 'B', [`${base}/e1`]: entry() }))
+    await allowed('puts it on a competition it does not manage', as(orgBot, 'PATCH', '', { [`competitions/${priv}/organisations/${oid}`]: true }))
+    await allowed('and takes it off again', as(orgBot, 'PATCH', '', { [`competitions/${priv}/organisations/${oid}`]: null }))
+    await refused('edits another organisation', as(orgBot, 'PATCH', `organisations/${other}`, { name: 'Mine now' }))
+    await refused('puts another organisation on a competition', as(orgBot, 'PUT', `competitions/${priv}/organisations/${other}`, true))
+    await refused('deletes the organisation', as(orgBot, 'DELETE', `organisations/${oid}`))
+    await refused('invites an admin', as(orgBot, 'PUT', `organisations:data/${oid}/invites/bot`, { created: new Date().toISOString(), payload: { email: 'friend@example.test' } }))
+    await refused('makes someone an admin', as(orgBot, 'PUT', `organisations:permissions/${oid}/users/${stranger.uid}`, true))
+    await refused('makes itself an admin of another', as(orgBot, 'PUT', `users:permissions/${org.uid}/organisations/${other}`, true))
+    await refused('a stranger’s assistant edits it', as(strangerBot, 'PATCH', `organisations/${oid}`, { location: 'Z' }))
+
+    // The log
+    await refused('an assistant writes an entry for someone else', as(orgBot, 'PUT', `${base}/e2`, entry({ uid: stranger.uid })))
+    await refused('an entry without what it changed', as(orgBot, 'PUT', `${base}/e3`, { at: { '.sv': 'timestamp' }, uid: org.uid, tool: 't', summary: 's' }))
+    await refused('an entry with something extra', as(orgBot, 'PUT', `${base}/e4`, entry({ extra: 1 })))
+    await refused('an entry for another organisation', as(orgBot, 'PUT', `organisations:changes/${other}/e5`, entry()))
+    await refused('a stranger’s assistant writes one', as(strangerBot, 'PUT', `${base}/e6`, entry({ uid: stranger.uid })))
+    await refused('a person writes one directly', as(org, 'PUT', `${base}/e7`, entry()))
+    await refused('rewrites one', as(orgBot, 'PUT', `${base}/e1`, entry({ summary: 'Something else' })))
+    await refused('deletes one', as(orgBot, 'DELETE', `${base}/e1`))
+    await refused('a mark by someone else', as(orgBot, 'PUT', `${base}/e1/undone`, { at: { '.sv': 'timestamp' }, by: stranger.uid, change: 'e8' }))
+    await allowed('marks one undone, with the undo entry', as(orgBot, 'PATCH', '', { [`${base}/e1/undone`]: { at: { '.sv': 'timestamp' }, by: org.uid, change: 'e8' }, [`${base}/e8`]: entry({ tool: 'undo_change', undoOf: 'e1', summary: 'Undid: Changed location' }), [`organisations/${oid}/location`]: 'A' }))
+    await refused('and marks it again', as(orgBot, 'PUT', `${base}/e1/undone`, { at: { '.sv': 'timestamp' }, by: org.uid, change: 'e9' }))
+    await allowed('its admin reads the log', as(org, 'GET', base))
+    await allowed('their assistant reads it', as(orgBot, 'GET', base))
+    await refused('a stranger reads it', as(stranger, 'GET', base))
+    await refused('a stranger’s assistant reads it', as(strangerBot, 'GET', base))
+    await refused('a signed-out read', as(null, 'GET', base))
+  } finally {
+    await dbRemove(base)
+    await dbRemove(`organisations/${oid}`)
+    await dbRemove(`organisations/${other}`)
+    await dbRemove(`organisations:permissions/${oid}`)
+    await dbRemove(`users:permissions/${org.uid}/organisations`)
+    await dbRemove(`competitions/${priv}/organisations`)
+  }
+})
+
 test('known competitions: read when signed in, written only by functions, and how their reads went for system admins only', async () => {
   const key = `sdc:2027-10-23:${uid('rules-known')}`
   await dbSet(`knownCompetitions/${key}`, { source: 'sdc', date: '2027-10-23', name: 'Rules Fall Classic', country: 'CA', fetched: '2026-10-12T07:00:00.000Z' })
