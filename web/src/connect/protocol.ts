@@ -80,6 +80,12 @@ export const TOOLS = {
     hostname: 'binder.scotdance.app',
     serves: (hostname: string) => hostname === 'binder.scotdance.app' || isStudioSite(hostname),
   },
+  entries: {
+    name: 'Entries',
+    icon: '/img/tools/entries.svg',
+    hostname: 'entries.scotdance.app',
+    serves: (hostname: string) => hostname === 'entries.scotdance.app',
+  },
 } as const
 export type Audience = keyof typeof TOOLS
 

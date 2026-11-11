@@ -96,6 +96,35 @@ describe('toolPass notes the link', () => {
   })
 })
 
+describe('toolPass for Entries', () => {
+  const auth = { uid: 'u1', token: { email: 'a@b.c', firebase: { sign_in_provider: 'password' } } }
+  const data = () => ({
+    'users:permissions/u1/organisations/bchda': true,
+    'users:permissions/u1/organisations/gone': true,
+    'users:permissions/u1/organisations/revoked': false,
+    'users:permissions/u2/organisations/other': true,
+    'organisations/bchda/name': 'BC Highland Dancing Association',
+    'organisations/revoked/name': 'No Longer Theirs',
+    'organisations/other/name': 'Someone Else’s',
+  })
+  const payload = async (audience: string) =>
+    decode((await getOnToolPass(() => SECRET, memoryDb(data()))({ audience }, { auth })).pass.split('.')[1]!)
+
+  it('names the organisations they’re an admin of, and only those', async () => {
+    expect((await payload('entries')).organisations).toEqual([{ id: 'bchda', name: 'BC Highland Dancing Association' }])
+  })
+
+  it('says an admin of none has none', async () => {
+    const pass = await getOnToolPass(() => SECRET, memoryDb({}))({ audience: 'entries' }, { auth })
+    expect(decode(pass.pass.split('.')[1]!).organisations).toEqual([])
+  })
+
+  it('tells no other tool', async () => {
+    expect(await payload('binder')).not.toHaveProperty('organisations')
+    expect(await payload('challenge')).not.toHaveProperty('organisations')
+  })
+})
+
 describe('unlinkTool', () => {
   const auth = (uid = 'u1') => ({ uid, token: { firebase: { sign_in_provider: 'password' } } })
   const linked = () =>

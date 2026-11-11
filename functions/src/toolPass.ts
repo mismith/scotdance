@@ -8,13 +8,16 @@ import { HttpsError } from 'firebase-functions/v2/https';
 // alone: never this project's own sign-in, so a tool can't act as you here.
 //
 // A compact JWT, HS256: { iss, aud, sub (uid), email, name, iat, exp, jti }.
+// Entries' also says which organisations they're an admin of
+// (`organisations: [{ id, name }]`), so the organisation they take entries
+// and payments for there is the one here, under the same id.
 //
 // Each pass is noted in `users:tools/{uid}/{tool}` (first and last sign-in),
 // so people see the tools they use in Account, and can unlink one: an unlink
 // pass (aud `{tool}:unlink`, which no tool takes as a sign-in) to the tool's
 // own `unlinkScotDance`, which signs them out there everywhere (ADR 0017).
 
-export const AUDIENCES = ['challenge', 'binder'] as const;
+export const AUDIENCES = ['challenge', 'binder', 'entries'] as const;
 export type Audience = (typeof AUDIENCES)[number];
 export const ISSUER = 'https://scotdance.app';
 export const PASS_SECONDS = 120;
@@ -23,13 +26,17 @@ export const PASS_SECONDS = 120;
 export const UNLINK_URLS: Record<Audience, string> = {
   challenge: 'https://us-central1-scotdance-challenge.cloudfunctions.net/unlinkScotDance',
   binder: 'https://us-central1-scotdance-binder.cloudfunctions.net/unlinkScotDance',
+  entries: 'https://us-central1-scotdance-entries.cloudfunctions.net/unlinkScotDance',
 };
 
 const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
 
 export function signPass(
   secret: string,
-  who: { uid: string; email?: string | null; name?: string | null; audience: Audience | `${Audience}:unlink` },
+  who: {
+    uid: string; email?: string | null; name?: string | null; audience: Audience | `${Audience}:unlink`;
+    organisations?: PassOrganisation[];
+  },
   now = Date.now(),
 ): string {
   const iat = Math.floor(now / 1000);
@@ -40,12 +47,19 @@ export function signPass(
     sub: who.uid,
     email: who.email ?? null,
     name: who.name ?? null,
+    ...(who.organisations ? { organisations: who.organisations } : {}),
     iat,
     exp: iat + PASS_SECONDS,
     jti: randomUUID(),
   });
   const signature = createHmac('sha256', secret).update(`${header}.${payload}`).digest('base64url');
   return `${header}.${payload}.${signature}`;
+}
+
+/** An organisation they're an admin of, as Entries' pass names it. */
+export interface PassOrganisation {
+  id: string;
+  name: string;
 }
 
 export function isAudience(value: unknown): value is Audience {
@@ -68,6 +82,17 @@ interface Db {
 export interface ToolLink {
   linkedAt: number;
   signedInAt: number;
+}
+
+/** The organisations someone is an admin of (ADR 0005), with their names. Ones since deleted are left out. */
+async function adminOf(db: Db, uid: string): Promise<PassOrganisation[]> {
+  const ids = Object.entries(((await db.child(`users:permissions/${uid}/organisations`).get()).val() as Record<string, unknown> | null) ?? {})
+    .filter(([, allowed]) => allowed === true)
+    .map(([id]) => id);
+  const names = await Promise.all(ids.map(async (id) => (await db.child(`organisations/${id}/name`).get()).val()));
+  return ids
+    .map((id, i) => ({ id, name: names[i] }))
+    .filter((o): o is PassOrganisation => typeof o.name === 'string' && !!o.name.trim());
 }
 
 /**
@@ -93,6 +118,7 @@ export function getOnToolPass(secret: () => string, db: Db) {
         email: auth.token.email ?? null,
         name,
         audience: data.audience,
+        ...(data.audience === 'entries' ? { organisations: await adminOf(db, auth.uid) } : {}),
       }),
     };
   };

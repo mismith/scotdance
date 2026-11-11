@@ -75,3 +75,8 @@ call, as their work there stays too.
   link.
 - Links made before this shipped are backfilled once from each tool's Auth
   users (functions/scripts/backfill-tool-links.mjs).
+- Entries (2026-11-11) is a tool too. Its pass also names the organisations
+  they're an admin of (`organisations: [{ id, name }]`, ADR 0005), and
+  nothing else about them: Entries keeps each under the same id, so the
+  organisation that takes entries and payments there is the one here. No
+  other tool's pass carries it.
