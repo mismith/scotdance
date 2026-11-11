@@ -16,7 +16,7 @@ interface Context {
  * the tools and nothing else, so every callable here turns such a token away.
  */
 export function humansOnly(ctx: Context): void {
-  if (ctx.auth?.token?.via === 'mcp') throw new HttpsError('permission-denied', 'Assistants can’t do this.');
+  if (ctx.auth?.token?.via === 'mcp') throw new HttpsError('permission-denied', 'AI assistants can’t do this.');
 }
 
 function signedIn(ctx: Context): string {
@@ -38,12 +38,27 @@ export const onConnectionRequest = (data: unknown, ctx: Context) => {
   return describeRequest(field(data, 'request'));
 };
 
-/** The person allowed it (or said no): make the connection and return the redirect with a one-use code */
-export const onApproveConnection = (data: unknown, ctx: Context) => {
+/** Whether they are a system admin or an admin of at least one competition or organisation: the only people who can connect an AI assistant */
+export async function managesAnything(uid: string): Promise<boolean> {
+  const permissions = await getStore().get(`users:permissions/${uid}`);
+  if (!permissions) return false;
+  const any = (v: unknown) => !!v && typeof v === 'object' && Object.values(v).some((x) => x === true);
+  return permissions.admin === true || any(permissions.competitions) || any(permissions.organisations);
+}
+
+/**
+ * The person allowed it (or said no): make the connection and return the redirect with a one-use code. Only people who
+ * manage something can allow one (the page says so; this is what holds if it is skipped). Saying no is open to anyone.
+ */
+export const onApproveConnection = async (data: unknown, ctx: Context) => {
   const uid = signedIn(ctx);
   const deny = (data as Record<string, unknown> | null | undefined)?.deny as unknown;
   if (deny !== undefined && typeof deny !== 'boolean') throw new HttpsError('invalid-argument', 'deny is not valid.');
-  return decide(uid, { request: field(data, 'request'), deny: deny as boolean | undefined });
+  const request = field(data, 'request');
+  if (deny !== true && !(await managesAnything(uid))) {
+    throw new HttpsError('permission-denied', 'An AI assistant can only work with the competitions and organisations you manage, and you don’t manage any yet.');
+  }
+  return decide(uid, { request, deny: deny as boolean | undefined });
 };
 
 /** The person ended a connection (or, naming none, every one: deleting their account): it and its tokens go */

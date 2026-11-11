@@ -22,8 +22,8 @@ function errorPage(res: Response, status: number, message: string): void {
     .send(
       '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
         + '<title>Can\'t connect</title><body style="font:16px system-ui,sans-serif;max-width:32rem;margin:4rem auto;padding:0 1rem">'
-        + `<h1 style="font-size:1.25rem">Can't connect this assistant</h1><p>${escape(message)}</p>`
-        + '<p>Go back to the assistant and try adding ScotDance.app again.</p></body></html>',
+        + `<h1 style="font-size:1.25rem">Can't connect this AI assistant</h1><p>${escape(message)}</p>`
+        + '<p>Go back to your AI assistant and try adding ScotDance.app again.</p></body></html>',
     );
 }
 
@@ -57,9 +57,9 @@ export const authorize: RequestHandler = async (req, res) => {
   const redirectUri = param(req, 'redirect_uri');
   if (!clientId || redirectUri === null) return errorPage(res, 400, 'The request is missing its client.');
   const client = await getClient(clientId);
-  if (!client) return errorPage(res, 400, 'That assistant couldn\'t be identified.');
+  if (!client) return errorPage(res, 400, 'That AI assistant couldn\'t be identified.');
   if (!redirectUri || !client.redirect_uris.some((registered) => redirectUriMatches(redirectUri, registered))) {
-    return errorPage(res, 400, 'That assistant\'s return address isn\'t one it registered.');
+    return errorPage(res, 400, 'That AI assistant\'s return address isn\'t one it registered.');
   }
 
   // Phase 2: the rest of the request. Errors go back to the assistant, but only one we know: anyone can
@@ -94,5 +94,5 @@ export const authorize: RequestHandler = async (req, res) => {
     createdAt: Date.now(),
     expiresAt: later(REQUEST_TTL),
   });
-  res.redirect(302, `${issuer()}/connect-assistant?request=${id}`);
+  res.redirect(302, `${issuer()}/connect-ai?request=${id}`);
 };

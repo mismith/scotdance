@@ -42,7 +42,7 @@ async function begin(extra: Record<string, string | undefined> = {}) {
   const res = await authorize(params)
   assert.equal(res.status, 302)
   const location = new URL(res.headers.get('location')!)
-  assert.equal(location.origin + location.pathname, `${ORIGIN}/connect-assistant`)
+  assert.equal(location.origin + location.pathname, `${ORIGIN}/connect-ai`)
   return { keys, request: location.searchParams.get('request')! }
 }
 
@@ -144,7 +144,7 @@ describe('authorize', () => {
     assert.equal(count('oauth:requests/'), 0)
   }
 
-  test('happy path files the request and sends the browser to /connect-assistant', async () => {
+  test('happy path files the request and sends the browser to /connect-ai', async () => {
     const { keys, params } = asked({ resource: RESOURCE })
     const res = await authorize(params)
     assert.equal(res.status, 302)
@@ -197,7 +197,7 @@ describe('authorize', () => {
       await expectPage(await authorize({ ...params, resource: 'https://evil.example/mcp' }))
       await expectPage(await authorize({ ...params, state: 'x'.repeat(2000) }))
       // A good request from it still goes on to the approval page, where it is shown for what it is
-      assert.match((await authorize(params)).headers.get('location')!, /\/connect-assistant\?request=/)
+      assert.match((await authorize(params)).headers.get('location')!, /\/connect-ai\?request=/)
     } finally {
       knownHosts.add('127.0.0.1')
     }
@@ -288,16 +288,44 @@ describe('the person decides', () => {
     const { request } = await begin()
     await assert.rejects(Promise.resolve().then(() => onConnectionRequest({ request }, ctx(null))), (e) => codeOf(e) === 'unauthenticated')
     for (const f of [onConnectionRequest, onApproveConnection]) {
-      assert.throws(() => f({ request }, ctx('u1', { via: 'mcp', scope: 'manage' })), (e) => codeOf(e) === 'permission-denied')
+      await assert.rejects(Promise.resolve().then(() => f({ request }, ctx('u1', { via: 'mcp', scope: 'manage' }))), (e) => codeOf(e) === 'permission-denied')
     }
     await assert.rejects(Promise.resolve().then(() => onEndConnection({ connection: 'x'.repeat(22) }, ctx('u1', { via: 'mcp' }))), (e) => codeOf(e) === 'permission-denied')
     assert.throws(() => humansOnly(ctx('u1', { via: 'mcp' })), (e) => codeOf(e) === 'permission-denied')
     assert.doesNotThrow(() => humansOnly(ctx('u1', { admin: true })))
     // Bad arguments
     assert.throws(() => onConnectionRequest({ request: 'a b' }, ctx()), (e) => codeOf(e) === 'invalid-argument')
-    assert.throws(() => onApproveConnection({ request, deny: 'yes' }, ctx()), (e) => codeOf(e) === 'invalid-argument')
+    await assert.rejects(onApproveConnection({ request, deny: 'yes' }, ctx()), (e) => codeOf(e) === 'invalid-argument')
+    h.store.docs.set('users:permissions/u1', { competitions: { c1: true } })
     const done = (await onApproveConnection({ request }, ctx())) as { redirect: string }
     assert.match(done.redirect, /code=/)
+  })
+
+  test('only someone who manages a competition or organisation (or is a system admin) can allow one', async () => {
+    const refused = async (permissions?: Record<string, unknown>) => {
+      h.store.docs.clear()
+      const { request } = await begin()
+      if (permissions) h.store.docs.set('users:permissions/u1', permissions)
+      else h.store.docs.delete('users:permissions/u1')
+      await assert.rejects(onApproveConnection({ request }, ctx('u1')), (e) => codeOf(e) === 'permission-denied')
+      assert.equal(connections().length, 0, 'no connection was made')
+      assert.equal(count('oauth:requests/'), 1, 'and the request is still there')
+    }
+    await refused()
+    await refused({})
+    await refused({ competitions: { c1: false } })
+    await refused({ organisations: {}, admin: false })
+    // Saying no is open to anyone
+    const { request } = await begin()
+    h.store.docs.delete('users:permissions/u1')
+    const no = (await onApproveConnection({ request, deny: true }, ctx('u1'))) as { redirect: string }
+    assert.match(no.redirect, /error=access_denied/)
+    for (const permissions of [{ competitions: { c1: true } }, { organisations: { o1: true } }, { admin: true }]) {
+      const again = await begin()
+      h.store.docs.set('users:permissions/u1', permissions)
+      const yes = (await onApproveConnection({ request: again.request }, ctx('u1'))) as { redirect: string }
+      assert.match(yes.redirect, /code=/)
+    }
   })
 })
 

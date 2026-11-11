@@ -47,6 +47,6 @@ test('a system admin in person is let in to a system admin utility, and their as
   for (const name of CALLABLES) {
     const answer = await callFunction(name, { audience: 'challenge', competitionId: 'x', request: 'x', name: 'x' }, bossBot)
     expect(answer.error?.status, name).toBe('PERMISSION_DENIED')
-    expect(answer.error?.message, name).toBe('Assistants can’t do this.')
+    expect(answer.error?.message, name).toBe('AI assistants can’t do this.')
   }
 })

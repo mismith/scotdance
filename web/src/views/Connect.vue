@@ -11,7 +11,7 @@ import { answerRequest, lookUpRequest, type AssistantRequest } from '@/lib/assis
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 
-// An assistant (Claude, ChatGPT) has asked to manage this person's competitions and sent them here (ADR 0018).
+// An AI assistant (Claude, ChatGPT) has asked to manage this person's competitions and sent them here (ADR 0018).
 // Signing in comes first, and the address stays, so they land back here. There is nothing to pick: what it can
 // reach is checked by the database rules on every call. The server decides; this only asks.
 
@@ -52,7 +52,7 @@ const known = computed(() => asked.value?.known ?? false)
 const name = computed(() => asked.value?.client.name ?? '')
 const host = computed(() => asked.value?.client.host ?? '')
 
-usePageTitle(['Connect an assistant'])
+usePageTitle(['Connect an AI assistant'])
 
 const busy = ref(false)
 const problem = ref('')
@@ -74,7 +74,7 @@ async function answer(deny?: true) {
 
 <template>
   <div class="flex min-h-dvh flex-col">
-    <AppBar title="Connect an assistant" show-title :fallback="{ to: { name: 'home' }, label: 'Home' }" />
+    <AppBar title="Connect an AI assistant" show-title :fallback="{ to: { name: 'home' }, label: 'Home' }" />
     <main class="mx-auto w-full max-w-lg flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-[calc(var(--chrome-bottom)+1.5rem)]">
       <div v-if="state === 'loading'" class="flex justify-center py-20" role="status" aria-busy="true">
         <LoaderCircle class="text-muted-foreground size-8 animate-spin" />
@@ -83,7 +83,7 @@ async function answer(deny?: true) {
       <EmptyState
         v-else-if="state === 'signed-out'"
         :icon="Bot"
-        title="Connect your assistant"
+        title="Connect your AI assistant"
         description="Sign in to ScotDance.app to allow it."
       >
         <Button variant="primary" size="lg" @click="auth.openLogin()">Sign in</Button>
@@ -93,7 +93,7 @@ async function answer(deny?: true) {
         v-else-if="state === 'nothing'"
         :icon="ShieldOff"
         title="You don’t manage anything yet"
-        description="An assistant can only work with the competitions and organisations you’re an admin of. Add a competition, or ask an admin to invite you, then connect it again."
+        description="An AI assistant can only work with the competitions and organisations you’re an admin of. Add a competition, or ask an admin to invite you, then connect it again."
       >
         <Button variant="primary" size="lg" :to="{ name: 'home' }">Back to Home</Button>
       </EmptyState>
@@ -102,7 +102,7 @@ async function answer(deny?: true) {
         v-else-if="state === 'gone'"
         :icon="TimerOff"
         title="That request has run out"
-        description="Go back to your assistant and connect again."
+        description="Go back to your AI assistant and connect again."
       />
 
       <EmptyState v-else-if="state === 'failed'" :icon="TriangleAlert" title="That didn’t open" description="Check your connection and try again.">
@@ -113,14 +113,14 @@ async function answer(deny?: true) {
         <EmptyState
           :icon="Bot"
           :title="known ? `Let ${name} manage your competitions?` : `Let ${host} manage your competitions?`"
-          description="It can look up and change the competitions and organisations you manage, the same as you can. It can’t invite or remove admins, or delete a competition."
+          description="This AI assistant can look up and change the competitions and organisations you manage, the same as you can. It can’t invite or remove admins, or delete a competition."
         >
           <Button type="submit" variant="primary" size="lg" :busy="busy">Allow</Button>
           <Button variant="plain" size="lg" :disabled="busy" @click="answer(true)">Not now</Button>
           <template #footer>
             <span v-if="problem" class="text-destructive block font-medium" role="alert">{{ problem }}</span>
             <span v-if="!known" class="block font-medium">It calls itself “{{ name }}”. ScotDance.app doesn’t know it, so only allow it if you set it up yourself.</span>
-            <span class="block">You can disconnect it any time in Account.</span>
+            <span class="block">You can see what it changed, and disconnect it, any time in Account.</span>
           </template>
         </EmptyState>
       </form>

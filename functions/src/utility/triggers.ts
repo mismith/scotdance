@@ -65,7 +65,7 @@ export function https(options: CallableOptions = {}, access: CallableAccess = {}
   return {
     onCall: (handler: Handler) => onCall(options, (request) => {
       if (!access.assistants && isAssistant(request.auth)) {
-        throw new HttpsError('permission-denied', 'Assistants can’t do this.');
+        throw new HttpsError('permission-denied', 'AI assistants can’t do this.');
       }
       return handler(request.data, {
         auth: request.auth ?? null,

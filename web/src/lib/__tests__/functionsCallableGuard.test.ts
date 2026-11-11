@@ -19,7 +19,7 @@ describe('callables and assistants', () => {
   it('turns an assistant’s token away before the handler runs, and lets a person through', async () => {
     let ran = 0
     const fn = https().onCall(async () => ++ran) as unknown as Callable
-    await expect(Promise.resolve().then(() => fn.run(request(assistant)))).rejects.toThrow(/Assistants can’t do this/)
+    await expect(Promise.resolve().then(() => fn.run(request(assistant)))).rejects.toThrow(/AI assistants can’t do this/)
     expect(ran).toBe(0)
     expect(await fn.run(request(person))).toBe(1)
     expect(await fn.run(request(null))).toBe(2)
@@ -40,7 +40,7 @@ describe('callables and assistants', () => {
     const db = { child: () => ({ get: async () => ({ val: () => null }), update: async () => {}, remove: async () => {} }) }
     const toolPass = https().onCall(getOnToolPass(() => 'secret', db)) as unknown as Callable
     expect(((await toolPass.run({ data: { audience: 'challenge' }, auth: person, rawRequest: {} })) as { pass: string }).pass).toBeTruthy()
-    await expect(Promise.resolve().then(() => toolPass.run({ data: { audience: 'challenge' }, auth: assistant, rawRequest: {} }))).rejects.toThrow(/Assistants can’t do this/)
+    await expect(Promise.resolve().then(() => toolPass.run({ data: { audience: 'challenge' }, auth: assistant, rawRequest: {} }))).rejects.toThrow(/AI assistants can’t do this/)
   })
 
   it('opts no callable in: an assistant reaches createOrganisation only through its tool', () => {
