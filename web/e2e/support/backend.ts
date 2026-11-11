@@ -28,6 +28,35 @@ export async function account(email: string, password = 'password'): Promise<Acc
   return { uid: r.localId, token: r.idToken }
 }
 
+/**
+ * An assistant's session as `who`: what the `mcp` function signs in with (ADR 0018), a token marked `via: 'mcp'`.
+ * The emulator takes an unsigned custom token, so this makes one and exchanges it, as the function does.
+ */
+export async function assistant(who: Account): Promise<Account> {
+  const part = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url')
+  const now = Math.floor(Date.now() / 1000)
+  const token = [
+    part({ alg: 'none', typ: 'JWT' }),
+    part({
+      uid: who.uid,
+      claims: { via: 'mcp', scope: 'manage' },
+      iss: 'firebase-auth-emulator@example.com',
+      sub: 'firebase-auth-emulator@example.com',
+      aud: 'https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit',
+      iat: now,
+      exp: now + 3600,
+    }),
+    '',
+  ].join('.')
+  const r = await fetch(`${AUTH}/identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=fake`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, returnSecureToken: true }),
+  }).then((res) => res.json())
+  if (!r.idToken) throw new Error(`Couldn't sign in an assistant for ${who.uid}: ${JSON.stringify(r)}`)
+  return { uid: who.uid, token: r.idToken }
+}
+
 export interface Answer {
   ok: boolean
   status: number

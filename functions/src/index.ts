@@ -26,7 +26,11 @@ import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
 import { runtimeConfig, geocodingApiKey, toolPassSecret } from './utility/config';
 import { UNLINK_URLS, getOnToolPass, getOnUnlinkTool } from './toolPass';
-import { database, https } from './utility/triggers';
+import { database, https, request } from './utility/triggers';
+import { mcpApp } from './mcp/app';
+import * as AssistantConnections from './oauth/callables';
+import { runtime as oauthRuntime } from './oauth/runtime';
+import { rtdbStore } from './oauth/store';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onTaskDispatched } from 'firebase-functions/v2/tasks';
 import { enqueue, TASKS_INVOKER } from './utility/tasks';
@@ -119,7 +123,26 @@ export const unlinkTool = https({ secrets: [toolPassSecret] }).onCall(getOnUnlin
   appConfig.db,
   (tool) => (isEmulator() ? (process.env[`TOOL_UNLINK_URL_${tool.toUpperCase()}`] || null) : UNLINK_URLS[tool]),
 ));
-export const competitionStaffSync = database().ref(`/${env}/competitions:data/{competitionId}/staff/{staffId}`)
+// Assistants (Claude, ChatGPT) managing competitions for the person who connects them (ADR 0018). One function
+// serves the OAuth server and the MCP endpoint; Hosting rewrites /mcp, /oauth/** and /.well-known/oauth-* to it.
+// Its records live under the data namespace, server-only (oauth:*), and it acts as the person through the database
+// rules, never the Admin SDK (mcp/session.ts).
+oauthRuntime.store = rtdbStore(appConfig.db);
+let mcpHandler: ReturnType<typeof mcpApp> | undefined;
+export const mcp = request({ timeoutSeconds: 60, memory: '512MiB' }).onRequest((req, res) => {
+  mcpHandler ??= mcpApp({ auth: getAuth(app), env });
+  mcpHandler(req, res);
+});
+// The /connect page's callables: what an assistant asked for, allow or refuse it, and disconnect one.
+export const connectionRequest = https().onCall(AssistantConnections.onConnectionRequest);
+export const approveConnection = https().onCall(AssistantConnections.onApproveConnection);
+export const endConnection = https().onCall(AssistantConnections.onEndConnection);
+// The database keeps records until told otherwise: clear what has expired once a day.
+export const sweepOauth = onSchedule({ schedule: '17 4 * * *', timeZone: 'UTC' }, async () => {
+  const swept = await AssistantConnections.sweepExpired();
+  console.log(`[oauth] swept ${swept} expired records`);
+});
+export const competitionStaffSync =database().ref(`/${env}/competitions:data/{competitionId}/staff/{staffId}`)
   .onWrite(Links.getOnStaffWritten(appConfig.db));
 export const competitionDetailsSync = database().ref(`/${env}/competitions/{competitionId}`)
   .onUpdate(Links.getOnCompetitionUpdated(appConfig.db));

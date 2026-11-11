@@ -2,11 +2,12 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { onValue } from 'firebase/database'
-import { ChevronRight, ExternalLink, Eye, EyeOff, LogOut } from '@lucide/vue'
+import { Bot, ChevronRight, Copy, ExternalLink, Eye, EyeOff, LogOut, Plus } from '@lucide/vue'
 import { dataRef } from '@/firebase'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { friendlyError } from '@/lib/admin/write'
 import { TOOLS, linkedTools, toolDate, unlinkTool, type Audience } from '@/lib/tools'
+import { assistantAddress, connectionDate, connectionsFrom, disconnect, type Connection } from '@/lib/assistants'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import MeAvatar from '@/components/MeAvatar.vue'
@@ -54,6 +55,50 @@ async function unlink(tool: Audience) {
     toast(friendlyError(e), { tone: 'error' })
   } finally {
     unlinking.value = null
+  }
+}
+
+// The assistants (Claude, ChatGPT) they've connected to manage their competitions (ADR 0018)
+const connectionRecords = ref<unknown>(null)
+let offConnections: (() => void) | null = null
+watch(
+  () => auth.uid,
+  (uid) => {
+    offConnections?.()
+    offConnections = uid ? onValue(dataRef(`users:connections/${uid}`), (snap) => (connectionRecords.value = snap.val())) : null
+  },
+  { immediate: true },
+)
+onScopeDispose(() => offConnections?.())
+const assistants = computed(() => connectionsFrom(connectionRecords.value))
+const disconnecting = ref<string | null>(null)
+async function disconnectAssistant(c: Connection) {
+  const name = c.client?.name || 'this assistant'
+  const ok = await confirm({
+    title: `Disconnect ${name}?`,
+    message: `It stops working with your account straight away. To use it again, connect it again.`,
+    confirmLabel: `Disconnect ${name}`,
+    destructive: true,
+  })
+  if (!ok) return
+  disconnecting.value = c.id
+  try {
+    await disconnect(c.id)
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  } finally {
+    disconnecting.value = null
+  }
+}
+const connectOpen = ref(false)
+const addressCopied = ref(false)
+async function copyAddress() {
+  try {
+    await navigator.clipboard.writeText(assistantAddress())
+    addressCopied.value = true
+    setTimeout(() => (addressCopied.value = false), 1600)
+  } catch {
+    /* clipboard blocked: the address is on screen to select */
   }
 }
 
@@ -259,6 +304,26 @@ const submitDisabled = computed(() => {
         </ul>
       </section>
 
+      <section v-if="me.canManageAny" class="space-y-1">
+        <h2 class="text-heading">Assistants</h2>
+        <p class="text-muted-foreground text-sm">Claude, ChatGPT and other assistants that manage your competitions for you.</p>
+        <ul v-if="assistants.length" class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
+          <li v-for="c in assistants" :key="c.id" class="flex min-h-16 items-center gap-2 py-1 pr-2 pl-4">
+            <div class="flex min-w-0 flex-1 items-center gap-3">
+              <span class="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-[0.625rem]"><Bot class="size-5" /></span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-base font-semibold">{{ c.client?.name || 'An assistant' }}</span>
+                <span class="text-muted-foreground block truncate text-sm">
+                  Connected {{ connectionDate(c.createdAt) }}<template v-if="c.lastUsedAt && connectionDate(c.lastUsedAt) !== connectionDate(c.createdAt)"> · Last used {{ connectionDate(c.lastUsedAt) }}</template>
+                </span>
+              </span>
+            </div>
+            <Button variant="plain" class="text-destructive!" :busy="disconnecting === c.id" @click="disconnectAssistant(c)">Disconnect</Button>
+          </li>
+        </ul>
+        <div class="pt-1"><Button @click="connectOpen = true"><Plus /> Connect an assistant</Button></div>
+      </section>
+
       <div class="space-y-2">
         <Button size="lg" block @click="handleSignOut"><LogOut /> Sign out</Button>
         <button type="button" class="text-destructive press-row h-12 w-full rounded-full text-callout font-semibold" @click="openModal('delete')">
@@ -266,6 +331,23 @@ const submitDisabled = computed(() => {
         </button>
       </div>
     </main>
+
+    <Dialog :open="connectOpen" variant="sheet" @close="connectOpen = false">
+      <template #header><h2 class="text-title">Connect an assistant</h2></template>
+      <div class="space-y-3 p-4 pb-[calc(1.5rem+var(--safe-bottom))]">
+        <p class="text-base">
+          In Claude or ChatGPT, add a custom connector with this address. It brings you back here to allow it.
+        </p>
+        <div class="field flex items-center gap-2 rounded-xl py-1 pr-1 pl-3">
+          <code class="min-w-0 flex-1 truncate text-base select-all">{{ assistantAddress() }}</code>
+          <Button variant="tonal" @click="copyAddress"><Copy /> {{ addressCopied ? 'Copied' : 'Copy' }}</Button>
+        </div>
+        <p class="text-muted-foreground text-sm">
+          It can do what you can do with the competitions and organisations you manage. It can’t invite or remove admins, or delete a competition.
+        </p>
+        <Button size="lg" block @click="connectOpen = false">Done</Button>
+      </div>
+    </Dialog>
 
     <Dialog :open="sheet.open" :morph="sheet" variant="sheet" @close="closeModal">
       <template #header>

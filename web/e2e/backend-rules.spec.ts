@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { dbGet, dbRemove, dbSet, uid } from './support/emulator'
-import { account, as, type Account } from './support/backend'
+import { account, as, assistant, type Account } from './support/backend'
 
 // firebase.rules.json with real ID tokens: every write the app makes as a
 // parent and as an organiser (not a system admin) is allowed, and what must
@@ -280,6 +280,71 @@ test('invites: only an organiser makes them; anyone with the link accepts an ope
     expect(await dbGet(`users:permissions/${stranger.uid}/competitions/${priv}`)).toBeNull()
   } finally {
     await dbRemove(`users:permissions/${other.uid}`)
+  }
+})
+
+// An assistant (the `mcp` function, ADR 0018) is signed in as its person with a token marked via: 'mcp'. It gets
+// what that person was made an admin of, and a system admin's grant over everything is not part of it.
+test('an assistant gets its person’s own grants, never a system admin’s, and never access or whole competitions', async () => {
+  const boss = await account(`${uid('rules-boss')}@example.test`)
+  const scratch = uid('rules-scratch')
+  await dbSet(`users:permissions/${boss.uid}/admin`, true)
+  await dbSet(`users:permissions/${boss.uid}/competitions/${scratch}`, true)
+  await dbSet(`competitions/${scratch}`, { name: 'Rules scratch', date: '2026-10-01' })
+  await dbSet(`users:tools/${org.uid}/binder`, { linkedAt: 1, signedInAt: 1 })
+  await dbSet(`users:connections/${org.uid}/c1`, { id: 'c1', client: { id: 'x', name: 'Claude' }, scope: 'manage', createdAt: 1, lastUsedAt: 1 })
+  await dbSet('oauth:tokens/hash1', { uid: org.uid, connection: 'c1', scope: 'manage', expiresAt: 1 })
+  const orgBot = await assistant(org)
+  const bossBot = await assistant(boss)
+  try {
+    // The same system admin, in person and as an assistant
+    await allowed('a system admin reads a private competition’s data', as(boss, 'GET', `competitions:data/${priv}`))
+    await refused('their assistant reads it', as(bossBot, 'GET', `competitions:data/${priv}`))
+    await refused('their assistant edits a competition they were not made an admin of', as(bossBot, 'PATCH', `competitions/${priv}`, { name: 'x' }))
+    await refused('their assistant reads the whole tree', as(bossBot, 'GET', ''))
+    await allowed('their assistant reads their own permissions (how it finds their competitions)', as(bossBot, 'GET', `users:permissions/${boss.uid}/competitions`))
+    await allowed('their assistant reads a competition they were made an admin of', as(bossBot, 'GET', `competitions:data/${scratch}`))
+    await allowed('their assistant edits it', as(bossBot, 'PATCH', `competitions/${scratch}`, { name: 'Rules scratch edited' }))
+    await refused('their assistant makes itself an admin of another', as(bossBot, 'PUT', `users:permissions/${boss.uid}/competitions/${priv}`, true))
+    await refused('their assistant edits the list of a competition’s admins', as(bossBot, 'PUT', `competitions:permissions/${scratch}/users/${stranger.uid}`, true))
+
+    // An organiser's assistant: their competition, as they have it
+    await allowed('read their competition’s data', as(orgBot, 'GET', `competitions:data/${pub}/dancers`))
+    await allowed('edit their competition', as(orgBot, 'PATCH', '', { [`competitions/${pub}/name`]: 'Rules assistant' }))
+    await allowed('add a dancer', as(orgBot, 'PATCH', '', { [`competitions:data/${pub}/dancers/d3`]: { firstName: 'Rules', lastName: 'Third', number: '3' } }))
+    await allowed('and take them off again', as(orgBot, 'PUT', `competitions:data/${pub}/dancers/d3`, null))
+    await allowed('change the schedule', as(orgBot, 'PUT', `competitions:data/${pub}/schedule/d1`, { name: 'Day' }))
+    await refused('edit someone else’s competition', as(orgBot, 'PATCH', `competitions/${scratch}`, { name: 'x' }))
+    await refused('invite someone', as(orgBot, 'PUT', `competitions:data/${pub}/invites/bot-invite`, { created: new Date().toISOString(), payload: { email: 'friend@example.test' } }))
+    await refused('invite someone, in one write at the top', as(orgBot, 'PATCH', '', { [`competitions:data/${pub}/invites/bot-invite`]: { created: new Date().toISOString(), payload: { email: 'friend@example.test' } } }))
+    await refused('write the whole of a competition’s data (invites and all)', as(orgBot, 'PUT', `competitions:data/${pub}`, { dancers: {} }))
+    await refused('accept an invite', as(orgBot, 'PATCH', '', { [`competitions:data/${pub}/invites/real/accepted`]: new Date().toISOString() }))
+    await refused('delete a whole competition', as(orgBot, 'DELETE', `competitions/${pub}`))
+    await refused('delete a whole competition, in one write at the top', as(orgBot, 'PATCH', '', { [`competitions/${pub}`]: null }))
+    await refused('give themselves a competition', as(orgBot, 'PUT', `users:permissions/${org.uid}/competitions/${priv}`, true))
+    await refused('make themselves a system admin', as(orgBot, 'PUT', `users:permissions/${org.uid}/admin`, true))
+    await refused('remove their own permission', as(orgBot, 'DELETE', `users:permissions/${org.uid}/competitions/${pub}`))
+    await refused('unlink a tool', as(orgBot, 'DELETE', `users:tools/${org.uid}/binder`))
+    await refused('write the assistants connected', as(orgBot, 'PUT', `users:connections/${org.uid}/c2`, { id: 'c2' }))
+    await refused('read the assistants connected', as(orgBot, 'GET', `users:connections/${org.uid}`))
+    await refused('read the sign-in records', as(orgBot, 'GET', 'oauth:tokens'))
+    await refused('write a token', as(orgBot, 'PUT', 'oauth:tokens/forged', { uid: org.uid }))
+
+    // The person themselves: the same things stay theirs
+    await allowed('the person invites', as(org, 'PUT', `competitions:data/${pub}/invites/person-invite`, { created: new Date().toISOString(), payload: { email: 'friend@example.test' } }))
+    await allowed('the person reads the assistants connected', as(org, 'GET', `users:connections/${org.uid}`))
+    await refused('the person writes them', as(org, 'PUT', `users:connections/${org.uid}/c2`, { id: 'c2' }))
+    await refused('the person reads the sign-in records', as(org, 'GET', 'oauth:tokens'))
+    await refused('the person writes a token', as(org, 'PUT', 'oauth:tokens/forged', { uid: org.uid }))
+    await allowed('the person deletes a competition of theirs', as(boss, 'DELETE', `competitions/${scratch}`))
+  } finally {
+    await dbRemove(`competitions:data/${pub}/invites/person-invite`)
+    await dbRemove(`competitions/${scratch}`)
+    await dbRemove(`users:tools/${org.uid}`)
+    await dbRemove(`users:connections/${org.uid}`)
+    await dbRemove('oauth:tokens')
+    await dbRemove(`users:permissions/${boss.uid}`)
+    await dbRemove(`users/${boss.uid}`)
   }
 })
 

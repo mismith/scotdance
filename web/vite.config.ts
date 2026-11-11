@@ -6,6 +6,11 @@ import { visualizer } from 'rollup-plugin-visualizer'
 
 const report = process.env.REPORT === 'true'
 
+// The assistants' door (ADR 0018): the `mcp` function answers these paths. In production Hosting rewrites them
+// (firebase.json, the `next` target); against the emulators the dev server stands in, so
+// http://localhost:5273/mcp behaves the same. (The proxy adds the original path after the function's address.)
+const MCP_PATHS = ['/mcp', '/oauth', '/.well-known/oauth-authorization-server', '/.well-known/oauth-protected-resource']
+
 export default defineConfig({
   plugins: [
     vue(),
@@ -61,5 +66,12 @@ export default defineConfig({
   },
   server: {
     host: true,
+    // (Only the dev server uses this; builds ignore it. A second stack on shifted ports sets VITE_EMULATOR_PORT_OFFSET.)
+    proxy: Object.fromEntries(
+      MCP_PATHS.map((path) => [
+        `^${path.replaceAll('.', '\\.')}(/.*)?$`,
+        { target: `http://127.0.0.1:${5001 + (Number(process.env.VITE_EMULATOR_PORT_OFFSET) || 0)}/firebase-scotdance/us-central1/mcp` },
+      ]),
+    ),
   },
 })

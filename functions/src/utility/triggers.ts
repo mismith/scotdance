@@ -2,8 +2,11 @@ import * as v1 from 'firebase-functions/v1';
 import {
   onValueCreated, onValueDeleted, onValueUpdated, onValueWritten, type ReferenceOptions,
 } from 'firebase-functions/v2/database';
-import { onCall, type CallableOptions } from 'firebase-functions/v2/https';
+import {
+  onCall, onRequest, type CallableOptions, type HttpsOptions, type Request,
+} from 'firebase-functions/v2/https';
 import { setGlobalOptions } from 'firebase-functions/v2/options';
+import type { Response } from 'express';
 import { isEmulator } from './env';
 
 // 2nd gen functions, registered in the 1st gen shape the handlers (and
@@ -49,5 +52,13 @@ export function https(options: CallableOptions = {}) {
       auth: request.auth ?? null,
       rawRequest: request.rawRequest,
     })),
+  };
+}
+
+// Plain HTTP requests (the `mcp` function's Express app, which serves the
+// assistants' OAuth and MCP endpoints), through the same global options.
+export function request(options: HttpsOptions = {}) {
+  return {
+    onRequest: (handler: (req: Request, res: Response) => void | Promise<void>) => onRequest(options, handler),
   };
 }

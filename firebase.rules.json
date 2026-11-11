@@ -1,8 +1,10 @@
 {
   "rules": {
     "$environment": {
-      ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('admin').val() === true", // is ADMIN
-      ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('admin').val() === true", // is ADMIN
+      // A system admin's grant is for the person, not for an assistant acting as them (ADR 0018): a session with
+      // `via: 'mcp'` gets only what its account was made an admin of, competition by competition and organisation by organisation.
+      ".read": "auth.token.via !== 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('admin').val() === true", // is ADMIN, and not an ASSISTANT
+      ".write": "auth.token.via !== 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('admin').val() === true", // is ADMIN, and not an ASSISTANT
 
       "versions": {
         ".read": true
@@ -16,7 +18,7 @@
       "competitions": {
         ".read": true,
         "$competitionId": {
-          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // has PERMISSION
+          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true && (newData.exists() || auth.token.via !== 'mcp')", // has PERMISSION, and an ASSISTANT can't DELETE the whole competition
           // A part it takes from its linked primary (ADR 0007) changes there, not here: a write that changes it is refused (functions copy it in)
           "description": { ".validate": "newData.val() === data.val() || root.child($environment).child('competitionLinks:sync').child($competitionId).child('about').val() !== true" }, // UNCHANGED or not SYNCED (about)
           "image": { ".validate": "newData.val() === data.val() || root.child($environment).child('competitionLinks:sync').child($competitionId).child('about').val() !== true" }, // UNCHANGED or not SYNCED (about)
@@ -70,12 +72,12 @@
             "$inviteId": {
               ".read": "auth !== null", // is AUTHED
               "accepted": {
-                ".write": "auth !== null && data.parent().exists() && !data.exists() && newData.exists() && !data.parent().child('cancelled').exists()" // is AUTHED and ACCEPTING an open invite
+                ".write": "auth !== null && auth.token.via !== 'mcp' && data.parent().exists() && !data.exists() && newData.exists() && !data.parent().child('cancelled').exists()" // is AUTHED (not an ASSISTANT) and ACCEPTING an open invite
               }
             }
           },
           ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('organisations').child($organisationId).val() === true", // has PERMISSION
-          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('organisations').child($organisationId).val() === true" // has PERMISSION
+          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('organisations').child($organisationId).val() === true && auth.token.via !== 'mcp'" // has PERMISSION, and not an ASSISTANT (invites are all that is here)
         }
       },
       "organisations:permissions": {
@@ -141,20 +143,40 @@
           // public reads a published competition section by section (both apps
           // do), so invites (emails, open invite ids) stay private.
           "dancers": {
+            ".write": "auth.token.via === 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION (the sections it works on)
             ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true", // is PUBLISHED
             ".indexOn": ["groupId", "dancerId"] // result alerts look up an age group's entries; Home, a followed dancer's
           },
-          "groups": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
-          "categories": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
-          "trophyEvents": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED; trophies across age groups, like Dancer of the Day
-          "dances": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
-          "platforms": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
-          "schedule": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
-          "draws": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
-          "results": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
-          "points": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "groups": {
+            ".write": "auth.token.via === 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION (the sections it works on)
+            ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "categories": {
+            ".write": "auth.token.via === 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION (the sections it works on)
+            ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "trophyEvents": {
+            ".write": "auth.token.via === 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION (the sections it works on)
+            ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED; trophies across age groups, like Dancer of the Day
+          "dances": {
+            ".write": "auth.token.via === 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION (the sections it works on)
+            ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "platforms": {
+            ".write": "auth.token.via === 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION (the sections it works on)
+            ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "schedule": {
+            ".write": "auth.token.via === 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION (the sections it works on)
+            ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "draws": {
+            ".write": "auth.token.via === 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION (the sections it works on)
+            ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "results": {
+            ".write": "auth.token.via === 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION (the sections it works on)
+            ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "points": {
+            ".write": "auth.token.via === 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION (the sections it works on)
+            ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
           // Judges' sheets (ADR 0013): pictures in Storage, each page saying where its file is, so functions can delete it with the page.
           "sheets": {
+            ".write": "auth.token.via === 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION (the sections it works on)
             ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true", // is PUBLISHED
             "$groupId": {
               ".validate": "newData.hasChildren()",
@@ -173,6 +195,7 @@
             }
           },
           "staff": {
+            ".write": "auth.token.via === 'mcp' && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // an ASSISTANT with PERMISSION (the sections it works on)
             // Judges and sponsors show once a competition is listed; a private one keeps them private.
             ".read": "root.child($environment).child('competitions').child($competitionId).child('listed').val() === true || root.child($environment).child('competitions').child($competitionId).child('published').val() === true", // is LISTED || PUBLISHED
             "$staffId": {
@@ -187,12 +210,16 @@
               // only accept one: they can't make their own, take an accepted one over, or
               // accept a cancelled one.
               "accepted": {
-                ".write": "auth !== null && data.parent().exists() && !data.exists() && newData.exists() && !data.parent().child('cancelled').exists()" // is AUTHED and ACCEPTING an open invite
+                ".write": "auth !== null && auth.token.via !== 'mcp' && data.parent().exists() && !data.exists() && newData.exists() && !data.parent().child('cancelled').exists()" // is AUTHED (not an ASSISTANT) and ACCEPTING an open invite
               }
             }
           },
           ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // has PERMISSION
-          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION
+          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true && auth.token.via !== 'mcp'", // has PERMISSION, and not an ASSISTANT (it writes one section at a time, below)
+          // An assistant works on the sections but not the invites (who can organise it is for the person to decide)
+          "$section": {
+            ".write": "auth.token.via === 'mcp' && $section !== 'invites' && root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true" // an ASSISTANT with PERMISSION, but not to the INVITES
+          }
         }
       },
       "competitions:submissions": {
@@ -278,13 +305,27 @@
           // The tools they sign in to with ScotDance.app, written by toolPass
           // (ADR 0017). Unlinking goes through unlinkTool; deleting their
           // account clears it.
-          ".write": "auth !== null && auth.uid === $userId && !newData.exists()" // is REMOVING OWN
+          ".write": "auth !== null && auth.token.via !== 'mcp' && auth.uid === $userId && !newData.exists()" // is REMOVING OWN (not an ASSISTANT)
         }
       },
+      // The assistants connected to their account (ADR 0018), written by functions: the Account screen lists them,
+      // and ending one goes through endConnection.
+      "users:connections": {
+        "$userId": {
+          ".read": "auth !== null && auth.token.via !== 'mcp' && auth.uid === $userId" // is SELF (not an ASSISTANT)
+        }
+      },
+      // Assistants' sign-in records: requests, codes and tokens (as hashes), for functions alone. No rule here gives a
+      // client access, and nothing but a function may write them. (A system admin's grant on the whole tree above still
+      // lets them read: what's there is hashes and pending requests, and a write fails the validation.)
+      "oauth:requests": { ".indexOn": ["expiresAt"], "$id": { ".validate": false } },
+      "oauth:codes": { ".indexOn": ["connection", "expiresAt"], "$id": { ".validate": false } },
+      "oauth:tokens": { ".indexOn": ["connection", "expiresAt"], "$id": { ".validate": false } },
+      "oauth:refresh": { ".indexOn": ["connection", "expiresAt"], "$id": { ".validate": false } },
       "users:permissions": {
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF
-          ".write": "auth !== null && auth.uid === $userId && !newData.exists()" // is REMOVING OWN permissions
+          ".write": "auth !== null && auth.token.via !== 'mcp' && auth.uid === $userId && !newData.exists()" // is REMOVING OWN permissions (not an ASSISTANT)
         }
       }
     }

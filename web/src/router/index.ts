@@ -238,6 +238,14 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/competition/AcceptInvite.vue'),
     meta: { title: 'Invitation' },
   },
+  // An assistant (Claude, ChatGPT) asks to manage the signed-in person's competitions (ADR 0018). The server's
+  // /oauth/authorize sends the browser here; the page asks for sign-in itself, so the address survives it.
+  {
+    path: '/connect',
+    name: 'connect',
+    component: () => import('@/views/Connect.vue'),
+    meta: { title: 'Connect an assistant', ownsBottomNav: true, noindex: true },
+  },
   {
     path: '/competitions/:competitionId/manage',
     component: () => import('@/views/manage/ManageLayout.vue'),
