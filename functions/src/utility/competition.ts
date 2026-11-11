@@ -18,6 +18,8 @@ export async function attachUserToCompetition({
 
 export async function ensureAdmin(ctx, db) {
   if (!ctx.auth?.uid) throw new HttpsError('unauthenticated', '');
+  // A system admin's powers are theirs, not their assistant's (ADR 0018). (Callables turn such a token away first.)
+  if (ctx.auth.token?.via === 'mcp') throw new HttpsError('permission-denied', '');
   const isAdmin = (await db.child(`users:permissions/${ctx.auth.uid}/admin`).get())
     .val() === true;
   if (!isAdmin) throw new HttpsError('permission-denied', '');

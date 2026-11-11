@@ -3,10 +3,11 @@ import {
   onValueCreated, onValueDeleted, onValueUpdated, onValueWritten, type ReferenceOptions,
 } from 'firebase-functions/v2/database';
 import {
-  onCall, onRequest, type CallableOptions, type HttpsOptions, type Request,
+  HttpsError, onCall, onRequest, type CallableOptions, type HttpsOptions, type Request,
 } from 'firebase-functions/v2/https';
 import { setGlobalOptions } from 'firebase-functions/v2/options';
 import type { Response } from 'express';
+import { isAssistant } from './assistant';
 import { isEmulator } from './env';
 
 // 2nd gen functions, registered in the 1st gen shape the handlers (and
@@ -46,12 +47,31 @@ export function database(options: DatabaseOptions = {}) {
   };
 }
 
-export function https(options: CallableOptions = {}) {
+export interface CallableAccess {
+  /**
+   * Let an assistant's token call this. Off unless a callable says so: an assistant reaches what it may through the
+   * tools built for it (which call a callable like this only for what they were made to do), never by calling it
+   * directly, and never with a system admin's powers.
+   */
+  assistants?: boolean;
+}
+
+/**
+ * Callables. A token with `via: 'mcp'` is turned away before the handler runs, unless the callable opts in with
+ * `{ assistants: true }`. So a new callable is closed to assistants until someone decides otherwise (and the handler
+ * must then ignore system-admin rights for such a token: see `isAssistant`).
+ */
+export function https(options: CallableOptions = {}, access: CallableAccess = {}) {
   return {
-    onCall: (handler: Handler) => onCall(options, (request) => handler(request.data, {
-      auth: request.auth ?? null,
-      rawRequest: request.rawRequest,
-    })),
+    onCall: (handler: Handler) => onCall(options, (request) => {
+      if (!access.assistants && isAssistant(request.auth)) {
+        throw new HttpsError('permission-denied', 'Assistants can’t do this.');
+      }
+      return handler(request.data, {
+        auth: request.auth ?? null,
+        rawRequest: request.rawRequest,
+      });
+    }),
   };
 }
 

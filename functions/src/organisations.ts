@@ -3,6 +3,7 @@ import { FirebaseInvites } from '@mismith/firebase-tools/dist/server';
 import { getPostmark } from './utility/email';
 import { V4_SITE, appModel, firstName, organisationMark, sendOptions, sentFrom } from './utility/emailModel';
 import { isEmulator } from './utility/env';
+import { isAssistant } from './utility/assistant';
 
 // Organisations: the associations, games societies and series that run
 // competitions or bring them together. Each is one record at
@@ -71,7 +72,8 @@ export function getOnCreate(db: any) {
     const uid = ctx.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', '');
     const perms = (await db.child(`users:permissions/${uid}`).get()).val() || {};
-    const isAdmin = perms.admin === true;
+    // A system admin's powers are theirs, not their assistant's (ADR 0018): `join: false`, `grantSubmitter` and the rest
+    const isAdmin = perms.admin === true && !isAssistant(ctx.auth);
     const some = (o: unknown) => Object.values((o || {}) as Record<string, unknown>).some((v) => v === true);
     if (!isAdmin && !some(perms.competitions) && !some(perms.organisations)) {
       throw new HttpsError('permission-denied', 'Submit a competition first.');

@@ -17,6 +17,29 @@ function setup() {
 }
 const draft = { name: 'BCHDA', shortName: 'BCHDA', location: 'Vancouver, BC', website: ' bchda.ca ', competitionId: 'c1', join: false }
 
+describe('creating an organisation as an assistant', () => {
+  const asAssistant = (db: FakeRtdb, data: object, uid: string) => getOnCreate(db.ref())(data, { auth: { uid, token: { via: 'mcp' } } })
+
+  it('gives a system admin’s assistant none of their admin powers', async () => {
+    const { db } = setup()
+    // They manage nothing themselves, so they can’t start one: being a system admin doesn’t count
+    await expect(asAssistant(db, draft, 'owner')).rejects.toMatchObject({ code: 'permission-denied', message: 'Submit a competition first.' })
+    db.write({ 'users:permissions/owner/competitions/c1': true })
+    // They can’t make it without joining it, or give its access to someone else
+    await expect(asAssistant(db, { ...draft, grantSubmitter: true }, 'owner')).rejects.toMatchObject({ code: 'permission-denied' })
+    const { organisationId: id } = await asAssistant(db, draft, 'owner')
+    expect(db.read(`users:permissions/owner/organisations/${id}`)).toBe(true)
+    expect(db.read(`organisations:permissions/${id}/users`)).toEqual({ owner: true })
+  })
+  it('starts one for an organiser as the callable does, and still refuses a foreign competition', async () => {
+    const { db } = setup()
+    const { organisationId: id } = await asAssistant(db, { name: 'New Society', shortName: 'NS', competitionId: 'c1' }, 'organiser')
+    expect(db.read(`competitions/c1/organisations/${id}`)).toBe(true)
+    expect(db.read(`users:permissions/organiser/organisations/${id}`)).toBe(true)
+    await expect(asAssistant(db, { name: 'Other', competitionId: 'foreign' }, 'organiser')).rejects.toMatchObject({ code: 'permission-denied' })
+  })
+})
+
 describe('creating an organisation from a managed competition', () => {
   it('creates, links and grants the verified submitter in one write', async () => {
     const { db, create } = setup()
