@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { MAX_RECORDS, recentChanges, undoChange } from './changes';
+import { MAX_RECORDS, recentChanges, undoChange, type Scope } from './changes';
+import { managedOrganisation } from './organisations';
 import { fileDraft, MAX_DRAFT_ENTRIES } from './draft';
 import { assertManages } from './read';
 import type { Session } from './session';
@@ -28,6 +29,17 @@ import { planResults } from './writeResults';
 import { planSchedule } from './writeSchedule';
 
 const competition = z.string().min(1).describe('The competition’s id (from get_competitions)');
+const organisationRef = z.string().min(1).describe('The organisation’s id or name (from get_organisations), for changes to an organisation');
+
+/** Whose log: a competition they manage, or an organisation they are an admin of (exactly one) */
+async function scopeFor(session: Session, competitionId?: string, organisationId?: string): Promise<Scope> {
+  if (!!competitionId === !!organisationId) throw new ToolError('Say whose changes: pass competition, or organisation, not both.');
+  if (competitionId) {
+    await assertManages(session, competitionId);
+    return { kind: 'competition', id: competitionId };
+  }
+  return { kind: 'organisation', id: (await managedOrganisation(session, organisationId!)).id };
+}
 const id = (what: string) => z.string().optional().describe(`${what}’s id, to change it. Leave out to add a new one.`);
 const clearable = (what: string) => z.string().nullable().optional().describe(`${what}. Pass null or "" to clear it. Leave out to keep it.`);
 const ref = (what: string) => z.string().describe(`${what}: an id, or a name that picks out one`);
@@ -455,25 +467,27 @@ const tools = [
   defineTool({
     name: 'get_changes',
     title: 'Get recent changes',
-    description: 'What assistants changed in a competition recently, newest first: id, when, which tool, a one-line summary, and whether it was undone. Kept 60 days.',
-    input: { competition, limit: z.number().int().min(1).max(30).optional() },
+    description:
+      'What assistants changed in a competition (pass competition) or in an organisation and the competitions it has (pass organisation) recently, newest first: id, when, '
+      + 'which tool, a one-line summary, and whether it was undone. Kept 60 days.',
+    input: { competition: competition.optional(), organisation: organisationRef.optional(), limit: z.number().int().min(1).max(30).optional() },
     annotations: READ,
-    run: async ({ competition: c, limit }, session) => {
-      await assertManages(session, c);
-      return { changes: await recentChanges(session, c, limit ?? 10) };
+    run: async ({ competition: c, organisation: o, limit }, session) => {
+      const scope = await scopeFor(session, c, o);
+      return { changes: await recentChanges(session, scope, limit ?? 10) };
     },
   }),
   defineTool({
     name: 'undo_change',
     title: 'Undo a change',
     description:
-      'Put back what one change changed (ids from get_changes or from a write tool’s result). It only works if nothing it changed has been '
-      + 'changed again since; otherwise it says what has, and changes nothing. The undo is logged too.',
-    input: { competition, change: z.string().min(1).describe('The change’s id') },
+      'Put back what one change changed (ids from get_changes or from a write tool’s result; pass competition, or organisation for update_organisation’s). '
+      + 'It only works if nothing it changed has been changed again since; otherwise it says what has, and changes nothing. The undo is logged too.',
+    input: { competition: competition.optional(), organisation: organisationRef.optional(), change: z.string().min(1).describe('The change’s id') },
     annotations: REMOVE,
-    run: async ({ competition: c, change: changeId }, session) => {
-      await assertManages(session, c);
-      const done = await undoChange(session, c, changeId);
+    run: async ({ competition: c, organisation: o, change: changeId }, session) => {
+      const scope = await scopeFor(session, c, o);
+      const done = await undoChange(session, scope, changeId);
       return { summary: `Undid: ${done.change}`, restored: done.restored, change: done.undoneBy };
     },
   }),

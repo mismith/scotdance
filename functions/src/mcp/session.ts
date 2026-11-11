@@ -18,10 +18,19 @@ export interface TokenMinter {
   createCustomToken(uid: string, claims: Record<string, unknown>): Promise<string>;
 }
 
+/** What a callable's handler takes (organisations.ts `getOnCreate`): the data it was called with, and who called */
+export type CallableHandler = (data: unknown, ctx: { auth: { uid: string; token: { via: 'mcp' } } }) => Promise<unknown>;
+
 export interface Deps {
   auth: TokenMinter;
   /** The data namespace in the database: `production` or `development` */
   env: string;
+  /**
+   * `createOrganisation`'s handler. Making an organisation (and its admin) takes the Admin SDK, which the callable has
+   * and a session does not; the callable itself stays closed to assistants, and its tool reaches the handler here, as
+   * the person but never with a system admin's rights (the token says `via: 'mcp'`).
+   */
+  createOrganisation?: CallableHandler;
 }
 
 export type Query = Record<string, string | number | boolean>;
@@ -43,6 +52,8 @@ export interface Session {
   /** Several writes at once, by path (null removes), atomically */
   update(values: Record<string, unknown>): Promise<void>;
   remove(path: string): Promise<void>;
+  /** Make an organisation, as `createOrganisation` does for the person (undefined where the server was not given it) */
+  createOrganisation?(data: Record<string, unknown>): Promise<{ organisationId: string }>;
 }
 
 interface Entry {
@@ -119,5 +130,8 @@ export function sessionFor(deps: Deps, access: Access): Session {
     write: async (path, value) => { await call('PUT', path, value); },
     update: async (values) => { await call('PATCH', '', values); },
     remove: async (path) => { await call('DELETE', path); },
+    createOrganisation: deps.createOrganisation
+      ? async (data) => (await deps.createOrganisation!(data, { auth: { uid: access.uid, token: { via: 'mcp' } } })) as { organisationId: string }
+      : undefined,
   };
 }

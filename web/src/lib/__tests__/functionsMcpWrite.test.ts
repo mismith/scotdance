@@ -5,63 +5,13 @@ import type { Reference } from 'firebase-admin/database'
 import { commitChange, expiredEntries, sweepChanges, MAX_RECORDS, recentChanges, same, stored, undoChange, type ChangeEntry } from '../../../../functions/src/mcp/changes'
 import { draftCsv, fileDraft } from '../../../../functions/src/mcp/draft'
 import { pushId } from '../../../../functions/src/mcp/ids'
-import { DatabaseError, type Query, type Session } from '../../../../functions/src/mcp/session'
+import { type Session } from '../../../../functions/src/mcp/session'
 import { resultsView, scheduleView } from '../../../../functions/src/mcp/view'
 import { writeTools } from '../../../../functions/src/mcp/writeTools'
 import { explain } from '../../../../functions/src/mcp/toolkit'
+import { fakeSession, type Json } from './mcpHarness'
 import { entriesOf as importEntries, gridFromText, parseGrid } from '../admin/importDancers'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Json = Record<string, any>
-
-/** The database in memory, as the REST session sees it: paths, multi-path updates with server time, simple queries */
-function fakeSession(initial: Json = {}, opts: { uid?: string; deny?: (path: string) => boolean } = {}) {
-  const tree: Json = JSON.parse(JSON.stringify(initial))
-  let clock = 1_000
-  const updates: Json[] = []
-  const keys = (p: string) => p.split('/').filter(Boolean)
-  const getIn = (p: string) => keys(p).reduce<unknown>((n, k) => (n && typeof n === 'object' ? (n as Json)[k] : undefined), tree)
-  const setIn = (p: string, v: unknown) => {
-    const ks = keys(p)
-    const trail: Json[] = [tree]
-    ks.slice(0, -1).forEach((k) => { trail.push((trail[trail.length - 1][k] ??= {}) as Json) })
-    const last = trail[trail.length - 1]
-    if (v === null || v === undefined) delete last[ks[ks.length - 1]]
-    else last[ks[ks.length - 1]] = v
-    // The database keeps no empty records
-    for (let i = trail.length - 1; i > 0 && !Object.keys(trail[i]).length; i--) delete trail[i - 1][ks[i - 1]]
-  }
-  const resolve = (v: unknown): unknown => {
-    if (v && typeof v === 'object') {
-      if ((v as Json)['.sv'] === 'timestamp') return clock
-      if (Array.isArray(v)) return v.map(resolve)
-      return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, resolve(x)]))
-    }
-    return v
-  }
-  const session: Session = {
-    uid: opts.uid ?? 'u1',
-    connection: 'c1',
-    client: 'Claude',
-    read: async (path: string, query?: Query) => {
-      const v = getIn(path)
-      if (query?.orderBy && v && typeof v === 'object') {
-        const sorted = Object.entries(v as Json).sort(([, a], [, b]) => (a[String(query.orderBy)] ?? 0) - (b[String(query.orderBy)] ?? 0))
-        return Object.fromEntries(sorted.slice(-Number(query.limitToLast ?? sorted.length)))
-      }
-      return v === undefined ? null : JSON.parse(JSON.stringify(v))
-    },
-    write: async (path, value) => { setIn(path, resolve(value)) },
-    update: async (values) => {
-      clock += 1000
-      if (opts.deny && Object.keys(values).some(opts.deny)) throw new DatabaseError('permission-denied', 401)
-      updates.push(values)
-      for (const [p, v] of Object.entries(values)) setIn(p, v === null ? null : stored(resolve(v)))
-    },
-    remove: async (path) => { setIn(path, null) },
-  }
-  return { session, tree, updates, tick: (ms: number) => { clock += ms } }
-}
 
 let counter = 0
 const ids = () => `id${String(++counter).padStart(3, '0')}`
@@ -216,7 +166,7 @@ describe('sweeping the log', () => {
     for (let i = 0; i < 5; i++) log[`c${i}`] = { old: { at: 10 * day }, [`new${i}`]: { at: 90 * day } }
     const removed: string[] = []
     const root = {
-      child: () => ({
+      child: (name: string) => ({
         orderByKey: () => {
           let after: string | undefined
           let size = 100
@@ -224,7 +174,8 @@ describe('sweeping the log', () => {
             limitToFirst: (n: number) => ((size = n), q),
             startAfter: (k: string) => ((after = k), q),
             get: async () => {
-              const keys = Object.keys(log).filter((k) => after === undefined || k > after).slice(0, size)
+              // (Organisations' logs are swept too; this one has none)
+              const keys = name !== 'competitions:changes' ? [] : Object.keys(log).filter((k) => after === undefined || k > after).slice(0, size)
               return { val: () => (keys.length ? Object.fromEntries(keys.map((k) => [k, log[k]])) : null) }
             },
           }

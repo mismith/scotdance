@@ -131,7 +131,7 @@ export const unlinkTool = https({ secrets: [toolPassSecret] }).onCall(getOnUnlin
 oauthRuntime.store = rtdbStore(appConfig.db);
 let mcpHandler: ReturnType<typeof mcpApp> | undefined;
 export const mcp = request({ timeoutSeconds: 60, memory: '512MiB' }).onRequest((req, res) => {
-  mcpHandler ??= mcpApp({ auth: getAuth(app), env });
+  mcpHandler ??= mcpApp({ auth: getAuth(app), env, createOrganisation: Organisations.getOnCreate(appConfig.db) });
   mcpHandler(req, res);
 });
 // The /connect page's callables: what an assistant asked for, allow or refuse it, and disconnect one.

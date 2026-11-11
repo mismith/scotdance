@@ -10,9 +10,17 @@ import { DatabaseError, type Session } from './session';
  * and only if every path still holds the "after" it was left with.
  *
  *   competitions:changes/{competitionId}/{changeId}
+ *   organisations:changes/{organisationId}/{changeId}   (changes to an organisation, and to which competitions it has)
  *
- * It sits beside `competitions:data`, not inside it, so no data trigger fires for it.
+ * They sit beside `competitions:data`, not inside it, so no data trigger fires for them.
  */
+
+/** Whose log: a competition's, or an organisation's */
+export type Scope = { kind: 'competition' | 'organisation'; id: string };
+const scopeOf = (x: string | Scope): Scope => (typeof x === 'string' ? { kind: 'competition', id: x } : x);
+export const logRoot = (kind: Scope['kind']) => (kind === 'competition' ? 'competitions:changes' : 'organisations:changes');
+const logPath = (x: string | Scope) => `${logRoot(scopeOf(x).kind)}/${scopeOf(x).id}`;
+export const LOG_ROOTS = ['competitions:changes', 'organisations:changes'] as const;
 
 export type Updates = Record<string, unknown>;
 
@@ -177,7 +185,39 @@ export async function commitChange(session: Session, change: Change, newId: () =
     writes.set(`competitions/${cid}/${p}`, clean(v));
     before.set(`competitions/${cid}/${p}`, valueAt(change.current.info, p));
   }
+  return commitPaths(session, { kind: 'competition', id: cid }, { tool: change.tool, summary: change.summary, writes, before, guard: change.guard }, recordOf, newId);
+}
 
+/** A change to an organisation: absolute paths (`organisations/{id}/name`, `competitions/{cid}/organisations/{id}`) with the values they held */
+export interface OrganisationChange {
+  organisation: string;
+  tool: string;
+  summary: string;
+  /** What to write, by path (null removes) */
+  writes: Updates;
+  /** What each path holds now */
+  before: Record<string, unknown>;
+  guard?: (path: string) => string | null;
+}
+
+/** An organisation's change is logged under `organisations:changes/{id}` in the same update, as a competition's is */
+export function commitOrganisationChange(session: Session, change: OrganisationChange, newId: () => string = pushId): Promise<Committed | null> {
+  const writes = new Map(Object.entries(change.writes).map(([p, v]) => [p, clean(v)] as const));
+  const before = new Map(Object.entries(change.before));
+  // Each path is its own record: a competition added is one, a field of the organisation another
+  return commitPaths(session, { kind: 'organisation', id: change.organisation }, { tool: change.tool, summary: change.summary, writes, before, guard: change.guard }, (p) => p, newId);
+}
+
+interface Prepared {
+  tool: string;
+  summary: string;
+  writes: Map<string, unknown>;
+  before: Map<string, unknown>;
+  guard?: (path: string) => string | null;
+}
+
+async function commitPaths(session: Session, scope: Scope, change: Prepared, record: (path: string) => string, newId: () => string): Promise<Committed | null> {
+  const { writes, before } = change;
   const paths: PathChange[] = [];
   for (const [path, value] of writes) {
     const was = stored(before.get(path));
@@ -198,7 +238,7 @@ export async function commitChange(session: Session, change: Change, newId: () =
     if (locked) throw new ToolError(locked);
   }
 
-  const records = new Set(paths.map((p) => recordOf(p.path))).size;
+  const records = new Set(paths.map((p) => record(p.path))).size;
   if (records > MAX_RECORDS) {
     throw new ToolError(
       `That changes ${records} records, and one call can change at most ${MAX_RECORDS} (so it can be logged and undone). `
@@ -224,7 +264,7 @@ export async function commitChange(session: Session, change: Change, newId: () =
 
   const values: Updates = {};
   for (const [path, value] of writes) values[path] = value;
-  values[`competitions:changes/${cid}/${id}`] = entry;
+  values[`${logPath(scope)}/${id}`] = entry;
   try {
     await session.update(values);
   } catch (error) {
@@ -254,12 +294,17 @@ export interface Undone {
   restored: number;
 }
 
-const PATH_OK = (cid: string) => new RegExp(`^(competitions:data|competitions)/${cid.replace(/[^\w-]/g, '')}/[^.#$\\[\\]]+$`);
+const PATH_OK = (scope: Scope) => {
+  const id = scope.id.replace(/[^\w-]/g, '');
+  // An organisation's change: its own record, or the place it holds on a competition
+  if (scope.kind === 'organisation') return new RegExp(`^(organisations/${id}/[^.#$\\[\\]]+|competitions/[\\w-]+/organisations/${id})$`);
+  return new RegExp(`^(competitions:data|competitions)/${id}/[^.#$\\[\\]]+$`);
+};
 
 /** The sentence for paths that changed since: where, and what is there now */
 function changedSince(entry: ChangeEntry, now: Map<string, unknown>, cid: string): string {
   const differs = entry.paths.filter((p) => !holds(now.get(p.path), p.after));
-  const short = (p: string) => p.replace(`competitions:data/${cid}/`, '').replace(`competitions/${cid}/`, 'competition ');
+  const short = (p: string) => p.replace(`competitions:data/${cid}/`, '').replace(`competitions/${cid}/`, 'competition ').replace(/^organisations\/[^/]+\//, '');
   const show = (v: unknown) => {
     const s = JSON.stringify(stored(v) ?? null);
     return s.length > 60 ? `${s.slice(0, 57)}…` : s;
@@ -278,31 +323,32 @@ function changedSince(entry: ChangeEntry, now: Map<string, unknown>, cid: string
  */
 export async function undoChange(
   session: Session,
-  competition: string,
+  whose: string | Scope,
   changeId: string,
   newId: () => string = pushId,
 ): Promise<Undone> {
-  const entry = (await session.read(`competitions:changes/${competition}/${changeId}`)) as ChangeEntry | null;
-  if (!entry || typeof entry !== 'object') throw new ToolError(`There is no change ${changeId} for this competition. get_changes lists the recent ones.`);
+  const scope = scopeOf(whose);
+  const entry = (await session.read(`${logPath(scope)}/${changeId}`)) as ChangeEntry | null;
+  if (!entry || typeof entry !== 'object') throw new ToolError(`There is no change ${changeId} for this ${scope.kind}. get_changes lists the recent ones.`);
   if (entry.undone) throw new ToolError('That change has already been undone.');
   if (entry.undoOf) throw new ToolError('That change was itself an undo. To bring the original back, make the change again.');
   const paths = (Array.isArray(entry.paths) ? entry.paths : Object.values(entry.paths ?? {})) as PathChange[];
-  if (!paths.length || paths.some((p) => !PATH_OK(competition).test(String(p?.path)))) {
+  if (!paths.length || paths.some((p) => !PATH_OK(scope).test(String(p?.path)))) {
     throw new ToolError('That change can’t be undone from here.');
   }
   const log = { ...entry, paths };
 
-  // Where each value is now: one read for each section the change touched
+  // Where each value is now: a competition's, one read for each section the change touched; an organisation's, each path
   const roots = new Map<string, Promise<unknown>>();
-  const rootOf = (path: string) => path.split('/').slice(0, path.startsWith('competitions:data/') ? 3 : 2).join('/');
+  const rootOf = (path: string) => (scope.kind === 'organisation' ? path : path.split('/').slice(0, path.startsWith('competitions:data/') ? 3 : 2).join('/'));
   for (const p of paths) {
     const root = rootOf(p.path);
     if (!roots.has(root)) roots.set(root, session.read(root));
   }
   const loaded = new Map(await Promise.all([...roots].map(async ([k, v]) => [k, await v] as const)));
-  const now = new Map(paths.map((p) => [p.path, valueAt(loaded.get(rootOf(p.path)), p.path.slice(rootOf(p.path).length + 1))] as const));
+  const now = new Map(paths.map((p) => [p.path, scope.kind === 'organisation' ? loaded.get(p.path) : valueAt(loaded.get(rootOf(p.path)), p.path.slice(rootOf(p.path).length + 1))] as const));
 
-  if (!paths.every((p) => holds(now.get(p.path), p.after))) throw new ToolError(changedSince(log, now, competition));
+  if (!paths.every((p) => holds(now.get(p.path), p.after))) throw new ToolError(changedSince(log, now, scope.id));
 
   const id = newId();
   const values: Updates = {};
@@ -317,8 +363,8 @@ export async function undoChange(
     undoOf: changeId,
     paths: paths.map((p) => ({ path: p.path, ...(p.after !== undefined ? { before: p.after } : {}), ...(p.before !== undefined ? { after: p.before } : {}) })),
   };
-  values[`competitions:changes/${competition}/${id}`] = undo;
-  values[`competitions:changes/${competition}/${changeId}/undone`] = { at: SERVER_TIME, by: session.uid, change: id };
+  values[`${logPath(scope)}/${id}`] = undo;
+  values[`${logPath(scope)}/${changeId}/undone`] = { at: SERVER_TIME, by: session.uid, change: id };
   try {
     await session.update(values);
   } catch (error) {
@@ -341,8 +387,8 @@ export interface ChangeRow {
 }
 
 /** The latest entries, newest first */
-export async function recentChanges(session: Session, competition: string, limit: number): Promise<ChangeRow[]> {
-  const found = (await session.read(`competitions:changes/${competition}`, { orderBy: 'at', limitToLast: limit })) as Record<string, ChangeEntry> | null;
+export async function recentChanges(session: Session, whose: string | Scope, limit: number): Promise<ChangeRow[]> {
+  const found = (await session.read(logPath(whose), { orderBy: 'at', limitToLast: limit })) as Record<string, ChangeEntry> | null;
   return Object.entries(found ?? {})
     .filter(([, e]) => e && typeof e === 'object')
     .map(([id, e]) => ({
@@ -366,36 +412,38 @@ export async function recentChanges(session: Session, competition: string, limit
 // ---------- tidying up
 
 /** Which entries are older than the cutoff, among the competitions' entries as read */
-export function expiredEntries(all: Record<string, Record<string, { at?: unknown }> | null>, cutoff: number): string[] {
+export function expiredEntries(all: Record<string, Record<string, { at?: unknown }> | null>, cutoff: number, root: string = LOG_ROOTS[0]): string[] {
   const out: string[] = [];
   for (const [competition, entries] of Object.entries(all)) {
     for (const [id, entry] of Object.entries(entries ?? {})) {
-      if (typeof entry?.at === 'number' && entry.at < cutoff) out.push(`competitions:changes/${competition}/${id}`);
+      if (typeof entry?.at === 'number' && entry.at < cutoff) out.push(`${root}/${competition}/${id}`);
     }
   }
   return out;
 }
 
-/** Deletes entries older than KEEP_DAYS, a few competitions at a time. Returns how many. */
+/** Deletes entries older than KEEP_DAYS from every log, a few competitions (or organisations) at a time. Returns how many. */
 export async function sweepChanges(root: Reference, now: number = Date.now(), pageSize = 20): Promise<number> {
   const cutoff = now - KEEP_DAYS * 24 * 60 * 60 * 1000;
-  const base = root.child('competitions:changes');
   let swept = 0;
-  let after: string | undefined;
-  for (;;) {
-    let query = base.orderByKey().limitToFirst(pageSize);
-    if (after !== undefined) query = query.startAfter(after);
-    const snap = await query.get();
-    const page = (snap.val() as Record<string, Record<string, { at?: unknown }>> | null) ?? {};
-    const keys = Object.keys(page);
-    if (!keys.length) break;
-    const old = expiredEntries(page, cutoff);
-    for (let i = 0; i < old.length; i += 400) {
-      await root.update(Object.fromEntries(old.slice(i, i + 400).map((p) => [p, null])));
+  for (const logs of LOG_ROOTS) {
+    const base = root.child(logs);
+    let after: string | undefined;
+    for (;;) {
+      let query = base.orderByKey().limitToFirst(pageSize);
+      if (after !== undefined) query = query.startAfter(after);
+      const snap = await query.get();
+      const page = (snap.val() as Record<string, Record<string, { at?: unknown }>> | null) ?? {};
+      const keys = Object.keys(page);
+      if (!keys.length) break;
+      const old = expiredEntries(page, cutoff, logs);
+      for (let i = 0; i < old.length; i += 400) {
+        await root.update(Object.fromEntries(old.slice(i, i + 400).map((p) => [p, null])));
+      }
+      swept += old.length;
+      after = keys[keys.length - 1];
+      if (keys.length < pageSize) break;
     }
-    swept += old.length;
-    after = keys[keys.length - 1];
-    if (keys.length < pageSize) break;
   }
   return swept;
 }
