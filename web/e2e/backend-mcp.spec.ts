@@ -87,8 +87,8 @@ test('get_staff: judges, pipers, sponsors and platforms', async () => {
 test('get_schedule: days to platforms with names, and one day', async () => {
   const { data } = await call('get_schedule', { competition: mine.id })
   expect(data.days.map((d: Json) => d.name)).toEqual(['Saturday', 'Sunday'])
-  const dance = data.days[0].blocks[0].events[0].dances[0]
-  expect(dance.name).toBe('Highland Fling (4)')
+  const dance = data.days[0].sessions[0].events[0].dances[0]
+  expect(dance.dance).toBe('Highland Fling (4)')
   expect(dance.platforms[0]).toMatchObject({ name: 'Platform A', judges: [{ name: 'Aileen Robertson' }] })
   expect(dance.platforms[0].ageGroups[0].name).toMatch(/^Primary/)
   const day = await call('get_schedule', { competition: mine.id, day: 'Sunday' })
