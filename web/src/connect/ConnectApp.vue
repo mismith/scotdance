@@ -39,8 +39,8 @@ const audience = ref<Audience | null>(null)
 const toolName = computed(() => (audience.value ? TOOLS[audience.value].name : null))
 // The sheet says everything the pass carries: a name and email for every tool, and more for a tool that gets more
 const toolGets = computed(() => {
-  const tool: { alsoGets?: string } | null = audience.value ? TOOLS[audience.value] : null
-  return tool?.alsoGets ? `your name, email address and ${tool.alsoGets}` : 'your name and email address'
+  const tool = audience.value ? TOOLS[audience.value] : null
+  return tool && 'alsoGets' in tool ? `your name, email address and ${tool.alsoGets}` : 'your name and email address'
 })
 const unreadable = ref(false)
 const open = ref(false)
