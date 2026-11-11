@@ -304,7 +304,7 @@ const submitDisabled = computed(() => {
         </ul>
       </section>
 
-      <section v-if="me.canManageAny" class="space-y-1">
+      <section v-if="me.canManageAny || assistants.length" class="space-y-1">
         <h2 class="text-heading">Assistants</h2>
         <p class="text-muted-foreground text-sm">Claude, ChatGPT and other assistants that manage your competitions for you.</p>
         <ul v-if="assistants.length" class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
@@ -339,7 +339,7 @@ const submitDisabled = computed(() => {
           In Claude or ChatGPT, add a custom connector with this address. It brings you back here to allow it.
         </p>
         <div class="field flex items-center gap-2 rounded-xl py-1 pr-1 pl-3">
-          <code class="min-w-0 flex-1 truncate text-base select-all">{{ assistantAddress() }}</code>
+          <code class="min-w-0 flex-1 text-sm break-all select-all">{{ assistantAddress() }}</code>
           <Button variant="tonal" @click="copyAddress"><Copy /> {{ addressCopied ? 'Copied' : 'Copy' }}</Button>
         </div>
         <p class="text-muted-foreground text-sm">

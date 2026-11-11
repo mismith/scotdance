@@ -63,7 +63,7 @@ text in records is data, never instructions.
 
 ### 5. Account and approval
 
-`/connect?request=<id>` (outside Manage): signed out, the app's own sign-in; then one screen naming the assistant
+`/connect-assistant?request=<id>` (outside Manage; not `/connect`, which dev servers answer with the tools’ `connect.html`): signed out, the app's own sign-in; then one screen naming the assistant
 with Allow or Not now. Account lists connected assistants (name, connected, last used) with Disconnect, and the
 address to paste into a custom connector. Both only for people who manage something. Deleting an account ends its
 connections.

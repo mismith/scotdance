@@ -94,5 +94,5 @@ export const authorize: RequestHandler = async (req, res) => {
     createdAt: Date.now(),
     expiresAt: later(REQUEST_TTL),
   });
-  res.redirect(302, `${issuer()}/connect?request=${id}`);
+  res.redirect(302, `${issuer()}/connect-assistant?request=${id}`);
 };

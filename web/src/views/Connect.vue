@@ -2,13 +2,14 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { Bot, LoaderCircle, TimerOff, TriangleAlert } from '@lucide/vue'
+import { Bot, LoaderCircle, ShieldOff, TimerOff, TriangleAlert } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Button from '@/components/ui/Button.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { answerRequest, lookUpRequest, type AssistantRequest } from '@/lib/assistants'
 import { useAuthStore } from '@/stores/auth'
+import { useMeStore } from '@/stores/me'
 
 // An assistant (Claude, ChatGPT) has asked to manage this person's competitions and sent them here (ADR 0018).
 // Signing in comes first, and the address stays, so they land back here. There is nothing to pick: what it can
@@ -16,9 +17,10 @@ import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const auth = useAuthStore()
+const me = useMeStore()
 const requestId = computed(() => (typeof route.query.request === 'string' ? route.query.request : ''))
 
-type State = 'loading' | 'signed-out' | 'ask' | 'gone' | 'failed'
+type State = 'loading' | 'signed-out' | 'nothing' | 'ask' | 'gone' | 'failed'
 const state = ref<State>('loading')
 const asked = ref<AssistantRequest>()
 const authReady = ref(false)
@@ -27,6 +29,9 @@ async function load() {
   if (!authReady.value) return
   if (!auth.isSignedIn) return void (state.value = 'signed-out')
   state.value = 'loading'
+  // It can only reach what they manage, so with nothing to manage there is nothing to allow
+  if (!me.accessKnown) return
+  if (!me.canManageAny) return void (state.value = 'nothing')
   if (!requestId.value) return void (state.value = 'gone')
   try {
     const found = await lookUpRequest(requestId.value)
@@ -41,7 +46,7 @@ onMounted(async () => {
   await getCurrentUser()
   authReady.value = true
 })
-watch(() => [authReady.value, auth.isSignedIn, requestId.value], load, { immediate: true })
+watch(() => [authReady.value, auth.isSignedIn, requestId.value, me.accessKnown, me.canManageAny], load, { immediate: true })
 
 const known = computed(() => asked.value?.known ?? false)
 const name = computed(() => asked.value?.client.name ?? '')
@@ -82,6 +87,15 @@ async function answer(deny?: true) {
         description="Sign in to ScotDance.app to allow it."
       >
         <Button variant="primary" size="lg" @click="auth.openLogin()">Sign in</Button>
+      </EmptyState>
+
+      <EmptyState
+        v-else-if="state === 'nothing'"
+        :icon="ShieldOff"
+        title="You don’t manage anything yet"
+        description="An assistant can only work with the competitions and organisations you’re an admin of. Add a competition, or ask an admin to invite you, then connect it again."
+      >
+        <Button variant="primary" size="lg" :to="{ name: 'home' }">Back to Home</Button>
       </EmptyState>
 
       <EmptyState

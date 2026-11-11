@@ -42,7 +42,7 @@ async function begin(extra: Record<string, string | undefined> = {}) {
   const res = await authorize(params)
   assert.equal(res.status, 302)
   const location = new URL(res.headers.get('location')!)
-  assert.equal(location.origin + location.pathname, `${ORIGIN}/connect`)
+  assert.equal(location.origin + location.pathname, `${ORIGIN}/connect-assistant`)
   return { keys, request: location.searchParams.get('request')! }
 }
 
@@ -144,7 +144,7 @@ describe('authorize', () => {
     assert.equal(count('oauth:requests/'), 0)
   }
 
-  test('happy path files the request and sends the browser to /connect', async () => {
+  test('happy path files the request and sends the browser to /connect-assistant', async () => {
     const { keys, params } = asked({ resource: RESOURCE })
     const res = await authorize(params)
     assert.equal(res.status, 302)
@@ -197,7 +197,7 @@ describe('authorize', () => {
       await expectPage(await authorize({ ...params, resource: 'https://evil.example/mcp' }))
       await expectPage(await authorize({ ...params, state: 'x'.repeat(2000) }))
       // A good request from it still goes on to the approval page, where it is shown for what it is
-      assert.match((await authorize(params)).headers.get('location')!, /\/connect\?request=/)
+      assert.match((await authorize(params)).headers.get('location')!, /\/connect-assistant\?request=/)
     } finally {
       knownHosts.add('127.0.0.1')
     }
