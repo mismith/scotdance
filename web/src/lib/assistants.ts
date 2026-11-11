@@ -53,7 +53,8 @@ export async function lookUpRequest(request: string): Promise<AssistantRequest |
     const { data } = await httpsCallable<{ request: string }, AssistantRequest>(functions, 'connectionRequest')({ request })
     return data
   } catch (e) {
-    if (isNotFound(e)) return null
+    // An id that was never a request (a mangled link) is as gone as one that ran out
+    if (isNotFound(e) || (e as { code?: string })?.code === 'functions/invalid-argument') return null
     throw e
   }
 }
