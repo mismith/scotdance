@@ -17,14 +17,13 @@ import { forgetCompetitionsList } from '@/composables/useCompetitions'
 import { newKey, write } from '@/lib/admin/write'
 import { at } from '@/lib/admin/collection'
 import { openToText } from '@/lib/trophyEvents'
-import { entryName, isTeam } from '@/lib/entries'
+import { categoryLabel, danceLabel, dancerLabel, groupLabel, platformLabel, staffLabel, trophyEventLabel } from '@shared/labels'
+import { compareNumbers } from '@shared/plans/draws'
+import type { CompetitionState, Plan } from '@shared/plans/types'
 import { record, undo, type HistoryWriter } from '@/lib/admin/history'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import {
-  dancerFullName,
-  danceFullName,
-  groupFullName,
   type Competition,
   type DrawsTree,
   type TeamMember,
@@ -121,16 +120,7 @@ function entries<T>(rec: Record<string, T> | undefined | null): Array<WithId<T>>
     .map(([id, v]) => ({ ...v, id }))
 }
 
-/** Numeric-aware compare for competitor numbers ("9" before "10", "?" last). */
-export function compareNumbers(a: string, b: string) {
-  const na = Number.parseInt(a, 10)
-  const nb = Number.parseInt(b, 10)
-  const fa = Number.isFinite(na)
-  const fb = Number.isFinite(nb)
-  if (fa && fb && na !== nb) return na - nb
-  if (fa !== fb) return fa ? -1 : 1
-  return a.localeCompare(b, undefined, { numeric: true })
-}
+export { compareNumbers }
 
 export function createManagedCompetition(competitionId: Ref<string>) {
   const competition = shallowRef<Competition | null>(null)
@@ -190,12 +180,15 @@ export function createManagedCompetition(competitionId: Ref<string>) {
     offData?.()
   })
 
+  /** What the shared plans (shared/plans) read: the competition record and its data, as stored. */
+  const state = computed<CompetitionState>(() => ({ info: competition.value, data: raw.value }))
+
   const loaded = computed(() => metaLoaded.value && dataLoaded.value)
   const exists = computed(() => competition.value != null)
 
   const categories = computed<MCategory[]>(() =>
     entries(raw.value.categories)
-      .map((c) => ({ ...c, label: (c.name ?? '').trim() || 'Untitled category' }))
+      .map((c) => ({ ...c, label: categoryLabel(c) }))
       .sort(byOrder),
   )
   const categoriesById = computed(() => new Map(categories.value.map((c) => [c.id, c])))
@@ -204,8 +197,7 @@ export function createManagedCompetition(competitionId: Ref<string>) {
     entries(raw.value.groups)
       .map((g) => {
         const category = g.categoryId ? categoriesById.value.get(g.categoryId) : undefined
-        const label = groupFullName({ id: g.id, name: g.name }, category ? { id: category.id, name: category.name } : undefined)
-        return { ...g, category, label: label || 'Untitled age group' }
+        return { ...g, category, label: groupLabel(g, category) }
       })
       .sort(byOrder),
   )
@@ -216,7 +208,7 @@ export function createManagedCompetition(competitionId: Ref<string>) {
       .sort(byOrder)
       .map((a) => ({
         ...a,
-        label: (a.name ?? '').trim() || 'Untitled trophy event',
+        label: trophyEventLabel(a),
         groups: groups.value.filter((g) => a.groupIds?.[g.id]),
         openTo: openToText(a.groupIds, groups.value, categories.value),
       })),
@@ -225,7 +217,7 @@ export function createManagedCompetition(competitionId: Ref<string>) {
 
   const dances = computed<MDance[]>(() =>
     entries(raw.value.dances)
-      .map((d) => ({ ...d, label: danceFullName(d) || 'Untitled dance' }))
+      .map((d) => ({ ...d, label: danceLabel(d) }))
       .sort(byOrder),
   )
   const dancesById = computed(() => new Map(dances.value.map((d) => [d.id, d])))
@@ -237,7 +229,7 @@ export function createManagedCompetition(competitionId: Ref<string>) {
         return {
           ...d,
           num,
-          label: isTeam(d) ? entryName(d) : dancerFullName(d) || 'Unnamed dancer',
+          label: dancerLabel(d),
           group: d.groupId ? groupsById.value.get(d.groupId) : undefined,
         }
       })
@@ -247,7 +239,7 @@ export function createManagedCompetition(competitionId: Ref<string>) {
 
   const staff = computed<MStaff[]>(() =>
     entries(raw.value.staff)
-      .map((s) => ({ ...s, label: dancerFullName(s) || 'Unnamed' }))
+      .map((s) => ({ ...s, label: staffLabel(s) }))
       .sort(byOrder),
   )
   const judges = computed(() => staff.value.filter((s) => s.type === 'Judge'))
@@ -255,7 +247,7 @@ export function createManagedCompetition(competitionId: Ref<string>) {
 
   const platforms = computed<MPlatform[]>(() =>
     entries(raw.value.platforms)
-      .map((p) => ({ ...p, label: (p.name ?? '').trim() || 'Untitled platform' }))
+      .map((p) => ({ ...p, label: platformLabel(p) }))
       .sort(byOrder),
   )
 
@@ -330,6 +322,17 @@ export function createManagedCompetition(competitionId: Ref<string>) {
     return id
   }
 
+  /**
+   * Save a change worked out by the shared plans (shared/plans): its data, then its record, each one undo step
+   * under the plan's summary. Returns the last change's id.
+   */
+  async function writePlan(p: Plan) {
+    let id: number | undefined
+    if (Object.keys(p.data).length) id = await writeData(p.data, p.summary)
+    if (Object.keys(p.info).length) id = await writeInfo(p.info, p.summary)
+    return id
+  }
+
   /** Undo a change (the latest by default), checking nobody has changed it since. */
   const undoChange = (id?: number) => undo(competitionId.value, id)
 
@@ -337,6 +340,7 @@ export function createManagedCompetition(competitionId: Ref<string>) {
     competitionId,
     competition,
     raw,
+    state,
     loaded,
     exists,
     loadError,
@@ -367,6 +371,7 @@ export function createManagedCompetition(competitionId: Ref<string>) {
     trophyEventDancers,
     writeData,
     writeInfo,
+    writePlan,
     undoChange,
     newKey,
   }

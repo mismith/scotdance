@@ -4,6 +4,7 @@ import { competitionChanged, editedCompetition, stampOf } from '@/lib/competitio
 import { enrichTrophyEvents } from '@/lib/trophyEvents'
 import { getSavedAt, onReconnect, onValueSaved } from '@/lib/offline'
 import { entryName, isTeam, memberName, teamMembers } from '@/lib/entries'
+import { compareKeys } from '@shared/util'
 import {
   danceFullName,
   dancerFullName,
@@ -104,7 +105,7 @@ export function snapshotToArray<T extends { id: string }>(
 
 // Push ids sort by creation time only when compared byte by byte, as Firebase
 // does. `localeCompare` ignores case, so "-LEgsiq…" would land before "-LEgsT0…".
-export const compareKeys = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
+export { compareKeys }
 
 // Items without `_order` sink to the end; ties broken by push id.
 export function byDragOrder<T extends { id: string; _order?: number }>(a: T, b: T) {

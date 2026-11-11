@@ -7,10 +7,11 @@ import NameSuggestions from '@/components/admin/NameSuggestions.vue'
 import { useManagedCompetition, type MDancer } from '@/composables/admin/useManagedCompetition'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
-import { draftName, listToMembers, membersToList, type MemberDraft } from '@/lib/admin/teamMembers'
+import { draftName, membersToList, type MemberDraft } from '@/lib/admin/teamMembers'
+import { planSetDancerName, planSetDancers, planTakeOffTeam } from '@shared/plans/dancers'
 import { namesDancingHere, suggestNames, type NameSuggestion } from '@/lib/admin/nameSuggestions'
 import { splitMembers, splitName } from '@/lib/admin/memberNames'
-import { ensemble, entryName, isTeam, legacyNames } from '@/lib/entries'
+import { isTeam } from '@/lib/entries'
 
 // An entry's dancers (ADR 0012). One dancer is a first and a last name, as
 // ever. "Add another dancer" (in the form's row of "+ Add" buttons, see
@@ -53,9 +54,6 @@ const several = computed(() => savedTeam.value || rows.value.length > 1)
 const filled = (list: MemberDraft[]) => list.filter((r) => draftName(r))
 
 // --- Saving (editing)
-const at = (k: string) => `dancers/${props.item!.id}/${k}`
-const nameOf = () => (props.item ? entryName(props.item) || 'this entry' : '')
-
 async function run<T>(fn: () => Promise<T>): Promise<T | undefined> {
   busy.value = true
   try {
@@ -69,32 +67,14 @@ async function run<T>(fn: () => Promise<T>): Promise<T | undefined> {
 const undoable = (change: unknown, message: string) =>
   change != null && toast(message, { action: { label: 'Undo', run: () => m.undoChange(change as Parameters<typeof m.undoChange>[0]) } })
 
-/** Several dancers as saved, with v3's copy of the entry's name (ADR 0012 decision 3). */
-function teamUpdates(list: MemberDraft[]) {
-  const d = props.item!
-  const members = listToMembers(list, m.newKey, savedTeam.value ? d.members : null)
-  const v3 = legacyNames({ ...d, team: true, members: members ?? undefined })
-  return { [at('team')]: true, [at('members')]: members, [at('firstName')]: v3.firstName, [at('lastName')]: v3.lastName, [at('dancerId')]: null }
-}
-/** One dancer left: a dancer again, under their own name. */
-function dancerUpdates(one: MemberDraft) {
-  return { [at('team')]: null, [at('members')]: null, [at('firstName')]: one.firstName.trim() || null, [at('lastName')]: one.lastName.trim() || null }
-}
-async function saveDancers(list: MemberDraft[], label = `Dancers of ${nameOf()}`) {
-  const named = filled(list)
-  // A dancer with a new row still empty: just their own name.
-  if (!savedTeam.value && named.length < 2) {
-    const one = named[0] ?? { firstName: '', lastName: '' }
-    return run(() => m.writeData({ [at('firstName')]: one.firstName.trim() || null, [at('lastName')]: one.lastName.trim() || null }, `Name of ${nameOf()}`))
-  }
-  if (named.length === 1 && savedTeam.value) {
-    const change = await run(() => m.writeData(dancerUpdates(named[0]), `Made ${nameOf()} one dancer`))
-    undoable(change, `${draftName(named[0])} is dancing on their own`)
+async function saveDancers(list: MemberDraft[], label?: string) {
+  const { plan, outcome, ensemble: word, alone } = planSetDancers(m.state.value, props.item!.id, list, m.newKey, label)
+  const change = await run(() => m.writeData(plan.data, plan.summary))
+  if (outcome === 'one') {
+    undoable(change, `${alone} is dancing on their own`)
     return
   }
-  const becoming = !savedTeam.value
-  const change = await run(() => m.writeData(teamUpdates(named), becoming ? `Made ${nameOf()} a ${ensemble(named.length)}` : label))
-  if (becoming) undoable(change, `Made a ${ensemble(named.length)}`)
+  if (outcome === 'became') undoable(change, `Made a ${word}`)
   return change
 }
 
@@ -104,8 +84,10 @@ function saveCell(i: number, part: 'firstName' | 'lastName') {
 }
 
 /** A dancer's own name (one dancer). */
-const saveOwn = (part: 'firstName' | 'lastName') => (value: string) =>
-  m.writeData({ [at(part)]: value || null }, `${part === 'firstName' ? 'First name' : 'Last name'} of ${nameOf()}`)
+const saveOwn = (part: 'firstName' | 'lastName') => (value: string) => {
+  const { data, summary } = planSetDancerName(m.state.value, props.item!.id, part, value)
+  return m.writeData(data, summary)
+}
 
 /** New dancers' rows, once each has a first name. */
 let committing = false
@@ -141,10 +123,9 @@ async function remove(i: number) {
     setRows(rows.value.filter((_, n) => n !== i))
     return
   }
-  const left = saved.value.filter((_, n) => n !== i)
-  if (filled(left).length === 1) return saveDancers(left)
-  const change = await run(() => m.writeData(teamUpdates(left), `Took ${draftName(r)} off ${nameOf()}`))
-  undoable(change, `Took ${draftName(r) || 'a dancer'} off`)
+  const { plan, outcome, alone } = planTakeOffTeam(m.state.value, props.item.id, i, m.newKey)
+  const change = await run(() => m.writeData(plan.data, plan.summary))
+  undoable(change, outcome === 'one' ? `${alone} is dancing on their own` : `Took ${draftName(r) || 'a dancer'} off`)
 }
 
 // --- Names dancing here, as one's typed

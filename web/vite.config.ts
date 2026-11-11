@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, searchForWorkspaceRoot } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
@@ -26,6 +26,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Pure TypeScript the functions build from too (../shared, see its README).
+      '@shared': fileURLToPath(new URL('../shared', import.meta.url)),
     },
   },
   build: {
@@ -66,6 +68,8 @@ export default defineConfig({
   },
   server: {
     host: true,
+    // ../shared sits beside web, outside the workspace root the dev server serves.
+    fs: { allow: [searchForWorkspaceRoot(process.cwd()), fileURLToPath(new URL('../shared', import.meta.url))] },
     // (Only the dev server uses this; builds ignore it. A second stack on shifted ports sets VITE_EMULATOR_PORT_OFFSET.)
     proxy: Object.fromEntries(
       MCP_PATHS.map((path) => [

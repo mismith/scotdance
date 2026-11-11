@@ -30,6 +30,7 @@ import { LINK_PROBLEM, looksLikeLink, type CollectionItem, type CollectionSpec, 
 import { htmlToText } from '@/lib/admin/richText'
 import { ALL_SECTIONS } from '@/lib/admin/sections'
 import { useMorph } from '@/lib/morph'
+import { planAdd, planAddPresets, planRemove, planReorder, planSetField, planSetFieldOn } from '@shared/plans/collection'
 import type { LinkPart } from '@/lib/linked'
 
 // One editable list: search, select several to change or delete at once,
@@ -126,14 +127,11 @@ const listInset = computed(() => {
 })
 
 async function saveOrder() {
-  const updates: Record<string, unknown> = {}
-  order.value.forEach((item, index) => {
-    if (item._order !== index) updates[`${props.spec.path}/${item.id}/_order`] = index
-  })
+  const { data: updates, summary } = planReorder(props.spec.path, order.value)
   // Dropped where it started: nothing to save (or to undo).
   if (!Object.keys(updates).length) return
   try {
-    await m.writeData(updates, `Reordered ${props.spec.plural}`)
+    await m.writeData(updates, summary)
   } catch (e) {
     order.value = [...props.items]
     toast(friendlyError(e), { tone: 'error' })
@@ -239,14 +237,8 @@ async function applyBulk(value: string | null) {
   void bulkSheet.hide()
   if (!field) return
   const ids = [...selected]
-  const updates: Record<string, unknown> = {}
-  for (const id of ids) {
-    updates[`${props.spec.path}/${id}/${field.key}`] = value
-    const item = props.items.find((i) => i.id === id)
-    if (item && props.spec.onChange) Object.assign(updates, props.spec.onChange(item, field.key, value))
-  }
+  const { data: updates, summary: message } = planSetFieldOn(m.state.value, props.spec.path, ids, field.key, value)
   try {
-    const message = `Updated ${ids.length} ${ids.length === 1 ? props.spec.singular : props.spec.plural}`
     const change = await m.writeData(updates, message)
     toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
     selecting.value = false
@@ -259,9 +251,9 @@ async function applyBulk(value: string | null) {
 // --- Deleting
 async function remove(ids: string[], swiped = false) {
   if (!ids.length) return
-  const names = ids.map((id) => props.items.find((i) => i.id === id)).filter(Boolean).map((i) => props.spec.title(i as T))
-  const impact = props.spec.impact?.(ids) ?? {}
-  const what = ids.length === 1 ? (names[0] ?? `this ${props.spec.singular}`) : `${ids.length} ${props.spec.plural}`
+  const removal = planRemove(m.state.value, props.spec.path, ids)
+  const impact = { warnings: removal.warnings }
+  const what = removal.summary.slice('Deleted '.length)
   // A swipe is deliberate enough on its own: it only asks when more than the
   // item goes (results, places in the schedule…). Undo covers the rest.
   const ok =
@@ -273,11 +265,9 @@ async function remove(ids: string[], swiped = false) {
       destructive: true,
     }))
   if (!ok) return
-  const updates: Record<string, unknown> = { ...impact.updates }
-  for (const id of ids) updates[`${props.spec.path}/${id}`] = null
   try {
-    const change = await m.writeData(updates, `Deleted ${what}`)
-    if (impact.lasting && Object.keys(impact.lasting).length) await m.writeData(impact.lasting, null)
+    const change = await m.writeData(removal.data, removal.summary)
+    if (Object.keys(removal.lasting).length) await m.writeData(removal.lasting, null)
     if (itemId.value && ids.includes(itemId.value)) await leaveFor(listRoute.value)
     selecting.value = false
     selected.clear()
@@ -289,10 +279,9 @@ async function remove(ids: string[], swiped = false) {
 
 // --- Editing one
 function saveField(item: T, key: string, value: unknown) {
-  const updates: Record<string, unknown> = { [`${props.spec.path}/${item.id}/${key}`]: value }
-  if (props.spec.onChange) Object.assign(updates, props.spec.onChange(item, key, value))
   const field = [...fieldsOf(item), ...props.spec.fields].find((f) => f.key === key)?.label ?? key
-  return m.writeData(updates, `${field} of ${props.spec.title(item) || `the ${singularOf(item)}`}`)
+  const { data: updates, summary } = planSetField(m.state.value, props.spec.path, item.id, key, value, field)
+  return m.writeData(updates, summary)
 }
 // Bound to the item as rendered: a field saving on its way out (Back pressed
 // mid-edit) must land on its own item, not whatever is open by then. If that
@@ -366,7 +355,6 @@ watch(
   },
 )
 
-const nextOrder = () => props.items.reduce((max, i) => Math.max(max, typeof i._order === 'number' ? i._order : -1), -1) + 1
 
 // A double tap on Add shouldn't add it twice.
 const submitting = ref(false)
@@ -401,36 +389,19 @@ async function submitDraft(another: boolean) {
   const record: Record<string, unknown> = props.spec.toRecord
     ? props.spec.toRecord({ ...draft, ...typed })
     : Object.fromEntries(Object.entries(typed).filter(([, v]) => v))
-  if (props.spec.sortable) record._order = nextOrder()
-  // Extra fields that follow from others (e.g. a dancer's category) go into
-  // the new record itself: one write can't touch a path and its child.
-  const updates: Record<string, unknown> = {}
-  const own = `${props.spec.path}/${id}/`
-  if (props.spec.onChange) {
-    for (const f of fields) {
-      const v = tidied(f, draftText(f.key))
-      if (!v || !(f.key in record)) continue
-      for (const [path, value] of Object.entries(props.spec.onChange({ ...(record as object), id, label: '' } as unknown as T, f.key, v))) {
-        if (path.startsWith(own)) {
-          if (value != null) record[path.slice(own.length)] = value
-        } else updates[path] = value
-      }
-    }
-  }
-  updates[`${props.spec.path}/${id}`] = record
-  const recordLabel = String(record.name ?? [record.firstName, record.lastName].filter(Boolean).join(' '))
-  const name = props.spec.title({ ...(record as object), id, label: recordLabel } as unknown as T) || recordLabel || `the ${singularOf(record)}`
+  const { data: updates, summary } = planAdd(m.state.value, props.spec.path, id, record, typed)
+  const saved = updates[`${props.spec.path}/${id}`] as Record<string, unknown>
   submitting.value = true
   try {
-    await m.writeData(updates, `Added ${name}`)
-    lastAdded.value = Object.fromEntries(Object.entries(record).filter(([, v]) => typeof v !== 'object').map(([k, v]) => [k, String(v)]))
+    await m.writeData(updates, summary)
+    lastAdded.value = Object.fromEntries(Object.entries(saved).filter(([, v]) => typeof v !== 'object').map(([k, v]) => [k, String(v)]))
     if (another) {
-      toast(`Added ${name}`)
+      toast(summary)
       resetDraft()
       await nextTick()
       formEl.value?.querySelector<HTMLElement>('input, select, textarea')?.focus()
     } else {
-      toast(`Added ${name}`)
+      toast(summary)
       await leaveFor(itemRoute(id))
     }
   } catch (e) {
@@ -479,14 +450,9 @@ async function addPresets() {
   void presetsSheet.hide()
   if (!picks.length || presetsTaken || (scopeField.value && !presetScope.value)) return
   presetsTaken = true
-  let order = nextOrder()
-  const updates: Record<string, unknown> = {}
   const scope = scopeField.value ? { [scopeField.value.key]: presetScope.value } : {}
-  for (const i of picks) {
-    updates[`${props.spec.path}/${m.newKey()}`] = { ...presets[i].values, ...scope, ...(props.spec.sortable ? { _order: order++ } : {}) }
-  }
+  const { data: updates, summary: message } = planAddPresets(m.state.value, props.spec.path, picks.map((i) => presets[i].values), scope, m.newKey)
   try {
-    const message = `Added ${picks.length} ${picks.length === 1 ? props.spec.singular : props.spec.plural}`
     const change = await m.writeData(updates, message)
     toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {

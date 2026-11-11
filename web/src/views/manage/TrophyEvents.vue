@@ -5,25 +5,10 @@ import CollectionEditor from '@/components/admin/CollectionEditor.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
 import { useManagedCompetition, type MTrophyEvent, type MGroup } from '@/composables/admin/useManagedCompetition'
 import type { CollectionSpec } from '@/lib/admin/collection'
-import { OVERALL, parsePlacings } from '@/lib/admin/results'
-import { forEachScheduleDance } from '@/lib/admin/scheduleTree'
-import { idList } from '@/lib/schedule'
+import { planSetTrophyEventBlock, planSetTrophyEventGroup } from '@shared/plans/membership'
 import { isDanced } from '@/lib/trophyEvents'
 
 const m = useManagedCompetition()
-
-/** Writes that take these trophy events off every platform they're on in the schedule. */
-function offSchedule(ids: string[]): Record<string, unknown> {
-  const updates: Record<string, unknown> = {}
-  forEachScheduleDance(m.schedule.value, (path, item) => {
-    for (const [pid, p] of Object.entries(item.platforms ?? {})) {
-      const groups = idList(p?.orderedGroupIds)
-      const kept = groups.filter((g) => !ids.includes(g))
-      if (kept.length !== groups.length) updates[`${path}/platforms/${pid}/orderedGroupIds`] = kept.length ? kept : null
-    }
-  })
-  return updates
-}
 
 const PRESETS = ['Dancer of the Day', 'Most Points']
 
@@ -65,8 +50,6 @@ const spec: CollectionSpec<MTrophyEvent> = {
       hint: 'Only for one danced on its own, like a Trophy Fling. It goes on the schedule like an age group.',
     },
   ],
-  // A new dance: its place on the schedule was under the old one's row.
-  onChange: (a, key, value) => (key === 'danceId' && (value || undefined) !== a.danceId ? offSchedule([a.id]) : {}),
   title: (a) => a.label,
   subtitle: (a) => {
     if (!a.openTo) return 'No age groups yet'
@@ -78,21 +61,6 @@ const spec: CollectionSpec<MTrophyEvent> = {
   searchText: (a) => a.trophy ?? '',
   presets: PRESETS.map((name) => ({ label: name, values: { name } })),
   presetsLead: 'Rename them any time.',
-  impact: (ids) => {
-    // And off the schedule, where a danced one stands among the age groups.
-    const updates: Record<string, unknown> = offSchedule(ids)
-    const scheduled = Object.keys(updates).length > 0
-    let placed = 0
-    for (const id of ids) {
-      const stored = m.results.value[id]
-      if (stored && Object.keys(stored).length) updates[`results/${id}`] = null
-      if (parsePlacings(stored?.[OVERALL]).entries.length) placed++
-    }
-    // Only warn when there are placings to lose (not for a "No results" mark).
-    const warnings = placed ? [`${ids.length === 1 ? 'Its' : 'Their'} placings will be deleted too.`] : []
-    if (scheduled) warnings.push(`Also removes ${ids.length === 1 ? 'it' : 'them'} from the schedule.`)
-    return { updates, warnings }
-  },
   emptyHint: 'A trophy event is one trophy for dancers from several age groups, like Dancer of the Day. Choose who can win it here, then pick the winners in Results.',
 }
 
@@ -119,11 +87,12 @@ const blocks = computed<Block[]>(() => {
 const groupName = (g: MGroup) => g.name?.trim() || g.label
 
 function setGroup(a: MTrophyEvent, g: MGroup, on: boolean) {
-  return m.writeData({ [`trophyEvents/${a.id}/groupIds/${g.id}`]: on || null }, `${on ? 'Added' : 'Removed'} ${g.label} ${on ? 'to' : 'from'} ${a.label}`)
+  const { data, summary } = planSetTrophyEventGroup(m.state.value, a.id, g.id, on)
+  return m.writeData(data, summary)
 }
 function setBlock(a: MTrophyEvent, b: Block, on: boolean) {
-  const updates = Object.fromEntries(b.groups.map((g) => [`trophyEvents/${a.id}/groupIds/${g.id}`, on || null]))
-  return m.writeData(updates, `${on ? 'Added' : 'Removed'} all ${b.name} ${on ? 'to' : 'from'} ${a.label}`)
+  const { data, summary } = planSetTrophyEventBlock(m.state.value, a.id, b.groups.map((g) => g.id), b.name, on)
+  return m.writeData(data, summary)
 }
 const allOn = (a: MTrophyEvent, b: Block) => b.groups.every((g) => !!a.groupIds?.[g.id])
 // Part of a category on: say how much, since its switch reads as off.

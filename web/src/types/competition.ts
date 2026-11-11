@@ -181,11 +181,7 @@ export interface EnrichedDancer extends Dancer {
   teamMembers?: EnrichedMember[]
 }
 
-export const dancerFullName = (d: Pick<Dancer, 'firstName' | 'lastName'>) =>
-  `${d.firstName ?? ''} ${d.lastName ?? ''}`.trim()
-
-export const groupFullName = (g: Group, category?: Category) =>
-  `${category?.name ?? ''} ${g.name ?? ''}`.trim()
+export { dancerFullName, groupFullName } from '@shared/labels'
 
 export interface Dance {
   id: string
@@ -200,11 +196,7 @@ export interface EnrichedDance extends Dance {
   fullName: string
 }
 
-export const danceFullName = (d: Pick<Dance, 'name' | 'steps'>) => {
-  const name = String(d.name ?? '').trim()
-  const steps = String(d.steps ?? '').trim()
-  return steps ? `${name} (${steps})` : name
-}
+export { danceFullName } from '@shared/labels'
 
 export const OVERALL_ID = 'overall'
 

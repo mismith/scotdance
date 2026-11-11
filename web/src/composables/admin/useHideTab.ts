@@ -2,23 +2,15 @@ import { computed } from 'vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { friendlyError } from '@/lib/admin/write'
+import { HIDE_TAB, planHideTab, tabHasContent, type HideableTab } from '@shared/plans/details'
 
 // Hiding the Schedule or Results tab, for competitions that won't use it
 // here. Hiding deletes what's been entered in it (after asking, and it can
 // be undone); showing it again starts from nothing.
 
-export type HideableTab = 'schedule' | 'results'
+export type { HideableTab }
 
-const TABS = {
-  schedule: {
-    name: 'Schedule',
-    deletes: 'The schedule built so far is deleted',
-  },
-  results: {
-    name: 'Results',
-    deletes: 'All results entered so far are deleted',
-  },
-}
+const TABS = HIDE_TAB
 
 export function useHideTab(tab: HideableTab) {
   const m = useManagedCompetition()
@@ -26,10 +18,7 @@ export function useHideTab(tab: HideableTab) {
   const hidden = computed(() =>
     tab === 'schedule' ? m.scheduleHidden.value : m.resultsHidden.value,
   )
-  const hasAny = () =>
-    tab === 'schedule'
-      ? Object.keys(m.schedule.value?.days ?? {}).length > 0
-      : Object.keys(m.results.value).length > 0
+  const hasAny = () => tabHasContent(m.state.value, tab)
 
   async function hide() {
     const any = hasAny()
@@ -43,7 +32,7 @@ export function useHideTab(tab: HideableTab) {
     })
     if (!ok) return
     try {
-      const change = await m.writeData({ [tab]: false }, `Hid the ${name} tab`)
+      const change = await m.writePlan(planHideTab(tab, true))
       toast(`${name} tab hidden`, {
         action: { label: 'Undo', run: () => m.undoChange(change) },
       })
@@ -54,7 +43,7 @@ export function useHideTab(tab: HideableTab) {
 
   async function show() {
     try {
-      await m.writeData({ [tab]: null }, `Showed the ${name} tab`)
+      await m.writePlan(planHideTab(tab, false))
     } catch (e) {
       toast(friendlyError(e), { tone: 'error' })
     }

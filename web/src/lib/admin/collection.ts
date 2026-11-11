@@ -1,3 +1,5 @@
+import { at } from '@shared/util'
+
 export interface SelectOption {
   value: string
   label: string
@@ -45,18 +47,6 @@ export interface CollectionItem {
   _order?: number
 }
 
-export interface DeleteImpact {
-  /** Extra paths (relative to competitions:data/{id}) to change alongside the delete. */
-  updates?: Record<string, unknown>
-  /** Plain-language consequences, shown in the confirmation. */
-  warnings?: string[]
-  /**
-   * Paths deleted for good alongside it: written after the delete and kept
-   * out of Undo (judges' sheets, whose files are deleted with them).
-   */
-  lasting?: Record<string, unknown>
-}
-
 export interface CollectionSpec<T extends CollectionItem = CollectionItem> {
   /** Key under competitions:data/{id}. */
   path: 'dancers' | 'groups' | 'trophyEvents' | 'categories' | 'dances' | 'platforms' | 'staff'
@@ -84,8 +74,6 @@ export interface CollectionSpec<T extends CollectionItem = CollectionItem> {
   presetsScope?: string
   /** Empty, the way to start is importing the dancers, which creates these too. */
   importFirst?: boolean
-  /** Extra writes when a field changes (e.g. a dancer's category follows their age group). */
-  onChange?: (item: T, key: string, value: unknown) => Record<string, unknown>
   /**
    * The fields for one item, or for the add form's values, when the list
    * holds more than one kind (dancers and teams). Defaults to `fields`,
@@ -96,8 +84,6 @@ export interface CollectionSpec<T extends CollectionItem = CollectionItem> {
   singularFor?: (values: Record<string, unknown>) => string
   /** The record the add form saves. Defaults to its fields' values, trimmed, empty ones left out. */
   toRecord?: (values: Record<string, unknown>) => Record<string, unknown>
-  /** What deleting these rows affects. */
-  impact?: (ids: string[]) => DeleteImpact
   /** Shown when the list is empty. */
   emptyHint?: string
 }
@@ -109,10 +95,7 @@ export const looksLikeLink = (v: string) =>
   !/\s/.test(v) && (/^(https?|mailto|tel):/i.test(v) || (!/^[a-z][a-z0-9+-]*:/i.test(v) && v.includes('.')))
 export const LINK_PROBLEM = 'That doesn’t look like a link. Try something like example.com/register.'
 
-/** Read a value at a slash path from a nested object. */
-export function at(obj: unknown, path: string): unknown {
-  return path.split('/').reduce<unknown>((o, k) => (o && typeof o === 'object' ? (o as Record<string, unknown>)[k] : undefined), obj)
-}
+export { at }
 
 /** Previous values for a set of paths, so a change can be undone. */
 export function snapshot(raw: unknown, updates: Record<string, unknown>): Record<string, unknown> {

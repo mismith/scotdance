@@ -28,6 +28,7 @@
     "store:upload:android": "cd ../android && LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 fastlane screenshots",
     "type-check": "vue-tsc -b",
     "lint": "eslint . --fix",
+    "lint:shared": "cd ../shared && ../web/node_modules/.bin/eslint .",
     "format": "prettier --write \"src/**/*.{ts,vue,js,json,css}\"",
     "report": "REPORT=true vite build",
     "test": "vitest run",

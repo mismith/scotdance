@@ -42,6 +42,7 @@ import { uploadLinkFile } from '@/lib/admin/upload'
 import { grow, shrink } from '@/lib/admin/motion'
 import { formatDateTime, formatExternalURL, formatHumanURL, parseDate } from '@/lib/format'
 import { registrationNote, registrationToSave } from '@/lib/registration'
+import { planAddLink, planAddOrganisation, planRemoveLink, planRemoveOrganisation, planSetDetail, planListed, planPublished, planSetLinkName, planSetLinkUrl, planSetVenue } from '@shared/plans/details'
 import { placesAvailable, type VenueFields } from '@/lib/maps'
 
 const m = useManagedCompetition()
@@ -75,7 +76,7 @@ const FIELD_NAMES: Record<string, string> = {
   registrationStart: 'Registration opens',
   registrationEnd: 'Registration closes',
 }
-const save = (key: string) => (v: string | null) => m.writeInfo({ [key]: v }, FIELD_NAMES[key] ?? key)
+const save = (key: string) => (v: string | null) => m.writePlan(planSetDetail(key, v, FIELD_NAMES[key] ?? key))
 
 // The registration number is saved as shown under it while it's typed: in its
 // association's format, or as typed when it isn't one ScotDance.app knows.
@@ -120,9 +121,10 @@ async function useItsVenue() {
 }
 
 async function pickVenue(fields: VenueFields) {
-  const message = `Venue set to ${fields.venue ?? fields.address ?? fields.location ?? 'the venue you picked'}`
+  const venue = planSetVenue({ ...fields })
+  const message = venue.summary
   try {
-    const change = await m.writeInfo({ ...fields }, message)
+    const change = await m.writePlan(venue)
     toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
@@ -173,9 +175,8 @@ async function addLink(url?: string, name?: string) {
   const u = (url ?? newUrl.value).trim()
   if (!u) return
   const id = m.newKey()
-  const order = links.value.reduce((max, l) => Math.max(max, l._order ?? -1), -1) + 1
   try {
-    await m.writeInfo({ [`links/${id}`]: { name: (name ?? newName.value).trim() || null, url: u, _order: order } }, 'Added a link')
+    await m.writePlan(planAddLink(m.state.value, id, name ?? newName.value, u))
     newName.value = ''
     newUrl.value = ''
   } catch (e) {
@@ -212,9 +213,10 @@ async function onFile(e: Event) {
   }
 }
 async function removeLink(link: LinkRow) {
-  const message = `Removed ${link.name || 'the link'}`
+  const removal = planRemoveLink(link.id, link.name)
+  const message = removal.summary
   try {
-    const change = await m.writeInfo({ [`links/${link.id}`]: null }, message)
+    const change = await m.writePlan(removal)
     toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
@@ -259,9 +261,10 @@ function suggestNewOrg(draft: OrganisationDraft, event: MouseEvent) {
   void pickingOrg.show(event)
 }
 async function addOrganisation(org: OrganisationListItem) {
-  const message = `Added ${org.name}`
+  const addition = planAddOrganisation(org.id, org.name)
+  const message = addition.summary
   try {
-    const change = await m.writeInfo({ [`organisations/${org.id}`]: true }, message)
+    const change = await m.writePlan(addition)
     toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
@@ -273,9 +276,10 @@ async function startOrganisation(draft: OrganisationDraft) {
   toast(`Started ${draft.name}${grantSubmitter.value ? ' and gave the submitter admin access' : ''}.`)
 }
 async function removeOrganisation(org: { id: string; name?: string }) {
-  const message = `Took ${org.name ?? 'it'} off`
+  const removal = planRemoveOrganisation(org.id, org.name)
+  const message = removal.summary
   try {
-    const change = await m.writeInfo({ [`organisations/${org.id}`]: null }, message)
+    const change = await m.writePlan(removal)
     toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
@@ -452,8 +456,8 @@ async function deleteCompetition() {
             <MovingList v-if="links.length" class="rows-engraved">
               <li v-for="link in links" :key="link.id" class="space-y-3 py-4 first:pt-0 last:pb-0">
                 <div class="grid gap-3 sm:grid-cols-2">
-                  <TextField :model-value="link.name" label="Label" placeholder="e.g. Program" :save="(v) => m.writeInfo({ [`links/${link.id}/name`]: v }, 'Link label')" />
-                  <TextField :model-value="link.url" label="Link" type="url" required :save="(v) => m.writeInfo({ [`links/${link.id}/url`]: v }, 'Link')" />
+                  <TextField :model-value="link.name" label="Label" placeholder="e.g. Program" :save="(v) => m.writePlan(planSetLinkName(link.id, v))" />
+                  <TextField :model-value="link.url" label="Link" type="url" required :save="(v) => m.writePlan(planSetLinkUrl(link.id, v))" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
                   <Button v-if="link.url" variant="plain" class="-ml-4" :href="formatExternalURL(link.url)" target="_blank" rel="noopener">
@@ -521,14 +525,14 @@ async function deleteCompetition() {
             label="Listed"
             description="Shows in the competitions list with its date, venue and judges."
             :shared="shared('visibility') ? 'visibility' : undefined"
-            :save="(on) => m.writeInfo(on ? { listed: true } : { listed: false, published: false }, on ? 'Listed' : 'Unlisted')"
+            :save="(on) => m.writePlan(planListed(on))"
           />
           <SwitchField
             :model-value="!!c.published"
             label="Published"
             description="Also shows dancers, the schedule and results."
             :shared="shared('visibility') ? 'visibility' : undefined"
-            :save="(on) => m.writeInfo(on ? { published: true, listed: true } : { published: false }, on ? 'Published' : 'Unpublished')"
+            :save="(on) => m.writePlan(planPublished(on))"
           />
         </div>
       </section>

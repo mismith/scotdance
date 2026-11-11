@@ -1,4 +1,5 @@
 import { now, nowMs } from '@/lib/now'
+import { parseDate } from '@shared/dates'
 
 /**
  * A link organisers typed, ready for an href: a bare host ("www.site.com",
@@ -50,17 +51,7 @@ const MS_PER_DAY = 86_400_000
  * - Other strings fall through to the standard `Date` constructor. Anything
  *   unreadable (e.g. legacy `''`) gives an Invalid Date: see {@link validDate}.
  */
-export function parseDate(value: number | string | Date): Date {
-  if (value instanceof Date) return value
-  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    const [y, m, d] = value.split('-').map(Number)
-    const date = new Date(y, m - 1, d)
-    // No rolling '2019-13-45' over into 2020: it isn't a date.
-    return date.getMonth() === m - 1 && date.getDate() === d ? date : new Date(NaN)
-  }
-  if (typeof value === 'string' && /^\d{10,}$/.test(value)) return new Date(Number(value))
-  return new Date(value)
-}
+export { parseDate }
 
 /** parseDate, or null for nothing, `''` and anything unreadable. */
 function validDate(value: number | string | Date | undefined | null): Date | null {

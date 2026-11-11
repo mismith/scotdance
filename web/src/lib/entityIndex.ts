@@ -1,20 +1,9 @@
 import { child, get } from 'firebase/database'
 import { dataRef } from '@/firebase'
 
-// Mirror of `normalizeName` in functions/src/utility/normalize.ts. The web
-// and functions packages don't share code; this implementation MUST stay in
-// sync — otherwise lookups silently miss and entity pages 404.
-export function normalizeEntityName(name: string): string {
-  return String(name ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
-    .split(/\s+/)
-    .filter(Boolean)
-    .join(' ')
-}
+// Mirrors `normalizeName` in functions/src/utility/normalize.ts: both are shared/normalize.ts.
+import { normalizeName as normalizeEntityName } from '@shared/normalize'
+export { normalizeEntityName }
 
 /** A `/{namespace}:index/{key}` entry: the aggregate's id plus what lists show of it. */
 export interface IndexEntry {

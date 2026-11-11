@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import CollectionEditor from '@/components/admin/CollectionEditor.vue'
 import { useManagedCompetition, type MPlatform } from '@/composables/admin/useManagedCompetition'
 import type { CollectionSpec } from '@/lib/admin/collection'
-import { forEachScheduleDance } from '@/lib/admin/scheduleTree'
 import { htmlToText, looksLikeHtml } from '@/lib/admin/richText'
 
 const m = useManagedCompetition()
@@ -22,17 +21,6 @@ const spec: CollectionSpec<MPlatform> = {
   // Older descriptions are HTML: the one-line subtitle shows just the words.
   subtitle: (p) => (p.description && looksLikeHtml(p.description) ? htmlToText(p.description) : p.description),
   presets: ['A', 'B', 'C', 'Stage'].map((name) => ({ label: name, values: { name } })),
-  impact: (ids) => {
-    const updates: Record<string, unknown> = {}
-    forEachScheduleDance(m.schedule.value, (path, item) => {
-      for (const id of ids) if (item.platforms?.[id]) updates[`${path}/platforms/${id}`] = null
-    })
-    const uses = Object.keys(updates).length
-    return {
-      updates,
-      warnings: uses ? [`The schedule puts age groups on ${ids.length === 1 ? 'it' : 'them'} in ${uses} ${uses === 1 ? 'place' : 'places'}; those assignments will be removed.`] : [],
-    }
-  },
   emptyHint: 'Add the platforms (stages) dancers perform on.',
 }
 

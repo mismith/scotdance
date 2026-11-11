@@ -9,10 +9,8 @@ import { useManagedCompetition, type MGroup } from '@/composables/admin/useManag
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import type { CollectionSpec } from '@/lib/admin/collection'
-import { forEachScheduleDance } from '@/lib/admin/scheduleTree'
 import { isChampionshipName } from '@/types/competition'
-import { idList } from '@/lib/schedule'
-import { sheetsGoForGood } from '@/lib/sheets'
+import { planSameDancesAs, planSetDanceGroup, planSetNotChampionship } from '@shared/plans/membership'
 
 const m = useManagedCompetition()
 
@@ -86,71 +84,33 @@ const spec: CollectionSpec<MGroup> = {
   presets: AGE_RANGES.map((name) => ({ label: name, values: { name } })),
   presetsScope: 'categoryId',
   importFirst: true,
-  impact: (ids) => {
-    const updates: Record<string, unknown> = {}
-    const lasting: Record<string, unknown> = {}
-    const warnings: string[] = []
-    let dancers = 0
-    let hasResults = false
-    for (const id of ids) {
-      dancers += m.groupDancers(id).length
-      for (const d of m.dances.value) if (d.groupIds?.[id]) updates[`dances/${d.id}/groupIds/${id}`] = null
-      // And off the trophy events it was open to.
-      for (const x of m.trophyEvents.value) if (x.groupIds?.[id]) updates[`trophyEvents/${x.id}/groupIds/${id}`] = null
-      if (m.results.value[id]) {
-        updates[`results/${id}`] = null
-        hasResults = true
-      }
-      if (m.points.value[id]) updates[`points/${id}`] = null
-      // Its judges' sheets, for good (their files go with them: functions/src/sheets.ts).
-      if (m.sheets.value[id]) lasting[`sheets/${id}`] = null
-      if (m.draws.value[id]) updates[`draws/${id}`] = null
-    }
-    // And off the platforms they're on in the schedule.
-    let scheduled = false
-    forEachScheduleDance(m.schedule.value, (path, item) => {
-      for (const [pid, p] of Object.entries(item.platforms ?? {})) {
-        const groups = idList(p?.orderedGroupIds)
-        const kept = groups.filter((g) => !ids.includes(g))
-        if (kept.length === groups.length) continue
-        updates[`${path}/platforms/${pid}/orderedGroupIds`] = kept.length ? kept : null
-        scheduled = true
-      }
-    })
-    const them = ids.length === 1 ? 'it' : 'them'
-    if (dancers) warnings.push(`${dancers} ${dancers === 1 ? 'dancer is' : 'dancers are'} in ${them} and will need another age group.`)
-    if (hasResults) warnings.push(`${ids.length === 1 ? 'Its' : 'Their'} results and draws will be deleted too.`)
-    if (scheduled) warnings.push(`Also removes ${them} from the schedule.`)
-    if (Object.keys(lasting).length) warnings.push(sheetsGoForGood(ids.length))
-    return { updates, warnings, lasting }
-  },
   emptyHint: 'Add the age groups dancing at this competition, or import them with your dancers.',
 }
 
 // --- Dances this group does
 const copyFrom = ref('')
 async function setDance(groupId: string, danceId: string, on: boolean) {
-  const dance = m.dancesById.value.get(danceId)?.label ?? 'a dance'
-  const group = m.groupsById.value.get(groupId)?.label ?? 'an age group'
-  await m.writeData({ [`dances/${danceId}/groupIds/${groupId}`]: on || null }, `${on ? 'Added' : 'Removed'} ${dance} ${on ? 'to' : 'from'} ${group}`)
+  const { data, summary } = planSetDanceGroup(m.state.value, danceId, groupId, on)
+  await m.writeData(data, summary)
 }
 async function sameAs(groupId: string) {
   const source = copyFrom.value
   copyFrom.value = ''
   if (!source) return
-  const updates: Record<string, unknown> = {}
-  for (const d of m.dances.value) {
-    const want = !!d.groupIds?.[source]
-    if (want !== !!d.groupIds?.[groupId]) updates[`dances/${d.id}/groupIds/${groupId}`] = want || null
-  }
-  if (!Object.keys(updates).length) return toast('Already the same dances')
-  const message = `Now does the same dances as ${m.groupsById.value.get(source)?.label}`
+  const same = planSameDancesAs(m.state.value, groupId, source)
+  if (!same) return toast('Already the same dances')
+  const message = same.summary
   try {
-    const change = await m.writeData(updates, message)
+    const change = await m.writeData(same.data, message)
     toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }
+}
+
+function setNotChampionship(groupId: string, on: boolean) {
+  const { data, summary } = planSetNotChampionship(m.state.value, groupId, on)
+  return m.writeData(data, summary)
 }
 
 const drawSummary = (groupId: string) => {
@@ -174,7 +134,7 @@ const items = computed(() => m.groups.value)
         :model-value="!!item.notChampionship"
         label="Not run as a championship"
         description="Too few dancers turned up for a championship, so it ran as a regular competition. Its results say so."
-        :save="(on) => m.writeData({ [`groups/${item.id}/notChampionship`]: on || null }, on ? `Marked ${item.label} not run as a championship` : `Marked ${item.label} a championship again`)"
+        :save="(on) => setNotChampionship(item.id, on)"
       />
       <section class="space-y-3">
         <div class="flex flex-wrap items-end justify-between gap-2">

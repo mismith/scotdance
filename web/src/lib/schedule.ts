@@ -7,6 +7,7 @@ import type {
   SchedulePlatform,
 } from '@/types/competition'
 import { compareKeys } from '@/lib/competitionData'
+import { idList } from '@shared/util'
 import { formatWeekday, parseDate } from '@/lib/format'
 import { stripTags } from '@/lib/stripTags'
 
@@ -32,14 +33,7 @@ export function toOrderedArray<V extends Record<string, unknown>>(
     })
 }
 
-/**
- * A stored list of ids as strings: an array, or an object if it was ever
- * saved sparse. Old spacers are numbers (timestamps).
- */
-export function idList(v: unknown): string[] {
-  const values = Array.isArray(v) ? v : v && typeof v === 'object' ? Object.values(v) : []
-  return values.filter((x) => x != null && x !== '').map(String)
-}
+export { idList }
 
 export function days(
   schedule: { days?: Record<string, Omit<ScheduleDay, 'id'>> } | null,

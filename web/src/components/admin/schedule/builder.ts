@@ -1,7 +1,8 @@
 import { computed, inject, provide, ref, toRaw, type InjectionKey, type Ref } from 'vue'
-import { compareKeys } from '@/lib/competitionData'
-import { formatWeekday, parseDate } from '@/lib/format'
-import { dayLabel, idList, isSpacerId, platformLabel } from '@/lib/schedule'
+import { dayLabel, platformLabel } from '@/lib/schedule'
+import * as plan from '@shared/plans/schedule'
+import { ids, isSpacerId, newSpacerId, ordered, scheduleUpdates, type CellLocation, type EventLocation, type Kind, type ScheduleEnv } from '@shared/plans/schedule'
+import { isoDate } from '@shared/dates'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import type { ManagedCompetition } from '@/composables/admin/useManagedCompetition'
@@ -19,149 +20,9 @@ import { isDanced } from '@/lib/trophyEvents'
 // public pages. Dances, age groups, judges and platforms are only read here:
 // they're managed in their own Manage sections.
 
-export interface Assignment {
-  orderedGroupIds?: string[]
-  orderedJudgeIds?: string[]
-}
-export interface SDance {
-  order?: number
-  danceId?: string
-  name?: string
-  description?: string
-  platforms?: Record<string, Assignment>
-}
-export interface SEvent {
-  order?: number
-  name?: string
-  description?: string
-  dances?: Record<string, SDance>
-}
-export interface SBlock {
-  order?: number
-  name?: string
-  description?: string
-  events?: Record<string, SEvent>
-}
-export interface SDay {
-  order?: number
-  name?: string
-  date?: string | number
-  description?: string
-  blocks?: Record<string, SBlock>
-}
-export interface SSchedule {
-  days?: Record<string, SDay>
-}
-
-/** Where an event is, within the day being edited. */
-export interface EventLocation {
-  blockId: string
-  eventId: string
-}
-/** Where a platform cell is, within the day being edited. */
-export interface CellLocation extends EventLocation {
-  danceId: string
-  platformId: string
-}
-
-/** Children in schedule order. */
-export function ordered<T extends { order?: number }>(
-  rec: Record<string, T> | null | undefined,
-): Array<[string, T]> {
-  return Object.entries(rec ?? {})
-    .filter(([, v]) => v && typeof v === 'object')
-    .sort(([ak, a], [bk, b]) =>
-      Number.isInteger(a.order) && Number.isInteger(b.order)
-        ? (a.order as number) - (b.order as number)
-        : compareKeys(ak, bk),
-    )
-}
-
-/** A stored id list (an array, or an object if it was ever sparse). */
-export const ids = idList
-
-/** Spacers among a platform's age groups have all-digit ids. */
-export { isSpacerId }
-export const newSpacerId = () => String(Date.now())
-
-const clone = <T>(v: T): T => JSON.parse(JSON.stringify(toRaw(v) ?? null))
-const isObj = (v: unknown): v is Record<string, unknown> =>
-  !!v && typeof v === 'object' && !Array.isArray(v)
-
-/**
- * Drop what the database doesn't keep (empty lists and objects), so what's
- * saved reads back the same (undo compares the two).
- */
-function prune(v: unknown): unknown {
-  if (Array.isArray(v)) return v.length ? v : undefined
-  if (!isObj(v)) return v
-  const out: Record<string, unknown> = {}
-  for (const [k, x] of Object.entries(v)) {
-    const p = prune(x)
-    if (p !== undefined && p !== null) out[k] = p
-  }
-  return Object.keys(out).length ? out : undefined
-}
-
-/** The paths that turn `a` into `b`, for one multi-path update. */
-function diff(path: string, a: unknown, b: unknown, out: Record<string, unknown>) {
-  if (isObj(a) && isObj(b)) {
-    for (const k of new Set([...Object.keys(a), ...Object.keys(b)]))
-      diff(`${path}/${k}`, a[k], b[k], out)
-  } else if (JSON.stringify(a ?? null) !== JSON.stringify(b ?? null)) {
-    out[path] = b === undefined ? null : clone(b)
-  }
-}
-
-/** Number siblings 0, 1, 2… in the given order. */
-function renumber(rec: Record<string, { order?: number }>, order: string[]) {
-  order.forEach((id, i) => {
-    if (rec[id] && rec[id].order !== i) rec[id].order = i
-  })
-}
-function insertAt<T extends { order?: number }>(
-  rec: Record<string, T>,
-  id: string,
-  value: T,
-  index?: number,
-) {
-  const order = ordered(rec)
-    .map(([k]) => k)
-    .filter((k) => k !== id)
-  rec[id] = value
-  order.splice(index ?? order.length, 0, id)
-  renumber(rec, order)
-}
-function moveWithin(
-  rec: Record<string, { order?: number }> | undefined,
-  from: number,
-  to: number,
-) {
-  if (!rec) return
-  const order = ordered(rec).map(([k]) => k)
-  if (from === to || from < 0 || to < 0 || from >= order.length || to >= order.length)
-    return
-  const [moved] = order.splice(from, 1)
-  order.splice(to, 0, moved)
-  renumber(rec, order)
-}
-
-const pad = (n: number) => String(n).padStart(2, '0')
-/** A stored date as YYYY-MM-DD (what date fields take), or '' if it isn't one. */
-export function isoDate(value: unknown): string {
-  if (value == null || value === '') return ''
-  const d = parseDate(value as string | number | Date)
-  return Number.isNaN(d.getTime())
-    ? ''
-    : `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
-/** A day's stored name: everyone (and the old app) sees it, so English, not the organiser's phone language. */
-const weekdayName = (iso: string) => parseDate(iso).toLocaleDateString('en', { weekday: 'long' })
-function shiftDate(iso: string, days: number) {
-  const d = parseDate(iso)
-  d.setDate(d.getDate() + days)
-  return isoDate(d)
-}
+export type { Assignment, SDance, SEvent, SBlock, SDay, SSchedule, EventLocation, CellLocation } from '@shared/plans/schedule'
+export { ids, isSpacerId, newSpacerId, ordered, isoDate }
+import type { SDance, SDay, SSchedule } from '@shared/plans/schedule'
 
 /** A short category name: "Primary" → "Pri", "Pre-Premier" → "PP". */
 function abbreviate(name: string) {
@@ -171,6 +32,8 @@ function abbreviate(name: string) {
     ? words.map((w) => Array.from(w)[0].toUpperCase()).join('')
     : Array.from(name).slice(0, 3).join('')
 }
+
+const clone = <T>(v: T): T => plan.clone(toRaw(v))
 
 export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | undefined>) {
   // --- Reading
@@ -268,6 +131,9 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
   /** What actions read: the copy being changed, if any, else what's saved. */
   const src = () => draft ?? schedule.value
 
+  /** What the shared actions need (shared/plans/schedule): the day being edited, new ids, the first day. */
+  const env = (): ScheduleEnv => ({ dayId: dayId.value, newId: m.newKey, competitionDate: m.competition.value?.date })
+
   /**
    * Change the schedule and save the difference as one change. Actions
    * called inside `fn` join the same change (e.g. autofill).
@@ -285,8 +151,7 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
     } finally {
       draft = null
     }
-    const updates: Record<string, unknown> = {}
-    diff('schedule', prune(before), prune(after), updates)
+    const updates = scheduleUpdates(before, after)
     if (!Object.keys(updates).length) return Promise.resolve(null)
     return m.writeData(updates, label).catch((e) => {
       toast(friendlyError(e), { tone: 'error' })
@@ -294,47 +159,12 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
     })
   }
 
-  /**
-   * The next day's name and date: the day after the last (or the
-   * competition's first day). Older apps head the schedule with each day's
-   * name, so days always have one.
-   */
-  function nextDay(s: SSchedule): SDay {
-    const list = ordered(s.days)
-    const start = isoDate(m.competition.value?.date)
-    const last = isoDate(list.at(-1)?.[1].date)
-    const date = last ? shiftDate(last, 1) : start && shiftDate(start, list.length)
-    return date ? { name: weekdayName(date), date } : { name: `Day ${list.length + 1}` }
-  }
+  const nextDay = (s: SSchedule): SDay => plan.nextDay(s, m.competition.value?.date)
 
   // Lookups within the day being edited, in `s` (a draft) or what's saved.
-  function dayIn(s: SSchedule, create = false): SDay | undefined {
-    // Before the first save, a day made earlier in the same change.
-    const id = dayId.value ?? ordered(s.days)[0]?.[0]
-    if (id && s.days?.[id]) return s.days[id]
-    if (!create) return undefined
-    s.days ??= {}
-    const newId = m.newKey()
-    s.days[newId] = { order: 0, ...nextDay(s) }
-    return s.days[newId]
-  }
-  const blockIn = (s: SSchedule, b: string) => dayIn(s)?.blocks?.[b]
-  const eventIn = (s: SSchedule, b: string, e: string) => blockIn(s, b)?.events?.[e]
-  const rowIn = (s: SSchedule, b: string, e: string, d: string) =>
-    eventIn(s, b, e)?.dances?.[d]
-  function cellIn(s: SSchedule, loc: CellLocation, create = false) {
-    const row = rowIn(s, loc.blockId, loc.eventId, loc.danceId)
-    if (!row) return undefined
-    if (!row.platforms?.[loc.platformId]) {
-      if (!create) return undefined
-      row.platforms ??= {}
-      row.platforms[loc.platformId] = {}
-    }
-    const cell = row.platforms[loc.platformId]
-    cell.orderedGroupIds = ids(cell.orderedGroupIds)
-    cell.orderedJudgeIds = ids(cell.orderedJudgeIds)
-    return cell as Required<Assignment>
-  }
+  const blockIn = (s: SSchedule, b: string) => plan.blockIn(s, env(), b)
+  const eventIn = (s: SSchedule, b: string, e: string) => plan.eventIn(s, env(), b, e)
+  const rowIn = (s: SSchedule, b: string, e: string, d: string) => plan.rowIn(s, env(), b, e, d)
 
   const getBlock = (b: string) => blockIn(src(), b)
   const getEvent = (b: string, e: string) => eventIn(src(), b, e)
@@ -345,55 +175,28 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
     row?.danceId ? danceName(row.danceId) : row?.name?.trim() || 'row'
 
   // Age groups and judges in platform cells
-  type Kind = 'group' | 'judge'
-  const listKey = (kind: Kind) =>
-    kind === 'group' ? 'orderedGroupIds' : 'orderedJudgeIds'
   const itemLabel = (kind: Kind, id: string) =>
     kind === 'judge' ? staffName(id) : isSpacerId(id) ? 'a spacer' : groupLabel(id)
 
   const addToCell = (kind: Kind, loc: CellLocation, id: string, index?: number) =>
     edit(
       `Added ${itemLabel(kind, id)} to ${rowLabel(getRow(loc.blockId, loc.eventId, loc.danceId))}`,
-      (s) => {
-        const list = cellIn(s, loc, true)?.[listKey(kind)]
-        if (!list || list.includes(id)) return
-        list.splice(index ?? list.length, 0, id)
-      },
+      (s) => plan.addToCell(s, env(), kind, loc, id, index),
     )
   const removeFromCell = (kind: Kind, loc: CellLocation, id: string) =>
-    edit(`Removed ${itemLabel(kind, id)}`, (s) => {
-      const list = cellIn(s, loc)?.[listKey(kind)]
-      const i = list?.indexOf(id) ?? -1
-      if (list && i >= 0) list.splice(i, 1)
-    })
+    edit(`Removed ${itemLabel(kind, id)}`, (s) => plan.removeFromCell(s, env(), kind, loc, id))
   const moveBetweenCells = (
     kind: Kind,
     from: CellLocation,
     to: CellLocation,
     id: string,
     index?: number,
-  ) =>
-    edit(`Moved ${itemLabel(kind, id)}`, (s) => {
-      const a = cellIn(s, from)?.[listKey(kind)]
-      const b = cellIn(s, to, true)?.[listKey(kind)]
-      if (!a || !b || b.includes(id)) return
-      const i = a.indexOf(id)
-      if (i >= 0) a.splice(i, 1)
-      b.splice(index ?? b.length, 0, id)
-    })
+  ) => edit(`Moved ${itemLabel(kind, id)}`, (s) => plan.moveBetweenCells(s, env(), kind, from, to, id, index))
   const reorderInCell = (kind: Kind, loc: CellLocation, from: number, to: number) =>
-    edit(kind === 'group' ? 'Reordered age groups' : 'Reordered judges', (s) => {
-      const list = cellIn(s, loc)?.[listKey(kind)]
-      if (!list || from === to || from >= list.length) return
-      const [x] = list.splice(from, 1)
-      list.splice(to, 0, x)
-    })
+    edit(kind === 'group' ? 'Reordered age groups' : 'Reordered judges', (s) => plan.reorderInCell(s, env(), kind, loc, from, to))
   /** Replace a cell's age groups or judges (autofill). */
   function setCell(kind: Kind, loc: CellLocation, list: string[]) {
-    return edit(kind === 'group' ? 'Assigned age groups' : 'Assigned judges', (s) => {
-      const cell = cellIn(s, loc, list.length > 0)
-      if (cell) cell[listKey(kind)] = list
-    })
+    return edit(kind === 'group' ? 'Assigned age groups' : 'Assigned judges', (s) => plan.setCell(s, env(), kind, loc, list))
   }
 
   // Days
@@ -404,96 +207,40 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
   function addDay() {
     const id = m.newKey()
     const day = nextDay(src())
-    void edit(`Added ${day.name}`, (s) => {
-      s.days ??= {}
-      insertAt(s.days, id, day)
-    })
+    void edit(`Added ${day.name}`, (s) => plan.addDay(s, id, day))
     return id
   }
-  const renameDay = (d: string, name: string) =>
-    edit(`Renamed ${dayName(d)}`, (s) => {
-      const x = s.days?.[d]
-      if (x) x.name = name
-    })
+  const renameDay = (d: string, name: string) => edit(`Renamed ${dayName(d)}`, (s) => plan.renameDay(s, d, name))
   /** Set a day's date (YYYY-MM-DD, or '' for none). A name that was its weekday follows it. */
-  const setDayDate = (d: string, date: string) =>
-    edit(`Changed the date of ${dayName(d)}`, (s) => {
-      const x = s.days?.[d]
-      if (!x) return
-      const old = isoDate(x.date)
-      const name = x.name?.trim()
-      if (date && (!name || (old && (name === weekdayName(old) || name === formatWeekday(old))))) x.name = weekdayName(date)
-      if (date) x.date = date
-      else delete x.date
-    })
-  const removeDay = (d: string) =>
-    edit(`Deleted ${dayName(d)}`, (s) => {
-      delete s.days?.[d]
-    })
+  const setDayDate = (d: string, date: string) => edit(`Changed the date of ${dayName(d)}`, (s) => plan.setDayDate(s, d, date))
+  const removeDay = (d: string) => edit(`Deleted ${dayName(d)}`, (s) => plan.removeDay(s, d))
 
   // Sessions
   function addBlock(name: string) {
     const id = m.newKey()
-    void edit(`Added ${name}`, (s) => {
-      const d = dayIn(s, true)!
-      d.blocks ??= {}
-      insertAt(d.blocks, id, { name })
-    })
+    void edit(`Added ${name}`, (s) => plan.addBlock(s, env(), id, name))
     return id
   }
-  const removeBlock = (b: string) =>
-    edit(`Deleted ${blockLabel(b)}`, (s) => {
-      delete dayIn(s)?.blocks?.[b]
-    })
-  const clearDay = () =>
-    edit('Cleared the schedule', (s) => {
-      const d = dayIn(s)
-      if (d) delete d.blocks
-    })
-  const renameBlock = (b: string, name: string) =>
-    edit(`Renamed ${blockLabel(b)}`, (s) => {
-      const x = blockIn(s, b)
-      if (x) x.name = name
-    })
+  const removeBlock = (b: string) => edit(`Deleted ${blockLabel(b)}`, (s) => plan.removeBlock(s, env(), b))
+  const clearDay = () => edit('Cleared the schedule', (s) => plan.clearDay(s, env()))
+  const renameBlock = (b: string, name: string) => edit(`Renamed ${blockLabel(b)}`, (s) => plan.renameBlock(s, env(), b, name))
   const describeBlock = (b: string, description: string) =>
-    edit(`Changed ${blockLabel(b)}`, (s) => {
-      const x = blockIn(s, b)
-      if (!x) return
-      if (description) x.description = description
-      else delete x.description
-    })
-  const reorderBlock = (from: number, to: number) =>
-    edit('Reordered sessions', (s) => moveWithin(dayIn(s)?.blocks, from, to))
+    edit(`Changed ${blockLabel(b)}`, (s) => plan.describeBlock(s, env(), b, description))
+  const reorderBlock = (from: number, to: number) => edit('Reordered sessions', (s) => plan.reorderBlock(s, env(), from, to))
 
   // Events
   function addEvent(b: string, name: string, description?: string) {
     const id = m.newKey()
-    void edit(`Added ${name}`, (s) => {
-      const x = blockIn(s, b)
-      if (!x) return
-      x.events ??= {}
-      insertAt(x.events, id, description ? { name, description } : { name })
-    })
+    void edit(`Added ${name}`, (s) => plan.addEvent(s, env(), b, id, name, description))
     return id
   }
-  const removeEvent = (b: string, e: string) =>
-    edit(`Deleted ${eventLabel(b, e)}`, (s) => {
-      delete blockIn(s, b)?.events?.[e]
-    })
+  const removeEvent = (b: string, e: string) => edit(`Deleted ${eventLabel(b, e)}`, (s) => plan.removeEvent(s, env(), b, e))
   const renameEvent = (b: string, e: string, name: string) =>
-    edit(`Renamed ${eventLabel(b, e)}`, (s) => {
-      const x = eventIn(s, b, e)
-      if (x) x.name = name
-    })
+    edit(`Renamed ${eventLabel(b, e)}`, (s) => plan.renameEvent(s, env(), b, e, name))
   const describeEvent = (b: string, e: string, description: string) =>
-    edit(`Changed ${eventLabel(b, e)}`, (s) => {
-      const x = eventIn(s, b, e)
-      if (!x) return
-      if (description) x.description = description
-      else delete x.description
-    })
+    edit(`Changed ${eventLabel(b, e)}`, (s) => plan.describeEvent(s, env(), b, e, description))
   const reorderEvent = (b: string, from: number, to: number) =>
-    edit('Reordered events', (s) => moveWithin(blockIn(s, b)?.events, from, to))
+    edit('Reordered events', (s) => plan.reorderEvent(s, env(), b, from, to))
 
   // Dances and other rows (Registration, March Past…)
   function addRow(
@@ -505,51 +252,25 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
     const id = m.newKey()
     void edit(
       `Added ${row.danceId ? danceName(row.danceId) : row.name || 'a row'}`,
-      (s) => {
-        const x = eventIn(s, b, e)
-        if (!x) return
-        x.dances ??= {}
-        insertAt(
-          x.dances,
-          id,
-          row.danceId ? { danceId: row.danceId } : { name: row.name ?? '' },
-          index,
-        )
-      },
+      (s) => plan.addRow(s, env(), b, e, id, row, index),
     )
     return id
   }
   const removeRow = (b: string, e: string, d: string) =>
-    edit(`Deleted ${rowLabel(getRow(b, e, d))}`, (s) => {
-      delete eventIn(s, b, e)?.dances?.[d]
-    })
+    edit(`Deleted ${rowLabel(getRow(b, e, d))}`, (s) => plan.removeRow(s, env(), b, e, d))
   const setRowText = (
     b: string,
     e: string,
     d: string,
     key: 'name' | 'description',
     value: string,
-  ) =>
-    edit(`Changed ${rowLabel(getRow(b, e, d))}`, (s) => {
-      const x = rowIn(s, b, e, d)
-      if (!x) return
-      if (value) x[key] = value
-      else delete x[key]
-    })
+  ) => edit(`Changed ${rowLabel(getRow(b, e, d))}`, (s) => plan.setRowText(s, env(), b, e, d, key, value))
   const reorderRow = (b: string, e: string, from: number, to: number) =>
-    edit('Reordered dances', (s) => moveWithin(eventIn(s, b, e)?.dances, from, to))
+    edit('Reordered dances', (s) => plan.reorderRow(s, env(), b, e, from, to))
   const moveRow = (from: EventLocation, d: string, to: EventLocation, index?: number) =>
     edit(
       `Moved ${rowLabel(getRow(from.blockId, from.eventId, d))} to ${eventLabel(to.blockId, to.eventId)}`,
-      (s) => {
-        const a = eventIn(s, from.blockId, from.eventId)
-        const b = eventIn(s, to.blockId, to.eventId)
-        const row = a?.dances?.[d]
-        if (!a?.dances || !row || !b) return
-        delete a.dances[d]
-        b.dances ??= {}
-        insertAt(b.dances, d, row, index)
-      },
+      (s) => plan.moveRow(s, env(), from, d, to, index),
     )
 
   return {

@@ -5,8 +5,7 @@ import SwitchField from '@/components/admin/SwitchField.vue'
 import { useManagedCompetition, type MDance } from '@/composables/admin/useManagedCompetition'
 import { danceFullName } from '@/types/competition'
 import type { CollectionSpec } from '@/lib/admin/collection'
-import { forEachScheduleDance } from '@/lib/admin/scheduleTree'
-import { sheetsGoForGood } from '@/lib/sheets'
+import { planSetDanceGroup } from '@shared/plans/membership'
 import { STANDARD_DANCES, tidySteps } from '@/lib/standardDances'
 
 const m = useManagedCompetition()
@@ -45,49 +44,14 @@ const spec: CollectionSpec<MDance> = {
     values: Object.fromEntries(Object.entries(p).filter(([, v]) => v)) as Record<string, string>,
   })),
   presetsLead: 'The usual ones, with their steps. Rename them any time.',
-  impact: (ids) => {
-    const updates: Record<string, unknown> = {}
-    let withResults = false
-    for (const [gid, byDance] of Object.entries(m.results.value)) {
-      for (const id of ids) {
-        if (byDance?.[id] !== undefined) {
-          updates[`results/${gid}/${id}`] = null
-          withResults = true
-        }
-      }
-    }
-    for (const [gid, byDance] of Object.entries(m.points.value)) for (const id of ids) if (byDance?.[id]) updates[`points/${gid}/${id}`] = null
-    // Its judges' sheets, for good (their files go with them: functions/src/sheets.ts).
-    const lasting: Record<string, unknown> = {}
-    for (const [gid, byDance] of Object.entries(m.sheets.value)) for (const id of ids) if (byDance?.[id]) lasting[`sheets/${gid}/${id}`] = null
-    for (const [gid, byDance] of Object.entries(m.draws.value)) for (const id of ids) if (byDance?.[id]) updates[`draws/${gid}/${id}`] = null
-    // Its slots in the schedule go too (with who dances where in them).
-    let scheduled = false
-    forEachScheduleDance(m.schedule.value, (path, item) => {
-      if (item.danceId && ids.includes(item.danceId)) {
-        updates[path] = null
-        scheduled = true
-      }
-    })
-    // Trophy events danced as it go back to being decided by the age groups' results.
-    const trophyEvents = m.trophyEvents.value.filter((t) => t.danceId && ids.includes(t.danceId))
-    for (const t of trophyEvents) updates[`trophyEvents/${t.id}/danceId`] = null
-    const warnings: string[] = []
-    if (withResults) warnings.push(`${ids.length === 1 ? 'Its' : 'Their'} results will be deleted too.`)
-    if (trophyEvents.length) warnings.push(`${trophyEvents.map((t) => t.label).join(', ')} won’t be danced any more.`)
-    if (scheduled) warnings.push(`Also removes ${ids.length === 1 ? 'it' : 'them'} from the schedule.`)
-    if (Object.keys(lasting).length) warnings.push(sheetsGoForGood(ids.length))
-    return { updates, warnings, lasting }
-  },
   emptyHint: 'Add the dances performed. “Add common dances” has the usual ones with their steps.',
 }
 
 const items = computed(() => m.dances.value)
 
 function setGroup(danceId: string, groupId: string, on: boolean) {
-  const dance = m.dancesById.value.get(danceId)?.label ?? 'a dance'
-  const group = m.groupsById.value.get(groupId)?.label ?? 'an age group'
-  return m.writeData({ [`dances/${danceId}/groupIds/${groupId}`]: on || null }, `${on ? 'Added' : 'Removed'} ${dance} ${on ? 'to' : 'from'} ${group}`)
+  const { data, summary } = planSetDanceGroup(m.state.value, danceId, groupId, on)
+  return m.writeData(data, summary)
 }
 </script>
 

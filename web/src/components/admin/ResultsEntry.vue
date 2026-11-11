@@ -24,6 +24,9 @@ import { selectionHaptic, tapHaptic } from '@/lib/haptics'
 import { getOrdinalSuffix } from '@/lib/results'
 import { isDanced } from '@/lib/trophyEvents'
 import { isChampionshipName, isPrimaryCategory } from '@/types/competition'
+import { noneLabel as noneLabelFor, planNoCallbackRound, planNoResults, planPlace, planPoint, planReorderPlacings, planReplacePlaceholder, planReverse, planTakeOut, planTie, resultName } from '@shared/plans/results'
+import { planSetNotChampionship } from '@shared/plans/membership'
+import type { Plan } from '@shared/plans/types'
 import {
   CALLBACKS,
   OVERALL,
@@ -35,11 +38,9 @@ import {
   newPlaceholderId,
   parsePlacings,
   placeAt,
-  removeEntry,
   resultRows,
   resultsOrder,
   scheduleTurns,
-  serializePlacings,
   stateLabel,
   tapGuard,
   trophyEventRows,
@@ -75,30 +76,18 @@ const isCallbacks = computed(() => props.danceId === CALLBACKS)
 const isOverall = computed(() => props.danceId === OVERALL)
 const isDance = computed(() => !isCallbacks.value && !isOverall.value)
 const kind = computed(() => (isCallbacks.value ? 'callbacks' : isOverall.value ? 'overall' : 'dance'))
-const danceName = computed(() =>
-  trophyEvent.value
-    ? isCallbacks.value
-      ? `${trophyEvent.value.label}: callbacks`
-      : trophyEvent.value.label
-    : isCallbacks.value
-      ? 'Callbacks'
-      : isOverall.value
-        ? 'Overall'
-        : (m.dancesById.value.get(props.danceId)?.label ?? 'Dance'),
-)
+const danceName = computed(() => resultName(m.state.value, props.groupId, props.danceId))
 // The heading: what this step is (a danced trophy event's callbacks or dance),
 // with the age group (or trophy event) under it.
 const trophyDance = computed(() => (trophyEvent.value?.danceId ? m.dancesById.value.get(trophyEvent.value.danceId)?.label : null))
 const heading = computed(() => (trophyEvent.value && isCallbacks.value ? 'Callbacks' : (trophyDance.value ?? danceName.value)))
 const subheading = computed(() => (trophyEvent.value ? (trophyEvent.value.danceId ? trophyEvent.value.label : trophyEvent.value.openTo) : group.value?.label))
 
-const path = computed(() => `results/${props.groupId}/${props.danceId}`)
-
 // A championship class that ran as a regular competition (too few dancers
 // turned up): its results say so.
 function setNotChampionship(on: boolean) {
-  const label = group.value?.label ?? 'this age group'
-  m.writeData({ [`groups/${props.groupId}/notChampionship`]: on || null }, on ? `Marked ${label} not run as a championship` : `Marked ${label} a championship again`).catch((e) => toast(friendlyError(e), { tone: 'error' }))
+  const { data, summary } = planSetNotChampionship(m.state.value, props.groupId, on)
+  m.writeData(data, summary).catch((e) => toast(friendlyError(e), { tone: 'error' }))
 }
 // Always build on the latest stored value: another device may have changed it.
 const rawNow = () => m.results.value[props.groupId]?.[props.danceId]
@@ -106,9 +95,7 @@ const placings = computed<Placings>(() => parsePlacings(rawNow()))
 const markedNone = computed(() => rawNow() === false)
 // Said generally: it also covers a dance that didn't run, or an Overall
 // that wasn't given.
-const noneLabel = computed(() =>
-  isCallbacks.value ? 'No callbacks' : isOverall.value && !isTrophyEvent.value ? 'No overall' : 'No results',
-)
+const noneLabel = computed(() => noneLabelFor(m.state.value, props.groupId, props.danceId))
 
 const TABS = [
   { value: 'placings', label: 'Placings' },
@@ -143,7 +130,6 @@ const callbacksFirst = computed(() => !isCallbacks.value && tab.value === 'placi
 const candidates = computed(() => (isCallbacks.value || tab.value === 'points' ? groupDancers.value : calledBack.value))
 
 const placedIndex = computed(() => new Map(placings.value.entries.map((e, i) => [e.id, i])))
-const pointsPath = computed(() => `points/${props.groupId}/${props.danceId}/combined`)
 const pointedIds = computed(() => m.points.value[props.groupId]?.[props.danceId]?.combined ?? [])
 const pointed = computed(() => new Set(pointedIds.value))
 // Primary has no championship points, as it has no overall. Any stored
@@ -157,19 +143,19 @@ const announcement = ref('')
 const spoken = (id: string) => (isPlaceholderId(id) ? 'Missed number' : who(id))
 
 /** Save this dance's placings. Returns the change's id, for Undo. */
-async function save(value: Placings | false | null, label: string): Promise<number | null> {
-  const stored = value === false || value === null ? value : serializePlacings(value)
+async function savePlan(p: Plan): Promise<number | null> {
   try {
-    return await m.writeData({ [path.value]: stored }, `${label} in ${danceName.value}`)
+    return await m.writeData(p.data, p.summary)
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
     return null
   }
 }
 /** Save, then say what happened with an Undo. */
-async function saveUndoable(value: Placings | false | null, label: string) {
-  const change = await save(value, label)
-  if (change) toast(label, { action: { label: 'Undo', run: () => m.undoChange(change) } })
+async function saveUndoable(p: Plan) {
+  const change = await savePlan(p)
+  // (What it did, without where: Undo's own words say which dance.)
+  if (change) toast(p.summary.slice(0, -` in ${danceName.value}`.length), { action: { label: 'Undo', run: () => m.undoChange(change) } })
 }
 
 // A second tap on the same dancer within half a second is the same tap again,
@@ -215,51 +201,39 @@ function tapDancer(id: string, e?: Event) {
 /** Add a dancer to the end, or take them out if already there. */
 function place(id: string, e?: Event) {
   tapHaptic()
-  const p = parsePlacings(rawNow())
-  const i = p.entries.findIndex((e) => e.id === id)
-  if (i >= 0) {
+  const r = planPlace(m.state.value, props.groupId, props.danceId, id)
+  if (!r.added) {
     announcement.value = `${spoken(id)} taken out`
-    void saveUndoable(removeEntry(p, i), `Took out ${who(id)}`)
+    void saveUndoable(r.plan)
     return
   }
-  const added = { ...p, entries: [...p.entries, { id, tie: false }] }
-  const at = placeAt(added.entries.length - 1, added)
+  const at = placeAt(r.after.entries.length - 1, r.after)
   announcement.value = isCallbacks.value ? `${spoken(id)} called back` : at ? `${spoken(id)} placed ${at}${getOrdinalSuffix(at)}` : `${spoken(id)} placed`
-  void save(added, `Placed ${who(id)}`)
+  void savePlan(r.plan)
   void fly(e?.currentTarget, id)
 }
 /** A placed row tapped: take that dancer out. */
 function remove(index: number, id: string) {
   if (!canEdit.value || !firstTap(id)) return
-  const p = parsePlacings(rawNow())
   // By who, not just where: the list may have changed under the tap.
-  const i = p.entries[index]?.id === id ? index : p.entries.findIndex((e) => e.id === id)
-  if (i < 0) return
+  const r = planTakeOut(m.state.value, props.groupId, props.danceId, index, id)
+  if (!r) return
   announcement.value = `${spoken(id)} taken out`
-  void saveUndoable(removeEntry(p, i), `Took out ${who(id)}`)
+  void saveUndoable(r.plan)
 }
 function tie(index: number, on: boolean) {
-  const p = parsePlacings(rawNow())
-  if (!p.entries[index]) return
-  p.entries[index].tie = on
-  void save(p, `${on ? 'Tied' : 'Untied'} ${who(p.entries[index].id)}`)
+  const r = planTie(m.state.value, props.groupId, props.danceId, index, on)
+  if (r) void savePlan(r.plan)
 }
 function reorder(entries: Entry[], moved: string) {
-  const p = { ...parsePlacings(rawNow()), entries }
-  const at = placeAt(entries.findIndex((e) => e.id === moved), p)
-  void saveUndoable(p, at ? `Moved ${who(moved)} to ${at}${getOrdinalSuffix(at)}` : `Moved ${who(moved)}`)
+  void saveUndoable(planReorderPlacings(m.state.value, props.groupId, props.danceId, entries, moved).plan)
 }
 
 function point(id: string) {
   tapHaptic()
-  const list = [...pointedIds.value]
-  const i = list.indexOf(id)
-  if (i >= 0) list.splice(i, 1)
-  else list.push(id)
-  announcement.value = i >= 0 ? `Point taken from ${spoken(id)}` : `${spoken(id)} given a point`
-  void m
-    .writeData({ [pointsPath.value]: list.length ? list : null }, `${i >= 0 ? 'Took a point from' : 'Gave a point to'} ${who(id)} in ${danceName.value}`)
-    .catch((e) => toast(friendlyError(e), { tone: 'error' }))
+  const r = planPoint(m.state.value, props.groupId, props.danceId, id)
+  announcement.value = r.gave ? `${spoken(id)} given a point` : `Point taken from ${spoken(id)}`
+  void m.writeData(r.data, r.summary).catch((e) => toast(friendlyError(e), { tone: 'error' }))
 }
 
 /** Tap "Missed number": a new "?" each time (but one per tap). */
@@ -294,25 +268,26 @@ async function toggleChampionship() {
   }
   pickingReverse.value = false
   if (!(await renumberOk(null))) return
-  void saveUndoable({ ...parsePlacings(rawNow()), reverseFrom: null }, 'Lowest place first off')
+  void saveUndoable(planReverse(m.state.value, props.groupId, props.danceId, null).plan)
 }
 async function pickReverse(n: number) {
   selectionHaptic()
   pickingReverse.value = false
   if (n === placings.value.reverseFrom || !(await renumberOk(n))) return
-  void saveUndoable({ ...parsePlacings(rawNow()), reverseFrom: n }, `Entering from ${n}${getOrdinalSuffix(n)}`)
+  void saveUndoable(planReverse(m.state.value, props.groupId, props.danceId, n).plan)
 }
 
 // --- No results / no callbacks
 function setNone(on: boolean) {
-  void save(on ? false : null, on ? noneLabel.value : `Cleared “${noneLabel.value}”`)
+  void savePlan(planNoResults(m.state.value, props.groupId, props.danceId, on))
 }
 // From a dance waiting on callbacks: there wasn't a callback round, so mark
 // the callbacks "none" (as their own switch does) and carry on here.
 async function markNoCallbackRound() {
   try {
     const label = 'No callback round'
-    const change = await m.writeData({ [`results/${props.groupId}/${CALLBACKS}`]: false }, `${label} in ${subject.value?.label ?? 'this age group'}`)
+    const p = planNoCallbackRound(m.state.value, props.groupId)
+    const change = await m.writeData(p.data, p.summary)
     if (change) toast(label, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
@@ -335,11 +310,8 @@ function chooseFix(dancerId: string) {
   const id = fixing.value
   fixing.value = null
   // By id, not position: the list may have changed on another device since.
-  const p = parsePlacings(rawNow())
-  const entry = p.entries.find((e) => e.id === id)
-  if (!entry) return
-  entry.id = dancerId
-  void saveUndoable(p, `Replaced ? with ${who(dancerId)}`)
+  const r = id ? planReplacePlaceholder(m.state.value, props.groupId, props.danceId, id, dancerId) : null
+  if (r) void saveUndoable(r.plan)
 }
 
 // A dancer who can't be tapped here: given a point (on Placings), or placed

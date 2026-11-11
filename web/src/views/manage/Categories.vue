@@ -25,10 +25,6 @@ const spec: CollectionSpec<MCategory> = {
   },
   presets: CATEGORIES.map((name) => ({ label: name, values: { name } })),
   importFirst: true,
-  impact: (ids) => {
-    const n = ids.reduce((sum, id) => sum + groupsIn(id), 0)
-    return { warnings: n ? [`${n} ${n === 1 ? 'age group uses' : 'age groups use'} ${ids.length === 1 ? 'it' : 'them'} and will need another category.`] : [] }
-  },
   emptyHint: 'Categories group the age groups: Primary, Beginner, Novice, Intermediate, Premier.',
 }
 

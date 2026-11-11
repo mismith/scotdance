@@ -1,0 +1,6 @@
+{
+  "name": "scotdance-shared",
+  "private": true,
+  "type": "commonjs",
+  "description": "Pure TypeScript compiled into both web (Vite) and functions (tsc). No Vue, Firebase or DOM imports."
+}

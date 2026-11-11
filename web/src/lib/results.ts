@@ -118,20 +118,7 @@ export function getDancerPlace(
   return { place, tied, pointed }
 }
 
-export function getOrdinalSuffix(place: number): string {
-  const s = place % 100
-  if (s >= 11 && s <= 13) return 'th'
-  switch (place % 10) {
-    case 1:
-      return 'st'
-    case 2:
-      return 'nd'
-    case 3:
-      return 'rd'
-    default:
-      return 'th'
-  }
-}
+export { ordinalSuffix as getOrdinalSuffix } from '@shared/placings'
 
 export interface PlacedDancerRow {
   dancerId: string

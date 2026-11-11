@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const require = createRequire(import.meta.url);
-const { refreshSource } = require('../dist/knownCompetitions.js');
+const { refreshSource } = require('../dist/functions/src/knownCompetitions.js');
 
 const ROOT = new URL('../..', import.meta.url).pathname;
 const DRY = process.argv.includes('--dry-run');

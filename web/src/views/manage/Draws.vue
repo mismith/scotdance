@@ -7,7 +7,9 @@ import EmptyState from '@/components/EmptyState.vue'
 import Button from '@/components/ui/Button.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import NumberTile from '@/components/admin/NumberTile.vue'
-import { useManagedCompetition, compareNumbers, type MDance } from '@/composables/admin/useManagedCompetition'
+import { useManagedCompetition, type MDance } from '@/composables/admin/useManagedCompetition'
+import { missingFromDraw, planAddMissingToDraw, planClearAllDraws, planClearDraw, planNumberOrder, planRemoveStraysFromDraw, planSetDraw, planShuffle, planShuffleAll, storedDraw, strayInDraw } from '@shared/plans/draws'
+import type { Plan } from '@shared/plans/types'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 
@@ -23,13 +25,8 @@ const dancers = computed(() => m.groupDancers(groupId.value))
 const numbers = computed(() => dancers.value.map((d) => d.num).filter(Boolean))
 const byNumber = computed(() => new Map(dancers.value.map((d) => [d.num, d])))
 
-// The old admin saved draws cell by cell, so a draw can have gaps (and come
-// back as an object when sparse).
-function stored(danceId: string) {
-  const v: unknown = m.draws.value[groupId.value]?.[danceId]
-  const list: unknown[] = Array.isArray(v) ? v : v && typeof v === 'object' ? Object.values(v) : []
-  return list.filter((n) => n != null && n !== '').map((n) => String(n))
-}
+// The old admin saved draws cell by cell, so a draw can have gaps (and come back as an object when sparse).
+const stored = (danceId: string) => storedDraw(m.state.value, groupId.value, danceId)
 
 // Local copies for dragging; follow the database unless mid-drag.
 const lists = ref<Record<string, string[]>>({})
@@ -43,28 +40,14 @@ watch(
   { immediate: true, deep: true },
 )
 
-function shuffled(values: string[]) {
-  const a = [...values]
-  for (let i = a.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
-const inNumberOrder = () => [...numbers.value].sort(compareNumbers)
-// Reels are danced together in number order, so they aren't shuffled.
-const isReel = (d: MDance) => /(^|\s)reel(\s|$)/i.test(d.name ?? '')
-
-async function saveDraws(updates: Record<string, string[] | null>, message?: string) {
+async function saveDraws(p: Plan, announce = false) {
   try {
-    const change = await m.writeData(updates, message ?? `Changed the draw for ${group.value?.label ?? 'an age group'}`)
-    if (message) toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
+    const change = await m.writeData(p.data, p.summary)
+    if (announce) toast(p.summary, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }
 }
-
-const path = (danceId: string) => `draws/${groupId.value}/${danceId}`
 
 async function shuffleAll() {
   const hasAny = dances.value.some((d) => stored(d.id).length)
@@ -72,19 +55,15 @@ async function shuffleAll() {
     const ok = await confirm({ title: 'Shuffle every dance?', message: 'Replaces the current draws. You can undo straight after.', confirmLabel: 'Shuffle all' })
     if (!ok) return
   }
-  const updates: Record<string, string[] | null> = {}
-  for (const d of dances.value) updates[path(d.id)] = isReel(d) ? inNumberOrder() : shuffled(numbers.value)
-  await saveDraws(updates, 'Shuffled every dance')
+  await saveDraws(planShuffleAll(m.state.value, groupId.value), true)
 }
-const shuffleOne = (d: MDance) => saveDraws({ [path(d.id)]: shuffled(numbers.value) }, `Shuffled ${d.label}`)
-const numberOrder = (d: MDance) => saveDraws({ [path(d.id)]: inNumberOrder() }, `${d.label} in number order`)
-const clearOne = (d: MDance) => saveDraws({ [path(d.id)]: null }, `Cleared ${d.label}`)
+const shuffleOne = (d: MDance) => saveDraws(planShuffle(m.state.value, groupId.value, d.id), true)
+const numberOrder = (d: MDance) => saveDraws(planNumberOrder(m.state.value, groupId.value, d.id), true)
+const clearOne = (d: MDance) => saveDraws(planClearDraw(m.state.value, groupId.value, d.id), true)
 async function clearAll() {
   const ok = await confirm({ title: 'Clear all draws?', message: 'You can undo straight after.', confirmLabel: 'Clear all', destructive: true })
   if (!ok) return
-  const updates: Record<string, null> = {}
-  for (const d of dances.value) if (stored(d.id).length) updates[path(d.id)] = null
-  await saveDraws(updates, 'Cleared all draws')
+  await saveDraws(planClearAllDraws(m.state.value, groupId.value), true)
 }
 
 async function onEnd(d: MDance, e: { oldIndex?: number; newIndex?: number }) {
@@ -92,23 +71,20 @@ async function onEnd(d: MDance, e: { oldIndex?: number; newIndex?: number }) {
   await nextTick()
   dragging.value = false
   if (e.oldIndex === e.newIndex) return
-  void saveDraws({ [path(d.id)]: lists.value[d.id] })
+  void saveDraws(planSetDraw(m.state.value, groupId.value, d.id, lists.value[d.id]))
 }
 
 // Rows are keyed by number (and which time it appears, for an old draw that
 // has one twice), so a shuffle is seen to shuffle.
 const keyAt = (list: string[], i: number) => `${list[i]}#${list.slice(0, i).filter((n) => n === list[i]).length}`
 
-const missing = (danceId: string) => {
-  const set = new Set(stored(danceId))
-  return inNumberOrder().filter((n) => !set.has(n))
-}
-const strays = (danceId: string) => stored(danceId).filter((n) => !byNumber.value.has(n))
+const missing = (danceId: string) => missingFromDraw(m.state.value, groupId.value, danceId)
+const strays = (danceId: string) => strayInDraw(m.state.value, groupId.value, danceId)
 function addMissing(d: MDance) {
-  void saveDraws({ [path(d.id)]: [...stored(d.id).filter((n) => byNumber.value.has(n)), ...missing(d.id)] })
+  void saveDraws(planAddMissingToDraw(m.state.value, groupId.value, d.id))
 }
 function removeStrays(d: MDance) {
-  void saveDraws({ [path(d.id)]: stored(d.id).filter((n) => byNumber.value.has(n)) })
+  void saveDraws(planRemoveStraysFromDraw(m.state.value, groupId.value, d.id))
 }
 const anyDraws = computed(() => dances.value.some((d) => stored(d.id).length))
 </script>

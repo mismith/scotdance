@@ -29,6 +29,4 @@ function byOrder(a: SheetPage, b: SheetPage) {
 /** "2 pages", or nothing for one. */
 export const pageCount = (n: number) => (n > 1 ? `${n} pages` : '')
 
-/** Said before deleting a dance or an age group that has any: Undo brings back the rest, not these. */
-export const sheetsGoForGood = (n: number) =>
-  `${n === 1 ? 'Its judges’ sheets go' : 'Their judges’ sheets go'} for good: Undo won’t bring them back.`
+export { sheetsGoForGood } from '@shared/util'

@@ -12,6 +12,7 @@ import { useSetup } from '@/composables/admin/useSetup'
 import { useSidebar } from '@/composables/admin/useWide'
 import { formatLongDate } from '@/lib/format'
 import { VISIBILITY, visibilityOf } from '@/lib/visibility'
+import { planListed, planPublished } from '@shared/plans/details'
 
 const m = useManagedCompetition()
 // Linked (ADR 0007): Listed and published shared from the main one change there.
@@ -56,14 +57,14 @@ const results = computed(() => ({ name: 'manage.results', params: { competitionI
         label="Listed"
         description="Shows in the competitions list with its date, venue and judges."
         :shared="shared('visibility') ? 'visibility' : undefined"
-        :save="(on) => m.writeInfo(on ? { listed: true } : { listed: false, published: false }, on ? 'Listed' : 'Unlisted')"
+        :save="(on) => m.writePlan(planListed(on))"
       />
       <SwitchField
         :model-value="!!c?.published"
         label="Published"
         description="Also shows dancers, the schedule and results."
         :shared="shared('visibility') ? 'visibility' : undefined"
-        :save="(on) => m.writeInfo(on ? { published: true, listed: true } : { published: false }, on ? 'Published' : 'Unpublished')"
+        :save="(on) => m.writePlan(planPublished(on))"
       />
     </section>
 

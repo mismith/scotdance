@@ -4,12 +4,12 @@
     "strict": false,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
-    "rootDir": "src",
+    "rootDir": "..",
     "outDir": "dist",
     "sourceMap": true,
     "target": "es2022",
     "skipLibCheck": true
   },
   "compileOnSave": true,
-  "include": ["src"]
+  "include": ["src", "../shared"]
 }
