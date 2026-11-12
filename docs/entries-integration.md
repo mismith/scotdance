@@ -72,6 +72,21 @@ E2E_BASE_URL=http://localhost:5279 npx playwright test e2e/backend-rules.spec.ts
 
 Set `E2E_EMULATOR_PORT_OFFSET` to match a shifted emulator stack. For local Entries integration set `ENTRIES_MEMBERSHIP_URL` to the Entries emulator's `syncScotDanceMembership` callable, and `ENTRIES_ORIGIN` (functions) / `VITE_ENTRIES_ORIGIN` (web) to `http://localhost:5290`. Without a local membership URL, emulated permission changes never call the live Entries service.
 
+The real cross-app contract test uses the compiled Entries signer and both running emulators:
+
+```sh
+node web/scripts/entries-contract.cjs
+```
+
+It expects a sibling `entries` checkout (override with `ENTRIES_TEST_REPOSITORY`), its built functions, and
+its ignored `functions/.secret.local` containing the same `TOOL_PASS_SECRET` as ScotDance's emulator.
+ScotDance uses project `firebase-scotdance`, functions port 5001 and database port 9009. Entries uses project
+`demo-entries` (override with `ENTRIES_TEST_PROJECT`), functions port 5201 and Firestore port 8380. Start the
+ScotDance emulator with `ENTRIES_MEMBERSHIP_URL=http://127.0.0.1:5201/demo-entries/us-central1/syncScotDanceMembership`.
+The script sets its source URL only in its own process, leaving Entries' sample stub unchanged. It tests
+inspection, shared registration publication, atomic dance seeding, second-send refusal, and actual membership
+grant/removal triggers. Fixtures have unique IDs and are removed in `finally`; credentials are never printed.
+
 Deploy receivers and rules before enabling producers: ScotDance `entriesCompetition` and registration protections; Entries `syncScotDanceMembership`; then the membership trigger/sweep and Entries publication. Deploy ScotDance's updated embed/importer before Splits starts sending explicit destination IDs and studio columns. The existing `next` branch workflow only deploys hosting; functions and rules must be released explicitly.
 
 For the initial release, Entries and Splits use `https://next.scotdance.app` for the source UI and embed. The JWT issuer remains `https://scotdance.app`. Deploy only `hosting:next`; the `production` hosting target serves the existing legacy application and must not receive this build unintentionally. The shared backend changes are scoped to:
