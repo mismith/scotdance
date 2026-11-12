@@ -7,7 +7,8 @@ import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import { useCompetitionLinks } from '@/composables/useCompetitionLinks'
 import { orderLinked, railRows } from '@/lib/linked'
 import Skeleton from '@/components/Skeleton.vue'
-import { formatLongDate, formatMonthYear, formatShortDate, formatWeekdayShortDate, parseDate } from '@/lib/format'
+import Button from '@/components/ui/Button.vue'
+import { formatLongDate, formatMonthDay, formatMonthYear, formatShortDate, formatWeekdayShortDate, parseDate } from '@/lib/format'
 import { selectionHaptic } from '@/lib/haptics'
 import { lateSkeleton } from '@/lib/settle'
 import { useFavoritesStore } from '@/stores/favorites'
@@ -152,18 +153,25 @@ function adjacentDay(direction: 'next' | 'prev') {
   const day = startOfDay(new Date(times[0]))
   const comps = onDay(day)
   const sameYear = day.getFullYear() === cursor.value.getFullYear()
-  return { date: day, label: sameYear ? formatWeekdayShortDate(day) : formatShortDate(day.getTime()), comps }
+  return { date: day, label: sameYear ? formatMonthDay(day) : formatShortDate(day.getTime()), comps }
 }
 
-// When the selected day has none, surface the next day that has some.
-const upcomingDay = computed(() => (visibleCompetitions.value.length ? null : adjacentDay('next')))
+// Date links keep nearby competitions available without duplicating their lists.
+const nextDay = computed(() => adjacentDay('next'))
 const previousDay = computed(() => adjacentDay('prev'))
 const nearby = computed(() =>
   [
-    upcomingDay.value && { ...upcomingDay.value, kind: 'Next' },
     previousDay.value && { ...previousDay.value, kind: 'Previous' },
+    nextDay.value && { ...nextDay.value, kind: 'Next' },
   ].filter((d) => !!d),
 )
+
+function goToDay(day: Date) {
+  selectionHaptic()
+  direction.value = day < cursor.value ? -1 : 1
+  cursor.value = new Date(day.getFullYear(), day.getMonth(), 1)
+  selected.value = startOfDay(day)
+}
 
 function shiftMonth(delta: 1 | -1) {
   direction.value = delta
@@ -350,23 +358,28 @@ function onPointerUp(e: PointerEvent) {
         </p>
       </section>
 
-      <section v-for="d in nearby" :key="d.kind" class="text-muted-foreground space-y-2 border-t pt-4">
-        <h3 class="flex items-baseline justify-between gap-3 text-sm font-semibold">
-          {{ d.kind }} · {{ d.label }}
-          <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ d.comps.length }}</span>
-        </h3>
-        <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem] [&_.text-foreground]:text-muted-foreground">
-          <CompetitionDateRow
-            v-for="{ competition, rail, note } in railed(d.comps)"
-            :key="competition.id"
-            :competition="competition"
-            :to="props.linkTo(competition)"
-            :alerts="favorites.isFavorite('competitions', competition.id)"
-            :rail="rail"
-            :note="note"
-          />
-        </ul>
-      </section>
+      <nav v-if="nearby.length" aria-label="More dates" class="grid grid-cols-2 gap-x-4 gap-y-2 border-t pt-4">
+        <h3 class="text-muted-foreground col-span-2 text-sm font-semibold">More dates</h3>
+        <div
+          v-for="d in nearby"
+          :key="d.kind"
+          :class="['flex flex-col', d.kind === 'Next' ? 'col-start-2 items-end' : 'items-start']"
+        >
+          <Button
+            variant="plain"
+            :class="d.kind === 'Next' ? '-mr-4' : '-ml-4'"
+            :aria-label="`${d.kind} event date: ${formatLongDate(d.date.getTime())}, ${d.comps.length} competition${d.comps.length === 1 ? '' : 's'}`"
+            @click="goToDay(d.date)"
+          >
+            <ChevronLeft v-if="d.kind === 'Previous'" aria-hidden="true" />
+            {{ d.label }}
+            <ChevronRight v-if="d.kind === 'Next'" aria-hidden="true" />
+          </Button>
+          <span class="text-muted-foreground text-sm tabular-nums">
+            {{ d.comps.length }} {{ d.comps.length === 1 ? 'event' : 'events' }}
+          </span>
+        </div>
+      </nav>
     </div>
     </Transition>
   </div>
