@@ -26,7 +26,7 @@ Actions:
 | Action | Additional fields | Response |
 | --- | --- | --- |
 | `inspect` | None | Public competition/organisation snapshots and `registrationTargetId`; requires current admin rights to both. |
-| `claim` | None; human `sub` | Establishes an ownership binding after checking current competition, organisation and primary permissions. Returns `registrationTargetId`, `bindingId`, `revision` (initially zero). Repeating the same claim preserves its binding. |
+| `claim` | None; human `sub` | Public competition/organisation snapshots plus `registrationTargetId`, `bindingId`, `revision` (initially zero). Checks current competition, organisation and primary permissions. Repeating the same claim preserves its binding. |
 | `snapshot` | None | Only public competition/organisation snapshots, for scheduled refresh. No participant or account information is returned. |
 | `registration` | `registrationURL`, nullable `registrationStart`/`registrationEnd` in milliseconds, increasing integer `revision`; ongoing service requests use `authority: service`, `sub: entries-service`, and `bindingId` | `registrationTargetId`, applied `revision`, `applied`. |
 | `unlink` | Human `sub`, matching `bindingId` | Rechecks live permission, clears registration and matching ownership copies, returns `released: true`. Repeated release is harmless; another owner/binding is refused. |
@@ -60,7 +60,8 @@ Every attempt rereads current authority. The receiver must retain the latest `ch
 Ordinary tool unlink only revokes sessions. Account deletion has a distinct signed audience, `entries:delete`,
 with `sub` and `deletedAt`, sent to Entries' `deleteScotDanceAccount`. The `auth-hooks` codebase records actual
 Firebase Auth deletion events in `entries:accountDeletions/{uid}`. `deliverEntriesAccountDeletion` sends newly
-queued requests; `retryEntriesAccountDeletion` retries pending requests every five minutes. Completed requests
+queued requests; `retryEntriesAccountDeletion` reads at most 100 indexed pending requests every five minutes,
+with a 45-second work budget. Completed requests
 retain a small server-only acknowledgement so repeated Auth events cannot start a different deletion.
 
 Entries keeps a permanent server-only `deletedAccounts/{uid}` tombstone to block stale sign-in passes and
@@ -113,7 +114,8 @@ The script sets its source URL only in its own process, leaving Entries' sample 
 inspection, shared registration publication, atomic dance seeding, second-send refusal, and actual membership
 grant/removal triggers. Fixtures have unique IDs and are removed in `finally`; credentials are never printed.
 Install the isolated Auth hook with Node 22 and `npm --prefix auth-hooks ci`. The extended test also covers
-human claim, service publishing after the editor loses access, unlink/reconnect replay protection, and the real
+the actual Entries link/refresh services consuming the claim snapshot, service publishing after the editor loses
+access, unlink/reconnect replay protection, and the real
 Auth hook handler → durable queue → signed receiver deletion path. It invokes the Auth event handler directly
 so it can run against an emulator stack started before the new codebase was registered. Set
 `ENTRIES_ACCOUNT_DELETE_URL=http://127.0.0.1:5201/demo-entries/us-central1/deleteScotDanceAccount` on a restarted

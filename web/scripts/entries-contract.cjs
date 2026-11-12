@@ -11,7 +11,7 @@ process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9399';
 process.env.FIREBASE_DATABASE_EMULATOR_HOST = '127.0.0.1:9009';
 process.env.FUNCTIONS_EMULATOR = 'true';
 process.env.GCLOUD_PROJECT = 'firebase-scotdance';
-const { scotDanceSource } = require(entries + '/dist/entryService.js');
+const { scotDanceSource, createEntriesService } = require(entries + '/dist/entryService.js');
 const entriesRequire = require('node:module').createRequire(entries + '/dist/entryService.js');
 const { initializeApp } = entriesRequire('firebase-admin/app');
 const { getFirestore } = entriesRequire('firebase-admin/firestore');
@@ -23,6 +23,7 @@ const sourceDb = entriesRequire('firebase-admin/database').getDatabase(initializ
 const deletionHook = require('../../auth-hooks').entriesAccountDeleted;
 const { sendEntriesAccountDeletion } = require('../../functions/dist/functions/src/entriesBridge');
 const source = scotDanceSource(() => secret, true);
+const entriesService = createEntriesService({ db: firestore, source, emulator: true, payments: () => { throw new Error('Contract test must not call Stripe'); } });
 const id = 'contract-' + require('node:crypto').randomUUID();
 const uid = id + '-user', org = id + '-org', comp = id + '-sat', main = id + '-sun', link = id + '-link';
 async function db(method, relative, data) {
@@ -46,6 +47,7 @@ async function membership(allowed) {
  try {
   await firestore.doc(`users/${uid}`).set({ email: '', name: 'Contract organiser' });
   await auth.createUser({ uid });
+  await firestore.doc(`organisations/${org}`).set({ name: 'Isolated contract association', passFeeOn: false });
   await db('PATCH', '', {
    [`competitions/${comp}`]: { name: 'Isolated Entries contract Saturday', date: '2027-07-05', listed: false },
    [`competitions/${main}`]: { name: 'Isolated Entries contract Sunday', date: '2027-07-06', listed: false },
@@ -58,7 +60,18 @@ async function membership(allowed) {
   assert.equal(inspected.organisation.image, 'https://example.test/logo.png');
   console.log('PASS actual Entries signer -> ScotDance inspect and public snapshot');
   const registration = { registrationURL: `http://localhost:5290/enter/${org}/${comp}`, registrationStart: 1800000000000, registrationEnd: 1800100000000, revision: 1 };
-  const claimed = await source(uid, org, comp, 'claim');
+  await membership(true);
+  await entriesService.linkCompetition({ organisation: org, competition: comp }, uid);
+  const linked = (await firestore.doc(`organisations/${org}/competitions/${comp}`).get()).data();
+  assert.equal(linked.name, 'Isolated Entries contract Saturday');
+  assert.ok(linked.bindingId);
+  await db('PUT', `competitions/${comp}/name`, 'Refreshed contract competition');
+  const refreshed = await entriesService.refreshCompetition({ organisation: org, competition: comp }, uid);
+  assert.equal(refreshed.competition.name, 'Refreshed contract competition');
+  assert.equal((await firestore.doc(`organisations/${org}`).get()).data().image, 'https://example.test/logo.png');
+  const claimed = await source(uid, org, comp, 'inspect');
+  assert.equal(claimed.bindingId, linked.bindingId);
+  console.log('PASS actual Entries link and refresh services consume the complete source claim snapshot');
   await db('DELETE', `users:permissions/${uid}`);
   await assert.rejects(() => source(uid, org, comp, 'registration', registration));
   await source('entries-service', org, comp, 'registration', { ...registration, authority: 'service', bindingId: claimed.bindingId });
@@ -131,6 +144,7 @@ async function membership(allowed) {
   await firestore.recursiveDelete(firestore.doc(`organisations/${org}`));
   await firestore.recursiveDelete(firestore.doc(`users/${uid}`));
   await firestore.doc(`deletedAccounts/${uid}`).delete();
+  await firestore.doc(`competitions/${comp}`).delete();
   await auth.deleteUser(uid).catch(() => {});
  }
 })().then(() => { console.log('PASS isolated fixture cleanup'); process.exit(0); }, error => { console.error(error.message); process.exit(1); });
