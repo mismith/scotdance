@@ -106,6 +106,18 @@ describe('Entries registration ownership', () => {
     expect(tree.read('competitions/sun/registrationEnd')).toBe(1800200000000)
   })
 
+  it('refuses a publication whose target moved while its transaction was pending', async () => {
+    const { call, tree } = setup()
+    await call(registration())
+    tree.duringTransaction = (path) => {
+      if (path !== 'competitions/sat') return
+      tree.duringTransaction = null
+      tree.write({ 'competitions/sat/entriesRegistration/targetId': 'sun' })
+    }
+    await expect(call(registration(2))).rejects.toThrow(/destination changed/)
+    expect(tree.read('competitions/sat/entriesRegistration')).toMatchObject({ targetId: 'sun', revision: 1 })
+  })
+
   it('publishes atomically from a cold transaction and ignores retries and late revisions', async () => {
     const { call, tree } = setup()
     expect(await call(registration(2))).toMatchObject({ applied: true, registrationTargetId: 'sat', revision: 2 })

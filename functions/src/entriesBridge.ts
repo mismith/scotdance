@@ -106,6 +106,10 @@ export function getOnEntriesCompetition(secret: () => string, db: any) {
         if (!current) return null; // A cold Admin SDK cache starts at null; allow its server retry.
         if (!current.date) { problem = 'The competition is no longer available.'; return undefined; }
         const owner = current.entriesRegistration;
+        if (owner && owner.targetId !== target) {
+          problem = 'The shared registration destination changed. Refresh and publish again.';
+          return undefined;
+        }
         if (owner && (owner.competitionId !== p.competitionId || owner.organisationId !== p.organisationId)) {
           problem = 'These shared registration settings already belong to another Entries competition. Stop sharing registration to configure it separately.';
           return undefined;
