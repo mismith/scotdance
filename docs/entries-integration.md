@@ -159,3 +159,23 @@ current-authority read make repeated deliveries safe.
 
 These checks verify the ScotDance side of the release. Entries payment, payout and Splits acceptance evidence
 is maintained with those applications. The legacy frontend was not replaced.
+
+## Lifecycle repair released 2026-11-12
+
+- Deployed the binding/claim/unlink repair in `entriesCompetition`, `linkCompetitions`,
+  `competitionDetailsSync` and `competitionDeleted`, together with the protected ownership rules.
+  The claim response includes public snapshots, as verified through the actual Entries link and refresh services.
+- After the Entries deletion receiver was deployed and reachable, released `deliverEntriesAccountDeletion`,
+  `retryEntriesAccountDeletion`, the indexed pending queue and the separate Node 22
+  `auth-hooks:entriesAccountDeleted`. No frontend deployment was needed.
+- The full source regression checkpoint passed 108 files / 1,745 tests; the final bridge suite passed 21 tests,
+  including the shared Auth-hook queuer and bounded retries. Functions lint/build, web type checking and
+  real database ownership-rule checks passed. The privacy helper's three tests cover retained paid roster
+  exports, removal of private data/correction history, failed Auth deletion and completed-request replay.
+- The extended cross-app emulator test passed actual link/refresh, publication after the editor loses access,
+  idempotent unlink, old-binding rejection after reconnect, membership changes and signed account deletion.
+- An isolated production check created no-email temporary Auth accounts and a synthetic saved dancer, then
+  deleted the source Auth account. The actual Auth event automatically produced a pending queue record and
+  reached completed acknowledgements on both services. Entries' private profile, saved birthday and Auth
+  account were gone. All temporary documents, accounts and acknowledgements were cleaned up. No orders,
+  messages, real organisations or real competition records were involved in this check.
