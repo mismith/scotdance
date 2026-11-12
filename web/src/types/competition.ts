@@ -25,6 +25,8 @@ export interface Competition {
   registrationURL?: string
   registrationStart?: number
   registrationEnd?: number
+  /** Server-owned registration settings, copied with linked registration fields. */
+  entriesRegistration?: { competitionId: string; organisationId: string; targetId: string; revision: number }
   /** Keyed by push id (old and new admin alike). */
   links?: Record<string, CompetitionLink>
   sobhd?: string

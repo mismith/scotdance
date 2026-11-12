@@ -65,6 +65,47 @@ test.afterAll(async () => {
   await dbRemove('dancers:hidden/-RulesHide')
 })
 
+test('Entries owns registration fields even when clients delete fields or remove the ownership marker', async () => {
+  const path = `competitions/${pub}`
+  const owner = { competitionId: pub, organisationId: 'entries-org', targetId: pub, revision: 1 }
+  await refused('an organiser forges Entries ownership', as(org, 'PUT', `${path}/entriesRegistration`, owner))
+  await dbSet(`${path}/entriesRegistration`, owner)
+  await dbSet(`${path}/registrationURL`, 'https://entries.scotdance.app/enter/entries-org/example')
+  await dbSet(`${path}/registrationStart`, 1800000000000)
+  await dbSet(`${path}/registrationEnd`, 1800100000000)
+  const bot = await assistant(org)
+  try {
+    for (const who of [org, bot]) {
+      await allowed('unrelated competition edits remain possible', as(who, 'PATCH', path, { description: 'An unchanged registration' }))
+      await refused('change registration URL', as(who, 'PATCH', path, { registrationURL: 'https://other.test' }))
+      await refused('delete registration URL', as(who, 'DELETE', `${path}/registrationURL`))
+      await refused('delete registration dates', as(who, 'PATCH', path, { registrationStart: null, registrationEnd: null }))
+      await refused('remove ownership', as(who, 'DELETE', `${path}/entriesRegistration`))
+      await refused('change ownership', as(who, 'PATCH', `${path}/entriesRegistration`, { competitionId: 'other' }))
+      await refused('remove lock and overwrite together', as(who, 'PATCH', '', { [`${path}/entriesRegistration`]: null, [`${path}/registrationURL`]: 'https://other.test' }))
+    }
+    await dbSet(`users:permissions/${org.uid}/admin`, true)
+    await refused('system-admin client deletes a managed date', as(org, 'DELETE', `${path}/registrationEnd`))
+  } finally {
+    await dbRemove(`users:permissions/${org.uid}/admin`)
+    for (const field of ['entriesRegistration', 'registrationURL', 'registrationStart', 'registrationEnd', 'description']) await dbRemove(`${path}/${field}`)
+  }
+})
+
+test('an Entries submitter can watch their own approval but cannot forge readiness or another submitter', async () => {
+  const submission = uid('entries-submission')
+  const path = `competitions:submissions/${submission}`
+  const value = { competition: { name: 'Entries Highland Competition', date: '2027-07-05', location: 'Calgary' }, submittedBy: parent.uid, returnTo: 'entries' }
+  try {
+    await refused('forge completed review', as(parent, 'PUT', path, { ...value, entriesReady: true }))
+    await refused('forge another submitter', as(parent, 'PUT', path, { ...value, submittedBy: stranger.uid }))
+    await allowed('submit for Entries', as(parent, 'PUT', path, value))
+    await allowed('read own approval progress', as(parent, 'GET', path))
+    await refused('read another organiser’s submission', as(stranger, 'GET', path))
+    await refused('mark own submission ready', as(parent, 'PATCH', path, { entriesReady: true }))
+  } finally { await dbRemove(path) }
+})
+
 test('public reads: published data and profiles yes, private data and other people no', async () => {
   await allowed('signed-out read of a published competition’s data', as(null, 'GET', `competitions:data/${pub}/dancers`))
   for (const section of ['groups', 'categories', 'dances', 'platforms', 'schedule', 'draws', 'results', 'points', 'staff'])

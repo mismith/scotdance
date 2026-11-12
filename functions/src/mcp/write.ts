@@ -123,7 +123,7 @@ export class Work {
 export interface Loaded {
   state: CompetitionState;
   /** Parts of a linked competition that follow the primary, by name */
-  locks: { sync: Record<string, boolean>; primary: string };
+  locks: { sync: Record<string, boolean>; primary: string; entries?: boolean };
 }
 
 /** The competition as the planners need it, read as the person (and checked to be one they manage) */
@@ -135,7 +135,7 @@ export async function loadState(session: Session, competition: string, sections:
     readLinkLocks(session, competition),
   ]);
   if (!info || typeof info !== 'object') throw new ToolError(`There is no competition ${competition}.`);
-  return { state: { info: info as RawInfo, data: parts as RawData }, locks };
+  return { state: { info: info as RawInfo, data: parts as RawData }, locks: { ...locks, entries: !!(info as Record<string, unknown>).entriesRegistration } };
 }
 
 /** Which linked part (ADR 0007) each field of the competition's record belongs to */
@@ -153,6 +153,7 @@ export function lockGuard(competition: string, locks: Loaded['locks']) {
     const info = `competitions/${competition}/`;
     if (path.startsWith(info)) part = FIELD_PART[path.slice(info.length).split('/')[0]];
     else if (path.startsWith(`competitions:data/${competition}/staff`)) part = 'staff';
+    if (part === 'registration' && locks.entries) return 'Registration is managed in Entries. Change its link and dates there.';
     if (!part || !locks.sync[part]) return null;
     return (
       `The ${SYNC_PARTS[part] ?? part} of this competition is shared from ${locks.primary}, so it can only be changed there. `

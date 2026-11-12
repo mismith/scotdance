@@ -3,6 +3,7 @@
  *
  *   <script src="https://scotdance.app/embed.js"></script>
  *   const sent = await ScotDance.send({ source: 'Splits', name: 'entries.csv', text: csv })
+ *   // Add competitionId when the destination is already known; its permission is checked in the sheet.
  *   // → { sent: true, competitionId, competitionName, url } or { sent: false }
  *
  *   const me = await ScotDance.signIn({ audience: 'challenge' })

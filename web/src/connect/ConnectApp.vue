@@ -140,8 +140,11 @@ const lists = computed(() =>
     { label: 'Earlier', rows: earlier.value },
   ].filter((l) => l.rows.length),
 )
+const destination = computed(() => item.value?.competitionId
+  ? competitions.value?.find((c) => c.id === item.value?.competitionId) ?? null
+  : null)
 
-type Step = 'loading' | 'signin' | 'continue' | 'pick' | 'none' | 'sent' | 'unreadable'
+type Step = 'loading' | 'signin' | 'continue' | 'pick' | 'destination' | 'unavailable' | 'none' | 'sent' | 'unreadable'
 const sent = ref<{ name: string; url: string; tabOpened: boolean } | null>(null)
 const step = computed<Step>(() => {
   if (unreadable.value) return 'unreadable'
@@ -150,6 +153,7 @@ const step = computed<Step>(() => {
   if (!auth.isSignedIn || handingOff.value) return 'signin'
   if (audience.value) return 'continue'
   if (!competitions.value) return 'loading'
+  if (item.value?.competitionId) return destination.value ? 'destination' : 'unavailable'
   return competitions.value.length ? 'pick' : 'none'
 })
 
@@ -163,6 +167,10 @@ const title = computed(() => {
       return 'Sign in with ScotDance.app'
     case 'pick':
       return 'Which competition?'
+    case 'destination':
+      return `Send to ${destination.value?.name}`
+    case 'unavailable':
+      return 'This competition is unavailable'
     case 'sent':
       return `Sent to ${sent.value?.name}`
     case 'unreadable':
@@ -181,14 +189,20 @@ async function send(c: Option) {
   sending.value = c.id
   sendError.value = null
   try {
+    // The sheet may have been open while its admin was removed.
+    if ((await get(dataRef(`users:permissions/${auth.uid}/competitions/${c.id}`))).val() !== true) {
+      throw new Error('permission-denied')
+    }
     const key = await sendToInbox(auth.uid, { ...item.value, competitionId: c.id })
     const url = `${location.origin}/competitions/${encodeURIComponent(c.id)}/manage/dancers/import?inbox=${encodeURIComponent(key)}`
     const tab = window.open(url, '_blank')
     if (tab) tab.opener = null
     sent.value = { name: c.name, url, tabOpened: !!tab }
     tell({ type: 'sent', competitionId: c.id, competitionName: c.name, url })
-  } catch {
-    sendError.value = 'That didn’t send. Check your connection and try again.'
+  } catch (error) {
+    sendError.value = error instanceof Error && /permission/.test(error.message)
+      ? 'You no longer manage this competition. Sign in with an account that does.'
+      : 'That didn’t send. Check your connection and try again.'
   } finally {
     sending.value = null
   }
@@ -280,6 +294,19 @@ watch(
           Use another account
         </button>
       </div>
+
+      <div v-else-if="step === 'destination' && destination" class="space-y-4">
+        <p class="text-muted-foreground text-callout">The dancers go to Import dancers, where you check them before saving.</p>
+        <Button variant="primary" size="lg" block :busy="!!sending" @click="send(destination)">Review dancers in {{ destination.name }}</Button>
+        <p v-if="sendError" class="text-destructive text-callout" role="alert">{{ sendError }}</p>
+        <button type="button" class="text-primary press text-callout font-semibold" @click="auth.signOut()">Use another account</button>
+      </div>
+
+      <EmptyState
+        v-else-if="step === 'unavailable'" size="inline" scott title="This competition is unavailable"
+        description="It may have been removed, or this account no longer manages it. Your list has not been sent elsewhere.">
+        <Button variant="primary" @click="auth.signOut()">Use another account</Button>
+      </EmptyState>
 
       <div v-else-if="step === 'pick'" class="space-y-5">
         <section v-for="list in lists" :key="list.label" class="space-y-1.5">

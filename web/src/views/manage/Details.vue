@@ -408,7 +408,22 @@ async function deleteCompetition() {
         </template>
       </section>
 
-      <section v-if="shared('registration')" class="space-y-4">
+      <section v-if="c.entriesRegistration" class="space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-heading">Registration</h2>
+          <a
+            :href="`https://entries.scotdance.app/organise?organisation=${encodeURIComponent(c.entriesRegistration.organisationId)}&competition=${encodeURIComponent(c.entriesRegistration.competitionId)}`"
+            target="_blank" rel="noopener" class="text-primary press inline-flex min-h-11 items-center gap-2 text-sm font-semibold">
+            Managed in Entries <ExternalLink class="size-4" />
+          </a>
+        </div>
+        <p class="text-callout break-all">{{ c.registrationURL ? formatHumanURL(c.registrationURL) : 'No registration link' }}</p>
+        <dl class="grid gap-3 sm:grid-cols-2">
+          <div><dt class="text-muted-foreground text-sm">Opens</dt><dd>{{ when(c.registrationStart) || 'Not set' }}</dd></div>
+          <div><dt class="text-muted-foreground text-sm">Closes</dt><dd>{{ when(c.registrationEnd) || 'Not set' }}</dd></div>
+        </dl>
+      </section>
+      <section v-else-if="shared('registration')" class="space-y-4">
         <h2 class="text-heading">Registration</h2>
         <SharedValue label="Registration link" part="registration" :value="c.registrationURL ? formatHumanURL(c.registrationURL) : null" />
         <div class="grid gap-4 sm:grid-cols-2">
@@ -508,7 +523,7 @@ async function deleteCompetition() {
 
       <Transition :css="false" @enter="grow" @leave="shrink">
         <div v-if="(!registrationShown && !shared('registration')) || (!addingLink && !shared('links'))" class="flex flex-wrap gap-2">
-          <Button v-if="!registrationShown && !shared('registration')" :disabled="!canEdit" @click="openRegistration">
+          <Button v-if="!registrationShown && !shared('registration') && !c.entriesRegistration" :disabled="!canEdit" @click="openRegistration">
             <Plus /> Add registration details
           </Button>
           <Button v-if="!addingLink && !shared('links')" :disabled="!canEdit" @click="openLinkForm">

@@ -44,6 +44,13 @@ describe('readItem', () => {
     expect(readItem({ ...item, source: '  Splits ', extra: 'dropped' })).toEqual(item)
   })
 
+  it('preserves a valid preselected competition and rejects path injection', () => {
+    expect(readItem({ ...item, competitionId: '-Saturday' })).toEqual({ ...item, competitionId: '-Saturday' })
+    for (const competitionId of ['', '../other', 'one/two', 42, 'x'.repeat(129)]) {
+      expect(readItem({ ...item, competitionId })).toBeNull()
+    }
+  })
+
   it('turns away anything else', () => {
     expect(readItem(null)).toBeNull()
     expect(readItem({ ...item, kind: 'results' })).toBeNull()

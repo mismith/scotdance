@@ -22,7 +22,7 @@ type FieldPart = Exclude<Part, 'staff'>;
 export const PART_FIELDS: Record<FieldPart, string[]> = {
   about: ['description', 'image'],
   venue: ['venue', 'space', 'address', 'location', 'lat', 'lng', 'country', 'region', 'locality'],
-  registration: ['registrationURL', 'registrationStart', 'registrationEnd'],
+  registration: ['registrationURL', 'registrationStart', 'registrationEnd', 'entriesRegistration'],
   links: ['links'],
   // Together, so a copy can never be published without being listed.
   visibility: ['listed', 'published'],
@@ -253,6 +253,11 @@ async function planPart(db: Db, from: string, to: string, part: Part, records: M
   };
   if (part !== 'staff') {
     const [src, dst] = await Promise.all([record(from), record(to)]);
+    if (part === 'registration' && dst.entriesRegistration
+      && (!src.entriesRegistration || dst.entriesRegistration.competitionId !== src.entriesRegistration.competitionId
+        || dst.entriesRegistration.organisationId !== src.entriesRegistration.organisationId)) {
+      return { part, updates: {}, replaces: true, blocked: 'This competition has its own Entries registration. It cannot share another competition’s registration settings.' };
+    }
     const updates: Updates = {};
     for (const f of PART_FIELDS[part]) {
       if (!same(src[f], dst[f])) updates[`competitions/${to}/${f}`] = src[f] ?? null;
@@ -343,6 +348,13 @@ export async function takeOut(db: Db, competitionId: string) {
         for (const id of left) updates[`competitionLinks:sync/${id}`] = null;
       }
     }
+  }
+  // An inherited Entries marker belongs to the old primary. Keeping the
+  // copied dates is useful; keeping its edit lock would make them impossible to own separately.
+  for (const path of Object.keys(updates).filter((p) => p.startsWith('competitionLinks:sync/') && updates[p] === null)) {
+    const id = path.split('/')[1];
+    const owner = await val(db, `competitions/${id}/entriesRegistration`);
+    if (owner && owner.targetId !== id) updates[`competitions/${id}/entriesRegistration`] = null;
   }
   await db.update(updates);
   return link;
@@ -521,7 +533,13 @@ export function getOnLink(db: Db) {
       const planned = on ? await plansFor(db, link.primary, changing.map((id) => ({ competitionId: id, parts: [part] }))) : [];
       if (dryRun) return { primary: link.primary, targets: preview(planned) };
       const updates: Updates = {};
-      for (const id of changing) updates[`competitionLinks:sync/${id}/${part}`] = on ? true : null;
+      for (const id of changing) {
+        updates[`competitionLinks:sync/${id}/${part}`] = on ? true : null;
+        if (!on && part === 'registration') {
+          const owner = await val(db, `competitions/${id}/entriesRegistration`);
+          if (owner && owner.targetId !== id) updates[`competitions/${id}/entriesRegistration`] = null;
+        }
+      }
       applyOrRefuse(planned, updates);
       if (Object.keys(updates).length) await db.update(updates);
       return { linkId: link.linkId, changed: changing.length };

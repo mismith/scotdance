@@ -101,6 +101,33 @@ test('already signed in to ScotDance.app, it goes straight to the competitions',
   await expect(s.getByText(`Signed in as ${email}.`)).toBeVisible()
 })
 
+test('Entries destination reaches the right competition and preserves the import preview', async ({ page, baseURL }) => {
+  const { competition, email, uid: me } = await organiser()
+  await signIn(page, email)
+  const csv = 'Number,Full name,Location,Studio\nBeginner 7 Years & Under\n101,Ava Ross,,Thistle School\n'
+  await openTool(page, baseURL!, `ScotDance.send(${JSON.stringify({ source: 'Splits', name: 'entries.csv', text: csv, competitionId: competition.id })})`)
+  const s = sheet(page)
+  await expect(s.getByRole('heading', { name: `Send to ${competition.name}` })).toBeVisible()
+  await expect(s.getByRole('heading', { name: 'Which competition?' })).toHaveCount(0)
+  const popupPromise = page.waitForEvent('popup')
+  await s.getByRole('button', { name: `Review dancers in ${competition.name}` }).click()
+  const popup = await popupPromise
+  await expect(popup).toHaveURL(new RegExp(`/competitions/${competition.id}/manage/dancers/import\\?inbox=`))
+  await expect(popup.getByText('Ava Ross')).toBeVisible({ timeout: 15_000 })
+  await expect(popup.getByRole('button', { name: /Import 1 dancer/ })).toBeVisible()
+  await dbRemove(`users:inbox/${me}`)
+})
+
+test('a destination this account cannot manage is refused rather than silently redirected', async ({ page, baseURL }) => {
+  const { email, uid: me } = await organiser()
+  await signIn(page, email)
+  await openTool(page, baseURL!, `ScotDance.send(${JSON.stringify({ source: 'Splits', name: 'entries.csv', text: CSV, competitionId: 'not-managed' })})`)
+  const s = sheet(page)
+  await expect(s.getByRole('heading', { name: 'This competition is unavailable' }).first()).toBeVisible()
+  await expect(s.getByRole('heading', { name: 'Which competition?' })).toHaveCount(0)
+  expect(await dbGet(`users:inbox/${me}`)).toBeNull()
+})
+
 test('with no competitions, says to add one first', async ({ page, baseURL }) => {
   const email = `${uid('org')}@example.test`
   await ensureUser(email)

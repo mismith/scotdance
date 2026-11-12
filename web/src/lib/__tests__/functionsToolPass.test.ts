@@ -122,6 +122,19 @@ describe('toolPass for Entries', () => {
   it('tells no other tool', async () => {
     expect(await payload('binder')).not.toHaveProperty('organisations')
     expect(await payload('challenge')).not.toHaveProperty('organisations')
+    expect(await payload('binder')).not.toHaveProperty('competitions')
+    expect(await payload('challenge')).not.toHaveProperty('competitions')
+  })
+
+  it('includes upcoming managed competitions, including unlisted ones, but not past or deleted records', async () => {
+    const tree = memoryDb({ ...data(),
+      'users:permissions/u1/competitions': { future: true, past: true, gone: true, stranger: false },
+      'competitions/future': { name: 'Future Highland Games', date: '2099-07-05', listed: false },
+      'competitions/past': { name: 'Old Games', date: '2000-01-01' },
+      'competitions/stranger': { name: 'Other Games', date: '2099-07-06' },
+    })
+    const { pass } = await getOnToolPass(() => SECRET, tree)({ audience: 'entries' }, { auth })
+    expect(decode(pass.split('.')[1]!).competitions).toEqual([{ id: 'future', name: 'Future Highland Games', date: '2099-07-05' }])
   })
 })
 

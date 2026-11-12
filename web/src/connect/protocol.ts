@@ -25,6 +25,8 @@ export interface ToolItem {
   name: string
   /** CSV, read like any pasted or chosen list. */
   text: string
+  /** A tool may already know the destination; the connect page still checks permission. */
+  competitionId?: string
 }
 
 /** What the database rules accept: 1 MB of text, and short labels. */
@@ -57,7 +59,10 @@ export function readItem(value: unknown): ToolItem | null {
   const label = (s: unknown) => typeof s === 'string' && s.trim().length > 0 && s.length <= MAX_LABEL
   if (v.kind !== 'dancers' || !label(v.source) || !label(v.name)) return null
   if (typeof v.text !== 'string' || !v.text.trim() || v.text.length > MAX_TEXT) return null
-  return { kind: 'dancers', source: (v.source as string).trim(), name: (v.name as string).trim(), text: v.text }
+  if (v.competitionId !== undefined && (typeof v.competitionId !== 'string' || !/^[^.#$/[\]]{1,128}$/.test(v.competitionId)
+    || [...v.competitionId].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127))) return null
+  return { kind: 'dancers', source: (v.source as string).trim(), name: (v.name as string).trim(), text: v.text,
+    ...(typeof v.competitionId === 'string' && { competitionId: v.competitionId }) }
 }
 
 /**
@@ -86,7 +91,7 @@ export const TOOLS = {
     hostname: 'entries.scotdance.app',
     serves: (hostname: string) => hostname === 'entries.scotdance.app',
     /** What its pass says beyond a name and email (functions/src/toolPass.ts), as the sign-in sheet puts it */
-    alsoGets: 'the organisations you run',
+    alsoGets: 'the organisations and upcoming competitions you run',
   },
 } as const
 export type Audience = keyof typeof TOOLS

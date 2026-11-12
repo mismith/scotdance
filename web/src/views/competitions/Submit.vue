@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { endAt, get, orderByChild, query, startAt } from 'firebase/database'
+import { endAt, get, onValue, orderByChild, query, startAt } from 'firebase/database'
 import { useIntersectionObserver } from '@vueuse/core'
 import { Check, ChevronLeft, ChevronRight, Plus, Send } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
@@ -53,6 +53,7 @@ import {
 import { type OrganisationListItem } from '@/types/organisation'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
+import { entriesReturnUrl } from '@shared/entriesReturn'
 
 // Organisers ask for their competition to be added, one question at a time
 // (ADR 0010): an intro, then a slide per question, each with one button at
@@ -66,6 +67,7 @@ const auth = useAuthStore()
 const me = useMeStore()
 const filter = useLocationFilter()
 const router = useRouter()
+const returnToEntries = computed(() => router.currentRoute?.value.query.returnTo === 'entries')
 
 const blank = () => ({
   country: null as string | null,
@@ -561,6 +563,7 @@ async function send() {
         // Linked with it once both are approved (functions/src/submissions.ts).
         ...(linkedTo.value && linking.value && { linkedTo: linkedTo.value.id }),
         submitted: new Date().toISOString(),
+        ...(returnToEntries.value && { returnTo: 'entries', submittedBy: auth.uid }),
         // Emails about it are v4's, linking back here (functions/src/utility/emailModel.ts).
         origin: window.location.origin,
       },
@@ -594,6 +597,16 @@ function another() {
 // venue, organisations and you, linked with this one once both are approved.
 // One submission is still one competition.
 const justSent = ref<{ id: string; name: string; date: string; known: string | null } | null>(null)
+watch(() => sent.value && justSent.value?.id, (id, _before, cleanup) => {
+  if (!id || !returnToEntries.value) return
+  const stop = onValue(dataRef(`competitions:submissions/${id}`), (snapshot) => {
+    const value = snapshot.val()
+    if (value?.entriesReady === true && typeof value.competitionId === 'string') {
+      window.location.assign(entriesReturnUrl(value.competitionId, import.meta.env.VITE_ENTRIES_ORIGIN || undefined))
+    }
+  }, () => { /* Approval email remains the return path if this tab loses its connection. */ })
+  cleanup(stop)
+})
 const nextDay = computed(() => (justSent.value?.date ? addDays(justSent.value.date, 1) : null))
 const nextDayLabel = computed(() =>
   nextDay.value ? parseDate(nextDay.value).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) : '',
@@ -921,7 +934,7 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
             <SentMark class="mx-auto size-14" />
             <h1 class="text-display">Sent</h1>
             <p class="text-muted-foreground mx-auto max-w-md text-base text-pretty">
-              Thanks. It’s usually approved overnight. You’ll get an email at {{ me.email }} with a link to start adding the details.
+              Thanks. It’s usually approved overnight. You’ll get an email at {{ me.email }} with a link {{ returnToEntries ? 'back to Entries' : 'to start adding the details' }}.
             </p>
             <p class="text-muted-foreground mx-auto max-w-md text-sm">If it doesn’t arrive, check your junk folder.</p>
             <!-- Asked every time: a weekend's two (or a week's seven) go together. -->

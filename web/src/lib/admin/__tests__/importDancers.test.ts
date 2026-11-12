@@ -713,6 +713,23 @@ describe('duets, trios and groups (ADR 0012)', () => {
     expect(headed.dancers.map((d) => d.studio)).toEqual([undefined, undefined, 'Thistle School'])
   })
 
+  it('round trips Splits headed programs with full names, missing locations and studios', () => {
+    const result = parseGrid([
+      ['Number', 'Full name', 'Location', 'Studio'], ['Beginner 8 & Under'],
+      ['101', 'Isla Grant', '', 'Thistle School'], ['102', 'Mairi Shaw', 'Calgary', 'House of Glen'],
+    ])!
+    expect(result.layout).toBe('program')
+    expect(result.dancers).toMatchObject([
+      { number: '101', firstName: 'Isla', lastName: 'Grant', location: '', studio: 'Thistle School', category: 'Beginner', group: '8 & Under' },
+      { number: '102', firstName: 'Mairi', lastName: 'Shaw', location: 'Calgary', studio: 'House of Glen' },
+    ])
+    const separate = parseGrid([
+      ['Number', 'First name', 'Last name', 'Location', 'Studio'], ['Beginner 8 & Under'],
+      ['101', 'Isla', '', '', 'Thistle School'],
+    ])!
+    expect(separate.dancers[0]).toMatchObject({ firstName: 'Isla', lastName: '', location: '', studio: 'Thistle School' })
+  })
+
   it('leaves a group’s studio and location alone when the file has none', () => {
     const tree: Tree = {
       categories: { c: { name: 'Choreography Duet' } },

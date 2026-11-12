@@ -26,6 +26,7 @@ import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
 import { runtimeConfig, geocodingApiKey, toolPassSecret } from './utility/config';
 import { UNLINK_URLS, getOnToolPass, getOnUnlinkTool } from './toolPass';
+import { getOnEntriesCompetition, getOnEntriesMembership, retryEntriesMemberships } from './entriesBridge';
 import { database, https, request } from './utility/triggers';
 import { mcpApp } from './mcp/app';
 import * as AssistantConnections from './oauth/callables';
@@ -117,6 +118,17 @@ export const linkCompetitions = https().onCall(Links.getOnLink(appConfig.db));
 
 // "Sign in with ScotDance.app" for its tools on other projects (Challenge; toolPass.ts, ADR 0015).
 export const toolPass = https({ secrets: [toolPassSecret] }).onCall(getOnToolPass(() => toolPassSecret.value(), appConfig.db));
+export const entriesCompetition = https({ secrets: [toolPassSecret] }).onCall(getOnEntriesCompetition(() => toolPassSecret.value(), appConfig.db));
+const entriesMembershipUrl = () => isEmulator()
+  ? process.env.ENTRIES_MEMBERSHIP_URL || null
+  : 'https://us-central1-scotdance-entries.cloudfunctions.net/syncScotDanceMembership';
+export const entriesOrganisationMembership = database({ secrets: [toolPassSecret], retry: true })
+  .ref(`/${env}/organisations:permissions/{organisationId}/users/{uid}`)
+  .onWrite(getOnEntriesMembership(() => toolPassSecret.value(), appConfig.db, entriesMembershipUrl));
+export const retryEntriesMembership = onSchedule({ schedule: 'every 5 minutes', secrets: [toolPassSecret] }, async () => {
+  const url = entriesMembershipUrl();
+  if (url) await retryEntriesMemberships(appConfig.db, toolPassSecret.value(), url);
+});
 // Unlinking one signs them out of it (ADR 0017). In the emulator only a tool
 // named in TOOL_UNLINK_URL_<TOOL> (its own emulator) is called.
 export const unlinkTool = https({ secrets: [toolPassSecret] }).onCall(getOnUnlinkTool(
