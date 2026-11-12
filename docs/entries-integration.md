@@ -95,3 +95,7 @@ For the initial release, Entries and Splits use `https://next.scotdance.app` for
 firebase deploy --project firebase-scotdance --only database,functions:entriesCompetition,functions:toolPass,functions:entriesOrganisationMembership,functions:retryEntriesMembership,functions:linkCompetitions,functions:competitionDetailsSync,functions:competitionDeleted,functions:competitionSubmissionUpdated,functions:mcp
 firebase deploy --project firebase-scotdance --only hosting:next
 ```
+
+The first membership-trigger deployment asks to acknowledge its retry policy. For an unattended, scoped
+deployment, add `--non-interactive --force` to the backend command above; the monotonic membership version and
+current-authority read make repeated deliveries safe.
