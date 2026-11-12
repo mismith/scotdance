@@ -59,6 +59,13 @@ const others = computed(() =>
 const exact = computed(() => o.organisations.value.some((org) => [org.name, org.shortName].some((s) => s?.trim().toLowerCase() === q.value)))
 const searchEl = ref<InstanceType<typeof SearchField> | null>(null)
 
+function onSearchEnter(event: KeyboardEvent) {
+  if (!(event.target instanceof HTMLInputElement) || event.isComposing || event.repeat) return
+  if (!props.creatable || !q.value || yours.value.length || others.value.length) return
+  event.preventDefault()
+  void startCreate()
+}
+
 // --- Starting one
 const creating = ref(false)
 const newName = ref('')
@@ -191,7 +198,7 @@ const ROW = 'press-row focus-inset flex min-h-15 w-full items-center gap-3 px-4 
 
     <template v-else>
       <div class="p-4 pt-1">
-        <SearchField ref="searchEl" v-model="query" :label="any ? 'Find an organisation' : 'Find one of yours'" />
+        <SearchField ref="searchEl" v-model="query" :label="any ? 'Find an organisation' : 'Find one of yours'" @keydown.enter="onSearchEnter" />
       </div>
       <div class="pb-[calc(0.5rem+var(--safe-bottom))]">
         <section v-if="yours.length" :aria-label="mineLabel">
