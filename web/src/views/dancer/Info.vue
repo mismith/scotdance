@@ -17,9 +17,8 @@ import { heroTitle } from '@/lib/heroTitle'
 import { profileColumns, profileHeader } from '@/lib/profile'
 import { useAuthStore } from '@/stores/auth'
 
-// A dancer across every competition. Their number is different at each one,
-// so it's shown per competition, never as who they are. Signed in: every
-// competition, a season at a time. Otherwise the basic profile: the latest
+// A dancer across every competition, with results rather than old bibs.
+// Signed in: every competition, a season at a time. Otherwise: the latest
 // few competitions and a way in to the rest.
 const setHeader = injectInfoHeaderSetter()
 const route = useRoute()
@@ -83,7 +82,7 @@ const signIn = () => auth.openLogin()
     <div class="space-y-5">
       <section v-if="focus && showFocus" class="space-y-2">
         <h2 :class="['text-section', focus.phase === 'today' && 'text-live']">{{ focusLabel }}</h2>
-        <DancerDayCard class="-mx-4" :days="focus.days" :competition-id="focus.competitionId" :color="color" :name="name" size="lg" />
+        <DancerDayCard class="-mx-4" :days="focus.days" :show-number="focus.phase !== 'after'" :competition-id="focus.competitionId" :color="color" :name="name" size="lg" />
       </section>
 
       <!-- Until it's known who is looking, nothing below the day card. -->
@@ -95,12 +94,12 @@ const signIn = () => auth.openLogin()
 
       <section v-else-if="record.rich.value && (record.rows.value.length || loadingRows)">
         <h2 class="sr-only">Competitions</h2>
-        <CompetitionList :years="record.bySeason.value" :dancer-id="dancerId" :skip="record.focusId.value" headings :loading="loadingRows" />
+        <CompetitionList :years="record.bySeason.value" :skip="record.focusId.value" headings :loading="loadingRows" />
       </section>
 
       <section v-else-if="record.rows.value.length || loadingRows" class="space-y-2">
         <h2 class="text-section">Latest competitions</h2>
-        <CompetitionList :years="latestBasic" :dancer-id="dancerId" :loading="loadingRows" />
+        <CompetitionList :years="latestBasic" :loading="loadingRows" />
         <button
           v-if="moreBehind"
           type="button"
