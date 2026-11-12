@@ -99,3 +99,24 @@ firebase deploy --project firebase-scotdance --only hosting:next
 The first membership-trigger deployment asks to acknowledge its retry policy. For an unattended, scoped
 deployment, add `--non-interactive --force` to the backend command above; the monotonic membership version and
 current-authority read make repeated deliveries safe.
+
+## Released 2026-11-11
+
+- Deployed production database rules and the nine scoped functions listed above to `firebase-scotdance`.
+  The new membership receiver in Entries was deployed first. All create/update operations succeeded.
+- Deployed only `hosting:next`, available at `https://next.scotdance.app`. Its live HTML exactly matched the
+  production bundle; the HTML hash of `https://scotdance.app/` remained unchanged from before deployment.
+- The live `entriesCompetition` endpoint returned the expected application `401 UNAUTHENTICATED` for an invalid
+  signed pass, confirming that the public transport reaches its signature check.
+- Signed-out desktop and phone checks passed for the live homepage and connect screen without runtime errors.
+- Validation before release: 108 unit-test files / 1,739 tests at the ownership checkpoint; the final added
+  target-move guard passed all 15 bridge tests. Functions lint/build and the production web build passed.
+- Real emulator rules checks verified registration ownership against organiser, assistant and system-admin
+  client writes, and submission readiness protections. Browser checks verified permitted destination
+  preselection/import preview and refusal of a destination the account cannot manage.
+- The reusable cross-app contract test passed with the actual Entries signer and both running emulators,
+  including real membership grant/removal triggers and cleanup. Production signing secrets were independently
+  verified equal by the release coordinator; they are not stored in this repository or these notes.
+
+These checks verify the ScotDance side of the release. Entries payment, payout and Splits acceptance evidence
+is maintained with those applications. The legacy frontend was not replaced.

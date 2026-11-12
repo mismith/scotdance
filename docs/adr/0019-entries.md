@@ -1,6 +1,6 @@
 # ADR-0019: How ScotDance Entries and ScotDance.app fit together
 
-Status: Implemented, pending production release (design agreed with Murray 2026-11-11)
+Status: Implemented and deployed to ScotDance next and shared backend; legacy frontend preserved (2026-11-11)
 Date: 2026-11-11
 
 ## Context
@@ -123,7 +123,7 @@ Taken from a real form (SHDA November 2026 on Eventry):
   `next.scotdance.app` for the updated source UI and embed, preserving the active legacy application.
 - The source bridge, ownership rules, return journey and Splits destination flow are implemented and tested.
   [Integration contracts and release commands](../entries-integration.md) record the deployment sequence and
-  repeatable emulator checks. Production release and live acceptance are tracked separately from implementation.
+  repeatable emulator checks, deployed scope and live acceptance evidence.
 
 ## Consequences
 
