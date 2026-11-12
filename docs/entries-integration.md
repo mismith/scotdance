@@ -32,6 +32,8 @@ Actions:
 
 Registration resolves shared fields to the current primary and requires permission to that primary too. Its `entriesRegistration` marker records the source competition, organisation, target and revision. Another Entries source is rejected. A repeated/older revision cannot overwrite newer settings. Browser and assistant writes cannot edit or delete the managed fields or ownership marker. Linked registration copies include the marker; stopping sharing releases inherited ownership while retaining the displayed dates.
 
+Changing the primary moves the authoritative registration and updates every shared ownership target, even when mirrored copies have not caught up. If the Entries source stops sharing or its primary leaves, its latest registration moves back to that source and the other copies lose their inherited lock. Overlapping propagation deliveries cannot regress a newer copied revision.
+
 Registration URLs must exactly name `/enter/<organisationId>/<competitionId>` on `https://entries.scotdance.app`. Only in emulators, `http://localhost:5290` and `http://127.0.0.1:5290` are also accepted.
 
 Dance publication uses a transaction on the destination list. It never overwrites an existing list, including one populated concurrently. Identical name/steps pairs across categories become one dance; different steps remain separate.
@@ -71,3 +73,10 @@ E2E_BASE_URL=http://localhost:5279 npx playwright test e2e/backend-rules.spec.ts
 Set `E2E_EMULATOR_PORT_OFFSET` to match a shifted emulator stack. For local Entries integration set `ENTRIES_MEMBERSHIP_URL` to the Entries emulator's `syncScotDanceMembership` callable, and `ENTRIES_ORIGIN` (functions) / `VITE_ENTRIES_ORIGIN` (web) to `http://localhost:5290`. Without a local membership URL, emulated permission changes never call the live Entries service.
 
 Deploy receivers and rules before enabling producers: ScotDance `entriesCompetition` and registration protections; Entries `syncScotDanceMembership`; then the membership trigger/sweep and Entries publication. Deploy ScotDance's updated embed/importer before Splits starts sending explicit destination IDs and studio columns. The existing `next` branch workflow only deploys hosting; functions and rules must be released explicitly.
+
+For the initial release, Entries and Splits use `https://next.scotdance.app` for the source UI and embed. The JWT issuer remains `https://scotdance.app`. Deploy only `hosting:next`; the `production` hosting target serves the existing legacy application and must not receive this build unintentionally. The shared backend changes are scoped to:
+
+```sh
+firebase deploy --project firebase-scotdance --only database,functions:entriesCompetition,functions:toolPass,functions:entriesOrganisationMembership,functions:retryEntriesMembership,functions:linkCompetitions,functions:competitionDetailsSync,functions:competitionDeleted,functions:competitionSubmissionUpdated,functions:mcp
+firebase deploy --project firebase-scotdance --only hosting:next
+```

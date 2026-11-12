@@ -79,7 +79,7 @@ test('signs in, sends to the competition tapped, and opens its Import dancers, s
   // Its Import dancers opens with the list in the preview: already signed in,
   // since signing in over the tool signed in to ScotDance.app
   await expect(popup).toHaveURL(new RegExp(`/competitions/${competition.id}/manage/dancers/import\\?inbox=${key}$`))
-  await expect(popup.getByText('Ava Ross')).toBeVisible({ timeout: 15_000 })
+  await expect(popup.getByRole('cell', { name: 'Ava Ross', exact: true })).toBeVisible({ timeout: 15_000 })
   await expect(popup.getByRole('button', { name: /Import 2 dancers/ })).toBeVisible()
 
   await expect(s.getByRole('heading', { name: `Sent to ${competition.name}` })).toBeVisible()
@@ -113,7 +113,7 @@ test('Entries destination reaches the right competition and preserves the import
   await s.getByRole('button', { name: `Review dancers in ${competition.name}` }).click()
   const popup = await popupPromise
   await expect(popup).toHaveURL(new RegExp(`/competitions/${competition.id}/manage/dancers/import\\?inbox=`))
-  await expect(popup.getByText('Ava Ross')).toBeVisible({ timeout: 15_000 })
+  await expect(popup.getByRole('cell', { name: 'Ava Ross', exact: true })).toBeVisible({ timeout: 15_000 })
   await expect(popup.getByRole('button', { name: /Import 1 dancer/ })).toBeVisible()
   await dbRemove(`users:inbox/${me}`)
 })

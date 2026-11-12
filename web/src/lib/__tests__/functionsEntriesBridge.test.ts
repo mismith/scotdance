@@ -71,6 +71,41 @@ describe('Entries signed requests', () => {
 })
 
 describe('Entries registration ownership', () => {
+  it.each(['source leaves', 'primary leaves', 'source stops sharing'])('moves ownership home after changing the primary: %s', async (action) => {
+    const { call, db, tree } = setup()
+    const link = getOnLink(db)
+    const ctx = { auth: { uid: 'organiser' } }
+    await call(registration())
+    await link({ action: 'link', competitionId: 'sun', withId: 'sat' }, ctx)
+    tree.write({ 'competitions/mon': { name: 'Monday', date: '2027-07-07' }, 'users:permissions/organiser/competitions/mon': true })
+    await link({ action: 'link', competitionId: 'mon', withId: 'sat' }, ctx)
+    // The primary is newer than its mirrors while propagation is pending.
+    await call({ ...registration(2), registrationEnd: 1800200000000 })
+    await link({ action: 'primary', competitionId: 'sun' }, ctx)
+    for (const id of ['sat', 'sun', 'mon']) expect(tree.read(`competitions/${id}/entriesRegistration`)).toMatchObject({ competitionId: 'sat', targetId: 'sun', revision: 2 })
+    await link(action === 'source stops sharing'
+      ? { action: 'sync', competitionId: 'sat', part: 'registration', on: false }
+      : { action: 'unlink', competitionId: action === 'source leaves' ? 'sat' : 'sun' }, ctx)
+    expect(tree.read('competitions/sat/entriesRegistration')).toMatchObject({ competitionId: 'sat', targetId: 'sat', revision: 2 })
+    expect(tree.read('competitions/sat/registrationEnd')).toBe(1800200000000)
+    for (const id of ['sun', 'mon']) expect(tree.read(`competitions/${id}/entriesRegistration`)).toBeNull()
+    expect(await call(registration(3))).toMatchObject({ registrationTargetId: 'sat', applied: true })
+  })
+
+  it('does not let an overlapping older propagation regress a newer copied revision', async () => {
+    const { call, db, tree } = setup()
+    await call(registration())
+    await getOnLink(db)({ action: 'link', competitionId: 'sun', withId: 'sat' }, { auth: { uid: 'organiser' } })
+    tree.duringTransaction = (path) => {
+      if (path !== 'competitions/sun') return
+      tree.duringTransaction = null
+      tree.write({ 'competitions/sun/entriesRegistration/revision': 2, 'competitions/sun/registrationEnd': 1800200000000 })
+    }
+    await getOnCompetitionUpdated(db)({ before: snap({}), after: snap(tree.read('competitions/sat')) }, { params: { competitionId: 'sat' } })
+    expect(tree.read('competitions/sun/entriesRegistration/revision')).toBe(2)
+    expect(tree.read('competitions/sun/registrationEnd')).toBe(1800200000000)
+  })
+
   it('publishes atomically from a cold transaction and ignores retries and late revisions', async () => {
     const { call, tree } = setup()
     expect(await call(registration(2))).toMatchObject({ applied: true, registrationTargetId: 'sat', revision: 2 })
