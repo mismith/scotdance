@@ -76,10 +76,11 @@ Taken from a real form (SHDA November 2026 on Eventry):
 
 - **Items**: a name, a price, and optionally a category, steps and a member price. A dance is an item with a
   category and steps ("Fling [4]"). Choreography and workshops are items too.
-- **Fees**: a name, an amount, and per dancer or per order (a flat fee, an association's levy). A per-order
-  fee can be waived when the order has a second dancer ("$5 admission, waived when registering more than one").
-- The second-dancer waiver is optional and configurable; competitions may leave it disabled. Dancer levies
-  apply once per competition. Order charges, including the Stripe service fee, apply per order.
+- **Fees**: a name, an amount, and per dancer or per order (a flat fee, an association's levy).
+- Admission can be configured as once per family for the competition: the first payment includes it, even
+  when that payment enters two dancers; later orders do not add it again. There is no retroactive refund.
+  When that setting is disabled, admission applies to every order. Dancer levies apply once per competition;
+  Stripe service fees apply to each payment.
 - Member pricing: a yes/no question on the form picks the member price, on trust.
 - The organisers' own "online service fee" is Entries' card fee, shown as "Service fee". There is one, not two.
 - Family caps are not built.
@@ -131,6 +132,11 @@ Taken from a real form (SHDA November 2026 on Eventry):
   their roster keeps names, categories and ages at the competition, together with necessary financial records.
   Pending payments keep that minimal roster until reconciled. Signing out or unlinking a tool does not delete data.
   Distinct signed deletion delivery, retries and a permanent receiver tombstone prevent lost requests or replay.
+- Organisers can correct entered dancer details without changing the financial order snapshot. The current
+  corrected roster is used in reports and Splits; correction history is retained until privacy deletion removes it.
+- A competition can be unlinked or moved to another organisation only before any checkout/order exists. The
+  operation is durable and releases the old registration binding before claiming the destination. Paid orders
+  and their organisation never move as part of this operation.
 
 ## Consequences
 
