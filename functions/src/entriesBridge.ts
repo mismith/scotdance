@@ -129,7 +129,7 @@ export function getOnEntriesCompetition(secret: () => string, db: any) {
       });
       if (!result.snapshot.exists()) throw new HttpsError('not-found', 'The competition is no longer available.');
       if (problem) throw new HttpsError('failed-precondition', problem);
-      if (p.action === 'claim') return { registrationTargetId: target, ...result.snapshot.val().entriesRegistration };
+      if (p.action === 'claim') return { ...facts, registrationTargetId: target, ...result.snapshot.val().entriesRegistration };
       // Clear only copies of this exact binding, never a newly linked owner.
       const link = await linkOf(db, p.competitionId);
       for (const id of link?.members ?? []) {
@@ -257,8 +257,10 @@ export async function sendEntriesAccountDeletion(db: any, secret: string, url: s
 }
 
 export async function retryEntriesAccountDeletions(db: any, secret: string, url: string, send: Send = post) {
-  const requests = await read(db, 'entries:accountDeletions') ?? {};
-  for (const [uid] of Object.entries(requests).filter(([, value]: [string, any]) => value.state !== 'complete').slice(0, 100)) {
+  const requests = (await db.child('entries:accountDeletions').orderByChild('state').equalTo('pending').limitToFirst(100).get()).val() ?? {};
+  const deadline = Date.now() + 45_000;
+  for (const uid of Object.keys(requests)) {
+    if (Date.now() >= deadline) break;
     await sendEntriesAccountDeletion(db, secret, url, uid, send).catch((error) => console.error('Entries account deletion retry failed', uid, error));
   }
 }

@@ -9,6 +9,9 @@
       "versions": {
         ".read": true
       },
+      "entries:accountDeletions": {
+        ".indexOn": ["state"]
+      },
       "faqs": {
         ".read": true
       },

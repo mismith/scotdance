@@ -91,7 +91,7 @@ export class FakeQuery {
     private readonly db: FakeRtdb,
     readonly path: string,
     private readonly key: string,
-    private readonly bounds: { start?: Json; end?: Json } = {},
+    private readonly bounds: { start?: Json; end?: Json; limit?: number } = {},
   ) {}
 
   startAt(value: Json) {
@@ -106,6 +106,10 @@ export class FakeQuery {
     return new FakeQuery(this.db, this.path, this.key, { start: value, end: value })
   }
 
+  limitToFirst(limit: number) {
+    return new FakeQuery(this.db, this.path, this.key, { ...this.bounds, limit })
+  }
+
   async get() {
     await tick()
     const node = this.db.read(this.path)
@@ -115,7 +119,8 @@ export class FakeQuery {
       const v = this.key === '$key' ? k : getIn(child, parts(this.key))
       return (!('start' in bounds) || compareOrder(v, bounds.start) >= 0) && (!('end' in bounds) || compareOrder(v, bounds.end) <= 0)
     })
-    return snap(hits.length ? Object.fromEntries(hits) : null)
+    const limited = hits.slice(0, bounds.limit ?? hits.length)
+    return snap(limited.length ? Object.fromEntries(limited) : null)
   }
 }
 

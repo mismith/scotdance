@@ -78,6 +78,8 @@ describe('Entries registration ownership', () => {
     const { call, tree } = setup()
     const claimed = await call({ action: 'claim' })
     expect(claimed).toMatchObject({ registrationTargetId: 'sat', revision: 0 })
+    expect(claimed.competition).toMatchObject({ id: 'sat', name: 'Saturday Highland Competition' })
+    expect(claimed.organisation).toMatchObject({ id: 'association', name: 'Dancing Association' })
     expect(claimed.bindingId).toBeTruthy()
     expect((await call({ action: 'claim' })).bindingId).toBe(claimed.bindingId)
     tree.write({ 'users:permissions/organiser': null, 'organisations:permissions/association/users/organiser': null })
@@ -206,6 +208,16 @@ describe('Entries registration ownership', () => {
 })
 
 describe('Entries account deletion delivery', () => {
+  it('bounds each retry sweep to 100 pending deletions and excludes completed history', async () => {
+    const { db, tree } = setup()
+    tree.write(Object.fromEntries(Array.from({ length: 105 }, (_, i) => [`entries:accountDeletions/p${i}`, { deletedAt: 1, state: 'pending' }])))
+    tree.write({ 'entries:accountDeletions/complete': { deletedAt: 1, state: 'complete' } })
+    let sent = 0
+    await retryEntriesAccountDeletions(db, SECRET, 'http://entries.test/delete', async () => { sent++; return { ok: true, status: 200 } })
+    expect(sent).toBe(100)
+    await retryEntriesAccountDeletions(db, SECRET, 'http://entries.test/delete', async () => { sent++; return { ok: true, status: 200 } })
+    expect(sent).toBe(105)
+  })
   it('persists deletion across delivery failure and retries its distinct signed purpose idempotently', async () => {
     const { db, tree } = setup()
     const calls: Record<string, unknown>[] = []
