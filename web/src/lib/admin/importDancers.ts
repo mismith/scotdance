@@ -199,6 +199,11 @@ export function spellCapitals(dancers: ImportedDancer[], existing: ExistingText)
 
 /** Which column holds what in a program, unless the organiser says otherwise. */
 export function programColumns(grid: Grid): Record<TableField, number> {
+  // Explicit headings win: Splits can export full names plus a Studio column.
+  for (const row of grid.slice(0, 15)) {
+    const columns = guessColumns(row)
+    if (columns.number === 0 && (columns.fullName >= 0 || columns.firstName >= 0)) return columns
+  }
   // Some programs (and scotdance-splits with names combined) have three
   // columns: number, full name, location. Spot it from the whole sheet:
   // nothing past the third column, and the names mostly have spaces.

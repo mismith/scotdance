@@ -4,6 +4,7 @@ import { organisationsForSubmission } from './organisations';
 import { pairFor, writeLink } from './links';
 import { isEmulator } from './utility/env';
 import { reviewReasons, type ReviewContext } from './review';
+import { entriesReturnUrl } from '../../shared/entriesReturn';
 import { adminSite, appModel, firstName, sendOptions, sentFrom, summary, type SentFrom } from './utility/emailModel';
 
 export { summary };
@@ -203,7 +204,8 @@ class Submissions {
       await snap.ref.update({ organisationIds: Object.fromEntries(organisationIds.map((id) => [id, true])) });
     }
     await this.linkWeekend(submissionId, submission, competitionId);
-
+    // Only now can Entries refresh their pass and find the competition and its organisations.
+    if (submission.returnTo === 'entries') await snap.ref.update({ entriesReady: true });
 
     // send email
     await sendEmail({
@@ -213,7 +215,9 @@ class Submissions {
       TemplateModel: {
         ...this.getTemplateModel(submission, from),
         admin: {
-          link: from.v4 ? `${from.url}/competitions/${competitionId}/manage` : `${from.url}/#/competitions/${competitionId}/admin`,
+          link: submission.returnTo === 'entries'
+            ? entriesReturnUrl(competitionId, isEmulator() ? process.env.ENTRIES_ORIGIN : undefined)
+            : from.v4 ? `${from.url}/competitions/${competitionId}/manage` : `${from.url}/#/competitions/${competitionId}/admin`,
         },
       },
     });

@@ -36,6 +36,7 @@ export function signPass(
   who: {
     uid: string; email?: string | null; name?: string | null; audience: Audience | `${Audience}:unlink`;
     organisations?: PassOrganisation[];
+    competitions?: PassCompetition[];
   },
   now = Date.now(),
 ): string {
@@ -48,6 +49,7 @@ export function signPass(
     email: who.email ?? null,
     name: who.name ?? null,
     ...(who.organisations ? { organisations: who.organisations } : {}),
+    ...(who.competitions ? { competitions: who.competitions } : {}),
     iat,
     exp: iat + PASS_SECONDS,
     jti: randomUUID(),
@@ -60,6 +62,27 @@ export function signPass(
 export interface PassOrganisation {
   id: string;
   name: string;
+}
+
+export interface PassCompetition {
+  id: string;
+  name: string;
+  date: string | number;
+}
+
+/** The date is a calendar day, so keep today's competitions regardless of the server's UTC offset. */
+async function upcomingManaged(db: Db, uid: string, now: number): Promise<PassCompetition[]> {
+  const permissions = ((await db.child(`users:permissions/${uid}/competitions`).get()).val() ?? {}) as Record<string, unknown>;
+  const ids = Object.keys(permissions).filter((id) => permissions[id] === true);
+  const rows = await Promise.all(ids.map(async (id) => {
+    const c = (await db.child(`competitions/${id}`).get()).val() as Partial<PassCompetition> | null;
+    if (!c || typeof c.name !== 'string' || !c.name.trim() || !c.date) return null;
+    const date = typeof c.date === 'number' ? c.date : Date.parse(c.date);
+    if (!Number.isFinite(date) || date + 36 * 60 * 60 * 1000 < now) return null;
+    return { id, name: c.name, date: c.date };
+  }));
+  return rows.filter((c): c is PassCompetition => c !== null)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.name.localeCompare(b.name));
 }
 
 export function isAudience(value: unknown): value is Audience {
@@ -118,7 +141,7 @@ export function getOnToolPass(secret: () => string, db: Db) {
         email: auth.token.email ?? null,
         name,
         audience: data.audience,
-        ...(data.audience === 'entries' ? { organisations: await adminOf(db, auth.uid) } : {}),
+        ...(data.audience === 'entries' ? { organisations: await adminOf(db, auth.uid), competitions: await upcomingManaged(db, auth.uid, now) } : {}),
       }),
     };
   };

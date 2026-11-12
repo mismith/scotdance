@@ -357,6 +357,28 @@ describe('from the v4 app', () => {
   })
   afterEach(() => vi.useRealTimers())
 
+  it('returns to Entries only after review has created the organisation and granted both permissions', async () => {
+    const { submit, change, read, rtdb } = arrival()
+    await submit({}, { origin: 'https://next.scotdance.app', returnTo: 'entries', newOrganisations: { new: { name: 'Coastal Highland Dancing Association' } } })
+    expect(read().entriesReady).toBeUndefined()
+    expect(read().approved).toBeUndefined()
+    postmark.sent.length = 0
+    await change({ [`${PATH}/s1/approved`]: '2026-10-06T13:00:00.000Z' })
+    const submission = read()
+    expect(submission.entriesReady).toBe(true)
+    const organisationId = Object.keys(submission.organisationIds)[0]
+    expect(rtdb.read(`organisations:permissions/${organisationId}/users/organiser-1`)).toBe(true)
+    expect(rtdb.read(`users:permissions/organiser-1/competitions/${submission.competitionId}`)).toBe(true)
+    expect(postmark.sent[0].TemplateModel.admin.link).toBe(`https://entries.scotdance.app/organise?competition=${submission.competitionId}&refresh=1`)
+  })
+
+  it('never treats an arbitrary return address as an Entries return intent', async () => {
+    const { submit, read } = arrival()
+    await submit({}, { origin: 'https://next.scotdance.app', returnTo: 'https://evil.test/phishing' })
+    expect(read().entriesReady).toBeUndefined()
+    expect(postmark.sent[0].TemplateModel.admin.link).toBe(`https://next.scotdance.app/competitions/${read().competitionId}/manage`)
+  })
+
   it('gets the v4 emails, linking back to the site it came from', async () => {
     const prod = arrival()
     await prod.submit({}, { origin: 'https://scotdance.app' })

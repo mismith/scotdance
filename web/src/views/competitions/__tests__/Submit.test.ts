@@ -19,6 +19,7 @@ vi.mock('@/lib/maps', () => ({ placesAvailable: true }))
 // What the lookups on the date find (knownCompetitions and competitions, by
 // date), in place of the database.
 const db = vi.hoisted(() => ({ data: {} as Record<string, Record<string, { date?: string }>> }))
+const entriesReturn = vi.hoisted(() => ({ query: {} as Record<string, string>, listener: null as null | ((snapshot: { val: () => unknown }) => void) }))
 type Lookup = { lookup: true; path: string; from: string; to: string }
 vi.mock('@/firebase', async (original) => ({
   ...(await original<typeof import('@/firebase')>()),
@@ -28,6 +29,10 @@ vi.mock('firebase/database', async (original) => {
   const real = await original<typeof import('firebase/database')>()
   return {
     ...real,
+    onValue: (_ref: unknown, callback: (snapshot: { val: () => unknown }) => void) => {
+      entriesReturn.listener = callback
+      return () => { entriesReturn.listener = null }
+    },
     query: (ref: Lookup, ...bounds: object[]) => Object.assign({}, ref, ...bounds),
     orderByChild: () => ({}),
     startAt: (from: string) => ({ from }),
@@ -59,7 +64,7 @@ vi.mock('@/lib/admin/feedback', () => ({
 const push = vi.fn()
 vi.mock('vue-router', async (original) => ({
   ...(await original<typeof import('vue-router')>()),
-  useRouter: () => ({ push }),
+  useRouter: () => ({ push, currentRoute: { value: { query: entriesReturn.query } } }),
 }))
 // June 2027, so the date's month is the one the calendar opens on.
 vi.mock('@/lib/now', async (original) => ({
@@ -212,6 +217,8 @@ const TELUS = {
 }
 
 beforeEach(() => {
+  entriesReturn.query = {}
+  entriesReturn.listener = null
   write.mockClear()
   auth.openLogin.mockClear()
   Object.assign(auth, { isSignedIn: true, uid: 'u1' })
@@ -413,6 +420,25 @@ describe('Add a competition', () => {
       disclaimer: true,
     })
     expect(w.text()).toContain('Sent')
+  })
+
+  it('keeps the Entries return intent and waits until approval finishes granting access', async () => {
+    entriesReturn.query = { returnTo: 'entries' }
+    const redirect = vi.spyOn(window.location, 'assign').mockImplementation(() => {})
+    const w = await begin()
+    await toReview(w)
+    await w.find('[data-slide] [role=checkbox]').trigger('click')
+    await cont(w)
+    expect(sentValue()).toMatchObject({ returnTo: 'entries', submittedBy: 'u1' })
+    expect(w.text()).toContain('back to Entries')
+    expect(entriesReturn.listener).not.toBeNull()
+    entriesReturn.listener!({ val: () => ({ competitionId: 'new-competition', approved: true }) })
+    expect(redirect).not.toHaveBeenCalled()
+    entriesReturn.listener!({ val: () => ({ competitionId: 'new-competition', entriesReady: true }) })
+    expect(redirect).toHaveBeenCalledWith('https://entries.scotdance.app/organise?competition=new-competition&refresh=1')
+    w.unmount()
+    expect(entriesReturn.listener).toBeNull()
+    redirect.mockRestore()
   })
 
   it('a venue typed and not picked goes as its name, in the country asked, with no map position', async () => {

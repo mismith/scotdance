@@ -22,7 +22,7 @@ type FieldPart = Exclude<Part, 'staff'>;
 export const PART_FIELDS: Record<FieldPart, string[]> = {
   about: ['description', 'image'],
   venue: ['venue', 'space', 'address', 'location', 'lat', 'lng', 'country', 'region', 'locality'],
-  registration: ['registrationURL', 'registrationStart', 'registrationEnd'],
+  registration: ['registrationURL', 'registrationStart', 'registrationEnd', 'entriesRegistration'],
   links: ['links'],
   // Together, so a copy can never be published without being listed.
   visibility: ['listed', 'published'],
@@ -253,6 +253,11 @@ async function planPart(db: Db, from: string, to: string, part: Part, records: M
   };
   if (part !== 'staff') {
     const [src, dst] = await Promise.all([record(from), record(to)]);
+    if (part === 'registration' && dst.entriesRegistration?.targetId === to
+      && (!src.entriesRegistration || dst.entriesRegistration.competitionId !== src.entriesRegistration.competitionId
+        || dst.entriesRegistration.organisationId !== src.entriesRegistration.organisationId)) {
+      return { part, updates: {}, replaces: true, blocked: 'This competition has its own Entries registration. It cannot share another competition’s registration settings.' };
+    }
     const updates: Updates = {};
     for (const f of PART_FIELDS[part]) {
       if (!same(src[f], dst[f])) updates[`competitions/${to}/${f}`] = src[f] ?? null;
@@ -288,8 +293,7 @@ export interface TargetPreview {
   parts: Array<Omit<PartPlan, 'updates'>>
 }
 
-async function plansFor(db: Db, from: string, all: Array<{ competitionId: string, parts: Part[] }>) {
-  const records = new Map<string, Json>();
+async function plansFor(db: Db, from: string, all: Array<{ competitionId: string, parts: Part[] }>, records = new Map<string, Json>()) {
   // Writing into a deleted one would bring it back as a stub.
   const there = await Promise.all(all.map((t) => exists(db, t.competitionId)));
   const targets = all.filter((_, i) => there[i]);
@@ -314,6 +318,31 @@ function applyOrRefuse(planned: Awaited<ReturnType<typeof plansFor>>, into: Upda
 }
 
 // Taking one out ---------------------------------------------------------------
+
+/** Registration stays with its Entries source when that source stops sharing. */
+async function releaseRegistration(db: Db, stopped: string[], members: string[]): Promise<Updates> {
+  const records = new Map<string, Json>(await Promise.all([...new Set([...stopped, ...members])].map(async (id) => [id, await val(db, `competitions/${id}`)] as [string, Json])));
+  const moves = new Map<string, Json>();
+  for (const record of records.values()) {
+    const owner = record?.entriesRegistration;
+    if (owner && owner.competitionId !== owner.targetId && (stopped.includes(owner.competitionId) || stopped.includes(owner.targetId))) {
+      moves.set(owner.competitionId, records.get(owner.targetId) ?? record);
+    }
+  }
+  const updates: Updates = {};
+  for (const [id, record] of records) {
+    const owner = record?.entriesRegistration;
+    if (owner && (moves.has(owner.competitionId) || (stopped.includes(id) && owner.targetId !== id))) {
+      updates[`competitions/${id}/entriesRegistration`] = null;
+    }
+  }
+  for (const [source, record] of moves) {
+    if (!records.get(source)?.date) continue;
+    for (const field of PART_FIELDS.registration) updates[`competitions/${source}/${field}`] = record[field] ?? null;
+    updates[`competitions/${source}/entriesRegistration`] = { ...record.entriesRegistration, targetId: source };
+  }
+  return updates;
+}
 
 /**
  * Takes a competition out of its link, keeping everything it has. Its
@@ -344,6 +373,8 @@ export async function takeOut(db: Db, competitionId: string) {
       }
     }
   }
+  const stopped = Object.keys(updates).filter((p) => p.startsWith('competitionLinks:sync/') && updates[p] === null).map((p) => p.split('/')[1]);
+  Object.assign(updates, await releaseRegistration(db, stopped, link?.members ?? stopped));
   await db.update(updates);
   return link;
 }
@@ -492,7 +523,14 @@ export function getOnLink(db: Db) {
         const fresh = await plansFor(db, competitionId, [...flags.keys()].map((id) => ({ competitionId: id, parts: [...PARTS] })));
         for (const { competitionId: id, plans } of fresh) flags.set(id, plans.filter((p) => !p.replaces && !p.blocked).map((p) => p.part));
       }
-      const planned = await plansFor(db, competitionId, [...flags].map(([id, parts]) => ({ competitionId: id, parts })));
+      // A mirrored registration may still be waiting for its trigger. Move
+      // the authoritative values, not that possibly older mirrored revision.
+      const record = (await val(db, `competitions/${competitionId}`)) ?? {};
+      if (link.primary && theirs.includes('registration')) {
+        const primary = (await val(db, `competitions/${link.primary}`)) ?? {};
+        for (const field of PART_FIELDS.registration) record[field] = primary[field] ?? null;
+      }
+      const planned = await plansFor(db, competitionId, [...flags].map(([id, parts]) => ({ competitionId: id, parts })), new Map([[competitionId, record]]));
       if (dryRun) return { primary: competitionId, targets: preview(planned) };
       const updates: Updates = {
         [`competitionLinks/${link.linkId}/primary`]: competitionId,
@@ -504,6 +542,17 @@ export function getOnLink(db: Db) {
         for (const [id, parts] of flags) updates[`competitionLinks:sync/${id}`] = parts.length ? Object.fromEntries(parts.map((p) => [p, true])) : null;
       }
       applyOrRefuse(planned, updates);
+      if (link.primary && theirs.includes('registration')) {
+        for (const field of PART_FIELDS.registration) updates[`competitions/${competitionId}/${field}`] = record[field] ?? null;
+      }
+      const owner = record.entriesRegistration;
+      if (owner) {
+        const normalized = { ...owner, targetId: competitionId };
+        updates[`competitions/${competitionId}/entriesRegistration`] = normalized;
+        for (const [id, parts] of flags) {
+          if (parts.includes('registration')) updates[`competitions/${id}/entriesRegistration`] = normalized;
+        }
+      }
       await db.update(updates);
       return { linkId: link.linkId };
     }
@@ -521,7 +570,10 @@ export function getOnLink(db: Db) {
       const planned = on ? await plansFor(db, link.primary, changing.map((id) => ({ competitionId: id, parts: [part] }))) : [];
       if (dryRun) return { primary: link.primary, targets: preview(planned) };
       const updates: Updates = {};
-      for (const id of changing) updates[`competitionLinks:sync/${id}/${part}`] = on ? true : null;
+      for (const id of changing) {
+        updates[`competitionLinks:sync/${id}/${part}`] = on ? true : null;
+      }
+      if (!on && part === 'registration') Object.assign(updates, await releaseRegistration(db, changing, link.members));
       applyOrRefuse(planned, updates);
       if (Object.keys(updates).length) await db.update(updates);
       return { linkId: link.linkId, changed: changing.length };
@@ -611,6 +663,22 @@ export function getOnCompetitionUpdated(db: Db) {
     const updates: Updates = {};
     for (const part of changed) {
       for (const id of await syncing(db, link, part)) {
+        if (part === 'registration') {
+          if (fresh.entriesRegistration && fresh.entriesRegistration.targetId !== competitionId) continue;
+          // Deliveries overlap. A late older event must never regress an
+          // Entries revision or replace another registration's ownership.
+          await db.child(`competitions/${id}`).transaction((current: Json) => {
+            if (!current) return current;
+            const owner = current.entriesRegistration;
+            const next = fresh.entriesRegistration;
+            if (owner && (!next || owner.competitionId !== next.competitionId || owner.organisationId !== next.organisationId
+              || owner.targetId !== next.targetId || owner.revision > next.revision)) return;
+            const result = { ...current };
+            for (const f of PART_FIELDS.registration) result[f] = fresh[f] ?? null;
+            return result;
+          });
+          continue;
+        }
         for (const f of PART_FIELDS[part]) updates[`competitions/${id}/${f}`] = fresh[f] ?? null;
       }
     }

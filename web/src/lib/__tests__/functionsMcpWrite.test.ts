@@ -217,6 +217,17 @@ describe('sweeping the log', () => {
 })
 
 describe('update_competition', () => {
+  test('directs Entries-managed registration changes back to Entries, including clear requests', async () => {
+    const db = fakeSession(competition())
+    db.tree.competitions.c1.entriesRegistration = { competitionId: 'c1', organisationId: 'o1', targetId: 'c1', revision: 1 }
+    db.tree.competitions.c1.registrationURL = 'https://entries.scotdance.app/enter/o1/c1'
+    await refused(call(db.session, 'update_competition', { competition: 'c1', registrationUrl: 'example.com/new' }), /managed in Entries/)
+    await refused(call(db.session, 'update_competition', { competition: 'c1', registrationUrl: null }), /managed in Entries/)
+    assert.equal(db.updates.length, 0)
+    await call(db.session, 'update_competition', { competition: 'c1', venue: 'New Hall' })
+    assert.equal(db.tree.competitions.c1.venue, 'New Hall')
+  })
+
   test('changes only what is given, as given, and says the map pin did not move', async () => {
     const db = fakeSession(competition())
     const out = await call(db.session, 'update_competition', { competition: 'c1', name: '  Spring Games 2026 ', venue: 'The Arena', registrationUrl: 'example.com/register', registrationOpens: '2026-01-05T09:00', links: [{ label: 'Program', url: 'https://example.com/p.pdf' }] })

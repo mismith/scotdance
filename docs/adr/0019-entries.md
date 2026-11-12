@@ -1,6 +1,6 @@
 # ADR-0019: How ScotDance Entries and ScotDance.app fit together
 
-Status: Proposed (design agreed with Murray 2026-11-11; nothing built)
+Status: Implemented and deployed to ScotDance next and shared backend; legacy frontend preserved (2026-11-11)
 Date: 2026-11-11
 
 ## Context
@@ -78,6 +78,8 @@ Taken from a real form (SHDA November 2026 on Eventry):
   category and steps ("Fling [4]"). Choreography and workshops are items too.
 - **Fees**: a name, an amount, and per dancer or per order (a flat fee, an association's levy). A per-order
   fee can be waived when the order has a second dancer ("$5 admission, waived when registering more than one").
+- The second-dancer waiver is optional and configurable; competitions may leave it disabled. Dancer levies
+  apply once per competition. Order charges, including the Stripe service fee, apply per order.
 - Member pricing: a yes/no question on the form picks the member price, on trust.
 - The organisers' own "online service fee" is Entries' card fee, shown as "Service fee". There is one, not two.
 - Family caps are not built.
@@ -96,7 +98,8 @@ Taken from a real form (SHDA November 2026 on Eventry):
 - An order is one payment for one or more dancers, each with their items. A parent can order again for the same
   competition. A dancer already entered can only add items they haven't entered, and the form shows what they
   already have as it is filled in.
-- Refunds will need to be per dancer; today they are per order.
+- Refunds can be per dancer without cancelling anyone else's entry. Everything the parent paid is refundable,
+  including shared fees, service fees and donations; a partial dancer refund must explicitly account for those amounts.
 
 ### 8. Dancers reach a competition through Splits
 
@@ -107,6 +110,20 @@ Taken from a real form (SHDA November 2026 on Eventry):
 - The organiser makes the age groups in Splits and sends them here as now (ADR 0015): the inbox, then Import
   dancers' preview. The competition is already chosen.
 - Birthdays stay in Entries; Splits gets ages. Splits passes the studio through (Import dancers already reads it).
+- Workshop-only purchasers are excluded from competitive age groups.
+
+### 9. Implementation clarifications
+
+- Conflicting shared registration settings are rejected with an explanation. Changing a linked primary keeps
+  Entries ownership and its latest registration together; separating the source competition releases inherited locks.
+- Trusted organisers retain the existing organisation-creation route. New organisations submitted with a
+  competition require review before the return to Entries becomes available.
+- Payout notifications use Postmark.
+- Delivery uses committed worktrees and usable previews, without pull requests. Initial hosting uses
+  `next.scotdance.app` for the updated source UI and embed, preserving the active legacy application.
+- The source bridge, ownership rules, return journey and Splits destination flow are implemented and tested.
+  [Integration contracts and release commands](../entries-integration.md) record the deployment sequence and
+  repeatable emulator checks, deployed scope and live acceptance evidence.
 
 ## Consequences
 
