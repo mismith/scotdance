@@ -26,7 +26,7 @@ import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
 import { runtimeConfig, geocodingApiKey, toolPassSecret } from './utility/config';
 import { UNLINK_URLS, getOnToolPass, getOnUnlinkTool } from './toolPass';
-import { getOnEntriesCompetition, getOnEntriesMembership, retryEntriesMemberships } from './entriesBridge';
+import { getOnEntriesCompetition, getOnEntriesMembership, retryEntriesMemberships, sendEntriesAccountDeletion, retryEntriesAccountDeletions } from './entriesBridge';
 import { database, https, request } from './utility/triggers';
 import { mcpApp } from './mcp/app';
 import * as AssistantConnections from './oauth/callables';
@@ -128,6 +128,20 @@ export const entriesOrganisationMembership = database({ secrets: [toolPassSecret
 export const retryEntriesMembership = onSchedule({ schedule: 'every 5 minutes', secrets: [toolPassSecret] }, async () => {
   const url = entriesMembershipUrl();
   if (url) await retryEntriesMemberships(appConfig.db, toolPassSecret.value(), url);
+});
+const entriesAccountDeleteUrl = () => isEmulator()
+  ? process.env.ENTRIES_ACCOUNT_DELETE_URL || null
+  : 'https://us-central1-scotdance-entries.cloudfunctions.net/deleteScotDanceAccount';
+// The small auth-hooks codebase records first-generation Auth deletions.
+// Delivery stays on the main Node 24 runtime and is durable after the user is gone.
+export const deliverEntriesAccountDeletion = database({ secrets: [toolPassSecret], retry: true })
+  .ref(`/${env}/entries:accountDeletions/{uid}`).onCreate(async (_snapshot, ctx) => {
+    const url = entriesAccountDeleteUrl();
+    if (url) await sendEntriesAccountDeletion(appConfig.db, toolPassSecret.value(), url, ctx.params.uid);
+  });
+export const retryEntriesAccountDeletion = onSchedule({ schedule: 'every 5 minutes', secrets: [toolPassSecret] }, async () => {
+  const url = entriesAccountDeleteUrl();
+  if (url) await retryEntriesAccountDeletions(appConfig.db, toolPassSecret.value(), url);
 });
 // Unlinking one signs them out of it (ADR 0017). In the emulator only a tool
 // named in TOOL_UNLINK_URL_<TOOL> (its own emulator) is called.

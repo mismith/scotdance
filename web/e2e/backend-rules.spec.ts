@@ -67,12 +67,13 @@ test.afterAll(async () => {
 
 test('Entries owns registration fields even when clients delete fields or remove the ownership marker', async () => {
   const path = `competitions/${pub}`
-  const owner = { competitionId: pub, organisationId: 'entries-org', targetId: pub, revision: 1 }
+  const owner = { competitionId: pub, organisationId: 'entries-org', targetId: pub, revision: 1, bindingId: 'current-binding' }
   await refused('an organiser forges Entries ownership', as(org, 'PUT', `${path}/entriesRegistration`, owner))
   await dbSet(`${path}/entriesRegistration`, owner)
   await dbSet(`${path}/registrationURL`, 'https://entries.scotdance.app/enter/entries-org/example')
   await dbSet(`${path}/registrationStart`, 1800000000000)
   await dbSet(`${path}/registrationEnd`, 1800100000000)
+  await dbSet(`${path}/entriesRegistrationReleasedBinding`, 'previous-binding')
   const bot = await assistant(org)
   try {
     for (const who of [org, bot]) {
@@ -82,13 +83,15 @@ test('Entries owns registration fields even when clients delete fields or remove
       await refused('delete registration dates', as(who, 'PATCH', path, { registrationStart: null, registrationEnd: null }))
       await refused('remove ownership', as(who, 'DELETE', `${path}/entriesRegistration`))
       await refused('change ownership', as(who, 'PATCH', `${path}/entriesRegistration`, { competitionId: 'other' }))
+      await refused('change service binding', as(who, 'PATCH', `${path}/entriesRegistration`, { bindingId: 'forged' }))
+      await refused('remove released binding', as(who, 'DELETE', `${path}/entriesRegistrationReleasedBinding`))
       await refused('remove lock and overwrite together', as(who, 'PATCH', '', { [`${path}/entriesRegistration`]: null, [`${path}/registrationURL`]: 'https://other.test' }))
     }
     await dbSet(`users:permissions/${org.uid}/admin`, true)
     await refused('system-admin client deletes a managed date', as(org, 'DELETE', `${path}/registrationEnd`))
   } finally {
     await dbRemove(`users:permissions/${org.uid}/admin`)
-    for (const field of ['entriesRegistration', 'registrationURL', 'registrationStart', 'registrationEnd', 'description']) await dbRemove(`${path}/${field}`)
+    for (const field of ['entriesRegistration', 'entriesRegistrationReleasedBinding', 'registrationURL', 'registrationStart', 'registrationEnd', 'description']) await dbRemove(`${path}/${field}`)
   }
 })
 

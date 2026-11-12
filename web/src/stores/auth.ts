@@ -174,8 +174,8 @@ export const useAuthStore = defineStore('auth', () => {
       }
     }
     const uid = u.uid
-    // Signed out of their other ScotDance tools too (ADR 0017); their work
-    // there stays.
+    // Unlink signs out other tools. Entries private data is separately
+    // removed by the reliable server-side Auth deletion hook below.
     await (await import('@/lib/tools')).unlinkEveryTool()
     // And the assistants connected to it (ADR 0018)
     await (await import('@/lib/assistants')).disconnectEveryAssistant()

@@ -26,8 +26,10 @@ Actions:
 | Action | Additional fields | Response |
 | --- | --- | --- |
 | `inspect` | None | Public competition/organisation snapshots and `registrationTargetId`; requires current admin rights to both. |
+| `claim` | None; human `sub` | Establishes an ownership binding after checking current competition, organisation and primary permissions. Returns `registrationTargetId`, `bindingId`, `revision` (initially zero). Repeating the same claim preserves its binding. |
 | `snapshot` | None | Only public competition/organisation snapshots, for scheduled refresh. No participant or account information is returned. |
-| `registration` | `registrationURL`, nullable `registrationStart`/`registrationEnd` in milliseconds, increasing integer `revision` | `registrationTargetId`, applied `revision`, `applied`. |
+| `registration` | `registrationURL`, nullable `registrationStart`/`registrationEnd` in milliseconds, increasing integer `revision`; ongoing service requests use `authority: service`, `sub: entries-service`, and `bindingId` | `registrationTargetId`, applied `revision`, `applied`. |
+| `unlink` | Human `sub`, matching `bindingId` | Rechecks live permission, clears registration and matching ownership copies, returns `released: true`. Repeated release is harmless; another owner/binding is refused. |
 | `dances` | `dances: [{ name, steps? }]`, at most 200 | `sent`: count of distinct names/steps inserted. |
 
 Registration resolves shared fields to the current primary and requires permission to that primary too. Its `entriesRegistration` marker records the source competition, organisation, target and revision. Another Entries source is rejected. A repeated/older revision cannot overwrite newer settings. Browser and assistant writes cannot edit or delete the managed fields or ownership marker. Linked registration copies include the marker; stopping sharing releases inherited ownership while retaining the displayed dates.
@@ -35,6 +37,11 @@ Registration resolves shared fields to the current primary and requires permissi
 Changing the primary moves the authoritative registration and updates every shared ownership target, even when mirrored copies have not caught up. If the Entries source stops sharing or its primary leaves, its latest registration moves back to that source and the other copies lose their inherited lock. Overlapping propagation deliveries cannot regress a newer copied revision.
 
 Registration URLs must exactly name `/enter/<organisationId>/<competitionId>` on `https://entries.scotdance.app`. Only in emulators, `http://localhost:5290` and `http://127.0.0.1:5290` are also accepted.
+
+Once a human with current access establishes a binding, Entries can keep publishing that connection without
+depending on the last editor retaining access. Service requests cannot claim an unowned competition or
+change its owning organisation. Unlink/reconnect creates a fresh binding, invalidating earlier jobs. The
+server-owned released-binding marker prevents delayed mirror updates from reinstating a released connection.
 
 Dance publication uses a transaction on the destination list. It never overwrites an existing list, including one populated concurrently. Identical name/steps pairs across categories become one dance; different steps remain separate.
 
@@ -47,6 +54,25 @@ Dance publication uses a transaction on the destination list. It never overwrite
 - The same HS256 secret, two-minute lifetime and unique `jti`.
 
 Every attempt rereads current authority. The receiver must retain the latest `checkedAt`, ignore older deliveries and prevent an older sign-in pass from restoring removed access. Native event retries are supplemented by `retryEntriesMembership` every five minutes. Failed deliveries stay in the server-only `entries:membershipFailures` tree until acknowledged; version stamps stay in `entries:membershipVersions`.
+
+## Account deletion
+
+Ordinary tool unlink only revokes sessions. Account deletion has a distinct signed audience, `entries:delete`,
+with `sub` and `deletedAt`, sent to Entries' `deleteScotDanceAccount`. The `auth-hooks` codebase records actual
+Firebase Auth deletion events in `entries:accountDeletions/{uid}`. `deliverEntriesAccountDeletion` sends newly
+queued requests; `retryEntriesAccountDeletion` retries pending requests every five minutes. Completed requests
+retain a small server-only acknowledgement so repeated Auth events cannot start a different deletion.
+
+Entries keeps a permanent server-only `deletedAccounts/{uid}` tombstone to block stale sign-in passes and
+in-flight writes. It deletes the saved parent/dancer profile tree, memberships, pending notifications and Auth
+account; removes birthdays, contact/location data and correction history; and retains paid roster names,
+categories and age at the competition plus the financial audit. Pending payments retain that minimal roster
+until reconciliation settles or expires them. Deletion never silently withdraws or refunds a paid entry.
+
+Firebase Auth deletion events are still first-generation and Node 24 is supported only for second-generation
+functions, so the tiny Auth hook uses Node 22 while the existing backend stays on Node 24. Its lockfile pins
+the compatible database dependency. See [Firebase Auth events](https://firebase.google.com/docs/functions/1st-gen/auth-events)
+and [Google's runtime support table](https://docs.cloud.google.com/functions/docs/runtime-support).
 
 ## Splits destination
 
@@ -86,6 +112,17 @@ ScotDance emulator with `ENTRIES_MEMBERSHIP_URL=http://127.0.0.1:5201/demo-entri
 The script sets its source URL only in its own process, leaving Entries' sample stub unchanged. It tests
 inspection, shared registration publication, atomic dance seeding, second-send refusal, and actual membership
 grant/removal triggers. Fixtures have unique IDs and are removed in `finally`; credentials are never printed.
+Install the isolated Auth hook with Node 22 and `npm --prefix auth-hooks ci`. The extended test also covers
+human claim, service publishing after the editor loses access, unlink/reconnect replay protection, and the real
+Auth hook handler → durable queue → signed receiver deletion path. It invokes the Auth event handler directly
+so it can run against an emulator stack started before the new codebase was registered. Set
+`ENTRIES_ACCOUNT_DELETE_URL=http://127.0.0.1:5201/demo-entries/us-central1/deleteScotDanceAccount` on a restarted
+ScotDance emulator to exercise automatic delivery of actual Auth deletion events too.
+
+For the lifecycle repair release, deploy source rules and `entriesCompetition`, `linkCompetitions`,
+`competitionDetailsSync`, `competitionDeleted` before Entries begins claiming bindings. Deploy the Entries
+`deleteScotDanceAccount` receiver before enabling `deliverEntriesAccountDeletion`, `retryEntriesAccountDeletion`
+and the isolated `functions:auth-hooks` producer. Existing source UI screens do not require rebuilding for this repair.
 
 Deploy receivers and rules before enabling producers: ScotDance `entriesCompetition` and registration protections; Entries `syncScotDanceMembership`; then the membership trigger/sweep and Entries publication. Deploy ScotDance's updated embed/importer before Splits starts sending explicit destination IDs and studio columns. The existing `next` branch workflow only deploys hosting; functions and rules must be released explicitly.
 

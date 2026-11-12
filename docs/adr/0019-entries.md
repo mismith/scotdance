@@ -124,6 +124,13 @@ Taken from a real form (SHDA November 2026 on Eventry):
 - The source bridge, ownership rules, return journey and Splits destination flow are implemented and tested.
   [Integration contracts and release commands](../entries-integration.md) record the deployment sequence and
   repeatable emulator checks, deployed scope and live acceptance evidence.
+- Ongoing publication belongs to a server-side Entries connection established by a currently authorised human,
+  rather than whichever organiser last saved settings. Unlinking releases that binding; reconnecting creates a
+  new one so an older queued job cannot recreate it.
+- Deleting a ScotDance account deletes its private Entries profiles and birthdays. Paid entries remain entered:
+  their roster keeps names, categories and ages at the competition, together with necessary financial records.
+  Pending payments keep that minimal roster until reconciled. Signing out or unlinking a tool does not delete data.
+  Distinct signed deletion delivery, retries and a permanent receiver tombstone prevent lost requests or replay.
 
 ## Consequences
 

@@ -1,11 +1,14 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
+import { createRequire } from 'node:module'
 import { FakeRtdb, snap } from './fakeRtdb'
 import {
   getOnEntriesCompetition, getOnEntriesMembership, readEntriesMessage, sendEntriesMembership, signEntriesMessage,
+  sendEntriesAccountDeletion, retryEntriesAccountDeletions,
 } from '../../../../functions/src/entriesBridge'
 import { getOnLink, getOnCompetitionUpdated } from '../../../../functions/src/links'
 
+const { queueAccountDeletion } = createRequire(import.meta.url)('../../../../auth-hooks/deletion.js')
 const SECRET = 'entries-bridge-test-secret'
 const claims = (extra: Record<string, unknown> = {}) => ({
   iss: 'https://entries.scotdance.app', aud: 'scotdance:entries', sub: 'organiser',
@@ -71,6 +74,58 @@ describe('Entries signed requests', () => {
 })
 
 describe('Entries registration ownership', () => {
+  it('binds ongoing service publication to the verified connection rather than its last human editor', async () => {
+    const { call, tree } = setup()
+    const claimed = await call({ action: 'claim' })
+    expect(claimed).toMatchObject({ registrationTargetId: 'sat', revision: 0 })
+    expect(claimed.bindingId).toBeTruthy()
+    expect((await call({ action: 'claim' })).bindingId).toBe(claimed.bindingId)
+    tree.write({ 'users:permissions/organiser': null, 'organisations:permissions/association/users/organiser': null })
+    await expect(call(registration(1))).rejects.toThrow(/administer both/)
+    expect(await call({ ...registration(1), sub: 'entries-service', authority: 'service', bindingId: claimed.bindingId })).toMatchObject({ applied: true })
+    await expect(call({ ...registration(2), sub: 'entries-service', authority: 'service', bindingId: 'wrong' })).rejects.toThrow(/no longer authorised/)
+    await expect(call({ ...registration(2), competitionId: 'sun', registrationURL: 'https://entries.scotdance.app/enter/association/sun', sub: 'entries-service', authority: 'service', bindingId: claimed.bindingId })).rejects.toThrow(/no longer authorised/)
+  })
+
+  it('unlinks only the matching binding, clears its linked copies and rejects replay after a new claim', async () => {
+    const { call, tree, db } = setup()
+    const claimed = await call({ action: 'claim' })
+    await call(registration(1))
+    await getOnLink(db)({ action: 'link', competitionId: 'sun', withId: 'sat' }, { auth: { uid: 'organiser' } })
+    await expect(call({ action: 'unlink', bindingId: 'wrong' })).rejects.toThrow(/different Entries connection/)
+    expect(await call({ action: 'unlink', bindingId: claimed.bindingId })).toMatchObject({ released: true })
+    for (const id of ['sat', 'sun']) {
+      expect(tree.read(`competitions/${id}/entriesRegistration`)).toBeNull()
+      expect(tree.read(`competitions/${id}/registrationURL`)).toBeNull()
+    }
+    expect(await call({ action: 'unlink', bindingId: claimed.bindingId })).toMatchObject({ released: true })
+    const replacement = await call({ action: 'claim' })
+    expect(replacement.bindingId).not.toBe(claimed.bindingId)
+    await expect(call({ action: 'unlink', bindingId: claimed.bindingId })).rejects.toThrow(/different Entries connection/)
+    await expect(call({ ...registration(99), sub: 'entries-service', authority: 'service', bindingId: claimed.bindingId })).rejects.toThrow(/no longer authorised/)
+  })
+
+  it.each(['released', 'replaced'])('does not restore a %s connection from a delayed linked propagation', async (state) => {
+    const { call, tree, db } = setup()
+    const claimed = await call({ action: 'claim' })
+    await call(registration(1))
+    await getOnLink(db)({ action: 'link', competitionId: 'sun', withId: 'sat' }, { auth: { uid: 'organiser' } })
+    tree.duringTransaction = (path) => {
+      if (path !== 'competitions/sun') return
+      tree.duringTransaction = null
+      tree.write({
+        'competitions/sun/registrationURL': null,
+        'competitions/sun/entriesRegistrationReleasedBinding': claimed.bindingId,
+        'competitions/sun/entriesRegistration': state === 'released' ? null : {
+          competitionId: 'sat', organisationId: 'association', targetId: 'sat', bindingId: 'new-binding', revision: 0,
+        },
+      })
+    }
+    await getOnCompetitionUpdated(db)({ before: snap({}), after: snap(tree.read('competitions/sat')) }, { params: { competitionId: 'sat' } })
+    expect(tree.read('competitions/sun/registrationURL')).toBeNull()
+    if (state === 'released') expect(tree.read('competitions/sun/entriesRegistration')).toBeNull()
+    else expect(tree.read('competitions/sun/entriesRegistration')).toMatchObject({ bindingId: 'new-binding', revision: 0 })
+  })
   it.each(['source leaves', 'primary leaves', 'source stops sharing'])('moves ownership home after changing the primary: %s', async (action) => {
     const { call, db, tree } = setup()
     const link = getOnLink(db)
@@ -147,6 +202,32 @@ describe('Entries registration ownership', () => {
     expect(tree.read('competitions/sun/entriesRegistration')).toBeNull()
     expect(await call({ ...registration(), competitionId: 'sun', registrationURL: 'https://entries.scotdance.app/enter/association/sun' })).toMatchObject({ applied: true, registrationTargetId: 'sun' })
     await expect(getOnLink(db)({ action: 'sync', competitionId: 'sun', part: 'registration', on: true }, { auth: { uid: 'organiser' } })).rejects.toThrow(/own Entries registration/)
+  })
+})
+
+describe('Entries account deletion delivery', () => {
+  it('persists deletion across delivery failure and retries its distinct signed purpose idempotently', async () => {
+    const { db, tree } = setup()
+    const calls: Record<string, unknown>[] = []
+    let fail = true
+    const send = async (_url: string, body: any) => {
+      const pass = JSON.parse(Buffer.from(body.data.pass.split('.')[1], 'base64url').toString())
+      calls.push(pass)
+      return { ok: !fail, status: fail ? 503 : 200 }
+    }
+    const deleted = async ({ uid }: { uid: string }) => {
+      await queueAccountDeletion(db, uid)
+      await sendEntriesAccountDeletion(db, SECRET, 'http://entries.test/delete', uid, send)
+    }
+    await expect(deleted({ uid: 'parent' })).rejects.toThrow(/503/)
+    const queued = tree.read('entries:accountDeletions/parent') as { deletedAt: number; state: string }
+    expect(queued.state).toBe('pending')
+    fail = false
+    await retryEntriesAccountDeletions(db, SECRET, 'http://entries.test/delete', send)
+    expect(tree.read('entries:accountDeletions/parent')).toMatchObject({ state: 'complete', deletedAt: queued.deletedAt })
+    expect(calls[1]).toMatchObject({ aud: 'entries:delete', sub: 'parent', deletedAt: queued.deletedAt })
+    await deleted({ uid: 'parent' })
+    expect(calls).toHaveLength(2)
   })
 })
 

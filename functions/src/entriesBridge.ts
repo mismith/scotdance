@@ -93,19 +93,73 @@ export function getOnEntriesCompetition(secret: () => string, db: any) {
     if (!key(p.competitionId) || !key(p.organisationId)) throw new HttpsError('invalid-argument', 'A competition and organisation are required.');
     const facts = await snapshot(db, p.competitionId, p.organisationId);
     if (p.action === 'snapshot') return facts; // Public fields only, including unlisted competitions.
-    await requireAccess(db, p.sub, p.competitionId, p.organisationId);
+    const service = p.action === 'registration' && p.authority === 'service' && p.sub === 'entries-service';
+    if (!service) await requireAccess(db, p.sub, p.competitionId, p.organisationId);
     const target = await registrationTarget(db, p.competitionId);
-    if (p.action === 'inspect') return { ...facts, registrationTargetId: target };
+    if (p.action === 'inspect') {
+      const owner = await read(db, `competitions/${target}/entriesRegistration`);
+      return { ...facts, registrationTargetId: target,
+        ...(owner?.competitionId === p.competitionId && owner?.organisationId === p.organisationId
+          ? { bindingId: owner.bindingId ?? null, revision: owner.revision } : {}) };
+    }
+
+    if (p.action === 'claim' || p.action === 'unlink') {
+      if (target !== p.competitionId) await requireAccess(db, p.sub, target, p.organisationId);
+      if (p.action === 'unlink' && !key(p.bindingId)) throw new HttpsError('invalid-argument', 'A registration binding is required.');
+      const bindingId = randomUUID();
+      let problem: string | null = null;
+      const result = await db.child(`competitions/${target}`).transaction((current: any) => {
+        problem = null;
+        if (!current) return null;
+        const owner = current.entriesRegistration;
+        if (owner && (owner.targetId !== target || owner.competitionId !== p.competitionId || owner.organisationId !== p.organisationId
+          || (p.action === 'unlink' && owner.bindingId !== p.bindingId))) {
+          problem = 'These registration settings belong to a different Entries connection. Refresh before changing it.';
+          return undefined;
+        }
+        if (p.action === 'claim') return { ...current, entriesRegistration: {
+          competitionId: p.competitionId, organisationId: p.organisationId, targetId: target,
+          revision: owner?.revision ?? 0, bindingId: owner?.bindingId ?? bindingId,
+        } };
+        if (!owner) return undefined;
+        const next = { ...current };
+        for (const field of ['entriesRegistration', 'registrationURL', 'registrationStart', 'registrationEnd']) delete next[field];
+        next.entriesRegistrationReleasedBinding = p.bindingId;
+        return next;
+      });
+      if (!result.snapshot.exists()) throw new HttpsError('not-found', 'The competition is no longer available.');
+      if (problem) throw new HttpsError('failed-precondition', problem);
+      if (p.action === 'claim') return { registrationTargetId: target, ...result.snapshot.val().entriesRegistration };
+      // Clear only copies of this exact binding, never a newly linked owner.
+      const link = await linkOf(db, p.competitionId);
+      for (const id of link?.members ?? []) {
+        if (id === target) continue;
+        await db.child(`competitions/${id}`).transaction((current: any) => {
+          if (!current) return null;
+          const owner = current.entriesRegistration;
+          if (owner?.bindingId !== p.bindingId || owner?.competitionId !== p.competitionId || owner?.organisationId !== p.organisationId) return undefined;
+          const next = { ...current };
+          for (const field of ['entriesRegistration', 'registrationURL', 'registrationStart', 'registrationEnd']) delete next[field];
+          next.entriesRegistrationReleasedBinding = p.bindingId;
+          return next;
+        });
+      }
+      return { released: true, registrationTargetId: target };
+    }
 
     if (p.action === 'registration') {
       dates(p);
-      if (target !== p.competitionId) await requireAccess(db, p.sub, target, p.organisationId);
+      if (!service && target !== p.competitionId) await requireAccess(db, p.sub, target, p.organisationId);
       let problem: string | null = null;
       const result = await db.child(`competitions/${target}`).transaction((current: any) => {
         problem = null;
         if (!current) return null; // A cold Admin SDK cache starts at null; allow its server retry.
         if (!current.date) { problem = 'The competition is no longer available.'; return undefined; }
         const owner = current.entriesRegistration;
+        if (service && (!key(p.bindingId) || !owner || owner.bindingId !== p.bindingId)) {
+          problem = 'This Entries connection is no longer authorised to publish registration.';
+          return undefined;
+        }
         if (owner && owner.targetId !== target) {
           problem = 'The shared registration destination changed. Refresh and publish again.';
           return undefined;
@@ -120,7 +174,8 @@ export function getOnEntriesCompetition(secret: () => string, db: any) {
           registrationURL: p.registrationURL,
           registrationStart: p.registrationStart ?? null,
           registrationEnd: p.registrationEnd ?? null,
-          entriesRegistration: { competitionId: p.competitionId, organisationId: p.organisationId, targetId: target, revision: p.revision },
+          entriesRegistration: { competitionId: p.competitionId, organisationId: p.organisationId, targetId: target, revision: p.revision,
+            ...(owner?.bindingId && { bindingId: owner.bindingId }) },
         };
       });
       if (!result.snapshot.exists()) throw new HttpsError('not-found', 'The competition is no longer available.');
@@ -187,5 +242,23 @@ export async function retryEntriesMemberships(db: any, secret: string, url: stri
   const tasks = Object.entries(failed).flatMap(([organisationId, users]) => Object.keys(users as object).map((uid) => ({ organisationId, uid }))).slice(0, 100);
   for (const { organisationId, uid } of tasks) {
     await sendEntriesMembership(db, secret, url, organisationId, uid).catch((error) => console.error('Entries membership retry failed', organisationId, uid, error));
+  }
+}
+
+/** Account deletion is distinct from unlinking a tool: persist the request before delivery. */
+export async function sendEntriesAccountDeletion(db: any, secret: string, url: string, uid: string, send: Send = post) {
+  const pending = db.child(`entries:accountDeletions/${uid}`);
+  const request = await read(db, `entries:accountDeletions/${uid}`);
+  if (!request || request.state === 'complete') return;
+  const pass = signEntriesMessage(secret, { iss: 'https://scotdance.app', aud: 'entries:delete', sub: uid, deletedAt: request.deletedAt });
+  const result = await send(url, { data: { pass } });
+  if (!result.ok) throw new Error(`Entries account deletion answered ${result.status}`);
+  await pending.update({ state: 'complete', completedAt: Date.now() });
+}
+
+export async function retryEntriesAccountDeletions(db: any, secret: string, url: string, send: Send = post) {
+  const requests = await read(db, 'entries:accountDeletions') ?? {};
+  for (const [uid] of Object.entries(requests).filter(([, value]: [string, any]) => value.state !== 'complete').slice(0, 100)) {
+    await sendEntriesAccountDeletion(db, secret, url, uid, send).catch((error) => console.error('Entries account deletion retry failed', uid, error));
   }
 }

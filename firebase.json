@@ -8,13 +8,21 @@
   "storage": {
     "rules": "storage.rules"
   },
-  "functions": {
-    "predeploy": [
-      "npm --prefix \"$RESOURCE_DIR\" run lint",
-      "npm --prefix \"$RESOURCE_DIR\" run build"
-    ],
-    "source": "functions"
-  },
+  "functions": [
+    {
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ],
+      "source": "functions",
+      "codebase": "default"
+    },
+    {
+      "source": "auth-hooks",
+      "codebase": "auth-hooks",
+      "runtime": "nodejs22"
+    }
+  ],
   "hosting": [
     {
       "target": "production",

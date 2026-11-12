@@ -671,6 +671,8 @@ export function getOnCompetitionUpdated(db: Db) {
             if (!current) return current;
             const owner = current.entriesRegistration;
             const next = fresh.entriesRegistration;
+            if (next?.bindingId && current.entriesRegistrationReleasedBinding === next.bindingId) return;
+            if (owner?.bindingId && next?.bindingId && owner.bindingId !== next.bindingId) return;
             if (owner && (!next || owner.competitionId !== next.competitionId || owner.organisationId !== next.organisationId
               || owner.targetId !== next.targetId || owner.revision > next.revision)) return;
             const result = { ...current };
