@@ -43,6 +43,7 @@ jobs:
           cache-dependency-path: |
             web/package-lock.json
             functions/package-lock.json
+            auth-hooks/package-lock.json
       # The database emulator runs on Java.
       - uses: actions/setup-java@v4
         with:
@@ -59,6 +60,9 @@ jobs:
       - name: Install and build functions
         working-directory: functions
         run: npm ci && npm run build
+      - name: Install account deletion hook dependencies
+        working-directory: auth-hooks
+        run: npm ci
       # Empty config: no Postmark (invite and approval emails stay unsent)
       # and a stand-in geocoding key (an empty one sends the emulator off to
       # Secret Manager).
