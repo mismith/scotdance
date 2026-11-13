@@ -75,7 +75,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/seed/database_export"
           gunzip -c web/e2e/seed/database.json.gz > "$RUNNER_TEMP/seed/database_export/scotdance.json"
           echo '{"version":"15.32.1","database":{"version":"4.11.2","path":"database_export"}}' > "$RUNNER_TEMP/seed/firebase-export-metadata.json"
-      # One functions worker (--inspect-functions), as in `npm run local`:
+      # One functions worker per codebase, as in `npm run local`:
       # otherwise seeding spawns so many that the database emulator falls over.
       # The preload stops that worker running an event as the wrong function
       # (see the file). Signed out, the CLI can't look up the project's
@@ -90,7 +90,7 @@ jobs:
           --project firebase-scotdance
           --only auth,database,functions,storage
           --import "$RUNNER_TEMP/seed"
-          --inspect-functions 9229
+          --inspect-functions=true
           'cd web && npx playwright test'
       - name: Keep traces of failures
         if: failure()
