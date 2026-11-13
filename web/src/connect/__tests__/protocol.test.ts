@@ -85,6 +85,11 @@ describe('audienceFor', () => {
     expect(audienceFor('binder', 'https://a.b.scotdance.site')).toBeNull()
     expect(audienceFor('entries', 'https://entries.scotdance.app')).toBe('entries')
     expect(audienceFor('entries', 'https://binder.scotdance.app')).toBeNull()
+    expect(audienceFor('entries', 'https://scotdance-entries--kilt-gskstz6n.web.app')).toBe('entries')
+    expect(audienceFor('binder', 'https://scotdance-entries--kilt-gskstz6n.web.app')).toBeNull()
+    expect(audienceFor('entries', 'https://scotdance-entries.web.app')).toBeNull()
+    expect(audienceFor('entries', 'https://evil--scotdance-entries--x.web.app')).toBeNull()
+    expect(audienceFor('entries', 'http://scotdance-entries--kilt-gskstz6n.web.app')).toBeNull()
     expect(audienceFor('entries', 'https://cshd.scotdance.site')).toBeNull()
   })
 

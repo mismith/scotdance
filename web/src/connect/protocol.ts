@@ -39,6 +39,12 @@ const isStudioSite = (hostname: string) => STUDIO_SITE.test(hostname)
 
 /** Sites allowed to embed this page and hand it work: ScotDance.app's own, studios' own sites on Binder, and local
  * ones while developing. */
+/**
+ * Entries' Firebase Hosting preview channels (`scotdance-entries--<channel>-<hash>.web.app`). Only the Entries
+ * project's owners can publish to them, so they may sign in to Entries the way entries.scotdance.app does.
+ */
+export const isEntriesPreview = (hostname: string) => /^scotdance-entries--[a-z0-9-]+\.web\.app$/.test(hostname)
+
 export function isAllowedOrigin(origin: string, { dev = false } = {}): boolean {
   let url: URL
   try {
@@ -49,6 +55,7 @@ export function isAllowedOrigin(origin: string, { dev = false } = {}): boolean {
   if (url.origin !== origin) return false
   if (url.protocol === 'https:' && (url.hostname === 'scotdance.app' || url.hostname.endsWith('.scotdance.app'))) return true
   if (url.protocol === 'https:' && isStudioSite(url.hostname)) return true
+  if (url.protocol === 'https:' && isEntriesPreview(url.hostname)) return true
   return dev && url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
 }
 
@@ -89,7 +96,7 @@ export const TOOLS = {
     name: 'Entries',
     icon: '/img/tools/entries.svg',
     hostname: 'entries.scotdance.app',
-    serves: (hostname: string) => hostname === 'entries.scotdance.app',
+    serves: (hostname: string) => hostname === 'entries.scotdance.app' || isEntriesPreview(hostname),
     /** What its pass says beyond a name and email (functions/src/toolPass.ts), as the sign-in sheet puts it */
     alsoGets: 'the organisations and upcoming competitions you run',
   },

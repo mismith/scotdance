@@ -39,7 +39,7 @@
           "headers": [
             {
               "key": "Content-Security-Policy",
-              "value": "frame-ancestors https://scotdance.app https://*.scotdance.app https://*.scotdance.site"
+              "value": "frame-ancestors https://scotdance.app https://*.scotdance.app https://*.scotdance.site https://scotdance-entries--kilt-gskstz6n.web.app"
             }
           ]
         },
@@ -80,7 +80,7 @@
           "headers": [
             {
               "key": "Content-Security-Policy",
-              "value": "frame-ancestors https://scotdance.app https://*.scotdance.app https://*.scotdance.site"
+              "value": "frame-ancestors https://scotdance.app https://*.scotdance.app https://*.scotdance.site https://scotdance-entries--kilt-gskstz6n.web.app"
             }
           ]
         },
