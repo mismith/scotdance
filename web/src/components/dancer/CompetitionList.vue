@@ -5,22 +5,18 @@ import { ChevronRight } from '@lucide/vue'
 import DateTile from '@/components/DateTile.vue'
 import LinkRail from '@/components/LinkRail.vue'
 import Medal from '@/components/Medal.vue'
-import NumberCard from '@/components/NumberCard.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import { useDancerRecord, type ListRow } from '@/composables/useDancerRecord'
 import type { EntrySummary } from '@/lib/entrySummary'
-import { useFollowing } from '@/composables/useFollowing'
 import { useHiddenAs } from '@/composables/useHiddenAs'
 import { useMeStore } from '@/stores/me'
 
-// A dancer's competitions as rows: the date, the name, the number they wore
-// there and what they won, pinned on as on their day card. A year at a time
-// (`headings`), or one run of rows (Overview's Latest, the basic profile).
+// A dancer's competitions as rows: the date, the name and what they won.
+// A year at a time (`headings`), or one run of rows (the basic profile).
 // `skip`: a competition shown as the day card instead.
 const props = defineProps<{
   years: ReadonlyArray<readonly [string, ListRow[]]>
-  dancerId: string
   headings?: boolean
   skip?: string | null
   /** The competitions are still on their way. */
@@ -30,8 +26,6 @@ const props = defineProps<{
 const me = useMeStore()
 const record = useDancerRecord()
 const hiddenAs = useHiddenAs()
-const following = useFollowing()
-const color = computed(() => following.colorFor(props.dancerId))
 
 const shown = computed(() =>
   props.years
@@ -117,12 +111,11 @@ function medals(cid: string) {
               {{ medals(r.competitionId).groups.join(' · ') }}
             </span>
             <span v-if="hiddenAs(r.competitionId, r.competition)" class="mt-0.5 flex"><VisibilityChip :visibility="hiddenAs(r.competitionId, r.competition)" /></span>
-            <!-- The number they wore there, then what they won, pinned on as on their day card. -->
+            <!-- Their results, including an explicit unplaced result. -->
             <span
-              v-if="r.numbers.length || medals(r.competitionId).placings.length || medals(r.competitionId).overall || medals(r.competitionId).trophyEvents.length || medals(r.competitionId).teams.length"
+              v-if="medals(r.competitionId).unplaced || medals(r.competitionId).placings.length || medals(r.competitionId).overall || medals(r.competitionId).trophyEvents.length || medals(r.competitionId).teams.length"
               class="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1.5"
             >
-              <NumberCard v-for="n in r.numbers" :key="n" :number="n" :color="color" size="xs" class="mr-1.5" />
               <span v-if="medals(r.competitionId).unplaced" class="text-muted-foreground text-sm font-medium">Not placed</span>
               <Medal
                 v-for="m in medals(r.competitionId).placings"

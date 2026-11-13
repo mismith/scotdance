@@ -48,7 +48,6 @@ const me = useMeStore()
 const id = computed(() => String(route.params.organisationId ?? ''))
 const m = useManagedOrganisation(id)
 const org = computed(() => m.organisation.value ?? {})
-const entriesOrigin = import.meta.env.VITE_ENTRIES_ORIGIN || 'https://entries.scotdance.app'
 usePageTitle(() => ['Manage', m.organisation.value?.name])
 const sectionTitle = provideSectionTitle()
 
@@ -244,10 +243,6 @@ async function deleteOrganisation() {
 
       <div v-else class="space-y-10">
         <SectionHeader :title="org.name || 'Organisation'" kicker="Organisation" />
-
-        <Button :href="`${entriesOrigin}/organise?organisation=${encodeURIComponent(id)}&refresh=1`" target="_blank" rel="noopener">
-          <ExternalLink /> Take entries
-        </Button>
 
         <section class="space-y-4">
           <h2 class="text-heading">Its page</h2>

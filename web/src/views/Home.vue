@@ -376,6 +376,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
               <DancerDayCard
                 v-if="card.focus?.days.length"
                 :days="card.focus.days"
+                :show-number="card.focus.phase !== 'after'"
                 :fresh="liveFresh"
                 :competition-id="card.focus.competitionId"
                 :color="cardColor(card)"
@@ -480,6 +481,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
                 :class="settle"
                 :style="settleDelay(i)"
                 :days="card.focus.days"
+                :show-number="card.focus.phase !== 'after'"
                 :fresh="liveFresh"
                 :competition-id="card.focus.competitionId"
                 :color="cardColor(card)"

@@ -36,8 +36,10 @@ const props = withDefaults(
     size?: 'md' | 'lg'
     /** Just the dances, under a page that has its own header. */
     bare?: boolean
+    /** Use their avatar for past competitions outside competition records. */
+    showNumber?: boolean
   }>(),
-  { color: null, competitionName: null, name: null, fresh: null, size: 'md', bare: false },
+  { color: null, competitionName: null, name: null, fresh: null, size: 'md', bare: false, showNumber: true },
 )
 
 // Entries with nothing scheduled are dropped when another entry has dances.
@@ -180,7 +182,7 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
         :to="{ name: 'competition.dancer', params: { competitionId, dancerId: day.dancer.id } }"
         class="press-row focus-inset grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-3 p-4 @min-[34rem]:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
       >
-        <NumberCard v-if="bib" :number="bib.dancer.number" :color="color" size="md" />
+        <NumberCard v-if="showNumber && bib" :number="bib.dancer.number" :color="color" size="md" />
         <span v-else class="flex w-[5.5rem] justify-center"><Avatar :name="name || day.dancer.fullName" :color="color" size="lg" /></span>
         <span class="min-w-0">
           <span class="block text-[1.25rem] leading-tight font-bold tracking-[-0.01em] break-words">{{ name || day.dancer.fullName }}</span>

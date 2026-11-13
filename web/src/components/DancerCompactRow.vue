@@ -76,7 +76,7 @@ const to = computed(() =>
     >
       <span class="flex w-11 shrink-0 justify-center">
         <NumberCard
-          v-if="bib?.dancer.number != null"
+          v-if="f?.phase !== 'after' && bib?.dancer.number != null"
           :number="bib.dancer.number"
           size="xs"
           :color="color"

@@ -34,7 +34,7 @@ const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('
 export function signPass(
   secret: string,
   who: {
-    uid: string; email?: string | null; name?: string | null; audience: Audience | `${Audience}:unlink`;
+    uid: string; email?: string | null; emailVerified?: boolean; name?: string | null; audience: Audience | `${Audience}:unlink`;
     organisations?: PassOrganisation[];
     competitions?: PassCompetition[];
   },
@@ -47,6 +47,7 @@ export function signPass(
     aud: who.audience,
     sub: who.uid,
     email: who.email ?? null,
+    emailVerified: who.emailVerified === true,
     name: who.name ?? null,
     ...(who.organisations ? { organisations: who.organisations } : {}),
     ...(who.competitions ? { competitions: who.competitions } : {}),
@@ -90,7 +91,7 @@ export function isAudience(value: unknown): value is Audience {
 }
 
 interface Context {
-  auth: { uid: string; token: { email?: string; name?: string; firebase?: { sign_in_provider?: string } } } | null;
+  auth: { uid: string; token: { email?: string; email_verified?: boolean; name?: string; firebase?: { sign_in_provider?: string } } } | null;
 }
 
 interface Db {
@@ -139,6 +140,7 @@ export function getOnToolPass(secret: () => string, db: Db) {
       pass: signPass(secret(), {
         uid: auth.uid,
         email: auth.token.email ?? null,
+        emailVerified: auth.token.email_verified === true,
         name,
         audience: data.audience,
         ...(data.audience === 'entries' ? { organisations: await adminOf(db, auth.uid), competitions: await upcomingManaged(db, auth.uid, now) } : {}),

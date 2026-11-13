@@ -350,12 +350,12 @@ function onPointerUp(e: PointerEvent) {
         </p>
       </section>
 
-      <section v-for="d in nearby" :key="d.kind" class="space-y-2">
-        <h3 class="text-section flex items-baseline justify-between gap-3">
+      <section v-for="d in nearby" :key="d.kind" class="text-muted-foreground space-y-2 border-t pt-4">
+        <h3 class="flex items-baseline justify-between gap-3 text-sm font-semibold">
           {{ d.kind }} · {{ d.label }}
           <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ d.comps.length }}</span>
         </h3>
-        <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
+        <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem] [&_.text-foreground]:text-muted-foreground">
           <CompetitionDateRow
             v-for="{ competition, rail, note } in railed(d.comps)"
             :key="competition.id"
