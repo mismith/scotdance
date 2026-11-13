@@ -89,8 +89,8 @@ jobs:
           npx --yes firebase-tools@15 emulators:exec
           --project firebase-scotdance
           --only auth,database,functions,storage
+          --inspect-functions
           --import "$RUNNER_TEMP/seed"
-          --inspect-functions=true
           'cd web && npx playwright test'
       - name: Keep traces of failures
         if: failure()
