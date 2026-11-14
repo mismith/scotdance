@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Avatar from '@/components/Avatar.vue'
 import { computed, onScopeDispose, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { get, onValue } from 'firebase/database'
@@ -33,6 +34,7 @@ interface Flag {
 interface Person {
   email?: string
   displayName?: string
+  photoURL?: string
 }
 
 const FLAG_OVER = 50
@@ -116,9 +118,12 @@ async function dismiss(f: Flag) {
       />
       <ul v-else class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
         <li v-for="f in waiting" :key="`${f.uid}/${f.day}`" class="space-y-3 px-4 py-3">
-          <div class="min-w-0">
-            <span class="block truncate text-base font-medium">{{ nameOf(f.uid) }}</span>
-            <span v-if="emailOf(f.uid)" class="text-muted-foreground block truncate text-sm">{{ emailOf(f.uid) }}</span>
+          <div class="flex min-w-0 items-center gap-3">
+            <Avatar :name="nameOf(f.uid)" :email="people[f.uid]?.email" :image="people[f.uid]?.photoURL" />
+            <div class="min-w-0">
+              <span class="block truncate text-base font-medium">{{ nameOf(f.uid) }}</span>
+              <span v-if="emailOf(f.uid)" class="text-muted-foreground block truncate text-sm">{{ emailOf(f.uid) }}</span>
+            </div>
           </div>
           <dl class="text-sm [&>div]:flex [&>div]:justify-between [&>div]:gap-3 [&>div]:py-1 [&_dt]:text-muted-foreground [&_dd]:text-right">
             <div><dt>Day</dt><dd>{{ formatLongDate(f.day) }}</dd></div>
@@ -141,6 +146,7 @@ async function dismiss(f: Flag) {
       <ol v-else class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
         <li v-for="a in busiest" :key="a.uid">
           <RouterLink :to="{ name: 'admin.users', params: { userId: a.uid } }" class="press-row focus-inset flex min-h-14 items-center gap-3 px-4 py-2">
+            <Avatar :name="nameOf(a.uid)" :email="people[a.uid]?.email" :image="people[a.uid]?.photoURL" />
             <span class="min-w-0 flex-1">
               <span class="block truncate text-base font-medium">{{ nameOf(a.uid) }}</span>
               <span v-if="emailOf(a.uid)" class="text-muted-foreground block truncate text-sm">{{ emailOf(a.uid) }}</span>

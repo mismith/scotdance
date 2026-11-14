@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Avatar from '@/components/Avatar.vue'
 import { computed, onScopeDispose, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { get, onValue } from 'firebase/database'
@@ -34,6 +35,7 @@ interface UserRecord {
   id: string
   email?: string
   displayName?: string
+  photoURL?: string
   roles?: Record<string, boolean>
 }
 interface Perms {
@@ -195,6 +197,7 @@ function pick(id: string) {
             :aria-current="uid === u.id ? 'true' : undefined"
             :class="['press-row focus-inset flex min-h-14 items-center gap-3 px-4 py-2', uid === u.id && 'bg-blue-paper']"
           >
+            <Avatar :name="u.displayName || u.email || '?'" :email="u.email" :image="u.photoURL" />
             <span class="min-w-0 flex-1">
               <span class="block truncate text-base font-medium">{{ u.displayName || u.email || 'No name' }}</span>
               <span v-if="u.displayName && u.email" class="text-muted-foreground block truncate text-sm">{{ u.email }}</span>
@@ -218,6 +221,7 @@ function pick(id: string) {
     <template #detail>
       <div v-if="current" :key="current.id" class="mx-auto max-w-2xl space-y-8 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8">
         <header class="space-y-1">
+          <Avatar :name="current.displayName || current.email || '?'" :email="current.email" :image="current.photoURL" size="lg" />
           <h2 class="text-display break-words">{{ current.displayName || current.email || 'No name' }}</h2>
           <p v-if="current.displayName && current.email" class="text-muted-foreground text-base">{{ current.email }}</p>
           <p v-if="current.roles" class="text-muted-foreground text-sm">

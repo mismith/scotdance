@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Avatar from '@/components/Avatar.vue'
 import { computed, ref } from 'vue'
 import { MailPlus, ShieldCheck } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -136,7 +137,7 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
     <section class="space-y-3">
       <MovingList v-if="others.length || admins.length" class="rows-engraved -mx-4 [--inset:3rem] [--inset-end:1rem]">
         <li v-for="o in others" :key="o.uid" class="flex min-h-15 items-center gap-3 px-4 py-2">
-          <ShieldCheck class="text-primary size-5 shrink-0" />
+          <Avatar :name="o.email || '?'" :email="o.email" size="xs" />
           <span class="min-w-0 flex-1">
             <span class="block truncate text-base font-medium">
               {{ o.email ?? (o.uid === auth.uid ? 'You' : (unknownHolder ?? 'Another admin')) }}<span v-if="o.email && o.uid === auth.uid" class="text-muted-foreground font-normal"> (you)</span>
@@ -145,7 +146,7 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
           </span>
         </li>
         <li v-for="i in admins" :key="i.id" class="flex min-h-15 items-center gap-3 py-2 pr-2 pl-4">
-          <ShieldCheck class="text-primary size-5 shrink-0" />
+          <Avatar :name="i.payload?.email || '?'" :email="i.payload?.email" size="xs" />
           <span class="min-w-0 flex-1">
             <span class="block truncate text-base font-medium">
               {{ i.payload?.email ?? 'Unknown' }}<span v-if="i.acceptedBy === auth.uid" class="text-muted-foreground font-normal"> (you)</span>
@@ -186,6 +187,7 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
       <h2 class="text-heading">Invites</h2>
       <MovingList class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
         <li v-for="i in pending" :key="i.id" class="flex flex-wrap items-center gap-x-2 gap-y-1 py-2 pr-2 pl-4">
+          <Avatar :name="i.payload?.email || '?'" :email="i.payload?.email" size="xs" />
           <span class="min-w-0 flex-1 basis-48 py-1">
             <span class="block truncate text-base font-medium">{{ i.payload?.email ?? 'Unknown' }}</span>
             <span v-if="status(i) === 'pending' && i.emailFailed" class="text-destructive block text-sm font-medium">

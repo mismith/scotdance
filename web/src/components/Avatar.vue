@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
+import { useAvatar } from '@/lib/avatar'
 import { initialsOf, nameHue } from '@/lib/format'
 import { clothInk, isCloth } from '@/lib/tartan'
 import { inkOnLook } from '@/stores/dancerColors'
@@ -13,6 +14,7 @@ import { inkOnLook } from '@/stores/dancerColors'
 const props = withDefaults(
   defineProps<{
     name: string
+    email?: string | null
     image?: string | null
     /** A followed dancer's look, as a CSS background (see useFollowing's colorFor). */
     color?: string | null
@@ -21,10 +23,15 @@ const props = withDefaults(
     /** A person who isn't a dancer: initials on a soft colour of their own. */
     tinted?: boolean
   }>(),
-  { image: null, color: null, size: 'sm' },
+  { email: null, image: null, color: null, size: 'sm' },
 )
 
-const SIZE = { xs: 'size-8 text-xs', sm: 'size-10 text-sm', lg: 'size-16 text-xl', xl: 'size-24 text-[2rem]' }
+const SIZE = {
+  xs: 'size-8 text-xs',
+  sm: 'size-10 text-sm',
+  lg: 'size-16 text-xl',
+  xl: 'size-24 text-[2rem]',
+}
 
 // Initials in the colour's own ink; on a tartan, white (or ink, on light
 // cloth) with a soft halo that keeps them legible over every stripe.
@@ -35,22 +42,20 @@ const ink = computed(() => {
   return { color: ink, textShadow: `0 0 2px ${halo}, 0 1px 4px ${halo}` }
 })
 
-const broken = ref(false)
-watch(
-  () => props.image,
-  () => (broken.value = false),
-)
+const { image: photo, onError } = useAvatar(() => props)
 </script>
 
 <template>
   <img
-    v-if="image && !broken"
-    :src="image"
+    v-if="photo"
+    :key="photo"
+    :src="photo"
+    referrerpolicy="no-referrer"
     loading="lazy"
     decoding="async"
     alt=""
     :class="['bg-muted shrink-0 rounded-full object-cover', SIZE[size]]"
-    @error="broken = true"
+    @error="onError"
   />
   <span
     v-else
@@ -66,7 +71,9 @@ watch(
             ? 'bg-[oklch(0.93_0.05_var(--h))] text-[oklch(0.45_0.13_var(--h))] dark:bg-[oklch(0.34_0.06_var(--h))] dark:text-[oklch(0.88_0.08_var(--h))]'
             : 'bg-blue-paper text-primary',
     ]"
-    :style="color ? { '--dc': color, ...ink } : tinted ? { '--h': nameHue(name) } : undefined"
+    :style="
+      color ? { '--dc': color, ...ink } : tinted ? { '--h': nameHue(name) } : undefined
+    "
     aria-hidden="true"
   >
     {{ initialsOf(name) }}

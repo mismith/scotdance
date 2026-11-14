@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MeAvatar from '@/components/MeAvatar.vue'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { get } from 'firebase/database'
 import { httpsCallable } from 'firebase/functions'
@@ -284,6 +285,7 @@ watch(
       <LoginForm v-else-if="step === 'signin'" v-model:step="loginStep" :holding="handingOff" />
 
       <div v-else-if="step === 'continue'" class="space-y-3">
+        <div class="flex justify-center"><MeAvatar size="lg" /></div>
         <!-- Names aren't unique: show which account this is -->
         <p v-if="me.displayName && me.email" class="text-muted-foreground text-callout text-center">Signed in as {{ me.email }}</p>
         <Button variant="primary" size="lg" block :busy="passing" @click="continueToTool">
