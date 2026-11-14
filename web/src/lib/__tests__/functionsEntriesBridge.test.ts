@@ -89,22 +89,14 @@ describe('Entries registration ownership', () => {
     await expect(call({ ...registration(2), competitionId: 'sun', registrationURL: 'https://entries.scotdance.app/enter/association/sun', sub: 'entries-service', authority: 'service', bindingId: claimed.bindingId })).rejects.toThrow(/no longer authorised/)
   })
 
-  it('unlinks only the matching binding, clears its linked copies and rejects replay after a new claim', async () => {
-    const { call, tree, db } = setup()
+  it('rejects the retired unlink action without changing registration ownership', async () => {
+    const { call, tree } = setup()
     const claimed = await call({ action: 'claim' })
     await call(registration(1))
-    await getOnLink(db)({ action: 'link', competitionId: 'sun', withId: 'sat' }, { auth: { uid: 'organiser' } })
-    await expect(call({ action: 'unlink', bindingId: 'wrong' })).rejects.toThrow(/different Entries connection/)
-    expect(await call({ action: 'unlink', bindingId: claimed.bindingId })).toMatchObject({ released: true })
-    for (const id of ['sat', 'sun']) {
-      expect(tree.read(`competitions/${id}/entriesRegistration`)).toBeNull()
-      expect(tree.read(`competitions/${id}/registrationURL`)).toBeNull()
-    }
-    expect(await call({ action: 'unlink', bindingId: claimed.bindingId })).toMatchObject({ released: true })
-    const replacement = await call({ action: 'claim' })
-    expect(replacement.bindingId).not.toBe(claimed.bindingId)
-    await expect(call({ action: 'unlink', bindingId: claimed.bindingId })).rejects.toThrow(/different Entries connection/)
-    await expect(call({ ...registration(99), sub: 'entries-service', authority: 'service', bindingId: claimed.bindingId })).rejects.toThrow(/no longer authorised/)
+    const before = tree.read('competitions/sat')
+    await expect(call({ action: 'unlink', bindingId: claimed.bindingId })).rejects.toThrow(/Unknown Entries action/)
+    expect(tree.read('competitions/sat')).toEqual(before)
+    expect((await call({ action: 'claim' })).bindingId).toBe(claimed.bindingId)
   })
 
   it.each(['released', 'replaced'])('does not restore a %s connection from a delayed linked propagation', async (state) => {
