@@ -244,6 +244,24 @@ describe('Entries account deletion delivery', () => {
 })
 
 describe('Entries dances', () => {
+  it('preserves explicit program occurrences in the selected source competition and checks that target permission', async () => {
+    const { call, tree } = setup()
+    const dances = [
+      { occurrenceId: 'sunday-fling', canonicalDanceId: 'fling', name: 'Fling', steps: '4' },
+      { occurrenceId: 'sunday-trophy', canonicalDanceId: 'fling', name: 'Fling', steps: '4' },
+    ]
+    tree.write({ 'users:permissions/organiser/competitions/sun': null })
+    await expect(call({ action: 'dances', competitionId: 'sun', dances })).rejects.toThrow(/administer both/)
+    expect(tree.read('competitions:data/sun/dances')).toBeNull()
+    tree.write({ 'users:permissions/organiser/competitions/sun': true })
+    expect(await call({ action: 'dances', competitionId: 'sun', dances })).toEqual({ sent: 2 })
+    expect(tree.read('competitions:data/sat/dances')).toBeNull()
+    expect(Object.values(tree.read('competitions:data/sun/dances') as object)).toEqual([
+      { name: 'Fling', steps: '4', _order: 0, entriesOccurrenceId: 'sunday-fling', entriesCanonicalDanceId: 'fling' },
+      { name: 'Fling', steps: '4', _order: 1, entriesOccurrenceId: 'sunday-trophy', entriesCanonicalDanceId: 'fling' },
+    ])
+  })
+
   it('seeds only an empty list, deduplicating identical names and steps across categories', async () => {
     const { call, tree } = setup()
     const dances = [{ name: 'Fling', steps: 4 }, { name: 'Fling', steps: 4 }, { name: 'Fling', steps: 6 }, { name: 'Sword', steps: '2+1' }]

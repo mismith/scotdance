@@ -2,6 +2,7 @@ import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { linkOf } from './links';
 import { isEmulator } from './utility/env';
+import { entriesDances } from './entriesDances';
 
 // ADR 0019: a narrow server-to-server bridge. Every mutable value is inside
 // the signed pass; neither a browser's Firebase token nor a sign-in pass can
@@ -184,18 +185,8 @@ export function getOnEntriesCompetition(secret: () => string, db: any) {
     }
 
     if (p.action === 'dances') {
-      if (!Array.isArray(p.dances) || !p.dances.length || p.dances.length > 200) throw new HttpsError('invalid-argument', 'Send between one and 200 dances.');
-      const unique = new Map<string, { name: string; steps?: string | number; _order: number }>();
-      for (const dance of p.dances) {
-        if (!dance || typeof dance.name !== 'string' || !dance.name.trim() || dance.name.length > 120
-          || (dance.steps != null && !(typeof dance.steps === 'number' && Number.isFinite(dance.steps)) && !(typeof dance.steps === 'string' && dance.steps.length <= 40))) {
-          throw new HttpsError('invalid-argument', 'Each dance needs a name and valid steps.');
-        }
-        const name = dance.name.trim();
-        const fingerprint = `${name.toLowerCase()}|${String(dance.steps ?? '').trim()}`;
-        if (!unique.has(fingerprint)) unique.set(fingerprint, { name, ...(dance.steps != null && { steps: dance.steps }), _order: unique.size });
-      }
-      const list = Object.fromEntries([...unique.values()].map((dance) => [db.child('competitions:data').push().key, dance]));
+      const dances = entriesDances(p.dances);
+      const list = Object.fromEntries(dances.map((dance) => [db.child('competitions:data').push().key, dance]));
       const result = await db.child(`competitions:data/${p.competitionId}/dances`).transaction((current: any) =>
         current && Object.keys(current).length ? undefined : list);
       if (!result.committed) throw new HttpsError('failed-precondition', 'This competition already has dances. Edit them on ScotDance.app.');

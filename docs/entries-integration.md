@@ -2,6 +2,26 @@
 
 ADR 0019 gives ScotDance ownership of people, organisation admins and public competition details. Entries owns registration and payments. This bridge uses their existing shared `TOOL_PASS_SECRET`; it never accepts an Entries Firebase token as a ScotDance login.
 
+## Structured program occurrences (local implementation, not deployed)
+
+The signed `dances` action also accepts `occurrenceId` and optional `canonicalDanceId` on every dance.
+When occurrence IDs are supplied, each occurrence remains separate even when its name and steps match
+another one (for example the ordinary and trophy Fling). The source stores the provenance as
+`entriesOccurrenceId` and `entriesCanonicalDanceId`; its own dance keys remain source-owned.
+Mixed legacy/structured payloads, duplicate occurrence IDs and invalid IDs are rejected.
+The existing empty-list transaction and current organiser-permission checks remain in force.
+Legacy payloads continue deduplicating by name and steps.
+
+Entries selects a single competition instance and calls its `sourceCompetitionId`; it must not send a
+weekend's combined dance list to one day's competition. Splits continues to receive its version 1 solo
+age-list contract, with the selected source competition as the destination and an age calculated from
+the enrollment's saved reference date. Group rosters remain separate from solo age splitting. Binder's
+verified-email, explicit saved-dancer copy requires no change for this extension.
+
+Validate with `npm --prefix functions run build`,
+`node --test functions/dist/functions/src/entriesDances.test.js`, and
+`npm --prefix web test -- src/lib/__tests__/functionsEntriesBridge.test.ts --configLoader runner`.
+
 ## Sign in and return
 
 The `entries` tool pass includes `competitions: [{ id, name, date }]` for upcoming competitions the person explicitly manages. Unlisted competitions are included. Other tool passes do not receive this list.
