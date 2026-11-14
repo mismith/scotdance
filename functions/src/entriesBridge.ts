@@ -104,48 +104,26 @@ export function getOnEntriesCompetition(secret: () => string, db: any) {
           ? { bindingId: owner.bindingId ?? null, revision: owner.revision } : {}) };
     }
 
-    if (p.action === 'claim' || p.action === 'unlink') {
+    if (p.action === 'claim') {
       if (target !== p.competitionId) await requireAccess(db, p.sub, target, p.organisationId);
-      if (p.action === 'unlink' && !key(p.bindingId)) throw new HttpsError('invalid-argument', 'A registration binding is required.');
       const bindingId = randomUUID();
       let problem: string | null = null;
       const result = await db.child(`competitions/${target}`).transaction((current: any) => {
         problem = null;
         if (!current) return null;
         const owner = current.entriesRegistration;
-        if (owner && (owner.targetId !== target || owner.competitionId !== p.competitionId || owner.organisationId !== p.organisationId
-          || (p.action === 'unlink' && owner.bindingId !== p.bindingId))) {
+        if (owner && (owner.targetId !== target || owner.competitionId !== p.competitionId || owner.organisationId !== p.organisationId)) {
           problem = 'These registration settings belong to a different Entries connection. Refresh before changing it.';
           return undefined;
         }
-        if (p.action === 'claim') return { ...current, entriesRegistration: {
+        return { ...current, entriesRegistration: {
           competitionId: p.competitionId, organisationId: p.organisationId, targetId: target,
           revision: owner?.revision ?? 0, bindingId: owner?.bindingId ?? bindingId,
         } };
-        if (!owner) return undefined;
-        const next = { ...current };
-        for (const field of ['entriesRegistration', 'registrationURL', 'registrationStart', 'registrationEnd']) delete next[field];
-        next.entriesRegistrationReleasedBinding = p.bindingId;
-        return next;
       });
       if (!result.snapshot.exists()) throw new HttpsError('not-found', 'The competition is no longer available.');
       if (problem) throw new HttpsError('failed-precondition', problem);
-      if (p.action === 'claim') return { ...facts, registrationTargetId: target, ...result.snapshot.val().entriesRegistration };
-      // Clear only copies of this exact binding, never a newly linked owner.
-      const link = await linkOf(db, p.competitionId);
-      for (const id of link?.members ?? []) {
-        if (id === target) continue;
-        await db.child(`competitions/${id}`).transaction((current: any) => {
-          if (!current) return null;
-          const owner = current.entriesRegistration;
-          if (owner?.bindingId !== p.bindingId || owner?.competitionId !== p.competitionId || owner?.organisationId !== p.organisationId) return undefined;
-          const next = { ...current };
-          for (const field of ['entriesRegistration', 'registrationURL', 'registrationStart', 'registrationEnd']) delete next[field];
-          next.entriesRegistrationReleasedBinding = p.bindingId;
-          return next;
-        });
-      }
-      return { released: true, registrationTargetId: target };
+      return { ...facts, registrationTargetId: target, ...result.snapshot.val().entriesRegistration };
     }
 
     if (p.action === 'registration') {
