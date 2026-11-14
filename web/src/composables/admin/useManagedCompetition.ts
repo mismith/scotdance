@@ -41,7 +41,7 @@ import {
 export interface RawCategory { name?: string; _order?: number }
 export interface RawGroup { name?: string; categoryId?: string; sponsor?: string; trophy?: string; notChampionship?: boolean; _order?: number }
 export interface RawTrophyEvent { name?: string; trophy?: string; sponsor?: string; groupIds?: Record<string, boolean>; danceId?: string; _order?: number }
-export interface RawDance { name?: string; shortName?: string; steps?: string | number; groupIds?: Record<string, boolean>; _order?: number }
+export interface RawDance { name?: string; shortName?: string; steps?: string | number; groupIds?: Record<string, boolean>; _order?: number; entriesOccurrenceId?: string; entriesCanonicalDanceId?: string; entriesCategory?: string; entriesCountsForAggregate?: boolean }
 export interface RawDancer {
   number?: string | number
   firstName?: string

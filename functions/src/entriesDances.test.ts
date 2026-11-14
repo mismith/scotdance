@@ -16,12 +16,15 @@ test('legacy dances retain name and step deduplication', () => {
 test('ordinary and trophy occurrences of the same dance stay separate', () => {
   const dances = entriesDances([
     { occurrenceId: 'beginner-fling', canonicalDanceId: 'fling', name: 'Highland Fling', steps: '4' },
-    { occurrenceId: 'trophy-fling', canonicalDanceId: 'fling', name: 'Highland Fling', steps: '4' },
+    { occurrenceId: 'trophy-fling', canonicalDanceId: 'fling', name: 'Highland Fling', steps: '4', category: 'Beginner', countsForAggregate: false },
   ]);
   assert.equal(dances.length, 2);
   assert.equal(dances[1].entriesOccurrenceId, 'trophy-fling');
   assert.equal(dances[1].entriesCanonicalDanceId, 'fling');
   assert.equal(dances[1]._order, 1);
+  assert.equal(dances[1].entriesCategory, 'Beginner');
+  assert.equal(dances[1].entriesCountsForAggregate, false);
+  assert.equal('groupIds' in dances[1], false);
 });
 
 test('structured payloads reject duplicate, malformed and mixed occurrence identities', () => {
@@ -31,6 +34,7 @@ test('structured payloads reject duplicate, malformed and mixed occurrence ident
   assert.throws(() => entriesDances([{ ...dance, occurrenceId: '../private' }]), /occurrence ID/);
   assert.throws(() => entriesDances([{ ...dance, canonicalDanceId: {} }]), /occurrence ID/);
   assert.throws(() => entriesDances([{ ...dance, steps: Number.NaN }]), /valid steps/);
+  assert.throws(() => entriesDances([{ ...dance, countsForAggregate: 'false' }]), /aggregate information/);
   assert.throws(() => entriesDances([]), /between one/);
   assert.throws(() => entriesDances(Array.from({ length: 201 }, () => dance)), /between one/);
 });

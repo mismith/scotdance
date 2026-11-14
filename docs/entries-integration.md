@@ -9,6 +9,10 @@ When occurrence IDs are supplied, each occurrence remains separate even when its
 another one (for example the ordinary and trophy Fling). The source stores the provenance as
 `entriesOccurrenceId` and `entriesCanonicalDanceId`; its own dance keys remain source-owned.
 Mixed legacy/structured payloads, duplicate occurrence IDs and invalid IDs are rejected.
+Optional `category` and `countsForAggregate` are retained as `entriesCategory` and
+`entriesCountsForAggregate` metadata and shown in the organiser's dance list. Seeded occurrences have
+no `groupIds`: they are not automatically attached to every age group. Organisers assign the appropriate
+age groups and configure separate trophy events on ScotDance. Aggregate metadata does not alter scoring.
 The existing empty-list transaction and current organiser-permission checks remain in force.
 Legacy payloads continue deduplicating by name and steps.
 

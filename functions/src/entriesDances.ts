@@ -7,6 +7,8 @@ export interface EntriesDance {
   /** Entries occurrences are distinct even when their dance and steps match. */
   entriesOccurrenceId?: string;
   entriesCanonicalDanceId?: string;
+  entriesCategory?: string;
+  entriesCountsForAggregate?: boolean;
 }
 
 const id = (value: unknown): value is string => typeof value === 'string' && /^[\w-]{1,100}$/.test(value);
@@ -27,6 +29,9 @@ export function entriesDances(input: unknown): EntriesDance[] {
       || (dance.canonicalDanceId != null && !id(dance.canonicalDanceId)))) {
       throw new HttpsError('invalid-argument', 'Each program activity needs its own valid occurrence ID.');
     }
+    if (structured && ((dance.category != null && (typeof dance.category !== 'string' || !dance.category.trim() || dance.category.length > 80))
+      || (dance.countsForAggregate != null && typeof dance.countsForAggregate !== 'boolean')))
+      throw new HttpsError('invalid-argument', 'Check the activity section and aggregate information.');
     const name = dance.name.trim();
     const fingerprint = structured ? dance.occurrenceId : `${name.toLowerCase()}|${String(dance.steps ?? '').trim()}`;
     if (structured && unique.has(fingerprint))
@@ -37,6 +42,8 @@ export function entriesDances(input: unknown): EntriesDance[] {
       _order: unique.size,
       ...(structured && { entriesOccurrenceId: dance.occurrenceId }),
       ...(structured && dance.canonicalDanceId != null && { entriesCanonicalDanceId: dance.canonicalDanceId }),
+      ...(structured && dance.category != null && { entriesCategory: dance.category.trim() }),
+      ...(structured && dance.countsForAggregate != null && { entriesCountsForAggregate: dance.countsForAggregate }),
     });
   }
   return [...unique.values()];

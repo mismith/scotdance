@@ -37,7 +37,7 @@ const spec: CollectionSpec<MDance> = {
   title: (d) => d.label,
   subtitle: (d) => {
     const n = groupsDoing(d)
-    return [d.shortName, `${n} ${n === 1 ? 'age group' : 'age groups'}`].filter(Boolean).join(' · ')
+    return [d.shortName, d.entriesCategory, d.entriesCountsForAggregate === false ? 'Outside aggregate in Entries' : '', `${n} ${n === 1 ? 'age group' : 'age groups'}`].filter(Boolean).join(' · ')
   },
   presets: PRESETS.map((p) => ({
     label: danceFullName(p),
@@ -58,6 +58,10 @@ function setGroup(danceId: string, groupId: string, on: boolean) {
 <template>
   <CollectionEditor :spec="spec" :items="items">
     <template #detail-extra="{ item }">
+      <p v-if="item.entriesOccurrenceId" class="text-muted-foreground text-sm">
+        This activity came from Entries. Assign its age groups here; trophy events are set up separately.
+        <template v-if="item.entriesCountsForAggregate === false">Its entry information excludes it from the aggregate. This note does not change result calculations.</template>
+      </p>
       <section v-if="m.groups.value.length" class="space-y-3">
         <div>
           <h3 class="text-heading">Age groups</h3>
