@@ -3,6 +3,8 @@ import { mount, flushPromises } from '@vue/test-utils'
 import CompetitionsCalendar from '../CompetitionsCalendar.vue'
 
 const routing = vi.hoisted(() => ({ date: '2026-11-14', replace: vi.fn() }))
+// Keep the selected date distinct from today, whose URL intentionally omits it.
+vi.mock('@/lib/now', () => ({ now: () => new Date(2026, 10, 10, 12) }))
 vi.mock('vue-router', () => ({
   RouterLink: { template: '<a><slot /></a>' },
   useRoute: () => ({ query: { date: routing.date, view: 'calendar' } }),
