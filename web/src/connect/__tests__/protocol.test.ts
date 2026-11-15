@@ -72,6 +72,13 @@ describe('isFromTool', () => {
 })
 
 describe('audienceFor', () => {
+  it('restricts central account handoff to Connect alone', () => {
+    expect(audienceFor('connect', 'https://connect.scotdance.app')).toBe('connect')
+    for (const origin of ['https://entries.scotdance.app', 'https://binder.scotdance.app', 'https://cshd.scotdance.site', 'https://connect.scotdance.app.evil.example', 'https://scotdance-connect.web.app', 'http://connect.scotdance.app']) {
+      expect(audienceFor('connect', origin)).toBeNull()
+    }
+  })
+
   it('gives a tool’s pass to its own site only', () => {
     expect(audienceFor('challenge', 'https://challenge.scotdance.app')).toBe('challenge')
     expect(audienceFor('challenge', 'https://splits.scotdance.app')).toBeNull()

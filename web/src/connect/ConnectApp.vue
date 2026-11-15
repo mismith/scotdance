@@ -224,7 +224,10 @@ async function continueToTool() {
   passError.value = null
   try {
     const toolPass = httpsCallable<{ audience: Audience }, { pass: string }>(functions, 'toolPass')
-    const { data } = await toolPass({ audience: audience.value })
+    // Only the account portal receives the central identity token. Other tools keep scoped passes.
+    const data = audience.value === 'connect'
+      ? { pass: await auth.user.getIdToken(true) }
+      : (await toolPass({ audience: audience.value })).data
     tell({
       type: 'signedIn',
       pass: data.pass,

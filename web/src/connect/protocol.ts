@@ -79,6 +79,12 @@ export function readItem(value: unknown): ToolItem | null {
  * (<slug>.scotdance.site), where families sign in to the same Binder.
  */
 export const TOOLS = {
+  connect: {
+    name: 'Connect',
+    icon: '/img/logo.svg',
+    hostname: 'connect.scotdance.app',
+    serves: (hostname: string) => hostname === 'connect.scotdance.app',
+  },
   challenge: {
     name: 'Challenge',
     icon: '/img/tools/challenge.svg',
