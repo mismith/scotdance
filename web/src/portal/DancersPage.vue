@@ -1,0 +1,31 @@
+<script setup lang="ts">
+import { RouterLink } from 'vue-router'
+import { ChevronRight, Plus, Users } from '@lucide/vue'
+import Button from '@/components/ui/Button.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import { useConnectAccount } from './account'
+const store = useConnectAccount()
+</script>
+<template>
+  <section>
+    <div class="mb-6 flex items-center justify-between gap-4">
+      <h1 class="text-hero">My dancers</h1>
+      <Button v-if="store.dancers.length" to="/dancers/new" variant="primary"><Plus aria-hidden="true" /> Add dancer</Button>
+    </div>
+    <EmptyState v-if="!store.dancers.length" :icon="Users" title="No dancers yet" description="Add yourself or a dancer you manage.">
+      <Button to="/dancers/new" variant="primary"><Plus aria-hidden="true" /> Add dancer</Button>
+    </EmptyState>
+    <ul v-else class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
+      <li v-for="dancer in store.dancers" :key="dancer.id">
+        <RouterLink :to="`/dancers/${encodeURIComponent(dancer.id)}`" class="press-row focus-inset flex min-h-20 items-center gap-3 px-4 py-3">
+          <span class="flex size-11 shrink-0 items-center justify-center rounded-full bg-blue-paper text-heading font-semibold text-primary" aria-hidden="true">{{ dancer.firstName.slice(0, 1) }}</span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-base font-semibold">{{ dancer.firstName }} {{ dancer.lastName }}</span>
+            <span v-if="dancer.category || dancer.studio" class="block truncate text-sm text-muted-foreground">{{ [dancer.category, dancer.studio].filter(Boolean).join(' · ') }}</span>
+          </span>
+          <ChevronRight class="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+        </RouterLink>
+      </li>
+    </ul>
+  </section>
+</template>

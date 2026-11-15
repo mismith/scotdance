@@ -4,7 +4,7 @@ import { Crisp } from 'crisp-sdk-web'
 import { version } from '../../package.json'
 import { platform } from '@/lib/native'
 
-const WEBSITE_ID = '160e5d08-deea-4187-a21b-39762a904c26'
+import { SCOTDANCE_CRISP_WEBSITE_ID } from '@/lib/crisp'
 
 // SDK lacks a typed equivalent of $crisp.is("session:ongoing") (truthy
 // only after the visitor has sent or received at least one message),
@@ -55,7 +55,7 @@ function setUserEmail(email: string | null | undefined) {
 // Module-eval side effects. configure() injects the client script and
 // sets up the $crisp queue; subsequent calls buffer commands until the
 // script finishes loading.
-Crisp.configure(WEBSITE_ID)
+Crisp.configure(SCOTDANCE_CRISP_WEBSITE_ID)
 
 // Which build each conversation comes from: ideas shared from an early build
 // (useUpdate) show a version ahead of the stores.

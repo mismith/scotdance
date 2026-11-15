@@ -10,7 +10,10 @@ const matched = computed(() => !!owner.value && auth.uid === owner.value)
 const send = (type: string, extra = {}) => window.parent.postMessage({channel: ACCOUNT_CHANNEL, type, ...extra}, CONNECT_ORIGIN)
 function receive(event: MessageEvent) {
   const uid = accountOwner(event, window.parent)
-  if (uid) owner.value = uid
+  if (uid) {
+    owner.value = uid
+    if (typeof event.data.dark === 'boolean') document.documentElement.classList.toggle('dark', event.data.dark)
+  }
 }
 async function changed() {
   if (!matched.value || !auth.user) return

@@ -13,3 +13,9 @@ Entries is a first-party interface to the same account. Signing in permits the o
 Validation: 13 account/handoff protocol tests; type checks/build; live account name save/reload/restore and incorrect-password rejection; temporary-account Auth deletion erased its Connect profile. Existing reviewer credentials were not changed. Email delivery and real-phone autofill remain untested.
 
 Deploy: build `web`, deploy `hosting:next`; deploy `functions:auth-hooks` for deletion delivery. Connect has its own repository and deploy command. Production legacy account-page rollback is preserved in Hosting channel `before-connect-account` (verified against the prior live index). Existing competition data is untouched.
+
+## Shared frontend
+
+Connect's frontend now lives in `web/src/portal`, beside the competition app, using its actual Button, SidebarLink, EmptyState, LogoMark, theme and field styles. It is another Vue/Pinia/Vue Router entry, not a copied component package. Routes are `/dancers`, `/dancers/new`, `/dancers/:id`, `/account`, `/privacy` and `/support`; old account query links redirect to the clean route. The footer contains only privacy and support. Crisp shares the identity app's website ID through `src/lib/crisp.ts`.
+
+`npm --prefix web run dev:connect` starts a standalone local site with no production API proxy. Use fictional browser fixtures for development. `npm run deploy:connect` builds the separate site and deploys only Hosting in `scotdance-connect` via `firebase.connect.json`. Backend deployment remains in the separate Connect repository and no longer includes Hosting. Private records and authentication boundaries are unchanged. The account frame matches the portal's light/dark mode after validating its parent.

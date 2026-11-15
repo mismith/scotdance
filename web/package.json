@@ -33,7 +33,9 @@
     "report": "REPORT=true vite build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "dev:connect": "vite --config vite.connect.config.ts",
+    "build:connect": "vue-tsc -b && vite build --config vite.connect.config.ts"
   },
   "dependencies": {
     "@fontsource-variable/atkinson-hyperlegible-mono": "^5.3.0",

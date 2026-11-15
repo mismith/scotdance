@@ -12,7 +12,8 @@
     "postset-version": "npx cap copy",
     "known:sdc": "npm --prefix functions run build && node functions/scripts/refresh-sdc.mjs",
     "release": "git commit -a -m $npm_package_version && git tag \"v${npm_package_version}\"",
-    "deploy": "firebase deploy --only hosting:production,functions,database,storage && git push origin HEAD:main --tags"
+    "deploy": "firebase deploy --only hosting:production,functions,database,storage && git push origin HEAD:main --tags",
+    "deploy:connect": "npm --prefix web run build:connect && firebase deploy --config firebase.connect.json --project scotdance-connect --only hosting"
   },
   "dependencies": {
     "@capacitor-firebase/messaging": "^8.6.0",
