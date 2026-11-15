@@ -214,7 +214,8 @@ const addUrl = `${location.origin}/competitions/add`
 // For a tool: who you are, as a pass it can check (never this site's own
 // sign-in). Right after signing in here it carries on by itself, the Sign in
 // button still busy, so nothing else shows before the sheet closes; someone
-// already signed in taps Continue, so a tool never learns who you are unasked.
+// already signed in taps Continue. Connect is the account portal itself and
+// reuses the existing login without a second confirmation.
 const passing = ref(false)
 const handingOff = ref(false)
 const passError = ref<string | null>(null)
@@ -253,6 +254,14 @@ watch(
   },
   { flush: 'sync' },
 )
+watch(
+  () => open.value && auth.authReady && !!auth.user && audience.value === 'connect' && !unreadable.value,
+  (reuseAccount) => {
+    if (!reuseAccount) return
+    handingOff.value = true
+    void continueToTool()
+  },
+)
 </script>
 
 <template>
@@ -270,7 +279,7 @@ watch(
         <LogoMark frame="circle" class="bg-primary-fill size-10 shrink-0 rounded-full text-white" />
         <div class="min-w-0">
           <h2 class="text-title">{{ title }}</h2>
-          <p v-if="toolName && step !== 'unreadable'" class="text-muted-foreground text-sm">
+          <p v-if="toolName && audience !== 'connect' && step !== 'unreadable'" class="text-muted-foreground text-sm">
             {{ toolName }} gets {{ toolGets }}.
           </p>
           <p v-else-if="summary && step !== 'sent' && step !== 'unreadable'" class="text-muted-foreground truncate text-sm">

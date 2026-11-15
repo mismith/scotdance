@@ -1,6 +1,6 @@
 # Account editing in Connect
 
-Connect owns the account screen. `/account.html` is a small identity-origin entry point embedding the extracted name/email/password/deletion form. Connect frames it from `next.scotdance.app`; passwords stay on that established sign-in origin. It uses the original Auth store and private account records, preserving older names and account IDs. This is a UI move, not a data/password migration.
+Connect owns the account screen. `/account.html` is a small identity-origin entry point embedding the extracted name/email/password/deletion form. Connect frames it from `next.scotdance.app`; passwords stay on that established sign-in origin. It uses the original Auth store and private account records, preserving older names and account IDs. This is a UI move, not a data/password migration. Opening account settings reuses an existing identity-origin login automatically; signed-out users see the normal sign-in form.
 
 The frame validates both its actual parent window and exact `https://connect.scotdance.app` origin, then matches the requested owner to its signed-in UID. CSP permits only that parent. Connect validates the source frame and exact identity origin. Fresh tokens on successful edits renew Connect's existing session; other apps never receive these tokens.
 
