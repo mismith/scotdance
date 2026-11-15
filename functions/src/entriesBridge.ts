@@ -92,6 +92,41 @@ export function getOnEntriesCompetition(secret: () => string, db: any) {
   return async (data: { pass?: unknown } | undefined) => {
     const p = readEntriesMessage(data?.pass, secret());
     if (!key(p.competitionId) || !key(p.organisationId)) throw new HttpsError('invalid-argument', 'A competition and organisation are required.');
+    if (p.action === 'release') {
+      // Removal never deletes the source event. Only release the exact binding we own.
+      const releaseTarget = p.targetId ?? p.competitionId;
+      if (!key(releaseTarget) || !key(p.bindingId)) throw new HttpsError('invalid-argument', 'An Entries connection is required.');
+      const original = await read(db, `competitions/${p.competitionId}`);
+      if (original) await requireAccess(db, p.sub, p.competitionId, p.organisationId);
+      else if (await read(db, `organisations:permissions/${p.organisationId}/users/${p.sub}`) !== true)
+        throw new HttpsError('permission-denied', 'You must administer this organisation on ScotDance.app.');
+      if (releaseTarget !== p.competitionId && await read(db, `competitions/${releaseTarget}`))
+        await requireAccess(db, p.sub, releaseTarget, p.organisationId);
+      let problem: string | null = null;
+      await db.child(`competitions/${releaseTarget}`).transaction((current: any) => {
+        problem = null;
+        if (!current) return null; // Cold Admin SDK cache: let the server retry with its actual value.
+        if (!current.entriesRegistration) return current; // Verify absence on the server, even if the local cache is stale.
+        const owner = current.entriesRegistration;
+        if (owner.bindingId !== p.bindingId || owner.competitionId !== p.competitionId
+          || owner.organisationId !== p.organisationId || owner.targetId !== releaseTarget) {
+          problem = 'This registration connection changed. Refresh before removing it.';
+          return undefined;
+        }
+        const next = { ...current };
+        delete next.entriesRegistration;
+        // Never erase a replacement URL that somebody has since set on ScotDance.app.
+        if (next.registrationURL === `${ENTRIES_ISSUER}/enter/${encodeURIComponent(p.organisationId)}/${encodeURIComponent(p.competitionId)}`) {
+          delete next.registrationURL;
+          delete next.registrationStart;
+          delete next.registrationEnd;
+        }
+        return next;
+      });
+      if (problem) throw new HttpsError('failed-precondition', problem);
+      return { registrationTargetId: releaseTarget, released: true };
+    }
+
     const facts = await snapshot(db, p.competitionId, p.organisationId);
     if (p.action === 'snapshot') return facts; // Public fields only, including unlisted competitions.
     const service = p.action === 'registration' && p.authority === 'service' && p.sub === 'entries-service';
@@ -112,6 +147,10 @@ export function getOnEntriesCompetition(secret: () => string, db: any) {
         problem = null;
         if (!current) return null;
         const owner = current.entriesRegistration;
+        if (p.expectedBindingId != null && (!key(p.expectedBindingId) || owner?.bindingId !== p.expectedBindingId)) {
+          problem = 'This Entries connection was removed or replaced. Return to Entries and refresh.';
+          return undefined;
+        }
         if (owner && (owner.targetId !== target || owner.competitionId !== p.competitionId || owner.organisationId !== p.organisationId)) {
           problem = 'These registration settings belong to a different Entries connection. Refresh before changing it.';
           return undefined;
