@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Wordmark from '@/components/Wordmark.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
@@ -80,7 +81,7 @@ async function answer(deny?: true) {
     <main class="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-[max(1.5rem,var(--safe-top))]">
       <div class="text-title flex items-center justify-center gap-3 pt-4">
         <LogoMark class="text-primary size-10" />
-        <span>ScotDance.app</span>
+        <Wordmark />
       </div>
       <div v-if="state === 'loading'" class="flex justify-center py-20" role="status" aria-busy="true">
         <LoaderCircle class="text-muted-foreground size-8 animate-spin" />

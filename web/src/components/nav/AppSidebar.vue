@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Wordmark from '@/components/Wordmark.vue'
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { ArrowDownToLine, CalendarDays, ClipboardList, ExternalLink, Gavel, House, Info, Landmark, LifeBuoy, Music, School, Search, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
@@ -58,7 +59,7 @@ const browse = [
       aria-label="ScotDance.app, Home"
     >
       <LogoMark class="text-primary size-6" />
-      <span class="text-heading">ScotDance.app</span>
+      <Wordmark class="text-heading" />
     </RouterLink>
 
     <!-- Rows scroll out under soft edges (in the padding, so nothing's faded at
