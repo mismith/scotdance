@@ -1,6 +1,6 @@
 # ScotDance Connect plan
 
-Status: Private Connect preview implementation started, 15 November 2026. See `scotdance-connect/README.md` for verified implementation scope (the sibling repository).
+Status: Connect and Entries are live with automatic own-account access, 15 November 2026. Account forms moved into Connect; see `connect-account.md`. See `scotdance-connect/README.md` for verified implementation scope (the sibling repository).
 
 Connect is a private family address book shared across ScotDance apps. Parents or dancers enter their details once in Connect or Entries, keep control of them, and explicitly share selected fields with a studio. It is not a public dancer directory or a universal identity-verification system.
 
@@ -8,6 +8,7 @@ Connect is a private family address book shared across ScotDance apps. Parents o
 
 - Connect provides sign-in, account settings and My dancers at connect.scotdance.app, with the same profile forms available in Entries.
 - Reuse the existing ScotDance Firebase Authentication project, users, passwords and UIDs. Moving responsibility and screens to Connect does not require moving accounts between projects. An optional project display-name change is cosmetic, not a migration.
+- Entries is a first-party account interface: signing in permits managing your own dancers without a separate consent/grant screen. Studio or other-person access still needs explicit sharing approval.
 - Keep shared private dancer profiles in the separate scotdance-connect Firebase project, using Firestore with explicit access checks. Existing Firebase Auth stays in firebase-scotdance. Leave ScotDance.app’s live public results and Realtime Database intact.
 - Parents/dancers control shared profile data. Binder reads selected fields through an explicit ongoing sharing grant. Teachers propose corrections; the profile manager approves them.
 - Binder and Entries can be redesigned directly before launch. No backwards compatibility, existing-record migration, dual writes or legacy mapping framework. Real source data can be imported afresh when needed.

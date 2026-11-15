@@ -7,7 +7,8 @@
   },
   "dependencies": {
     "firebase-admin": "14.5.0",
-    "firebase-functions": "7.4.0"
+    "firebase-functions": "7.4.0",
+    "google-auth-library": "^11.3.4"
   },
   "overrides": {
     "@firebase/database-compat": "2.1.4"

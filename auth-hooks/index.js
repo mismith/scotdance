@@ -2,6 +2,7 @@ const { initializeApp } = require('firebase-admin/app');
 const { getDatabase } = require('firebase-admin/database');
 const { runWith } = require('firebase-functions/v1');
 const { queueAccountDeletion } = require('./deletion');
+const { deleteConnectAccount } = require('./connectDeletion');
 
 // Auth deletion remains first-generation, whose supported Node runtime is 22.
 // This hook only queues work; the main Node 24 codebase signs and delivers it.
@@ -15,4 +16,5 @@ const namespace = emulator ? 'development' : 'production';
 exports.entriesAccountDeleted = runWith({ failurePolicy: true, maxInstances: 2 })
   .auth.user().onDelete(async (user) => {
     await queueAccountDeletion(getDatabase(app).ref(namespace), user.uid);
+    if (!emulator) await deleteConnectAccount(user.uid);
   });

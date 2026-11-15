@@ -36,6 +36,7 @@ export default defineConfig({
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         connect: fileURLToPath(new URL('./connect.html', import.meta.url)),
+        account: fileURLToPath(new URL('./account.html', import.meta.url)),
       },
       treeshake: {
         moduleSideEffects(id) {
