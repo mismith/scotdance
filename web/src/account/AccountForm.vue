@@ -36,13 +36,19 @@ async function saveDisplayName() {
   if (next === (me.displayName ?? '')) return
   displayNameSaving.value = true
   displayNameError.value = null
+  let saved = false
   try {
     await auth.updateDisplayName(next)
-    emit('changed')
+    saved = true
   } catch (e) {
     displayNameError.value = e instanceof Error ? e.message : 'Could not save.'
   } finally {
     displayNameSaving.value = false
+  }
+  // Keep the final keystrokes if another edit arrived while the request was saving.
+  if (saved) {
+    if (displayName.value.trim() !== next) void saveDisplayName()
+    else emit('changed')
   }
 }
 
