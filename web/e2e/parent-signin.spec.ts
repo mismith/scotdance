@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { ensureUser, uid } from './support/emulator'
-import { fakeNative, openAccount, sheet, submitPassword } from './support/parent'
+import { fakeNative, openAccountForm, sheet, submitPassword } from './support/parent'
 
 // The sign-in sheet: email and password, the same on the web and in the apps.
 
@@ -31,8 +31,8 @@ test('opens on email and password, explains a wrong password kindly, and closes 
 
   await submitPassword(page, email)
   await expect(sheet(page)).toHaveCount(0)
-  await openAccount(page)
-  await expect(page.getByRole('main').getByText(email)).toBeVisible()
+  await openAccountForm(page)
+  await expect(page.getByRole('button', { name: `Email ${email} Change`, exact: true })).toBeVisible()
 })
 
 test('creates an account, with clear errors for a taken email and a short password', async ({ page }) => {
@@ -82,8 +82,8 @@ test('in the native app, signs in the same way', async ({ page }) => {
   await expect(s.getByRole('heading', { name: 'Sign in to ScotDance.app' })).toBeVisible()
   await submitPassword(page, email)
   await expect(sheet(page)).toHaveCount(0)
-  await openAccount(page)
-  await expect(page.getByRole('main').getByText(email)).toBeVisible()
+  await openAccountForm(page)
+  await expect(page.getByRole('button', { name: `Email ${email} Change`, exact: true })).toBeVisible()
 })
 
 test('a beta account without a password is offered a link to set one', async ({ page }) => {
@@ -102,7 +102,7 @@ test('a beta account without a password is offered a link to set one', async ({ 
     },
     { authDeps, email },
   )
-  await openAccount(page)
+  await openAccountForm(page)
   await expect(page.getByRole('button', { name: 'Password Change' })).toHaveCount(0)
   await page.getByRole('button', { name: 'Delete account' }).click()
   const s = sheet(page)

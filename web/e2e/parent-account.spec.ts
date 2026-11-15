@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { dbGet, dbSet, ensureUser, uid } from './support/emulator'
-import { openAccount, sheet, signInFromSheet } from './support/parent'
+import { openAccount, openAccountForm, sheet, signInFromSheet } from './support/parent'
 
 // Your account: the record System admin finds you by, and deleting it all.
 
@@ -40,7 +40,7 @@ test('deleting your account removes your favourites, alerts, colours and record'
   await signInFromSheet(page, email)
   await expect.poll(() => dbGet(`users/${id}/email`)).toBe(email)
 
-  await openAccount(page)
+  await openAccountForm(page)
   await page.getByRole('button', { name: 'Delete account' }).click()
   const s = sheet(page)
   await expect(s.getByRole('heading', { name: 'Delete your account?' })).toBeVisible()
@@ -50,7 +50,8 @@ test('deleting your account removes your favourites, alerts, colours and record'
   await expect(s.getByRole('alert')).toHaveText('That password isn’t right. Check it and try again.')
   await s.locator('input[autocomplete=current-password]').fill('password')
   await s.getByRole('button', { name: 'Delete my account' }).click()
-  await expect(page).toHaveURL(/\/$/)
+  await expect(page.getByRole('textbox', { name: 'Your name', exact: true })).toHaveCount(0)
+  await page.goto('/')
   await expect(page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
 
   expect(await dbGet(`users/${id}`)).toBeNull()
