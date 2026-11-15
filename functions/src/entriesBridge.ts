@@ -49,7 +49,7 @@ async function snapshot(db: any, competitionId: string, organisationId: string) 
   const fields = (source: any, names: string[]) => Object.fromEntries(names.filter((name) => source[name] != null).map((name) => [name, source[name]]));
   return {
     competition: { id: competitionId, ...fields(c, ['name', 'date', 'venue', 'address', 'location', 'country', 'region', 'locality', 'image']) },
-    organisation: { id: organisationId, ...fields(o, ['name', 'image']) },
+    organisation: { id: organisationId, ...fields(o, ['name', 'image']), shortName: typeof o.shortName === 'string' ? o.shortName.trim() || null : null },
   };
 }
 

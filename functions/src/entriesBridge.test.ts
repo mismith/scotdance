@@ -78,3 +78,13 @@ test('disconnect verifies a stale no-owner cache against the actual registration
   assert.equal(w.records['competitions/comp'].entriesRegistration, undefined);
   assert.equal(w.records['competitions/comp'].registrationURL, undefined);
 });
+
+
+test('Entries snapshots include the actual organisation short name and its removal', async () => {
+  const w = world(); w.records['organisations/org'].shortName = ' FHDA ';
+  const named = await w.call({ action: 'snapshot' }); assert.ok('organisation' in named);
+  assert.equal(named.organisation.shortName, 'FHDA');
+  delete w.records['organisations/org'].shortName;
+  const cleared = await w.call({ action: 'snapshot' }); assert.ok('organisation' in cleared);
+  assert.equal(cleared.organisation.shortName, null);
+});

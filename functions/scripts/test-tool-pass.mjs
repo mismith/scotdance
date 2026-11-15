@@ -27,3 +27,20 @@ test('Binder receives verification too; anonymous accounts cannot mint passes', 
     auth: { uid: 'alex', token: { email_verified: true, firebase: { sign_in_provider: 'anonymous' } } },
   }), { code: 'unauthenticated' });
 });
+
+
+test('Entries receives the actual organisation short name, including explicit absence', async () => {
+  const records = {
+    'users:permissions/alex/organisations': { named: true, unnamed: true },
+    'organisations/named': { name: 'Foothills Highland Dancing Association', shortName: ' FHDA ' },
+    'organisations/unnamed': { name: 'An Organisation Without a Short Name' },
+  };
+  const source = { child: path => ({ get: async () => ({ val: () => records[path] ?? null }), update: async () => {} }) };
+  const result = await getOnToolPass(() => 'test-only-secret', source)({ audience: 'entries' }, {
+    auth: { uid: 'alex', token: { email: 'alex@example.com' } },
+  });
+  assert.deepEqual(decode(result.pass).organisations, [
+    { id: 'named', name: 'Foothills Highland Dancing Association', shortName: 'FHDA' },
+    { id: 'unnamed', name: 'An Organisation Without a Short Name', shortName: null },
+  ]);
+});

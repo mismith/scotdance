@@ -9,7 +9,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 //
 // A compact JWT, HS256: { iss, aud, sub (uid), email, name, iat, exp, jti }.
 // Entries' also says which organisations they're an admin of
-// (`organisations: [{ id, name }]`), so the organisation they take entries
+// (`organisations: [{ id, name, shortName }]`), so the organisation they take entries
 // and payments for there is the one here, under the same id.
 //
 // Each pass is noted in `users:tools/{uid}/{tool}` (first and last sign-in),
@@ -63,6 +63,7 @@ export function signPass(
 export interface PassOrganisation {
   id: string;
   name: string;
+  shortName?: string | null;
 }
 
 export interface PassCompetition {
@@ -113,10 +114,15 @@ async function adminOf(db: Db, uid: string): Promise<PassOrganisation[]> {
   const ids = Object.entries(((await db.child(`users:permissions/${uid}/organisations`).get()).val() as Record<string, unknown> | null) ?? {})
     .filter(([, allowed]) => allowed === true)
     .map(([id]) => id);
-  const names = await Promise.all(ids.map(async (id) => (await db.child(`organisations/${id}/name`).get()).val()));
-  return ids
-    .map((id, i) => ({ id, name: names[i] }))
-    .filter((o): o is PassOrganisation => typeof o.name === 'string' && !!o.name.trim());
+  const organisations = await Promise.all(ids.map(async (id) => (await db.child(`organisations/${id}`).get()).val()));
+  return ids.flatMap((id, i): PassOrganisation[] => {
+    const record = organisations[i];
+    if (!record || typeof record !== 'object') return [];
+    const organisation = record as Record<string, unknown>;
+    if (typeof organisation.name !== 'string' || !organisation.name.trim()) return [];
+    return [{ id, name: organisation.name,
+      shortName: typeof organisation.shortName === 'string' ? organisation.shortName.trim() || null : null }];
+  });
 }
 
 /**
