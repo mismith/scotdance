@@ -96,7 +96,7 @@ export const TOOLS = {
     name: 'Entries',
     icon: '/img/tools/entries.svg',
     hostname: 'entries.scotdance.app',
-    serves: (hostname: string) => hostname === 'entries.scotdance.app' || isEntriesPreview(hostname),
+    serves: (hostname: string) => hostname === 'entries.scotdance.app' || hostname === 'dev.entries.scotdance.app' || isEntriesPreview(hostname),
     /** What its pass says beyond a name and email (functions/src/toolPass.ts), as the sign-in sheet puts it */
     alsoGets: 'the organisations and upcoming competitions you run',
   },
