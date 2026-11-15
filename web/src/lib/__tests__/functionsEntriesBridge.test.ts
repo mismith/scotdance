@@ -51,7 +51,7 @@ describe('Entries signed requests', () => {
     const facts = await call({ action: 'snapshot', sub: 'service' })
     expect(facts).toEqual({
       competition: { id: 'sat', name: 'Saturday Highland Competition', date: '2027-07-05', venue: 'Town Hall' },
-      organisation: { id: 'association', name: 'Dancing Association', image: 'https://example.test/logo.png' },
+      organisation: { id: 'association', name: 'Dancing Association', shortName: null, image: 'https://example.test/logo.png' },
     })
   })
 

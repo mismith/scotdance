@@ -111,7 +111,7 @@ describe('toolPass for Entries', () => {
     decode((await getOnToolPass(() => SECRET, memoryDb(data()))({ audience }, { auth })).pass.split('.')[1]!)
 
   it('names the organisations they’re an admin of, and only those', async () => {
-    expect((await payload('entries')).organisations).toEqual([{ id: 'bchda', name: 'BC Highland Dancing Association' }])
+    expect((await payload('entries')).organisations).toEqual([{ id: 'bchda', name: 'BC Highland Dancing Association', shortName: null }])
   })
 
   it('says an admin of none has none', async () => {
