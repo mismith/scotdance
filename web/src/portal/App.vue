@@ -14,9 +14,9 @@ onMounted(() => { void store.initialize(route.path === '/account') })
 <template>
   <div class="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-(--safe-top) sm:px-6">
     <header class="flex h-16 shrink-0 items-center justify-between gap-4">
-      <RouterLink to="/dancers" class="focus-inset -ml-2 flex min-h-11 items-center gap-2 rounded-xl px-2" aria-label="ScotDance Connect">
-        <LogoMark class="size-7 text-primary" />
-        <span class="text-heading font-semibold">Connect</span>
+      <RouterLink to="/dancers" class="focus-inset -ml-2 flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-2" aria-label="ScotDance Connect">
+        <LogoMark class="size-7 shrink-0 text-primary" />
+        <span class="truncate text-heading font-semibold">ScotDance Connect</span>
       </RouterLink>
       <Button v-if="store.account" variant="plain" size="sm" :busy="store.busy" @click="store.logout()">
         <LogOut aria-hidden="true" /> Sign out
