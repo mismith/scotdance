@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
-import { Users, UserRound, LogOut } from '@lucide/vue'
+import { Users, UserRound, LogOut, LockKeyhole } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import ScotDanceSignInButton from '@/components/ScotDanceSignInButton.vue'
 import SidebarLink from '@/components/nav/SidebarLink.vue'
@@ -38,9 +38,10 @@ onMounted(() => { void store.initialize(!route.meta.public) })
           </KeepAlive>
         </RouterView>
       </div>
-      <section v-else-if="!loading" class="space-y-5 py-12">
-        <h1 class="text-hero">Your ScotDance account</h1>
-        <p class="max-w-md text-base text-muted-foreground">Your account details, in one private place. Manage what you save and reuse it across the ScotDance.app family of <a href="https://toolkit.scotdance.app" class="text-primary underline underline-offset-4">tools</a>—with less typing and more control over your privacy.</p>
+      <section v-else-if="!loading" class="space-y-6 py-10 sm:py-14">
+        <LockKeyhole class="mb-8 size-20 text-primary" :stroke-width="1.3" aria-hidden="true" />
+        <h1 class="text-[clamp(2.5rem,6vw,3.5rem)] font-extrabold leading-[1.06] tracking-tight">One account.<br /><span class="text-primary">Less filling in.</span></h1>
+        <p class="max-w-md text-base text-muted-foreground">Your account details, in one private place. Save what you need and reuse it across the ScotDance.app family of <a href="https://toolkit.scotdance.app" class="text-primary underline underline-offset-4">tools</a>.</p>
         <ScotDanceSignInButton :busy="store.busy" @click="store.login()" />
       </section>
       <p v-if="store.error" role="alert" class="mt-5 text-destructive">{{ store.error }}</p>

@@ -10,3 +10,5 @@
 @source '../account/AccountForm.vue';
 @source '../components/Avatar.vue';
 @source '../components/Dialog.vue';
+
+@source '../components/ScotDanceSignInButton.vue';
