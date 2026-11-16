@@ -27,9 +27,9 @@ Build `npm --prefix web run build:connect`; test `npm --prefix web test -- src/p
 
 ## Release order
 
-Nothing is deployed by this work. Review the local form first. Deploy Connect API (new owner routes and null-link preservation), then Connect Hosting (editor and public JS with CORS), then Binder's `manageConnectDancer`, then Entries/Binder clients. The new Binder callable is private at IAM and enforces application authorization. Browser invocation must be enabled for that specific service using the established organisation-policy-compatible approach when deployment is authorized; do not broaden any other service. Existing Connect account routes retain `frame-ancestors 'none'`; only `/dancer-editor.html` permits the named first-party app origins and studio sites, with exact-origin/window checks in the widget.
+Deploy Connect API (new owner routes and null-link preservation), then Connect Hosting (editor and public JS with CORS), then Binder's `manageConnectDancer`, then Entries/Binder clients. Binder's callable enforces application authorization. Its Cloud Run service uses the existing `--no-invoker-iam-check` configuration for browser invocation; no allUsers IAM binding is needed. Existing Connect account routes retain `frame-ancestors 'none'`; only `/dancer-editor.html` permits the named first-party app origins and studio sites, with exact-origin/window checks in the widget.
 
-Connect frontend lives on the ScotDance `next` lineage, not legacy `main`. No migration, production fixture, new password store, public-profile identity matching or automatic studio synchronization is part of this change.
+Connect frontend lives on the ScotDance `next` lineage, not legacy `main`. No existing-data migration, new password store, public-profile identity matching or automatic studio synchronization is part of this change.
 
 ## Local verification completed
 
@@ -38,7 +38,7 @@ Connect frontend lives on the ScotDance `next` lineage, not legacy `main`. No mi
 - Binder app/site builds/type check, 344 frontend tests and 285 function tests.
 - Actual Connect API against isolated Auth/Firestore emulators: owner isolation, first/only defaults, explicit multi-dancer defaults, retries, stale revisions, Binder owner save/delete, old read-only route rejection and persistent public-profile unlinking.
 - Binder Firestore integration: authentic signup session overrides a concurrent staff login; expired/closed sessions reject owner editing; submitted snapshots stay whitelisted and acceptance stays idempotent.
-- Chromium and WebKit browser flows pass for signup, parent portal, native Connect and the real Entries wrapper. Browser API providers are fictional; production sign-in/storage behavior was not retested or deployed. Checks include cancellation, private saves, selected submission copies, birthday typing, city search, mobile picker bounds/Escape, focus return, deletion, retry receipts and account-switch cancellation.
+- Chromium and WebKit browser flows pass for signup, parent portal, native Connect and the real Entries wrapper. These local browser API providers are fictional; production verification is recorded below. Checks include cancellation, private saves, selected submission copies, birthday typing, city search, mobile picker bounds/Escape, focus return, deletion, retry receipts and account-switch cancellation.
 - Hosting header matching keeps ordinary Connect routes unframeable; only the dedicated editor permits first-party embedding. Public loader CORS does not apply to private APIs.
 
 The emulator test script completed successfully. The local Firebase CLI subsequently printed an update-cache permission error during shutdown; this did not fail any API assertion. No production service was contacted for the data tests.
@@ -50,3 +50,11 @@ The loader prepares its full-size iframe invisibly and opens the modal only afte
 The clicked button shows a spinner after 200ms if opening is still pending, without changing its size or accessible name. Readiness, cancellation and errors clear it. Reduced-motion preferences are respected.
 
 The editor and native app share `ConnectBrand.vue` for the existing icon and coloured wordmark. A yellow shield accompanies “Shared only when you consent.” at the bottom left of the form, beside Save. On narrow phones the text wraps while Save keeps its size. The signup page separately explains that selected details are shared on Send signup; editing a profile does not change an already-submitted studio copy.
+
+## Production release — 16 November 2026
+
+Released after local review: Connect API `37f5402`, Connect UI `18fe3ae7`, Entries `42c5371`, Binder `f83184e`. Connect was deployed with the existing Maps browser configuration. Entries production workflow `43966159560` and Binder workflow `43966475432` published the clients.
+
+Live checks used only the dedicated fictional reviewer. Binder signup sessions and portal authentication load the same owner profiles; signed-out requests and invalid signup sessions reject, including invalid sessions supplied alongside a valid login. A temporary profile created through signup was edited through Entries and deleted through Binder. Retries were idempotent and explicit public-profile unlinking survived each app. The temporary profile was removed and original profiles/defaults were verified unchanged.
+
+Actual browser sign-in, embedded form rendering, consent footer, desktop/mobile bounds, cancellation and focus restoration passed on live Entries and the fictional studio signup. The deployed loader matches its source; live headers allow the intended editor embeds while ordinary Connect pages remain unframeable. Native and embedded views both import `DancerEditor.vue`; the old instructions to keep duplicate forms aligned were removed.
