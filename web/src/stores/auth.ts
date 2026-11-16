@@ -122,13 +122,10 @@ export const useAuthStore = defineStore('auth', () => {
     await signOut(auth)
   }
 
-  // A few v4 beta accounts were made with Apple or Google: no password. (Ones
-  // made with an emailed link look as if they have one.) The Account page
-  // offers them a link to set one.
+  // Detect the Firebase credential provider before attempting reauthentication.
   const hasPassword = computed(() => user.value?.providerData.some((p) => p.providerId === 'password') ?? false)
 
-  // Sensitive changes need a recent sign-in: with the password if there is
-  // one. Without one, just try; Firebase says so if it's been too long.
+  // Firebase independently enforces recent authentication for sensitive changes.
   /** Returns whether they signed in again just now. */
   async function reauthenticate(currentPassword?: string): Promise<boolean> {
     const u = auth.currentUser

@@ -27,3 +27,7 @@ Connect lives in `web/src/portal`, alongside the competition app, importing its 
 `npm --prefix web run dev:connect` starts a standalone local site with no production API proxy. Use fictional browser fixtures. `npm run deploy:connect` builds and deploys only Connect Hosting via `firebase.connect.json`. Publish Connect before retiring the old identity-origin account entry with `npm --prefix web run build` and `firebase deploy --only hosting:next --project firebase-scotdance`. Do not deploy Hosting production or backend functions for this UI change.
 
 The separate Connect repository owns API/rules deployment, which does not include Hosting. No identity migration, IAM changes or private-data boundary changes are part of this release.
+
+## Supported sign-in copy
+
+Production Firebase Auth audit on 15 November 2026 found 5,311 accounts, all with password credentials and hashes, and no Apple/Google providers or passwordless accounts. Account copy therefore describes current passwords and password reset links only. The old beta-account comments and synthetic password-setup UI/test were removed. Internal credential-provider checks remain defensive; they are not evidence of production account types.

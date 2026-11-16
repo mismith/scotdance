@@ -64,9 +64,6 @@ const showCurrentPassword = ref(false)
 const showNewPassword = ref(false)
 const submitting = ref(false)
 const modalError = ref<string | null>(null)
-// An account without a password (made with Apple or Google in the v4 beta)
-// confirms it's them by setting one: offer the link.
-const needsPassword = computed(() => !auth.hasPassword)
 const passwordLinkSent = ref(false)
 async function sendPasswordLink() {
   if (!auth.user?.email) return
@@ -118,9 +115,7 @@ async function submitModal() {
       code === 'auth/invalid-credential' || code === 'auth/wrong-password'
         ? 'That password isn’t right. Check it and try again.'
         : code === 'auth/requires-recent-login'
-          ? needsPassword.value
-            ? 'For your security, set a password with the link above, sign in with it, then try again.'
-            : 'For your security, sign out, sign back in, then try again.'
+          ? 'For your security, sign out, sign back in, then try again.'
           : code === 'auth/email-already-in-use'
             ? 'That email already has an account.'
             : 'That didn’t work. Check your connection and try again.'
@@ -131,7 +126,7 @@ async function submitModal() {
 
 const submitDisabled = computed(() => {
   if (submitting.value) return true
-  if (auth.hasPassword && !currentPassword.value) return true
+  if (!currentPassword.value) return true
   if (modal.value === 'email' && !newEmail.value) return true
   if (modal.value === 'password' && !newPassword.value) return true
   return false
@@ -171,7 +166,7 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
             <button type="button" aria-label="Change email" class="text-primary text-callout press-row focus-inset min-h-11 rounded-full px-3 font-semibold" @click="openModal('email')">Change</button>
           </div>
         </li>
-        <li v-if="auth.hasPassword">
+        <li>
           <div class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left">
             <span class="flex-1 text-base font-medium">Password</span>
             <button type="button" aria-label="Change password" class="text-primary text-callout press-row focus-inset min-h-11 rounded-full px-3 font-semibold" @click="openModal('password')">Change</button>
@@ -208,7 +203,7 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
           </span>
         </label>
 
-        <div v-if="auth.hasPassword">
+        <div>
           <label class="block space-y-1.5">
             <span class="text-callout font-medium">Your current password</span>
             <span class="relative block">
@@ -218,24 +213,14 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
               </button>
             </span>
           </label>
-          <!-- Accounts made with an emailed link can look like they have a password. -->
           <button type="button" class="text-primary press h-11 text-sm font-semibold" @click="sendPasswordLink">
             Send password reset link
           </button>
           <p v-if="passwordLinkSent" class="text-done-foreground text-sm font-medium" role="status">
-            A link to set a password is on its way to {{ auth.user?.email }}.
+            A password reset link is on its way to {{ auth.user?.email }}.
           </p>
         </div>
-        <div v-else class="space-y-1">
-          <p class="text-muted-foreground text-sm">
-            To confirm it’s you, your account needs a password. Get a link to set one, sign in with it, then come back
-            here.
-          </p>
-          <button type="button" class="text-primary press h-11 font-semibold" @click="sendPasswordLink">Send password setup link</button>
-          <p v-if="passwordLinkSent" class="text-done-foreground text-sm font-medium" role="status">
-            A link is on its way to {{ auth.user?.email }}.
-          </p>
-        </div>
+
 
         <p v-if="modalError" class="text-destructive text-callout font-medium" role="alert">{{ modalError }}</p>
 

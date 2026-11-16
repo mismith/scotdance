@@ -88,29 +88,17 @@ test('in the native app, signs in the same way', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Change email', exact: true })).toBeVisible()
 })
 
-test('a beta account without a password is offered a link to set one', async ({ page }) => {
-  await page.goto('/')
-  // Sign in as a Google account (made in the v4 beta) through the app's own
-  // Firebase instance; the emulator takes an unsigned token.
-  const src = await (await page.request.get('/src/firebase.ts')).text()
-  const authDeps = src.match(/"(\/node_modules\/\.vite\/deps\/firebase_auth\.js[^"]*)"/)![1]
-  const email = `${uid('google')}@example.test`
-  await page.evaluate(
-    async ({ authDeps, email }) => {
-      const { auth } = await import(/* @vite-ignore */ '/src/firebase.ts')
-      const { GoogleAuthProvider, signInWithCredential } = await import(/* @vite-ignore */ authDeps)
-      const token = JSON.stringify({ sub: email, email, email_verified: true })
-      await signInWithCredential(auth, GoogleAuthProvider.credential(token))
-    },
-    { authDeps, email },
-  )
+test('account settings send a password reset link for an existing account', async ({ page }) => {
+  const email = `${uid('reset')}@example.test`
+  await ensureUser(email)
+  await openFromHome(page)
+  await submitPassword(page, email)
+  await expect(sheet(page)).toHaveCount(0)
   await openAccountForm(page)
-  await expect(page.getByRole('button', { name: 'Change password' })).toHaveCount(0)
-  await page.getByRole('button', { name: 'Delete account' }).click()
+  await page.getByRole('button', { name: 'Change password', exact: true }).click()
   const s = sheet(page)
-  await expect(s.getByText('your account needs a password', { exact: false })).toBeVisible()
-  await expect(s.getByText('Your current password')).toHaveCount(0)
-  await s.getByRole('button', { name: 'Send password setup link' }).click()
-  await expect(s.getByRole('status')).toHaveText(`A link is on its way to ${email}.`)
+  await expect(s.getByText('Your current password', { exact: true })).toBeVisible()
+  await s.getByRole('button', { name: 'Send password reset link' }).click()
+  await expect(s.getByRole('status')).toHaveText(`A password reset link is on its way to ${email}.`)
   await page.keyboard.press('Escape')
 })

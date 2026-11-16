@@ -32,7 +32,7 @@ onMounted(() => { void store.initialize(!route.meta.public) })
       <PageSkeleton v-if="loading" :account="route.path === '/account'" />
       <div v-if="route.meta.public || (store.ready && store.account)" v-show="!loading">
         <RouterView v-slot="{ Component }">
-          <KeepAlive include="AccountPage">
+          <KeepAlive include="AccountPage,DancersPage">
             <component :is="Component" />
           </KeepAlive>
         </RouterView>
