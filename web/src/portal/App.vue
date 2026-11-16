@@ -16,7 +16,7 @@ onMounted(() => { void store.initialize(!route.meta.public) })
     <header class="flex h-16 shrink-0 items-center justify-between gap-4">
       <RouterLink to="/account" class="focus-inset -ml-2 flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-2" aria-label="ScotDance Connect">
         <LogoMark class="size-7 shrink-0 text-primary" />
-        <span class="truncate text-heading font-semibold">ScotDance Connect</span>
+        <span class="truncate text-heading font-bold tracking-tight">ScotDance <span class="font-extrabold text-primary">Connect</span></span>
       </RouterLink>
       <Button v-if="store.account" variant="plain" size="sm" :busy="store.busy" @click="store.logout()">
         <LogOut aria-hidden="true" /> Sign out
