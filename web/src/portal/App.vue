@@ -31,7 +31,11 @@ onMounted(() => { void store.initialize(!route.meta.public) })
     <main id="main" class="flex-1 pb-8 pt-4">
       <PageSkeleton v-if="loading" :account="route.path === '/account'" />
       <div v-if="route.meta.public || (store.ready && store.account)" v-show="!loading">
-        <RouterView :key="route.path" />
+        <RouterView v-slot="{ Component }">
+          <KeepAlive include="AccountPage">
+            <component :is="Component" />
+          </KeepAlive>
+        </RouterView>
       </div>
       <section v-else-if="!loading" class="space-y-5 py-12">
         <h1 class="text-hero">Your ScotDance account</h1>

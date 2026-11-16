@@ -29,4 +29,6 @@ const router = createRouter({
 router.afterEach(to => { document.title = `${String(to.meta.title)} · ScotDance Connect` })
 const app = createApp(App)
 app.use(createPinia()).use(router).directive('proximity', vProximity)
-void router.isReady().then(() => app.mount('#app'))
+// Use the final font on the first frame, including the wordmark and footer.
+const typographyReady = document.fonts.load('700 17px "Atkinson Hyperlegible Next Variable"').catch(() => [])
+void Promise.all([router.isReady(), typographyReady]).then(() => app.mount('#app'))
