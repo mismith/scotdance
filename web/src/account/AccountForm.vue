@@ -136,12 +136,13 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
 </script>
 <template>
   <div class="space-y-5 px-4 py-3">
+      <h2 v-if="$slots['profile-details']" class="text-title">Profile</h2>
       <header class="space-y-2">
         <h1 class="sr-only">Account</h1>
         <div class="flex items-end gap-4">
           <Avatar :name="displayName || auth.user?.email || '?'" :email="auth.user?.email" :image="auth.photoURL" size="lg" you />
         <label class="block min-w-0 flex-1 space-y-1.5">
-          <span class="flex items-center justify-between gap-2 text-callout font-medium">Your name<span v-if="displayNameSaving" role="status" class="text-sm font-normal text-muted-foreground">Saving…</span></span>
+          <span class="flex items-center justify-between gap-2 text-callout font-medium">Full name<span v-if="displayNameSaving" role="status" class="text-sm font-normal text-muted-foreground">Saving…</span></span>
           <input
             v-model="displayName"
             type="text"
@@ -157,7 +158,7 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
       </header>
 
       <slot name="profile-details" />
-      <h2 v-if="$slots['profile-details']" class="pt-3 text-heading">Sign-in details</h2>
+      <h2 v-if="$slots['profile-details']" class="pt-3 text-title">Sign-in details</h2>
       <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
         <li>
           <div class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left">

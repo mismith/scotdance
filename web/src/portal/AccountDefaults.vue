@@ -35,13 +35,10 @@ async function flush() {
 }
 </script>
 <template>
-  <section class="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
-    <label class="text-callout font-medium">Studio<input v-model="draft.studio" class="field mt-1.5 h-12 w-full rounded-xl px-3 text-base" placeholder="Teacher or studio" maxlength="120" @input="inputStudio" @blur="settleStudio" @keydown.enter.prevent="settleStudio" /></label>
+  <section class="relative grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+    <label class="text-callout font-medium">Teacher studio<input v-model="draft.studio" class="field mt-1.5 h-12 w-full rounded-xl px-3 text-base" placeholder="e.g. Glenmore School of Dance" maxlength="120" @input="inputStudio" @blur="settleStudio" @keydown.enter.prevent="settleStudio" /></label>
     <CityField v-model="draft.location" @changed="save('location')" />
-    <div class="flex min-h-5 items-start justify-between gap-3 sm:col-span-2">
-      <p class="text-xs text-muted-foreground">Used to prefill new dancers. Optional; changes save automatically.</p>
-      <span role="status" class="w-12 shrink-0 text-right text-xs text-muted-foreground">{{ saving ? 'Saving…' : '' }}</span>
-    </div>
+    <span role="status" class="pointer-events-none absolute right-0 top-full mt-1 text-xs text-muted-foreground">{{ saving ? 'Saving…' : '' }}</span>
     <p v-if="error" role="alert" class="text-sm text-destructive sm:col-span-2">{{ error }} <button type="button" class="text-primary underline" @click="flush">Try again</button></p>
   </section>
 </template>
