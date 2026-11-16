@@ -110,7 +110,7 @@ test('a beta account without a password is offered a link to set one', async ({ 
   const s = sheet(page)
   await expect(s.getByText('your account needs a password', { exact: false })).toBeVisible()
   await expect(s.getByText('Your current password')).toHaveCount(0)
-  await s.getByRole('button', { name: 'Email me a link' }).click()
+  await s.getByRole('button', { name: 'Send password setup link' }).click()
   await expect(s.getByRole('status')).toHaveText(`A link is on its way to ${email}.`)
   await page.keyboard.press('Escape')
 })

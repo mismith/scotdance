@@ -220,7 +220,7 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
           </label>
           <!-- Accounts made with an emailed link can look like they have a password. -->
           <button type="button" class="text-primary press h-11 text-sm font-semibold" @click="sendPasswordLink">
-            Forgot it, or never had one? Email me a link
+            Send password reset link
           </button>
           <p v-if="passwordLinkSent" class="text-done-foreground text-sm font-medium" role="status">
             A link to set a password is on its way to {{ auth.user?.email }}.
@@ -231,7 +231,7 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
             To confirm it’s you, your account needs a password. Get a link to set one, sign in with it, then come back
             here.
           </p>
-          <button type="button" class="text-primary press h-11 font-semibold" @click="sendPasswordLink">Email me a link</button>
+          <button type="button" class="text-primary press h-11 font-semibold" @click="sendPasswordLink">Send password setup link</button>
           <p v-if="passwordLinkSent" class="text-done-foreground text-sm font-medium" role="status">
             A link is on its way to {{ auth.user?.email }}.
           </p>
