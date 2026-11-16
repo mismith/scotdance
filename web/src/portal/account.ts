@@ -28,6 +28,8 @@ interface Account { uid: string; name: string; email: string; emailVerified: boo
 export const useConnectAccount = defineStore('connect-account', () => {
   const account = ref<Account | null>(null)
   const dancers = ref<Dancer[]>([])
+  const defaults = ref<{ studio: string; location?: Dancer['location'] }>({ studio: '' })
+  const defaultsRevision = ref(0)
   const busy = ref(false)
   const ready = ref(false)
   const pageReady = ref(false)
@@ -39,6 +41,8 @@ export const useConnectAccount = defineStore('connect-account', () => {
     pageReady.value = false
     account.value = null
     dancers.value = []
+    defaults.value = { studio: '' }
+    defaultsRevision.value = 0
     identityPass = ''
     identityUntil = 0
   }
@@ -58,6 +62,8 @@ export const useConnectAccount = defineStore('connect-account', () => {
     const data = await api('load')
     account.value = data.account
     dancers.value = data.dancers
+    defaults.value = data.defaults ?? { studio: '' }
+    defaultsRevision.value = data.defaultsRevision ?? 0
   }
   async function run(fn: () => Promise<void>) {
     if (busy.value) return
@@ -122,13 +128,18 @@ export const useConnectAccount = defineStore('connect-account', () => {
     identityUntil = Date.now() + 50 * 60 * 1000
     await load()
   }
-  async function save(dancer: Dancer, remove = false) {
+  async function save(dancer: Dancer, remove = false, chosenDefaults: { studio?: boolean; location?: boolean } = {}) {
     return run(async () => {
       const { id, revision, firstName, lastName, birthday, category, studio, registrationNumber, location, publicDancer } = dancer
       const details = { firstName, lastName, birthday, category, studio, registrationNumber, ...(location ? { location } : {}), ...(publicDancer !== undefined ? { publicDancer } : {}) }
-      await api(remove ? 'delete' : 'save', { id, revision, requestId: crypto.randomUUID(), dancer: details })
+      await api(remove ? 'delete' : 'save', { id, revision, requestId: crypto.randomUUID(), dancer: details, defaults: chosenDefaults, defaultsRevision: defaultsRevision.value })
       await load()
     })
   }
-  return { account, dancers, busy, ready, pageReady, error, clear, initialize, login, logout, refresh, identityToken, load, save, run }
+  async function saveDefaults(values: Partial<{ studio: string; location: NonNullable<Dancer['location']> }>) {
+    const result = await api('defaults', { defaults: values, revision: defaultsRevision.value, requestId: crypto.randomUUID() })
+    defaults.value = result.defaults
+    defaultsRevision.value = result.defaultsRevision
+  }
+  return { account, dancers, defaults, defaultsRevision, saveDefaults, busy, ready, pageReady, error, clear, initialize, login, logout, refresh, identityToken, load, save, run }
 })

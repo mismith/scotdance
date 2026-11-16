@@ -1,56 +1,85 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRoute, useRouter, RouterLink } from 'vue-router'
-import { ChevronLeft } from '@lucide/vue'
+import { computed, ref, watch } from 'vue'
 import Button from '@/components/ui/Button.vue'
+import Dialog from '@/components/Dialog.vue'
 import DancerDetails from './DancerDetails.vue'
 import PublicDancerLink from './PublicDancerLink.vue'
+import BirthdayField from './BirthdayField.vue'
+import { tidy } from './profileFields'
+import { tidyRegistration, registrationCategory, registrationProblem } from './registration'
 import { useConnectAccount, type Dancer } from './account'
+const props = defineProps<{ dancer?: Dancer }>()
+const emit = defineEmits<{ close: [] }>()
 const store = useConnectAccount()
-const route = useRoute()
-const router = useRouter()
-const existing = store.dancers.find(d => d.id === route.params.id)
-const missing = !!route.params.id && !existing
-const draft = ref<Dancer>(existing ? JSON.parse(JSON.stringify(existing)) : {
-  id: crypto.randomUUID(), revision: 0, firstName: '', lastName: '', birthday: '', category: '', studio: '', registrationNumber: '',
+const draft = ref<Dancer>(props.dancer ? JSON.parse(JSON.stringify(props.dancer)) : {
+  id: crypto.randomUUID(), revision: 0, firstName: '', lastName: '', birthday: '', category: '',
+  studio: store.defaults.studio, registrationNumber: '', location: JSON.parse(JSON.stringify(store.defaults.location ?? { town: '', province: '', country: 'Canada' })),
 })
-draft.value.location ??= { town: '', province: '', country: '' }
-const title = computed(() => existing ? 'Edit dancer' : 'Add dancer')
+const title = computed(() => props.dancer ? 'Edit dancer' : 'Add dancer')
 const deleting = ref(false)
+const confirmDefaults = ref(false)
 const details = ref<InstanceType<typeof DancerDetails>>()
+const form = ref<HTMLFormElement>()
 const field = 'field mt-1.5 h-12 w-full rounded-xl px-3 text-base'
-async function save(remove = false) {
-  if (!remove) details.value?.commitPending()
-  if (await store.save(draft.value, remove)) await router.push('/dancers')
+const normalized = (value = '') => value.trim().replace(/\s+/g, ' ').toLowerCase()
+const locationKey = (p?: Dancer['location']) => [p?.town, p?.province, p?.country].map(normalized).join('|')
+const initial = { studio: normalized(draft.value.studio), location: locationKey(draft.value.location) }
+const changedDefaults = computed(() => ({
+  studio: !!draft.value.studio && normalized(draft.value.studio) !== initial.studio && normalized(draft.value.studio) !== normalized(store.defaults.studio),
+  location: !!draft.value.location?.town && locationKey(draft.value.location) !== initial.location && locationKey(draft.value.location) !== locationKey(store.defaults.location),
+}))
+const numberIssue = ref('')
+watch(() => draft.value.registrationNumber, number => {
+  const category = registrationCategory(number)
+  if (category) draft.value.category = category
+})
+function settleNumber() {
+  draft.value.registrationNumber = tidyRegistration(draft.value.registrationNumber)
+  numberIssue.value = draft.value.registrationNumber ? registrationProblem(draft.value.registrationNumber, draft.value.category) : ''
+}
+function close() { if (!store.busy) { store.error = ''; emit('close') } }
+async function save() {
+  if (details.value?.commitPending() === false || !form.value?.reportValidity()) return
+  draft.value.firstName = tidy(draft.value.firstName)
+  draft.value.lastName = tidy(draft.value.lastName)
+  draft.value.studio = tidy(draft.value.studio)
+  settleNumber()
+  if (numberIssue.value) return
+  if (store.dancers.some(d => d.id !== props.dancer?.id) && (changedDefaults.value.studio || changedDefaults.value.location)) { confirmDefaults.value = true; return }
+  await persist()
+}
+async function persist(updateDefaults = false, remove = false) {
+  if (await store.save(draft.value, remove, updateDefaults ? changedDefaults.value : {})) emit('close')
 }
 </script>
 <template>
-  <section>
-    <RouterLink to="/dancers" class="press-row -ml-2 mb-3 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-callout font-semibold text-primary"><ChevronLeft class="size-4" aria-hidden="true" />Dancers</RouterLink>
-    <h1 class="mb-6 text-hero">{{ missing ? 'Dancer not found' : title }}</h1>
-    <p v-if="missing" class="text-muted-foreground">This dancer may have been deleted.</p>
-    <form v-else class="space-y-6" @submit.prevent="save()">
-      <p class="text-muted-foreground">Only their name is required. Save other details if you’d like to reuse them across ScotDance.app tools.</p>
-      <fieldset :disabled="store.busy" class="grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2">
-        <label class="text-callout font-medium">First name<input v-model="draft.firstName" :class="field" required maxlength="120" autocomplete="off" /></label>
-        <label class="text-callout font-medium">Last name<input v-model="draft.lastName" :class="field" required maxlength="120" autocomplete="off" /></label>
-        <label class="text-callout font-medium">Birthday <span class="text-muted-foreground">(optional)</span><input v-model="draft.birthday" :class="field" type="date" min="1900-01-01" :max="new Date().toISOString().slice(0, 10)" /></label>
-        <label class="text-callout font-medium">Registration number <span class="text-muted-foreground">(optional)</span><input v-model="draft.registrationNumber" :class="field" maxlength="120" /></label>
-        <DancerDetails ref="details" v-model="draft" class="sm:col-span-2" />
-        <PublicDancerLink v-model="draft.publicDancer" :first-name="draft.firstName" :last-name="draft.lastName" class="sm:col-span-2" />
-      </fieldset>
-      <div v-if="!deleting" class="flex flex-wrap items-center gap-2">
-        <Button type="submit" variant="primary" :busy="store.busy">Save dancer</Button>
-        <Button to="/dancers" variant="plain" :disabled="store.busy">Cancel</Button>
-        <Button v-if="existing" variant="plain" class="sm:ml-auto" :disabled="store.busy" @click="deleting = true">Delete dancer</Button>
+  <Dialog :open="true" :morph="false" variant="sheet" size="lg" :closable="!store.busy" @close="close">
+    <template #header><h2 class="text-title">{{ deleting ? 'Delete dancer?' : confirmDefaults ? 'Use these details for new dancers?' : title }}</h2></template>
+    <div class="p-4">
+      <div v-if="deleting" class="space-y-4">
+        <p>Delete {{ draft.firstName }} {{ draft.lastName }}? Existing competition entries stay unchanged.</p>
+        <div class="flex flex-wrap gap-2"><Button variant="destructive" :busy="store.busy" @click="persist(false, true)">Delete dancer</Button><Button :disabled="store.busy" @click="deleting = false">Keep dancer</Button></div>
       </div>
-      <div v-else role="alert" class="space-y-3">
-        <p>Delete this dancer? Existing competition entries will stay unchanged.</p>
-        <div class="flex flex-wrap gap-2">
-          <Button variant="destructive" :busy="store.busy" @click="save(true)">Delete dancer</Button>
-          <Button :disabled="store.busy" @click="deleting = false">Keep dancer</Button>
+      <div v-else-if="confirmDefaults" class="space-y-4">
+        <p>Also save {{ [changedDefaults.studio && 'studio', changedDefaults.location && 'location'].filter(Boolean).join(' and ') }} as your account defaults? Your other dancers keep their own details.</p>
+        <div class="flex flex-wrap gap-2"><Button variant="primary" :busy="store.busy" @click="persist(false)">Just this dancer</Button><Button :disabled="store.busy" @click="persist(true)">Update defaults too</Button><Button variant="plain" :disabled="store.busy" @click="confirmDefaults = false">Back</Button></div>
+      </div>
+      <form v-else ref="form" class="space-y-5" @submit.prevent="save">
+        <fieldset :disabled="store.busy" class="grid min-w-0 grid-cols-2 gap-4">
+          <label class="text-callout font-medium">First name<input v-model="draft.firstName" :class="field" required maxlength="120" autocomplete="off" @blur="draft.firstName = tidy(draft.firstName)" /></label>
+          <label class="text-callout font-medium">Last name<input v-model="draft.lastName" :class="field" required maxlength="120" autocomplete="off" @blur="draft.lastName = tidy(draft.lastName)" /></label>
+          <BirthdayField v-model="draft.birthday" label="Birthday" class="col-span-2 sm:col-span-1" />
+          <label class="col-span-2 text-callout font-medium sm:col-span-1">Registration number<input v-model="draft.registrationNumber" :class="field" maxlength="120" autocomplete="off" @blur="settleNumber" /><span v-if="numberIssue" role="alert" class="mt-1 block text-sm text-destructive">{{ numberIssue }}</span></label>
+          <DancerDetails ref="details" v-model="draft" class="col-span-2" />
+          <PublicDancerLink v-model="draft.publicDancer" :first-name="draft.firstName" :last-name="draft.lastName" class="col-span-2" />
+        </fieldset>
+        <div class="flex flex-wrap items-center gap-2">
+          <Button type="submit" variant="primary" :busy="store.busy">Save dancer</Button>
+          <Button variant="plain" :disabled="store.busy" @click="close">Cancel</Button>
+          <Button v-if="props.dancer" variant="plain" class="ml-auto" :disabled="store.busy" @click="deleting = true">Delete dancer</Button>
         </div>
-      </div>
-    </form>
-  </section>
+      </form>
+      <p v-if="store.error" role="alert" class="mt-4 text-destructive">{{ store.error }}</p>
+    </div>
+  </Dialog>
 </template>

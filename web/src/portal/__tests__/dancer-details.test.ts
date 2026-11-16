@@ -13,7 +13,7 @@ describe('optional dancer details', () => {
   it('keeps optional fields collapsed and discards cancelled studio changes', async () => {
     const { w, dancer } = setup()
     expect(w.findAll('input')).toHaveLength(0)
-    await w.get('[aria-label^="Edit studio"]').trigger('click')
+    await w.get('[aria-label^="Edit teacher studio"]').trigger('click')
     await w.get('input').setValue('Changed studio')
     await w.get('[aria-label="Cancel detail changes"]').trigger('click')
     expect(dancer.studio).toBe('Original studio')
@@ -24,6 +24,7 @@ describe('optional dancer details', () => {
     await w.get('[aria-label^="Edit city"]').trigger('click')
     await w.findAll('button').find(b => b.text() === 'Enter city manually')!.trigger('click')
     await w.findAll('input')[0].setValue('Canmore')
+    await w.findAll('select')[0].setValue('AB')
     w.vm.commitPending()
     expect(dancer.location).toEqual({ town: 'Canmore', province: 'AB', country: 'Canada' })
     w.unmount()

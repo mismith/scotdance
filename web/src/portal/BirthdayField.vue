@@ -1,0 +1,531 @@
+<script setup lang="ts">
+import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
+import { daysInMonth } from './profileFields'
+import Popover from './Popover.vue'
+
+/**
+ * A birthday ('YYYY-MM-DD', '' for not set) picked by drilling down: decade, year, month, day. Decades read in
+ * order, oldest first, like a calendar. All the maths is on numbers and strings; a Date is only built to find which
+ * weekday a month starts on, so nothing shifts with the time zone.
+ */
+const props = defineProps<{ modelValue: string; label: string; id?: string }>()
+const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
+
+const auto = useId()
+const fieldId = computed(() => props.id ?? auto)
+const open = ref(false)
+const input = ref<HTMLInputElement>()
+const touched = ref(false)
+
+// On wide screens the picker is a Popover (it opens inside an open dialog, over the form, so nothing reflows). On a
+// phone inside a dialog (the Add a dancer sheet) a second sheet would sit over the first, so the same picker opens
+// in place, under the field, within the sheet it is already in.
+const root = ref<HTMLElement>()
+const inDialog = ref(false)
+const wide = ref(true)
+let media: MediaQueryList | undefined
+const onMedia = (e: MediaQueryListEvent) => (wide.value = e.matches)
+onMounted(() => {
+  inDialog.value = !!root.value?.closest('dialog')
+  media = window.matchMedia('(min-width: 900px)')
+  wide.value = media.matches
+  media.addEventListener('change', onMedia)
+})
+onBeforeUnmount(() => media?.removeEventListener('change', onMedia))
+const Inline = defineComponent({
+  props: { open: Boolean, title: String, width: Number },
+  emits: ['update:open'],
+  setup(p, { slots, emit }) {
+    const close = () => emit('update:open', false)
+    return () =>
+      h('div', null, [
+        h('div', { onClick: () => emit('update:open', !p.open) }, slots.anchor?.()),
+        p.open
+          ? h(
+              'div',
+              {
+                class: 'bf-inline',
+                onKeydown: (event: KeyboardEvent) => {
+                  if (event.key !== 'Escape') return
+                  event.preventDefault()
+                  event.stopPropagation()
+                  close()
+                },
+              },
+              [
+                h(
+                  'button',
+                  { type: 'button', class: 'bf-x', 'aria-label': 'Close', onClick: close },
+                  h('svg', { viewBox: '0 0 24 24', width: 18, height: 18, 'aria-hidden': 'true' }, [
+                    h('path', { d: 'M6 6l12 12M18 6 6 18' }),
+                  ]),
+                ),
+                slots.default?.(),
+              ],
+            )
+          : null,
+      ])
+  },
+})
+const Host = computed(() => (inDialog.value && !wide.value ? Inline : Popover))
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const FULL_MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
+const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+const pad = (n: number) => String(n).padStart(2, '0')
+
+const now = new Date()
+const thisYear = now.getFullYear()
+const thisMonth = now.getMonth() + 1
+const today = now.getDate()
+const FIRST_DECADE = Math.floor((thisYear - 120) / 10) * 10
+const decades = Array.from(
+  { length: Math.floor((thisYear - FIRST_DECADE) / 10) + 1 },
+  (_, i) => FIRST_DECADE + i * 10,
+)
+
+type Level = 'decade' | 'year' | 'month' | 'day'
+const level = ref<Level>('decade')
+const decade = ref(0)
+const year = ref(0)
+const month = ref(0)
+
+const chosen = computed(() => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(props.modelValue)
+  if (!m) return null
+  const [y, month, d] = m.slice(1).map(Number) as [number, number, number]
+  return y > 0 && month >= 1 && month <= 12 && d >= 1 && d <= daysInMonth(y, month)
+    ? { y, m: month, d }
+    : null
+})
+const birthdayProblem = computed(() => {
+  if (!props.modelValue) return ''
+  if (!chosen.value) return 'Enter a valid birthday as YYYY-MM-DD.'
+  if (props.modelValue > `${thisYear}-${pad(thisMonth)}-${pad(today)}`)
+    return 'Birthday cannot be in the future.'
+  if (chosen.value.y < thisYear - 120) return 'Enter a birthday within the last 120 years.'
+  return ''
+})
+watch([input, birthdayProblem], () => input.value?.setCustomValidity(birthdayProblem.value), {
+  flush: 'post',
+})
+
+const years = computed(() => Array.from({ length: 10 }, (_, i) => decade.value + i))
+const blanks = computed(() => new Date(year.value, month.value - 1, 1).getDay())
+const dayCount = computed(() => (year.value && month.value ? daysInMonth(year.value, month.value) : 0))
+
+const yearOk = (y: number) => y <= thisYear && y >= thisYear - 120
+const monthOk = (m: number) => year.value < thisYear || m <= thisMonth
+const dayOk = (d: number) => year.value < thisYear || month.value < thisMonth || d <= today
+
+const crumbs = computed(() => {
+  const list: Array<{ level: Level; text: string }> = [{ level: 'decade', text: 'Decades' }]
+  if (level.value !== 'decade') list.push({ level: 'year', text: `${decade.value}s` })
+  if (level.value === 'month' || level.value === 'day')
+    list.push({ level: 'month', text: String(year.value) })
+  if (level.value === 'day') list.push({ level: 'day', text: MONTHS[month.value - 1]! })
+  return list
+})
+
+watch(open, (isOpen) => {
+  if (!isOpen) return
+  const c = chosen.value
+  if (c) {
+    decade.value = Math.floor(c.y / 10) * 10
+    year.value = c.y
+    month.value = c.m
+    level.value = 'day'
+  } else level.value = 'decade'
+  focusSoon()
+})
+
+const cells = ref<HTMLElement>()
+async function focusSoon() {
+  await nextTick()
+  requestAnimationFrame(() => {
+    const list = cells.value
+    const target =
+      list?.querySelector<HTMLElement>('[aria-pressed="true"]:not(:disabled)') ??
+      list?.querySelector<HTMLElement>('button:not(:disabled)')
+    target?.focus({ preventScroll: true })
+  })
+}
+function goTo(next: Level) {
+  level.value = next
+  focusSoon()
+}
+function pickDecade(value: number) {
+  decade.value = value
+  goTo('year')
+}
+function pickYear(value: number) {
+  year.value = value
+  goTo('month')
+}
+function pickMonth(value: number) {
+  month.value = value
+  goTo('day')
+}
+function pickDay(value: number) {
+  emit('update:modelValue', `${year.value}-${pad(month.value)}-${pad(value)}`)
+  open.value = false
+  nextTick(() => root.value?.querySelector<HTMLButtonElement>('.trigger')?.focus())
+}
+// Back one level from the keyboard, as Backspace does in a drill-down
+function back() {
+  const order: Level[] = ['decade', 'year', 'month', 'day']
+  const i = order.indexOf(level.value)
+  if (i > 0) goTo(order[i - 1]!)
+}
+
+const columns = computed(() => ({ decade: 3, year: 5, month: 3, day: 7 })[level.value])
+// Arrow keys move between the cells of the grid; a blank day is skipped over
+function move(event: KeyboardEvent) {
+  const delta: Record<string, number> = {
+    ArrowLeft: -1,
+    ArrowRight: 1,
+    ArrowUp: -columns.value,
+    ArrowDown: columns.value,
+  }
+  if (event.key === 'Backspace') {
+    event.preventDefault()
+    return back()
+  }
+  const step = delta[event.key]
+  if (!step) return
+  const all = Array.from(cells.value?.children ?? []) as HTMLElement[]
+  let i = all.indexOf(event.target as HTMLElement)
+  if (i < 0) return
+  event.preventDefault()
+  for (;;) {
+    i += step
+    const next = all[i]
+    if (!next) return
+    if (next instanceof HTMLButtonElement && !next.disabled) return next.focus()
+  }
+}
+
+const title = computed(() => `${props.label}`)
+</script>
+
+<template>
+  <div ref="root" class="bf" :class="{ spread: open && Host !== Popover }">
+    <label :for="fieldId">{{ label }}</label>
+    <component :is="Host" v-model:open="open" :title="title" :width="332">
+      <template #anchor>
+        <div class="birthday-control">
+          <input
+            :id="fieldId"
+            ref="input"
+            :value="modelValue"
+            class="field num h-12 w-full rounded-xl px-3 text-base"
+            type="text"
+            placeholder="YYYY-MM-DD"
+            autocomplete="bday"
+            maxlength="10"
+            :aria-invalid="touched && !!birthdayProblem"
+            :aria-describedby="touched && birthdayProblem ? `${fieldId}-problem` : undefined"
+            @click.stop
+            @keydown.down.stop.prevent="open = true"
+            @blur="touched = true"
+            @invalid="touched = true"
+            @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+          />
+          <button type="button" class="trigger" :aria-expanded="open" aria-haspopup="dialog" :aria-label="`Choose ${label.toLowerCase()}`">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <rect x="3.5" y="5" width="17" height="15.5" rx="3" />
+              <path d="M3.5 10h17M8 3v4M16 3v4" />
+            </svg>
+          </button>
+        </div>
+      </template>
+      <div class="body">
+        <nav class="crumbs" aria-label="Birthday steps">
+          <template v-for="(c, i) in crumbs" :key="c.level">
+            <svg v-if="i" class="sep" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+              <path d="M9.5 6l6 6-6 6" />
+            </svg>
+            <span v-if="i === crumbs.length - 1" class="here" aria-current="step">{{ c.text }}</span>
+            <button v-else type="button" class="crumb" @click="goTo(c.level)">{{ c.text }}</button>
+          </template>
+        </nav>
+
+        <div
+          ref="cells"
+          class="cells"
+          :class="level"
+          role="group"
+          :aria-label="crumbs.at(-1)?.text"
+          @keydown="move"
+        >
+          <template v-if="level === 'decade'">
+            <button
+              v-for="d in decades"
+              :key="d"
+              type="button"
+              class="cell num"
+              :aria-pressed="chosen ? Math.floor(chosen.y / 10) * 10 === d : false"
+              @click="pickDecade(d)"
+            >
+              {{ d }}s
+            </button>
+          </template>
+          <template v-else-if="level === 'year'">
+            <button
+              v-for="y in years"
+              :key="y"
+              type="button"
+              class="cell num"
+              :aria-pressed="chosen?.y === y"
+              :disabled="!yearOk(y)"
+              @click="pickYear(y)"
+            >
+              {{ y }}
+            </button>
+          </template>
+          <template v-else-if="level === 'month'">
+            <button
+              v-for="(name, i) in MONTHS"
+              :key="name"
+              type="button"
+              class="cell"
+              :aria-label="FULL_MONTHS[i]"
+              :aria-pressed="chosen?.y === year && chosen?.m === i + 1"
+              :disabled="!monthOk(i + 1)"
+              @click="pickMonth(i + 1)"
+            >
+              {{ name }}
+            </button>
+          </template>
+          <template v-else>
+            <span v-for="(d, i) in DAYS" :key="'h' + i" class="dow" aria-hidden="true">{{ d }}</span>
+            <span v-for="n in blanks" :key="'b' + n" />
+            <button
+              v-for="d in dayCount"
+              :key="d"
+              type="button"
+              class="cell day num"
+              :aria-label="`${d} ${FULL_MONTHS[month - 1]} ${year}`"
+              :aria-pressed="chosen?.y === year && chosen?.m === month && chosen?.d === d"
+              :disabled="!dayOk(d)"
+              @click="pickDay(d)"
+            >
+              {{ d }}
+            </button>
+          </template>
+        </div>
+      </div>
+    </component>
+    <p v-if="touched && birthdayProblem" :id="`${fieldId}-problem`" class="birthday-problem" role="alert">
+      {{ birthdayProblem }}
+    </p>
+  </div>
+</template>
+
+<style scoped>
+.bf.spread {
+  grid-column: 1 / -1;
+}
+:global(.bf-inline) {
+  position: relative;
+  margin: 8px 0 0;
+  padding: 10px 14px 14px;
+  border-radius: var(--radius-xl);
+  background: var(--blue-paper);
+}
+:global(.bf-inline .bf-x) {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  color: var(--foreground);
+  background: none;
+  cursor: pointer;
+}
+:global(.bf-inline .bf-x svg) {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+:global(.bf-inline .bf-x:focus-visible) {
+  outline: 3px solid var(--primary);
+  outline-offset: 0;
+}
+.bf label {
+  display: block;
+}
+.birthday-control {
+  position: relative;
+}
+.birthday-control input {
+  padding-right: 44px;
+  margin-top: 6px;
+}
+.birthday-problem {
+  color: var(--destructive);
+  font-size: 14px;
+  margin: 4px 0;
+}
+.trigger {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+}
+.trigger svg {
+  flex: none;
+  fill: none;
+  stroke: var(--muted-foreground);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.trigger:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--ring);
+}
+.body {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.crumbs {
+  padding-right: 36px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  min-height: 40px;
+  font-size: 16px;
+}
+.crumb,
+.here {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+  background: none;
+}
+.crumb {
+  font-weight: 600;
+  color: var(--muted-foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.crumb:hover {
+  color: var(--foreground);
+  background: var(--blue-paper);
+}
+.sep {
+  flex: none;
+  fill: none;
+  stroke: var(--muted-foreground);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cells {
+  display: grid;
+  gap: 6px;
+  justify-items: stretch;
+}
+.cells.decade,
+.cells.month {
+  grid-template-columns: repeat(3, 1fr);
+}
+.cells.year {
+  grid-template-columns: repeat(5, 1fr);
+}
+.cells.day {
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  justify-items: center;
+}
+.cell {
+  min-height: 48px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--foreground);
+  background: var(--blue-paper);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.cell:hover:not(:disabled):not([aria-pressed='true']) {
+  background: var(--border);
+}
+.cell[aria-pressed='true'] {
+  color: var(--primary-foreground);
+  background: var(--primary-fill);
+}
+.cell:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.cells.year .cell {
+  font-size: 15.5px;
+  padding: 0;
+}
+.cells.day .cell {
+  width: min(40px, 100%);
+  min-height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 16px;
+  background: none;
+}
+.cells.day .cell:hover:not(:disabled):not([aria-pressed='true']) {
+  background: var(--blue-paper);
+}
+.dow {
+  display: grid;
+  place-items: center;
+  height: 28px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+.cell:focus-visible,
+.crumb:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+</style>

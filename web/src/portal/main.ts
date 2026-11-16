@@ -3,7 +3,6 @@ import { createPinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import DancersPage from './DancersPage.vue'
-import DancerPage from './DancerPage.vue'
 import AccountPage from './AccountPage.vue'
 import PolicyPage from './PolicyPage.vue'
 import SupportPage from './SupportPage.vue'
@@ -17,8 +16,6 @@ const router = createRouter({
   routes: [
     { path: '/', redirect: route => ({ path: route.query.section === 'dancers' ? '/dancers' : '/account', query: {} }) },
     { path: '/dancers', component: DancersPage, meta: { title: 'Dancers' } },
-    { path: '/dancers/new', component: DancerPage, meta: { title: 'Add dancer' } },
-    { path: '/dancers/:id', component: DancerPage, meta: { title: 'Edit dancer' } },
     { path: '/account', component: AccountPage, meta: { title: 'Account' } },
     { path: '/privacy', component: PolicyPage, meta: { title: 'Privacy and terms', public: true } },
     { path: '/support', redirect: '/help' },
