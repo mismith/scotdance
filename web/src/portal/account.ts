@@ -12,6 +12,16 @@ export interface Dancer {
   registrationNumber: string
   location?: { town: string; province: string; country: string }
 }
+// A non-sensitive preference: explicit sign-out must suppress automatic SSO.
+const signedOutKey = 'connect.signed-out'
+function explicitlySignedOut() {
+  try { return localStorage.getItem(signedOutKey) === 'true' }
+  catch { return true } // If persistence is unavailable, require an explicit sign-in.
+}
+function rememberSignOut(value: boolean) {
+  try { if (value) localStorage.setItem(signedOutKey, 'true'); else localStorage.removeItem(signedOutKey) } catch {}
+}
+
 interface Account { uid: string; name: string; email: string; emailVerified: boolean }
 
 export const useConnectAccount = defineStore('connect-account', () => {
@@ -83,20 +93,28 @@ export const useConnectAccount = defineStore('connect-account', () => {
       const result = await handoff()
       if (!result.signedIn) return
       await api('login', { token: result.pass })
+      rememberSignOut(false)
       await load()
       identityPass = result.pass
       identityUntil = Date.now() + 50 * 60 * 1000
     })
   }
   async function initialize(openAccount: boolean) {
-    try { await load() }
+    try {
+      if (explicitlySignedOut()) { clear(); return }
+      await load()
+    }
     catch (e) {
       if (e && typeof e === 'object' && 'status' in e && e.status === 401) {
         if (openAccount) await login()
       } else error.value = e instanceof Error ? e.message : 'Could not open Connect.'
     } finally { ready.value = true }
   }
-  const logout = () => run(async () => { await api('logout'); clear() })
+  const logout = () => run(async () => {
+    await api('logout')
+    rememberSignOut(true)
+    clear()
+  })
   async function refresh(token: string) {
     await api('login', { token })
     identityPass = token
