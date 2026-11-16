@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, useId, watch } from 'vue'
+import { nextTick, ref, useId } from 'vue'
 import { Check, Eye, EyeOff } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import Button from '@/components/ui/Button.vue'
@@ -13,7 +13,10 @@ export type LoginStep = 'signin' | 'register' | 'forgot'
 
 // `holding` keeps the button busy after signing in, while whoever shows it
 // finishes the job (the connect sheet handing a tool its pass).
-withDefaults(defineProps<{ benefits?: string[]; holding?: boolean }>(), { benefits: () => [], holding: false })
+withDefaults(defineProps<{ benefits?: string[]; holding?: boolean }>(), {
+  benefits: () => [],
+  holding: false,
+})
 const step = defineModel<LoginStep>('step', { default: 'signin' })
 
 const auth = useAuthStore()
@@ -26,15 +29,8 @@ const busy = ref(false)
 const errorMessage = ref<string | null>(null)
 const infoMessage = ref<string | null>(null)
 
-watch(
-  () => auth.isSignedIn,
-  (signedIn) => {
-    if (signedIn) password.value = ''
-  },
-)
-
 // What the form asks fades in as it changes, so two forms never show at once.
-const formEl = ref<HTMLElement | null>(null)
+const formEl = ref<HTMLFormElement | null>(null)
 async function go(next: LoginStep, animate = true) {
   step.value = next
   errorMessage.value = null
@@ -42,10 +38,18 @@ async function go(next: LoginStep, animate = true) {
   passwordVisible.value = false
   if (!animate || matchMedia('(prefers-reduced-motion: reduce)').matches) return
   await nextTick()
-  formEl.value?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' })
+  formEl.value?.animate([{ opacity: 0 }, { opacity: 1 }], {
+    duration: 200,
+    easing: 'ease-out',
+  })
 }
 /** Back to a fresh sign-in, as when the form is shown again. */
-defineExpose({ reset: () => go('signin', false) })
+defineExpose({
+  reset: () => {
+    password.value = ''
+    return go('signin', false)
+  },
+})
 
 function friendly(e: unknown): string {
   const code = (e as { code?: string })?.code ?? ''
@@ -70,12 +74,20 @@ function friendly(e: unknown): string {
 }
 
 async function submit() {
+  if (busy.value) return
+  // Password managers may fill the DOM without emitting Vue's input event.
+  if (formEl.value) {
+    const fields = new FormData(formEl.value)
+    email.value = String(fields.get('email') ?? '').trim()
+    password.value = String(fields.get('password') ?? '')
+  }
   errorMessage.value = null
   infoMessage.value = null
   busy.value = true
   try {
     if (step.value === 'signin') await auth.signInWithEmail(email.value, password.value)
-    else if (step.value === 'register') await auth.registerWithEmail(email.value, password.value)
+    else if (step.value === 'register')
+      await auth.registerWithEmail(email.value, password.value)
     else {
       await auth.resetPassword(email.value)
       infoMessage.value = `A reset link is on its way to ${email.value}.`
@@ -108,7 +120,9 @@ async function submit() {
 
     <!-- Not one <label>: the Show button inside it would join the field's name. -->
     <div v-if="step !== 'forgot'" class="space-y-1.5">
-      <label :for="passwordId" class="text-callout block font-medium">{{ step === 'register' ? 'Choose a password' : 'Password' }}</label>
+      <label :for="passwordId" class="text-callout block font-medium">{{
+        step === 'register' ? 'Choose a password' : 'Password'
+      }}</label>
       <span class="relative block">
         <input
           :id="passwordId"
@@ -128,16 +142,29 @@ async function submit() {
           :aria-pressed="passwordVisible"
           @click="passwordVisible = !passwordVisible"
         >
-          <component :is="passwordVisible ? EyeOff : Eye" class="size-4" aria-hidden="true" />
+          <component
+            :is="passwordVisible ? EyeOff : Eye"
+            class="size-4"
+            aria-hidden="true"
+          />
           {{ passwordVisible ? 'Hide' : 'Show' }}
         </button>
       </span>
     </div>
 
-    <p v-if="errorMessage" :id="errorId" class="text-destructive text-callout font-medium" role="alert">
+    <p
+      v-if="errorMessage"
+      :id="errorId"
+      class="text-destructive text-callout font-medium"
+      role="alert"
+    >
       {{ errorMessage }}
     </p>
-    <p v-if="infoMessage" class="text-done-foreground text-callout font-medium" role="status">
+    <p
+      v-if="infoMessage"
+      class="text-done-foreground text-callout font-medium"
+      role="status"
+    >
       {{ infoMessage }}
     </p>
 
@@ -149,14 +176,27 @@ async function submit() {
 
     <div class="text-callout space-y-1 text-center">
       <template v-if="step === 'signin'">
-        <button type="button" class="text-primary press-row block h-11 w-full rounded-full font-semibold" @click="go('forgot')">
+        <button
+          type="button"
+          class="text-primary press-row block h-11 w-full rounded-full font-semibold"
+          @click="go('forgot')"
+        >
           Forgot your password?
         </button>
-        <button type="button" class="text-primary press-row block h-11 w-full rounded-full font-semibold" @click="go('register')">
+        <button
+          type="button"
+          class="text-primary press-row block h-11 w-full rounded-full font-semibold"
+          @click="go('register')"
+        >
           New here? Create an account
         </button>
       </template>
-      <button v-else type="button" class="text-primary press-row h-11 rounded-full px-4 font-semibold" @click="go('signin')">
+      <button
+        v-else
+        type="button"
+        class="text-primary press-row h-11 rounded-full px-4 font-semibold"
+        @click="go('signin')"
+      >
         Back to sign in
       </button>
     </div>
