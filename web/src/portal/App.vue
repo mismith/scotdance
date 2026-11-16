@@ -59,7 +59,7 @@ onMounted(() => { void store.initialize(!route.meta.public) })
     </main>
     <footer class="flex gap-5 pb-[max(1rem,var(--safe-bottom))] text-xs text-muted-foreground">
       <RouterLink to="/privacy" class="flex min-h-11 items-center hover:text-foreground">Privacy &amp; terms</RouterLink>
-      <a href="/support" class="flex min-h-11 items-center hover:text-foreground" @click.prevent="store.run(openSupport)">Help &amp; feedback</a>
+      <a href="/help" class="flex min-h-11 items-center hover:text-foreground" @click.prevent="store.run(openSupport)">Help &amp; feedback</a>
     </footer>
   </div>
 </template>

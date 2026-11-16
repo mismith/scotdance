@@ -1,6 +1,6 @@
 import { SCOTDANCE_CRISP_WEBSITE_ID } from '@/lib/crisp'
 let starting: Promise<typeof import("crisp-sdk-web")> | undefined;
-/** Support is loaded only after an explicit click or visit to /support. No profile identity is sent. */
+/** Support is loaded only after an explicit click or visit to /help. No profile identity is sent. */
 export async function openSupport() {
   starting ??= import("crisp-sdk-web")
     .then((module) => {

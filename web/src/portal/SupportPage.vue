@@ -8,7 +8,7 @@ onMounted(() => { void store.run(openSupport) })
 </script>
 <template>
   <section class="space-y-5">
-    <h1 class="text-hero">Support</h1>
+    <h1 class="text-hero">Help &amp; feedback</h1>
     <Button variant="primary" :busy="store.busy" @click="store.run(openSupport)">Open chat</Button>
   </section>
 </template>
