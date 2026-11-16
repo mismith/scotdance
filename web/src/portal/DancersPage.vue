@@ -9,7 +9,7 @@ const store = useConnectAccount()
 <template>
   <section>
     <div class="mb-6 flex items-center justify-between gap-4">
-      <h1 class="text-hero">My dancers</h1>
+      <h1 class="text-hero">Dancers</h1>
       <Button v-if="store.dancers.length" to="/dancers/new" variant="primary"><Plus aria-hidden="true" /> Add dancer</Button>
     </div>
     <EmptyState v-if="!store.dancers.length" :icon="Users" title="No dancers yet" description="Add yourself or a dancer you manage.">

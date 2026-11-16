@@ -29,7 +29,7 @@
     </p>
     <h2>Changes and deletion</h2>
     <p>
-      You can edit or delete your private dancer profiles in My dancers.
+      You can edit or delete your private dancer profiles in Dancers.
       Deletion removes the active profile. Technical change records contain
       record identifiers and action times, not copies of previous profile
       details, and expire after 90 days. Request-retry records expire after 30

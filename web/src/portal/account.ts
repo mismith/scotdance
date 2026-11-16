@@ -20,10 +20,14 @@ export const useConnectAccount = defineStore('connect-account', () => {
   const busy = ref(false)
   const ready = ref(false)
   const error = ref('')
+  let identityPass = ''
+  let identityUntil = 0
 
   function clear() {
     account.value = null
     dancers.value = []
+    identityPass = ''
+    identityUntil = 0
   }
   async function api(action: string, data = {}) {
     const response = await fetch(`/api/${action}`, {
@@ -50,21 +54,36 @@ export const useConnectAccount = defineStore('connect-account', () => {
     catch (e) { error.value = e instanceof Error ? e.message : 'Please try again.'; return false }
     finally { busy.value = false }
   }
+  async function handoff() {
+    const w = window as Window & { ScotDance?: { signIn(options: { audience: string }): Promise<{ signedIn: boolean; pass: string; uid: string }> } }
+    if (!w.ScotDance) await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = 'https://next.scotdance.app/embed.js'
+      script.onload = () => resolve()
+      script.onerror = () => reject(new Error('Could not open ScotDance sign-in.'))
+      document.head.append(script)
+    })
+    if (!w.ScotDance) throw new Error('Could not open sign-in.')
+    return w.ScotDance.signIn({ audience: 'connect' })
+  }
+  async function identityToken() {
+    if (identityPass && Date.now() < identityUntil) return identityPass
+    const uid = account.value?.uid
+    const result = await handoff()
+    if (!result.signedIn) throw new Error('Sign in to edit your account.')
+    if (!uid || account.value?.uid !== uid || result.uid !== uid) throw new Error('Sign in with the same ScotDance account to edit these details.')
+    identityPass = result.pass
+    identityUntil = Date.now() + 50 * 60 * 1000
+    return identityPass
+  }
   async function login() {
     await run(async () => {
-      const w = window as Window & { ScotDance?: { signIn(options: { audience: string }): Promise<{ signedIn: boolean; pass: string }> } }
-      if (!w.ScotDance) await new Promise<void>((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = 'https://next.scotdance.app/embed.js'
-        script.onload = () => resolve()
-        script.onerror = () => reject(new Error('Could not open ScotDance sign-in.'))
-        document.head.append(script)
-      })
-      if (!w.ScotDance) throw new Error('Could not open sign-in.')
-      const result = await w.ScotDance.signIn({ audience: 'connect' })
+      const result = await handoff()
       if (!result.signedIn) return
       await api('login', { token: result.pass })
       await load()
+      identityPass = result.pass
+      identityUntil = Date.now() + 50 * 60 * 1000
     })
   }
   async function initialize(openAccount: boolean) {
@@ -76,7 +95,12 @@ export const useConnectAccount = defineStore('connect-account', () => {
     } finally { ready.value = true }
   }
   const logout = () => run(async () => { await api('logout'); clear() })
-  const refresh = (token: string) => run(async () => { await api('login', { token }); await load() })
+  async function refresh(token: string) {
+    await api('login', { token })
+    identityPass = token
+    identityUntil = Date.now() + 50 * 60 * 1000
+    await load()
+  }
   async function save(dancer: Dancer, remove = false) {
     return run(async () => {
       const { id, revision, firstName, lastName, birthday, category, studio, registrationNumber, location } = dancer
@@ -85,5 +109,5 @@ export const useConnectAccount = defineStore('connect-account', () => {
       await load()
     })
   }
-  return { account, dancers, busy, ready, error, clear, initialize, login, logout, refresh, save, run }
+  return { account, dancers, busy, ready, error, clear, initialize, login, logout, refresh, identityToken, load, save, run }
 })

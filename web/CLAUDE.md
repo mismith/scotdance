@@ -12,3 +12,5 @@
 `src/portal` is Connect's frontend, built separately with `npm run build:connect` and served locally with `npm run dev:connect` on port 5290. It directly imports this app's components, Tailwind styles and theme; do not fork another design system. Its small CSS entry lists the shared components Tailwind must scan outside the separate Vite root.
 
 From the repository root, `npm run deploy:connect` publishes only `firebase.connect.json` to the existing `scotdance-connect` Hosting site. Its `/api/**` rewrite remains on that project's private-data API. API and Firestore rules stay in `mismith/scotdance-connect`. Never deploy Connect over the competition app, proxy private production APIs into local development, or expose real family data as fixtures.
+
+Connect renders `src/account/AccountForm.vue` directly, using the user-scoped Firebase REST adapter. Only sign-in uses the existing identity-origin embed; do not reintroduce an account iframe. `/account-test.html` is emulator-only and must stay out of production build inputs.

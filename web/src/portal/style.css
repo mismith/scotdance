@@ -7,3 +7,7 @@
 @source '../components/AdminMark.vue';
 @source '../components/LogoMark.vue';
 @source '../components/EmptyState.vue';
+@source '../account/AccountForm.vue';
+@source '../components/Avatar.vue';
+@source '../components/Dialog.vue';
+@source '../account/AccountHeader.vue';

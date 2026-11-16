@@ -22,7 +22,7 @@ async function save(remove = false) {
 </script>
 <template>
   <section>
-    <RouterLink to="/dancers" class="press-row -ml-2 mb-3 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-callout font-semibold text-primary"><ChevronLeft class="size-4" aria-hidden="true" />My dancers</RouterLink>
+    <RouterLink to="/dancers" class="press-row -ml-2 mb-3 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-callout font-semibold text-primary"><ChevronLeft class="size-4" aria-hidden="true" />Dancers</RouterLink>
     <h1 class="mb-6 text-hero">{{ missing ? 'Dancer not found' : title }}</h1>
     <p v-if="missing" class="text-muted-foreground">This dancer may have been deleted.</p>
     <form v-else class="space-y-6" @submit.prevent="save()">

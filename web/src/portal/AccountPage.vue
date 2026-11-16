@@ -1,12 +1,49 @@
 <script setup lang="ts">
-import AccountFrame from './AccountFrame.vue'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
+import AccountForm from '@/account/AccountForm.vue'
+import AccountHeader from '@/account/AccountHeader.vue'
+import Button from '@/components/ui/Button.vue'
+import { createFirebaseSettings } from '@/account/firebase-settings'
 import { useConnectAccount } from './account'
 const store = useConnectAccount()
+const ready = ref(false)
+const error = ref('')
+const controller = createFirebaseSettings({
+  uid: store.account!.uid,
+  acquireToken: store.identityToken,
+  refreshSession: store.refresh,
+})
+const settings = controller.settings
+async function load() {
+  error.value = ''
+  try {
+    await controller.load()
+    ready.value = true
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Could not open your account.'
+  }
+}
+onMounted(load)
+onBeforeUnmount(controller.dispose)
 </script>
 <template>
   <section>
-    <div class="-mx-4">
-      <AccountFrame v-if="store.account" :uid="store.account.uid" @changed="store.refresh" @reauth="store.login" @deleted="store.clear" />
+    <AccountHeader
+      :name="settings.displayName || store.account?.name || store.account?.email || '?'"
+      :email="settings.user?.email || store.account?.email"
+      :image="settings.photoURL"
+    />
+    <AccountForm
+      v-if="ready"
+      :account="settings"
+      class="-mx-4"
+      @changed="store.run(store.load)"
+      @deleted="store.clear"
+    />
+    <div v-else-if="error" class="space-y-3">
+      <p role="alert" class="text-destructive">{{ error }}</p>
+      <Button @click="load">Try again</Button>
     </div>
+    <p v-else role="status" class="text-muted-foreground">Opening your account…</p>
   </section>
 </template>

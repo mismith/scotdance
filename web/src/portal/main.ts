@@ -15,8 +15,8 @@ import './style.css'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', redirect: route => ({ path: route.query.section === 'account' ? '/account' : '/dancers', query: {} }) },
-    { path: '/dancers', component: DancersPage, meta: { title: 'My dancers' } },
+    { path: '/', redirect: route => ({ path: route.query.section === 'dancers' ? '/dancers' : '/account', query: {} }) },
+    { path: '/dancers', component: DancersPage, meta: { title: 'Dancers' } },
     { path: '/dancers/new', component: DancerPage, meta: { title: 'Add dancer' } },
     { path: '/dancers/:id', component: DancerPage, meta: { title: 'Edit dancer' } },
     { path: '/account', component: AccountPage, meta: { title: 'Account' } },

@@ -31,13 +31,6 @@
       "ignore": ["firebase.json", "**/.DS_Store", "**/node_modules/**"],
       "headers": [
         {
-          "source": "/account.html",
-          "headers": [
-            { "key": "Content-Security-Policy", "value": "frame-ancestors https://connect.scotdance.app; object-src 'none'; base-uri 'self'" },
-            { "key": "Cache-Control", "value": "no-store" }
-          ]
-        },
-        {
           "source": "**",
           "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
         },
@@ -78,13 +71,6 @@
       "public": "web/dist",
       "ignore": ["firebase.json", "**/.DS_Store", "**/node_modules/**"],
       "headers": [
-        {
-          "source": "/account.html",
-          "headers": [
-            { "key": "Content-Security-Policy", "value": "frame-ancestors https://connect.scotdance.app; object-src 'none'; base-uri 'self'" },
-            { "key": "Cache-Control", "value": "no-store" }
-          ]
-        },
         {
           "source": "**",
           "headers": [{ "key": "Cache-Control", "value": "no-cache" }]

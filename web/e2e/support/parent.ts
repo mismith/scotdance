@@ -127,18 +127,7 @@ export async function openAccountForm(page: Page) {
     'href', 'https://connect.scotdance.app/?section=account',
   )
   await expect(page.getByRole('button', { name: 'Delete account', exact: true })).toHaveCount(0)
-  await page.goto('/account.html')
-  // Inject the parent message only in the test browser. Production origin/window
-  // validation is unchanged and has separate protocol and live iframe coverage.
-  await page.evaluate(async () => {
-    const { auth } = await import(/* @vite-ignore */ '/src/firebase.ts')
-    await auth.authStateReady()
-    if (!auth.currentUser) throw new Error('Test account is not signed in')
-    window.dispatchEvent(new MessageEvent('message', {
-      origin: 'https://connect.scotdance.app', source: window.parent,
-      data: { channel: 'scotdance:account', type: 'init', uid: auth.currentUser.uid },
-    }))
-  })
+  await page.goto('/account-test.html')
   await expect(page.getByRole('textbox', { name: 'Your name', exact: true })).toBeVisible()
 }
 

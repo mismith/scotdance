@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import { Eye, EyeOff } from '@lucide/vue'
-import { useAuthStore } from '@/stores/auth'
-import { useMeStore } from '@/stores/me'
+import type { AccountSettings } from './settings'
 import { useMorph } from '@/lib/morph'
 import Dialog from '@/components/Dialog.vue'
 import Button from '@/components/ui/Button.vue'
-const auth = useAuthStore()
-const me = useMeStore()
+const props = defineProps<{ account: AccountSettings }>()
+const auth = props.account
 const emit = defineEmits<{ changed: []; deleted: [] }>()
 // Display name (debounced save)
 const displayName = ref('')
@@ -16,7 +15,7 @@ const displayNameError = ref<string | null>(null)
 let displayNameTimer: ReturnType<typeof setTimeout> | null = null
 
 watch(
-  () => me.displayName,
+  () => auth.displayName,
   (name) => {
     if (!displayName.value || displayName.value === '') {
       displayName.value = name ?? ''
@@ -33,7 +32,7 @@ function onDisplayNameInput() {
 async function saveDisplayName() {
   if (displayNameSaving.value) return
   const next = displayName.value.trim()
-  if (next === (me.displayName ?? '')) return
+  if (next === (auth.displayName ?? '')) return
   displayNameSaving.value = true
   displayNameError.value = null
   let saved = false
@@ -155,9 +154,6 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
         </label>
         <p v-if="displayNameSaving" class="text-muted-foreground text-sm">Saving…</p>
         <p v-if="displayNameError" class="text-destructive text-sm font-medium" role="alert">Your name didn’t save. Try again.</p>
-        <p class="text-muted-foreground text-sm">
-          Your picture comes from <a href="https://gravatar.com/" target="_blank" rel="noopener" class="text-primary font-semibold">Gravatar</a>.
-        </p>
       </section>
 
       <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
