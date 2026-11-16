@@ -8,9 +8,12 @@ const pending = new Set<'studio' | 'location'>()
 const saving = ref(false)
 const error = ref('')
 watch(() => store.defaults, value => { if (!saving.value && !pending.size) draft.value = JSON.parse(JSON.stringify(value)) }, { immediate: true })
-async function save(field: 'category' | 'studio' | 'location') {
+function save(field: 'category' | 'studio' | 'location') {
   if (field === 'category') return
   pending.add(field)
+  void flush()
+}
+async function flush() {
   if (saving.value) return
   saving.value = true
   error.value = ''
@@ -30,6 +33,6 @@ async function save(field: 'category' | 'studio' | 'location') {
     <div class="flex items-center justify-between gap-3"><h2 class="text-heading">Studio &amp; location</h2><span class="min-h-5 text-sm text-muted-foreground" role="status">{{ saving ? 'Saving…' : '' }}</span></div>
     <p class="text-callout text-muted-foreground">Starting details for new dancers. Each dancer keeps their own saved copy.</p>
     <DancerDetails v-model="draft" :fields="['studio', 'location']" @changed="save" />
-    <p v-if="error" role="alert" class="text-sm text-destructive">{{ error }} <button type="button" class="text-primary underline" @click="save('studio')">Try again</button></p>
+    <p v-if="error" role="alert" class="text-sm text-destructive">{{ error }} <button type="button" class="text-primary underline" @click="flush">Try again</button></p>
   </section>
 </template>
