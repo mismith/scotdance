@@ -45,6 +45,7 @@ const toolGets = computed(() => {
 })
 const unreadable = ref(false)
 const open = ref(false)
+const passError = ref<string | null>(null)
 
 function tell(message: ToTool) {
   if (toolOrigin.value) window.parent.postMessage({ channel: CHANNEL, ...message }, toolOrigin.value)
@@ -78,11 +79,17 @@ onBeforeUnmount(() => window.removeEventListener('message', onMessage))
 
 // Showing: the tool matches the iframe's colour scheme (or the browser paints
 // it opaque), shows it, and fades its own placeholder out.
-watch(open, async (isOpen) => {
-  if (!isOpen) return
-  await nextTick()
-  tell({ type: 'ready', scheme: document.documentElement.classList.contains('dark') ? 'dark' : 'light' })
-})
+// Connect restores a session silently; reveal the sheet only when interaction is needed.
+watch(
+  () => open.value && (audience.value !== 'connect' ||
+    (auth.authReady && (!auth.user || !!passError.value))),
+  async (show) => {
+    if (!show) return
+    await nextTick()
+    tell({ type: 'ready', scheme: document.documentElement.classList.contains('dark') ? 'dark' : 'light' })
+  },
+)
+
 
 // What's being sent, in a line: "57 dancers in 9 age groups, from Splits".
 const summary = computed(() => {
@@ -218,7 +225,6 @@ const addUrl = `${location.origin}/competitions/add`
 // reuses the existing login without a second confirmation.
 const passing = ref(false)
 const handingOff = ref(false)
-const passError = ref<string | null>(null)
 async function continueToTool() {
   if (!audience.value || !auth.user || passing.value) return
   passing.value = true

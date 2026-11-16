@@ -96,7 +96,15 @@
     let result = unfinished
     let timer
 
+    const silent = request.type === 'signIn' && request.audience === 'connect'
+    let revealed = !silent
     const host = document.createElement('scotdance-connect')
+    if (silent) host.style.visibility = 'hidden'
+    function reveal() {
+      revealed = true
+      host.style.visibility = ''
+      root.style.overflow = 'hidden'
+    }
     const shadow = host.attachShadow({ mode: 'open' })
     shadow.innerHTML = `<style>${STYLE}</style><div class="backdrop"></div>`
     const backdrop = shadow.querySelector('.backdrop')
@@ -118,6 +126,7 @@
 
     // ScotDance.app didn't open (offline, or blocked): say so, in its colours.
     function failed() {
+      reveal()
       const card = document.createElement('div')
       card.className = 'card'
       card.setAttribute('role', 'alertdialog')
@@ -137,6 +146,7 @@
       if (data.type === 'hello') {
         iframe.contentWindow.postMessage({ channel: CHANNEL, ...request }, ORIGIN)
       } else if (data.type === 'ready') {
+        reveal()
         clearTimeout(timer)
         // The same colour scheme as the page inside, or the browser paints it opaque.
         iframe.style.colorScheme = data.scheme === 'dark' ? 'dark' : 'light'
@@ -163,14 +173,14 @@
       document.removeEventListener('keydown', onKeydown, true)
       host.remove()
       root.style.overflow = overflow
-      if (opener && typeof opener.focus === 'function') opener.focus({ preventScroll: true })
+      if (revealed && opener && typeof opener.focus === 'function') opener.focus({ preventScroll: true })
       active = null
       resolve(result)
     }
 
     window.addEventListener('message', onMessage)
     document.addEventListener('keydown', onKeydown, true)
-    root.style.overflow = 'hidden'
+    if (!silent) root.style.overflow = 'hidden'
     document.body.appendChild(host)
     // Next frame, so the backdrop fades in rather than appearing.
     requestAnimationFrame(load)
