@@ -103,3 +103,34 @@ export async function resolveVenue(placeId: string): Promise<VenueFields> {
     locality: locality?.shortText ?? null,
   }
 }
+
+/** Towns only: dancer profiles do not need street addresses or coordinates. */
+export async function fetchTownSuggestions(input: string): Promise<PlaceSuggestion[]> {
+  if (!input.trim() || !placesAvailable) return []
+  const { AutocompleteSuggestion, AutocompleteSessionToken } = await getPlacesLib()
+  if (!sessionToken) sessionToken = new AutocompleteSessionToken()
+  const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
+    input: input.trim(), sessionToken,
+    includedPrimaryTypes: ['locality', 'postal_town', 'administrative_area_level_3'],
+  })
+  return suggestions.flatMap(({ placePrediction: p }) => p ? [{
+    placeId: p.placeId,
+    primaryText: p.mainText?.toString() ?? p.text?.toString() ?? '',
+    secondaryText: p.secondaryText?.toString() ?? '',
+  }] : [])
+}
+
+export async function resolveTown(placeId: string): Promise<{ town: string; province: string; country: string }> {
+  const { Place } = await getPlacesLib()
+  const place = new Place({ id: placeId })
+  await place.fetchFields({ fields: ['addressComponents'] })
+  sessionToken = null
+  const find = (type: string) => place.addressComponents?.find(c => c.types.includes(type))
+  const country = find('country')
+  const region = find('administrative_area_level_1')
+  return {
+    town: (find('locality') ?? find('postal_town') ?? find('administrative_area_level_3'))?.longText ?? '',
+    province: (['CA', 'US'].includes(country?.shortText ?? '') ? region?.shortText : region?.longText) ?? '',
+    country: country?.longText ?? '',
+  }
+}

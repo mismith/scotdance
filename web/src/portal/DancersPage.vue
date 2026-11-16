@@ -9,6 +9,7 @@ const store = useConnectAccount()
 <template>
   <section>
     <h1 class="sr-only">Dancers</h1>
+    <p class="mb-6 max-w-xl text-base text-muted-foreground">Keep a private profile for yourself or each dancer you manage. These are the same profiles you use in Entries: changes in either app appear in both. Details needed for a competition are shared when you enter.</p>
     <div v-if="store.dancers.length" class="mb-6 flex justify-end">
       <Button to="/dancers/new" variant="primary"><Plus aria-hidden="true" /> Add dancer</Button>
     </div>

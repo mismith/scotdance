@@ -41,6 +41,8 @@
       competition and payment records follow the relevant app’s retention rules.
       For privacy questions, use Support below.
     </p>
+    <h2>City suggestions</h2>
+    <p>City search sends the city text you type to Google Maps to suggest places. It does not send dancer names or birthdays. You can enter a city manually instead.</p>
     <h2>Support</h2>
     <p>
       Opening Support loads Crisp live chat. Crisp receives the message you send

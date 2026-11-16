@@ -86,3 +86,11 @@ describe('resolveVenue', () => {
     expect(await resolveVenue('glasgow')).toMatchObject({ venue: 'Kelvin Hall', address: 'Argyle St', location: 'Glasgow, Scotland', locality: 'Glasgow', country: 'GB' })
   })
 })
+
+describe('resolveTown', () => {
+  it('stores town and country names with abbreviated Canadian regions', async () => {
+    const { resolveTown } = await import('@/lib/maps')
+    expect(await resolveTown('hall')).toEqual({ town: 'Calgary', province: 'AB', country: 'Canada' })
+    expect(await resolveTown('glasgow')).toEqual({ town: 'Glasgow', province: 'Scotland', country: 'United Kingdom' })
+  })
+})

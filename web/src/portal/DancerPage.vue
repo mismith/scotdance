@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { ChevronLeft } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
+import DancerDetails from './DancerDetails.vue'
 import { useConnectAccount, type Dancer } from './account'
 const store = useConnectAccount()
 const route = useRoute()
@@ -15,8 +16,10 @@ const draft = ref<Dancer>(existing ? JSON.parse(JSON.stringify(existing)) : {
 draft.value.location ??= { town: '', province: '', country: '' }
 const title = computed(() => existing ? 'Edit dancer' : 'Add dancer')
 const deleting = ref(false)
+const details = ref<InstanceType<typeof DancerDetails>>()
 const field = 'field mt-1.5 h-12 w-full rounded-xl px-3 text-base'
 async function save(remove = false) {
+  if (!remove) details.value?.commitPending()
   if (await store.save(draft.value, remove)) await router.push('/dancers')
 }
 </script>
@@ -26,18 +29,13 @@ async function save(remove = false) {
     <h1 class="mb-6 text-hero">{{ missing ? 'Dancer not found' : title }}</h1>
     <p v-if="missing" class="text-muted-foreground">This dancer may have been deleted.</p>
     <form v-else class="space-y-6" @submit.prevent="save()">
+      <p class="text-muted-foreground">Only their name is required for now. Changes also update this dancer in Entries.</p>
       <fieldset :disabled="store.busy" class="grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2">
         <label class="text-callout font-medium">First name<input v-model="draft.firstName" :class="field" required maxlength="120" autocomplete="off" /></label>
         <label class="text-callout font-medium">Last name<input v-model="draft.lastName" :class="field" required maxlength="120" autocomplete="off" /></label>
-        <label class="text-callout font-medium">Birthday<input v-model="draft.birthday" :class="field" type="date" min="1900-01-01" :max="new Date().toISOString().slice(0, 10)" /></label>
-        <label class="text-callout font-medium">Category<select v-model="draft.category" :class="field"><option value="">Not set</option><option v-for="c in ['Primary', 'Beginner', 'Novice', 'Intermediate', 'Premier']" :key="c">{{ c }}</option></select></label>
-        <label class="text-callout font-medium">Studio<input v-model="draft.studio" :class="field" maxlength="120" /></label>
-        <label class="text-callout font-medium">Registration number<input v-model="draft.registrationNumber" :class="field" maxlength="120" /></label>
-        <template v-if="draft.location">
-          <label class="text-callout font-medium">City<input v-model="draft.location.town" :class="field" maxlength="120" /></label>
-          <label class="text-callout font-medium">Province or region<input v-model="draft.location.province" :class="field" maxlength="120" /></label>
-          <label class="text-callout font-medium">Country<input v-model="draft.location.country" :class="field" maxlength="120" /></label>
-        </template>
+        <label class="text-callout font-medium">Birthday <span class="text-muted-foreground">(optional)</span><input v-model="draft.birthday" :class="field" type="date" min="1900-01-01" :max="new Date().toISOString().slice(0, 10)" /></label>
+        <label class="text-callout font-medium">Registration number <span class="text-muted-foreground">(optional)</span><input v-model="draft.registrationNumber" :class="field" maxlength="120" /></label>
+        <DancerDetails ref="details" v-model="draft" class="sm:col-span-2" />
       </fieldset>
       <div v-if="!deleting" class="flex flex-wrap items-center gap-2">
         <Button type="submit" variant="primary" :busy="store.busy">Save dancer</Button>

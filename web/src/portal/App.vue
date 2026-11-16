@@ -39,7 +39,7 @@ onMounted(() => { void store.initialize(!route.meta.public) })
       </div>
       <section v-else-if="!loading" class="space-y-5 py-12">
         <h1 class="text-hero">Your ScotDance account</h1>
-        <p class="max-w-md text-base text-muted-foreground">Manage your account and your dancers.</p>
+        <p class="max-w-md text-base text-muted-foreground">One ScotDance account for you and your dancers. Keep your details up to date here and reuse them in Entries, without filling them in again.</p>
         <Button variant="primary" :busy="store.busy" @click="store.login()">Sign in with ScotDance</Button>
       </section>
       <p v-if="store.error" role="alert" class="mt-5 text-destructive">{{ store.error }}</p>

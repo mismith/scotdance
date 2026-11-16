@@ -7,6 +7,7 @@ import tailwindcss from '@tailwindcss/vite'
 // No production API proxy: local previews must use fictional fixtures.
 export default defineConfig({
   root: fileURLToPath(new URL('./portal', import.meta.url)),
+  envDir: fileURLToPath(new URL('.', import.meta.url)),
   publicDir: false,
   plugins: [vue(), tailwindcss(), {
     name: 'watch-shared-ui',
