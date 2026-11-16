@@ -8,14 +8,19 @@ import Button from '@/components/ui/Button.vue'
 import Avatar from '@/components/Avatar.vue'
 const props = defineProps<{ account: AccountSettings }>()
 const auth = props.account
+function formatDate(value?: string) {
+  if (!value) return null
+  const date = new Date(value)
+  return Number.isFinite(date.getTime()) ? { iso: date.toISOString(), text: date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }), full: date.toLocaleString() } : null
+}
 const accountDates = computed(() => [
-  { label: 'Created', value: auth.user?.metadata?.creationTime },
+  { label: 'Active since', value: auth.user?.metadata?.creationTime },
   { label: 'Last sign-in', value: auth.user?.metadata?.lastSignInTime },
 ].flatMap(({ label, value }) => {
-  if (!value) return []
-  const date = new Date(value)
-  return Number.isFinite(date.getTime()) ? [{ label, iso: date.toISOString(), text: date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }), full: date.toLocaleString() }] : []
+  const date = formatDate(value)
+  return date ? [{ label, ...date }] : []
 }))
+const passwordDate = computed(() => formatDate(auth.user?.metadata?.passwordUpdatedTime))
 const emit = defineEmits<{ changed: []; deleted: [] }>()
 // Display name (debounced save)
 const displayName = ref('')
@@ -179,7 +184,10 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
         </li>
         <li>
           <div class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left">
-            <span class="flex-1 text-base font-medium">Password</span>
+            <span class="min-w-0 flex-1">
+              <span class="block text-base font-medium">Password</span>
+              <span v-if="passwordDate" class="block text-sm text-muted-foreground">Last changed <time :datetime="passwordDate.iso" :title="passwordDate.full">{{ passwordDate.text }}</time></span>
+            </span>
             <button type="button" aria-label="Change password" class="text-primary text-callout press-row focus-inset min-h-11 rounded-full px-3 font-semibold" @click="openModal('password')">Change</button>
           </div>
         </li>

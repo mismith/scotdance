@@ -1,6 +1,6 @@
 /** The shared account form is independent of where the account session lives. */
 export interface AccountSettings {
-  user: { email: string | null; metadata?: { creationTime?: string; lastSignInTime?: string } } | null
+  user: { email: string | null; metadata?: { creationTime?: string; lastSignInTime?: string; passwordUpdatedTime?: string } } | null
   displayName: string | null
   photoURL: string | null
   hasPassword: boolean

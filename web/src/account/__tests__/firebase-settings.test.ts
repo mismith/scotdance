@@ -40,9 +40,9 @@ function setup(overrides: Record<string, object> = {}) {
 }
 describe('direct account settings', () => {
   it('reads Firebase account dates and retains them when an update response omits metadata', async () => {
-    const c = setup({ lookup: { users: [{ ...user, createdAt: '1484124142000', lastLoginAt: '1484628946000' }] } })
+    const c = setup({ lookup: { users: [{ ...user, createdAt: '1484124142000', lastLoginAt: '1484628946000', passwordUpdatedAt: 1484124177000 }] } })
     await c.load()
-    const dates = { creationTime: new Date(1484124142000).toISOString(), lastSignInTime: new Date(1484628946000).toISOString() }
+    const dates = { creationTime: new Date(1484124142000).toISOString(), lastSignInTime: new Date(1484628946000).toISOString(), passwordUpdatedTime: new Date(1484124177000).toISOString() }
     expect(c.settings.user?.metadata).toEqual(dates)
     await c.settings.updateDisplayName('New name')
     expect(c.settings.user?.metadata).toEqual(dates)

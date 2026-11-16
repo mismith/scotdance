@@ -9,6 +9,7 @@ interface Identity {
   localId: string
   email?: string
   displayName?: string
+  passwordUpdatedAt?: number
   createdAt?: string
   lastLoginAt?: string
   photoUrl?: string
@@ -105,7 +106,7 @@ export function createFirebaseSettings(options: SettingsOptions) {
   function apply(user: Identity) {
     assertOwner(user)
     const metadata = { ...profile.user?.metadata }
-    for (const [source, target] of [['createdAt', 'creationTime'], ['lastLoginAt', 'lastSignInTime']] as const) {
+    for (const [source, target] of [['createdAt', 'creationTime'], ['lastLoginAt', 'lastSignInTime'], ['passwordUpdatedAt', 'passwordUpdatedTime']] as const) {
       if (user[source] !== undefined) {
         const value = Number(user[source])
         const date = new Date(value)
@@ -192,6 +193,13 @@ export function createFirebaseSettings(options: SettingsOptions) {
     async updateUserPassword(password, currentPassword) {
       await reauthenticate(currentPassword)
       await update({ password }, true)
+      // Update responses omit this timestamp. Read Firebase's value rather than
+      // inventing a local change time; an optional refresh must not fail the save.
+      if (profile.user?.metadata) profile.user.metadata.passwordUpdatedTime = undefined
+      try {
+        const result = await auth<{ users: Identity[] }>('lookup', { idToken: token })
+        if (result.users?.[0]) apply(result.users[0])
+      } catch { /* The password was saved; leave its date hidden until next load. */ }
     },
     async resetPassword(email) {
       if (email !== profile.user?.email) throw fail('user-mismatch')
