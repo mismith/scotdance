@@ -26,8 +26,8 @@ function outside(e: PointerEvent) {
   if (props.open && !anchor.value?.contains(e.target as Node) && !panel.value?.contains(e.target as Node)) close()
 }
 function escape(e: KeyboardEvent) { if (props.open && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close() } }
-onMounted(() => { document.addEventListener('pointerdown', outside); window.addEventListener('resize', place); document.addEventListener('scroll', place, true) })
-onBeforeUnmount(() => { observer?.disconnect(); document.removeEventListener('pointerdown', outside); window.removeEventListener('resize', place); document.removeEventListener('scroll', place, true) })
+onMounted(() => { document.addEventListener('pointerdown', outside); document.addEventListener('keydown', escape, true); window.addEventListener('resize', place); document.addEventListener('scroll', place, true) })
+onBeforeUnmount(() => { observer?.disconnect(); document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape, true); window.removeEventListener('resize', place); document.removeEventListener('scroll', place, true) })
 </script>
 <template>
   <div ref="anchor" @click="emit('update:open', !open)"><slot name="anchor" /></div>

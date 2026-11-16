@@ -1,0 +1,8 @@
+/* Suppress the full-site paper canvas. The shared dialog still uses Connect's paper. */
+html[data-dancer-editor]::before {
+  display: none;
+}
+html[data-dancer-editor],
+html[data-dancer-editor] body {
+  background: transparent;
+}

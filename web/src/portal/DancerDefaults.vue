@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// Keep aligned with DancerDefaults.vue in the other app (see AGENTS.md).
 import { computed, nextTick, reactive, ref, useId } from 'vue'
 import { Pencil } from '@lucide/vue'
 import CityField from './CityField.vue'

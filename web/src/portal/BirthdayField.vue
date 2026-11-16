@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// Parity: also inspect mismith/scotdance-entries/src/ui/BirthdayField.vue when changing behavior. See ./AGENTS.md.
 import { computed, nextTick, ref, useId, watch } from 'vue'
 import { daysInMonth } from './profileFields'
 import Popover from './Popover.vue'
@@ -12,7 +11,6 @@ import Popover from './Popover.vue'
 const props = defineProps<{ modelValue: string; label: string; id?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
-// Keep birthday typing behavior aligned with the other app's BirthdayField.vue.
 function formatBirthday(raw: string, finish = false) {
   const separated = /^(\d{4})\D+(\d{1,2})\D+(\d{1,2})$/.exec(raw.trim())
   if (separated && (finish || separated[3]!.length === 2)) return `${separated[1]}-${separated[2]!.padStart(2, '0')}-${separated[3]!.padStart(2, '0')}`

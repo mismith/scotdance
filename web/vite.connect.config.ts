@@ -8,12 +8,37 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   root: fileURLToPath(new URL('./portal', import.meta.url)),
   envDir: fileURLToPath(new URL('.', import.meta.url)),
-  publicDir: false,
-  plugins: [vue(), tailwindcss(), {
-    name: 'watch-shared-ui',
-    configureServer(server) { server.watcher.add(fileURLToPath(new URL('./src', import.meta.url))) },
-  }],
-  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
-  build: { outDir: '../dist-connect', emptyOutDir: true },
-  server: { host: '127.0.0.1', port: 5290, strictPort: true },
+  publicDir: fileURLToPath(new URL('./portal/public', import.meta.url)),
+  plugins: [
+    vue(),
+    tailwindcss(),
+    {
+      name: 'watch-shared-ui',
+      configureServer(server) {
+        server.watcher.add(fileURLToPath(new URL('./src', import.meta.url)))
+      },
+    },
+  ],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@shared': fileURLToPath(new URL('../shared', import.meta.url)),
+    },
+  },
+  build: {
+    outDir: '../dist-connect',
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./portal/index.html', import.meta.url)),
+        editor: fileURLToPath(new URL('./portal/dancer-editor.html', import.meta.url)),
+      },
+    },
+  },
+  server: {
+    host: '127.0.0.1',
+    port: 5290,
+    strictPort: true,
+    watch: { usePolling: process.env.CONNECT_POLLING === 'true' },
+  },
 })

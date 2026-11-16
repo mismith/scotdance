@@ -1,21 +1,14 @@
-# Keep Connect and Entries dancer forms aligned
+# One owner-profile dancer editor
 
-These are intentionally separate Vue implementations for now. Do not introduce a shared package or publishing workflow just to keep them aligned.
+`DancerEditor.vue` is the single owner-profile form. `DancerPage.vue` adapts the native Connect account store; `editor/EditorApp.vue` hosts the same component for Entries and Binder's parent signup/portal. Preserve the existing Connect design, birthday typing/picker, registration/category toggle, defaults pencil/Use default, city autocomplete and compact public-profile link.
 
-Before changing dancer fields, validation, autofill, default inheritance, loading/saving or editing UX, inspect the corresponding Entries implementation in `mismith/scotdance-entries` (use its active checkout/worktree, not an assumed local path):
+- Do not copy the form into sibling apps or introduce a shared-package release workflow. `portal/public/dancer-editor.js` is the versioned message client; apps retain small typed persistence adapters only.
+- All three uses edit the signed-in owner's private Connect profiles. Binder staff edit studio snapshots using Binder's own UI. Signup submits a whitelisted copy only when the parent sends it. No matching public link, family ID or teacher role authorizes private access.
+- The hosted UI has no auth session and never receives identity tokens. Authenticate in the host app using the existing central sign-in; server handlers derive the owner. Check exact message origin, source and instance. Only the selected profile, defaults and a sibling-presence flag enter the editor. Only a completed save/delete result returns.
+- Capture defaults revisions when opening; preserve unsaved drafts and stable retry IDs. Existing dancers and submitted entries/studio snapshots are never rewritten when defaults change.
+- Native Connect uses its own API adapter; hosted clients use Entries' owner callables or Binder's owner callable. Public link `null` means explicitly unlinked and must round-trip without automatic relinking.
+- `DancerDetails.vue` is legacy UI, not the owner editor. Entries' local birthday/details controls still serve competition-specific participant records; they are not the shared owner-profile form.
+- The iframe fills the viewport; the existing Connect dialog owns the card/sheet, scroll area and child pickers. The loader owns background inertness, loading, cancellation and return focus. Never nest a small iframe inside another card.
+- Local previews use fictional data, sample city results and sample public matches. Never proxy production private APIs into development.
 
-| Connect (`mismith/scotdance`, this directory) | Entries (`mismith/scotdance-entries`) |
-| --- | --- |
-| `DancerPage.vue` | `src/views/DancerEditor.vue` |
-| `DancerDefaults.vue` | `src/ui/DancerDefaults.vue` |
-| `DancerDetails.vue` | `src/ui/DancerDetails.vue` |
-| `BirthdayField.vue` | `src/ui/BirthdayField.vue` |
-| `CityField.vue` | `src/ui/PlaceField.vue` |
-| `AccountDefaults.vue`, `account.ts` | `src/views/AccountEditor.vue`, `src/data/account.ts`, `src/data/dancers.ts` |
-
-- Apply relevant behavioral fixes to both and check both forms. Styling, navigation and authentication wrappers can remain app-specific. Do not blindly copy framework-specific classes or imports.
-- Saved profiles permit incomplete optional details; competition entry requirements remain Entries-specific.
-- New dancers copy shared studio/city defaults. Existing dancers keep their own values. First/only-dancer changes can update defaults; with multiple dancers, ask before changing defaults. Never rewrite submitted entry snapshots.
-- Preserve browser autofill hints, studio capitalization, revision checks, refresh-on-return and unsaved drafts.
-- Public results-profile linking currently lives in Connect; do not accidentally erase its link when saving through Entries or add new UI parity without scope.
-- If the counterpart is unavailable or deliberately differs, report the gap instead of claiming parity. These comments are a reminder, not automated enforcement.
+See `docs/connect-editor.md` at the repository root for contract, local checks and release order. Account editing remains native and out of this widget's scope.

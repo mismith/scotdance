@@ -4,7 +4,7 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { Users, UserRound, LogOut, LockKeyhole } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import ScotDanceSignInButton from '@/components/ScotDanceSignInButton.vue'
-import LogoMark from '@/components/LogoMark.vue'
+import ConnectBrand from './ConnectBrand.vue'
 import { useConnectAccount } from './account'
 import { openSupport } from './support'
 import PageSkeleton from './PageSkeleton.vue'
@@ -34,8 +34,7 @@ onBeforeUnmount(() => {
   <div class="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-(--safe-top) sm:px-6">
     <header class="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 md:grid-cols-[auto_minmax(0,1fr)_auto]">
       <RouterLink to="/account" class="focus-inset -ml-2 my-2.5 flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-2" aria-label="ScotDance Connect">
-        <LogoMark class="size-7 shrink-0 text-primary" />
-        <span class="truncate text-heading font-bold tracking-tight">ScotDance <span class="font-extrabold text-primary">Connect</span></span>
+        <ConnectBrand />
       </RouterLink>
       <Button v-if="store.account" v-show="!loading" variant="plain" size="sm" class="col-start-2 row-start-1 justify-self-end md:col-start-3" :disabled="store.busy" @click="store.logout()">
         <LogOut aria-hidden="true" /> Sign out

@@ -13,4 +13,4 @@
 
 From the repository root, `npm run deploy:connect` publishes only `firebase.connect.json` to the existing `scotdance-connect` Hosting site. Its `/api/**` rewrite remains on that project's private-data API. API and Firestore rules stay in `mismith/scotdance-connect`. Never deploy Connect over the competition app, proxy private production APIs into local development, or expose real family data as fixtures.
 
-Connect renders `src/account/AccountForm.vue` directly, using the user-scoped Firebase REST adapter. Only sign-in uses the existing identity-origin embed; do not reintroduce an account iframe. `/account-test.html` is emulator-only and must stay out of production build inputs.
+Connect renders `src/account/AccountForm.vue` directly, using the user-scoped Firebase REST adapter. Sign-in uses the existing identity-origin embed; do not reintroduce an account iframe. The dancer-only hosted editor shares the native Connect component, as documented in src/portal/AGENTS.md. `/account-test.html` is emulator-only and must stay out of production build inputs.

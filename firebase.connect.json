@@ -26,6 +26,28 @@
             "value": "frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
           }
         ]
+      },
+      {
+        "source": "/dancer-editor.html",
+        "headers": [
+          {
+            "key": "Content-Security-Policy",
+            "value": "frame-ancestors https://entries.scotdance.app https://dev.entries.scotdance.app https://binder.scotdance.app https://*.scotdance.site; object-src 'none'; base-uri 'self'"
+          }
+        ]
+      },
+      {
+        "source": "/dancer-editor.js",
+        "headers": [
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
       }
     ],
     "rewrites": [

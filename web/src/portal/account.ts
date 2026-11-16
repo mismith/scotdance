@@ -132,11 +132,11 @@ export const useConnectAccount = defineStore('connect-account', () => {
     identityUntil = Date.now() + 50 * 60 * 1000
     await load()
   }
-  async function save(dancer: Dancer, remove = false, chosenDefaults: { studio?: boolean; location?: boolean } = {}) {
+  async function save(dancer: Dancer, remove = false, chosenDefaults: { studio?: boolean; location?: boolean } = {}, requestId: string = crypto.randomUUID(), expectedDefaultsRevision = defaultsRevision.value) {
     return run(async () => {
       const { id, revision, firstName, lastName, birthday, category, studio, registrationNumber, location, publicDancer } = dancer
       const details = { firstName, lastName, birthday, category, studio, registrationNumber, ...(location ? { location } : {}), ...(publicDancer !== undefined ? { publicDancer } : {}) }
-      await api(remove ? 'delete' : 'save', { id, revision, requestId: crypto.randomUUID(), dancer: details, defaults: chosenDefaults, defaultsRevision: defaultsRevision.value })
+      await api(remove ? 'delete' : 'save', { id, revision, requestId, dancer: details, defaults: chosenDefaults, defaultsRevision: expectedDefaultsRevision })
       await load()
     })
   }

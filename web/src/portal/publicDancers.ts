@@ -2,6 +2,7 @@
 import { normalizeName } from '../../../shared/normalize'
 export interface PublicDancer { id: string; name: string }
 export async function findPublicDancers(name: string, signal?: AbortSignal): Promise<PublicDancer[]> {
+  if (import.meta.env.DEV) return normalizeName(name) === 'isla fraser' ? [{ id: 'fictional-public-isla', name: 'Isla Fraser' }] : []
   const response = await fetch('https://us-central1-firebase-scotdance.cloudfunctions.net/searchAll', {
     method: 'POST', credentials: 'omit', signal,
     headers: { 'Content-Type': 'application/json' },

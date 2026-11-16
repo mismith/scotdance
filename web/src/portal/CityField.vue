@@ -1,8 +1,7 @@
 <script setup lang="ts">
-// Parity: also inspect mismith/scotdance-entries/src/ui/PlaceField.vue when changing behavior. See ./AGENTS.md.
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { Search, LoaderCircle, X, ChevronDown } from '@lucide/vue'
-import { fetchTownSuggestions, resolveTown, placesAvailable, type PlaceSuggestion } from '@/lib/maps'
+import { fetchTownSuggestions, resolveTown, placesAvailable, type PlaceSuggestion } from './citySearch'
 import { countryNames, needsRegion, placeLabel, PROVINCES, STATES } from './places'
 import { tidy } from './profileFields'
 import SaveIndicator from '@/account/SaveIndicator.vue'
