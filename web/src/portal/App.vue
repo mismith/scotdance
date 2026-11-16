@@ -18,7 +18,7 @@ onMounted(() => { void store.initialize(!route.meta.public) })
         <LogoMark class="size-7 shrink-0 text-primary" />
         <span class="truncate text-heading font-bold tracking-tight">ScotDance <span class="font-extrabold text-primary">Connect</span></span>
       </RouterLink>
-      <Button v-if="store.account" variant="plain" size="sm" :busy="store.busy" @click="store.logout()">
+      <Button v-if="store.account" variant="plain" size="sm" :disabled="store.busy" @click="store.logout()">
         <LogOut aria-hidden="true" /> Sign out
       </Button>
     </header>

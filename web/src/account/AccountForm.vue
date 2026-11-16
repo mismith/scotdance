@@ -146,7 +146,7 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
         <div class="flex items-end gap-4">
           <Avatar :name="displayName || auth.user?.email || '?'" :email="auth.user?.email" :image="auth.photoURL" size="lg" you />
         <label class="block min-w-0 flex-1 space-y-1.5">
-          <span class="text-callout font-medium">Your name</span>
+          <span class="flex items-center justify-between gap-2 text-callout font-medium">Your name<span v-if="displayNameSaving" role="status" class="text-sm font-normal text-muted-foreground">Saving…</span></span>
           <input
             v-model="displayName"
             type="text"
@@ -158,25 +158,24 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
         </label>
         </div>
         <p class="text-sm text-muted-foreground">Your picture comes from <a href="https://gravatar.com/" target="_blank" rel="noopener" class="font-semibold text-primary">Gravatar</a>.</p>
-        <p v-if="displayNameSaving" class="text-muted-foreground text-sm">Saving…</p>
         <p v-if="displayNameError" class="text-destructive text-sm font-medium" role="alert">Your name didn’t save. Try again.</p>
       </header>
 
       <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
         <li>
-          <button type="button" class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left" @click="openModal('email')">
+          <div class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left">
             <span class="min-w-0 flex-1">
               <span class="block text-base font-medium">Email</span>
               <span class="text-muted-foreground block truncate text-sm">{{ auth.user?.email ?? '—' }}</span>
             </span>
-            <span class="text-primary text-callout font-semibold">Change</span>
-          </button>
+            <button type="button" aria-label="Change email" class="text-primary text-callout press-row focus-inset min-h-11 rounded-full px-3 font-semibold" @click="openModal('email')">Change</button>
+          </div>
         </li>
         <li v-if="auth.hasPassword">
-          <button type="button" class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left" @click="openModal('password')">
+          <div class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left">
             <span class="flex-1 text-base font-medium">Password</span>
-            <span class="text-primary text-callout font-semibold">Change</span>
-          </button>
+            <button type="button" aria-label="Change password" class="text-primary text-callout press-row focus-inset min-h-11 rounded-full px-3 font-semibold" @click="openModal('password')">Change</button>
+          </div>
         </li>
       </ul>
       <button type="button" class="text-destructive press-row h-12 w-full rounded-full text-callout font-semibold" @click="openModal('delete')">Delete account</button>

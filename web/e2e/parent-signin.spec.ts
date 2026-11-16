@@ -32,7 +32,8 @@ test('opens on email and password, explains a wrong password kindly, and closes 
   await submitPassword(page, email)
   await expect(sheet(page)).toHaveCount(0)
   await openAccountForm(page)
-  await expect(page.getByRole('button', { name: `Email ${email} Change`, exact: true })).toBeVisible()
+  await expect(page.getByText(email, { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Change email', exact: true })).toBeVisible()
 })
 
 test('creates an account, with clear errors for a taken email and a short password', async ({ page }) => {
@@ -83,7 +84,8 @@ test('in the native app, signs in the same way', async ({ page }) => {
   await submitPassword(page, email)
   await expect(sheet(page)).toHaveCount(0)
   await openAccountForm(page)
-  await expect(page.getByRole('button', { name: `Email ${email} Change`, exact: true })).toBeVisible()
+  await expect(page.getByText(email, { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Change email', exact: true })).toBeVisible()
 })
 
 test('a beta account without a password is offered a link to set one', async ({ page }) => {
@@ -103,7 +105,7 @@ test('a beta account without a password is offered a link to set one', async ({ 
     { authDeps, email },
   )
   await openAccountForm(page)
-  await expect(page.getByRole('button', { name: 'Password Change' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Change password' })).toHaveCount(0)
   await page.getByRole('button', { name: 'Delete account' }).click()
   const s = sheet(page)
   await expect(s.getByText('your account needs a password', { exact: false })).toBeVisible()
