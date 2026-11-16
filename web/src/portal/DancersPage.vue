@@ -11,7 +11,7 @@ const store = useConnectAccount()
     <h1 class="sr-only">Dancers</h1>
     <aside class="mb-6 flex gap-3 rounded-2xl bg-blue-paper p-4 text-callout text-muted-foreground">
       <Info class="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
-      <p>Your private dancer profiles help prefill forms across the ScotDance.app family of <a href="https://toolkit.scotdance.app" class="text-primary underline underline-offset-4">tools</a>. You choose what to save.</p>
+      <p>Your private dancer profiles help prefill forms across the ScotDance.app family of <a href="https://toolkit.scotdance.app" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-4">tools</a>. You choose what to save.</p>
     </aside>
     <div v-if="store.dancers.length" class="mb-6 flex justify-end">
       <Button to="/dancers/new" variant="primary"><Plus aria-hidden="true" /> Add dancer</Button>

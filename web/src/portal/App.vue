@@ -4,13 +4,17 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { Users, UserRound, LogOut, LockKeyhole } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import ScotDanceSignInButton from '@/components/ScotDanceSignInButton.vue'
-import SidebarLink from '@/components/nav/SidebarLink.vue'
 import LogoMark from '@/components/LogoMark.vue'
 import { useConnectAccount } from './account'
 import { openSupport } from './support'
 import PageSkeleton from './PageSkeleton.vue'
 const route = useRoute()
 const store = useConnectAccount()
+const sections = [
+  { to: '/account', label: 'Account', icon: UserRound },
+  { to: '/dancers', label: 'Dancers', icon: Users },
+]
+const isCurrent = (path: string) => route.path === path || route.path.startsWith(`${path}/`)
 const loading = computed(() => !route.meta.public && (!store.ready || (route.path === '/account' && !!store.account && !store.pageReady)))
 onMounted(() => { void store.initialize(!route.meta.public) })
 </script>
@@ -25,9 +29,16 @@ onMounted(() => { void store.initialize(!route.meta.public) })
         <LogOut aria-hidden="true" /> Sign out
       </Button>
     </header>
-    <nav v-if="store.account || loading" :inert="loading" :aria-hidden="loading || undefined" :class="{ 'invisible': loading }" aria-label="Your account" class="-mx-1 flex gap-1 pb-5">
-      <SidebarLink to="/account" :icon="UserRound" label="Account" :state="route.path === '/account' ? 'current' : null" />
-      <SidebarLink to="/dancers" :icon="Users" label="Dancers" :state="route.path.startsWith('/dancers') ? 'current' : null" />
+    <nav v-if="store.account || loading" :inert="loading" :aria-hidden="loading || undefined" :class="{ 'invisible': loading }" aria-label="Your account" class="pb-5">
+      <div class="grid w-full max-w-sm grid-cols-2 gap-1 rounded-2xl border border-border bg-background p-1">
+        <RouterLink v-for="section in sections" :key="section.to" :to="section.to"
+          :aria-current="isCurrent(section.to) ? 'page' : undefined"
+          class="press-row focus-inset flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-callout font-semibold"
+          :class="isCurrent(section.to) ? 'bg-primary/20 text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'">
+          <component :is="section.icon" class="size-5 shrink-0" aria-hidden="true" />
+          {{ section.label }}
+        </RouterLink>
+      </div>
     </nav>
     <main id="main" class="flex-1 pb-8 pt-4">
       <PageSkeleton v-if="loading" :account="route.path === '/account'" />
@@ -41,7 +52,7 @@ onMounted(() => { void store.initialize(!route.meta.public) })
       <section v-else-if="!loading" class="space-y-6 py-10 sm:py-14">
         <LockKeyhole class="mb-8 size-20 text-primary" :stroke-width="1.3" aria-hidden="true" />
         <h1 class="text-[clamp(2.5rem,6vw,3.5rem)] font-extrabold leading-[1.06] tracking-tight">One account.<br /><span class="text-primary">Less filling in.</span></h1>
-        <p class="max-w-md text-base text-muted-foreground">Your account details, in one private place. Save what you need and reuse it across the ScotDance.app family of <a href="https://toolkit.scotdance.app" class="text-primary underline underline-offset-4">tools</a>.</p>
+        <p class="max-w-md text-base text-muted-foreground">Your account details, in one private place. Save what you need and reuse it across the ScotDance.app family of <a href="https://toolkit.scotdance.app" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-4">tools</a>.</p>
         <ScotDanceSignInButton :busy="store.busy" @click="store.login()" />
       </section>
       <p v-if="store.error" role="alert" class="mt-5 text-destructive">{{ store.error }}</p>
