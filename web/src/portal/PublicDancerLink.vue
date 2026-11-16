@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { Link, Search, ExternalLink, X, LoaderCircle } from '@lucide/vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { Pencil, Search, ExternalLink, X, LoaderCircle } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import { normalizeName } from '../../../shared/normalize'
 import { findPublicDancers, type PublicDancer } from './publicDancers'
@@ -8,6 +8,7 @@ const props = defineProps<{ firstName: string; lastName: string }>()
 // undefined = not matched yet; null = deliberately unlinked (persisted on Save dancer).
 const model = defineModel<PublicDancer | null>()
 const query = ref('')
+const searchInput = ref<HTMLInputElement>()
 const manual = ref(false)
 const matches = ref<PublicDancer[]>([])
 const searching = ref(false)
@@ -44,8 +45,9 @@ watch([name, model, manual], () => {
   }
   timer = setTimeout(startSearch, 400)
 }, { immediate: true })
-function unlink() { autoName = ''; manual.value = false; model.value = null }
-function search() { query.value = fullName.value; manual.value = true }
+function clearProfile() { autoName = ''; model.value = null; query.value = ''; searchInput.value?.focus() }
+function editQuery() { if (!query.value.trim()) { autoName = ''; model.value = null } }
+async function search() { query.value = model.value?.name || fullName.value; manual.value = true; await nextTick(); searchInput.value?.focus(); searchInput.value?.select() }
 function choose(match: PublicDancer) { autoName = ''; model.value = match; manual.value = false }
 async function finishMatching() {
   if (model.value !== undefined || manual.value) return
@@ -60,23 +62,25 @@ onBeforeUnmount(cancel)
 </script>
 <template>
   <div class="min-w-0">
-    <div class="flex min-h-11 flex-wrap items-center gap-x-2 text-callout">
+    <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+      <span class="text-callout font-medium">ScotDance.app dancer profile</span>
+    </div>
+    <div v-if="!manual" class="field mt-1.5 flex h-12 min-w-0 items-center gap-2 rounded-xl px-3 text-base">
       <template v-if="model">
-        <Link class="size-4 shrink-0 text-primary" aria-hidden="true" />
-        <a :href="`https://next.scotdance.app/dancers/${encodeURIComponent(model.id)}`" target="_blank" rel="noopener" class="inline-flex min-w-0 max-w-full items-center gap-1 text-primary" :title="model.name"><span class="truncate">{{ model.name }}</span><ExternalLink class="size-3 shrink-0" aria-hidden="true" /></a>
-        <Button variant="plain" size="sm" @click="search">Change</Button>
-        <Button variant="plain" size="sm" @click="unlink">Unlink</Button>
+        <a :href="`https://next.scotdance.app/dancers/${encodeURIComponent(model.id)}`" target="_blank" rel="noopener" class="inline-flex min-w-0 items-center gap-1 text-primary" :title="model.name"><span class="truncate">{{ model.name }}</span><ExternalLink class="size-3 shrink-0" aria-hidden="true" /></a>
+        <button type="button" class="press-row -mr-2.5 ml-auto flex size-11 shrink-0 items-center justify-center rounded-full text-primary" aria-label="Edit dancer profile" @click="search"><Pencil class="size-4" aria-hidden="true" /></button>
       </template>
-      <button v-else type="button" class="press-row -ml-2 inline-flex min-h-11 items-center gap-2 rounded-xl px-2 text-left font-semibold text-primary" @click="search">
+      <button v-else type="button" class="inline-flex h-full w-full min-w-0 items-center gap-2 text-left text-primary" @click="search">
         <LoaderCircle v-if="searching && !manual" class="size-4 shrink-0 animate-spin" aria-hidden="true" />
         <Search v-else class="size-4 shrink-0" aria-hidden="true" />
-        {{ searching && !manual ? 'Finding ScotDance.app profile…' : 'Find ScotDance.app profile' }}
+        {{ searching && !manual ? 'Finding a profile…' : 'Find a dancer profile' }}
       </button>
     </div>
-    <div v-if="manual" class="mt-2 space-y-2">
+    <div v-if="manual" class="mt-1.5 space-y-2">
       <div class="relative">
-        <label class="block min-w-0"><span class="sr-only">Search public dancers</span><input v-model="query" class="field h-12 w-full rounded-xl pl-3 pr-12 text-base" maxlength="240" /></label>
-        <button type="button" class="press-row absolute right-0.5 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground" aria-label="Close profile search" @click="manual = false"><X class="size-5" aria-hidden="true" /></button>
+        <Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-primary" aria-hidden="true" />
+        <label class="block min-w-0"><span class="sr-only">Search public dancers</span><input ref="searchInput" v-model="query" placeholder="Find a dancer profile" class="field h-12 w-full rounded-xl pl-10 pr-12 text-base" maxlength="240" @input="editQuery" @keydown.esc.stop.prevent="manual = false" /></label>
+        <button type="button" class="press-row absolute right-0.5 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground" aria-label="Clear dancer profile" @click="clearProfile"><X class="size-5" aria-hidden="true" /></button>
       </div>
       <p v-if="searching || error" role="status" class="text-sm text-muted-foreground">{{ error || 'Searching…' }}</p>
       <ul v-else-if="matches.length" class="space-y-1">

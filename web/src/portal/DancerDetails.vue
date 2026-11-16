@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// Parity: inspect ./AGENTS.md before changing shared dancer behavior.
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { Pencil, X, LoaderCircle } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'

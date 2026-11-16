@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// Parity: also inspect mismith/scotdance-entries/src/views/AccountEditor.vue when changing behavior. See ./AGENTS.md.
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { Shield } from '@lucide/vue'
 import CityField from './CityField.vue'

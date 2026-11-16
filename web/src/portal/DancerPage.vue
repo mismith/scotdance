@@ -1,9 +1,10 @@
 <script setup lang="ts">
+// Parity: also inspect mismith/scotdance-entries/src/views/DancerEditor.vue when changing behavior. See ./AGENTS.md.
 import { computed, nextTick, ref, watch } from 'vue'
-import { Trash2 } from '@lucide/vue'
+import { Trash2, ChevronDown } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
-import DancerDetails from './DancerDetails.vue'
+import DancerDefaults from './DancerDefaults.vue'
 import PublicDancerLink from './PublicDancerLink.vue'
 import BirthdayField from './BirthdayField.vue'
 import { tidy, tidyStudio } from './profileFields'
@@ -19,7 +20,10 @@ const draft = ref<Dancer>(props.dancer ? JSON.parse(JSON.stringify(props.dancer)
 const title = computed(() => props.dancer ? 'Edit dancer' : 'Add dancer')
 const deleting = ref(false)
 const confirmDefaults = ref(false)
-const details = ref<InstanceType<typeof DancerDetails>>()
+const categoryMode = ref(!draft.value.registrationNumber && !!draft.value.category)
+const manualCardCategory = ref(!!draft.value.registrationNumber && !registrationCategory(draft.value.registrationNumber))
+const categories = ['Primary', 'Beginner', 'Novice', 'Intermediate', 'Premier']
+function toggleCategory() { manualCardCategory.value = false; categoryMode.value = !categoryMode.value; if (categoryMode.value) { draft.value.registrationNumber = ''; numberIssue.value = '' } }
 const form = ref<HTMLFormElement>()
 const publicLink = ref<InstanceType<typeof PublicDancerLink>>()
 const preparing = ref(false)
@@ -35,15 +39,16 @@ const numberIssue = ref('')
 watch(() => draft.value.registrationNumber, number => {
   const category = registrationCategory(number)
   if (category) draft.value.category = category
-})
+}, { immediate: true })
 function settleNumber() {
+  manualCardCategory.value = !!draft.value.registrationNumber && !registrationCategory(draft.value.registrationNumber)
   draft.value.registrationNumber = tidyRegistration(draft.value.registrationNumber)
   numberIssue.value = draft.value.registrationNumber ? registrationProblem(draft.value.registrationNumber, draft.value.category) : ''
 }
 function close() { if (!store.busy && !preparing.value) { store.error = ''; emit('close') } }
 async function save() {
   if (preparing.value || store.busy) return
-  if (details.value?.commitPending() === false || !form.value?.reportValidity()) return
+  if (!form.value?.reportValidity()) return
   draft.value.firstName = tidy(draft.value.firstName)
   draft.value.lastName = tidy(draft.value.lastName)
   draft.value.studio = tidyStudio(draft.value.studio)
@@ -78,8 +83,20 @@ async function persist(updateDefaults = false, remove = false) {
           <label class="text-callout font-medium">First name<input v-model="draft.firstName" :class="field" required maxlength="120" name="given-name" autocomplete="section-dancer given-name" @blur="draft.firstName = tidy(draft.firstName)" /></label>
           <label class="text-callout font-medium">Last name<input v-model="draft.lastName" :class="field" required maxlength="120" name="family-name" autocomplete="section-dancer family-name" @blur="draft.lastName = tidy(draft.lastName)" /></label>
           <BirthdayField v-model="draft.birthday" label="Birthday" class="col-span-2 sm:col-span-1" />
-          <label class="col-span-2 text-callout font-medium sm:col-span-1">Registration number<input v-model="draft.registrationNumber" :class="field" maxlength="120" autocomplete="off" @blur="settleNumber" /><span v-if="numberIssue" role="alert" class="mt-1 block text-sm text-destructive">{{ numberIssue }}</span></label>
-          <DancerDetails ref="details" v-model="draft" class="col-span-2" />
+          <div class="col-span-2 min-w-0 sm:col-span-1">
+            <div class="flex items-baseline justify-between gap-2">
+              <label :for="categoryMode ? 'dancer-category' : 'dancer-registration'" class="text-callout font-medium">{{ categoryMode ? 'Category' : 'Registration number' }}</label>
+              <button type="button" class="shrink-0 text-xs text-primary" @click="toggleCategory">{{ categoryMode ? 'Use registration number' : 'Don’t have one?' }}</button>
+            </div>
+            <input v-if="!categoryMode" id="dancer-registration" v-model="draft.registrationNumber" :class="field" maxlength="120" autocomplete="off" @blur="settleNumber" />
+            <label v-if="!categoryMode && manualCardCategory" for="dancer-category" class="mt-2 block text-callout font-medium">Category</label>
+            <div v-if="categoryMode || manualCardCategory" class="relative mt-1.5">
+              <select id="dancer-category" aria-label="Category" v-model="draft.category" class="field h-12 w-full appearance-none rounded-xl pl-3 pr-10 text-base"><option value="">Choose…</option><option v-for="category in categories" :key="category">{{ category }}</option></select>
+              <ChevronDown class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            </div>
+            <span v-if="numberIssue" role="alert" class="mt-1 block text-sm text-destructive">{{ numberIssue }}</span>
+          </div>
+          <DancerDefaults v-model:studio="draft.studio" :location="draft.location || { town: '', province: '', country: 'Canada' }" @update:location="draft.location = $event" :defaults="store.defaults" class="col-span-2" />
           <PublicDancerLink ref="publicLink" v-model="draft.publicDancer" :first-name="draft.firstName" :last-name="draft.lastName" class="col-span-2" />
         </fieldset>
         <div class="flex justify-end">

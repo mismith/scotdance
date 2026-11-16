@@ -5,7 +5,7 @@ vi.mock('../publicDancers', () => ({ findPublicDancers: search }))
 import PublicDancerLink from '../PublicDancerLink.vue'
 afterEach(() => { vi.useRealTimers(); vi.clearAllMocks() })
 describe('private public-profile reference', () => {
-  it('automatically links exact names, and persists an explicit unlink', async () => {
+  it('automatically links exact names, and persists an explicitly cleared profile', async () => {
     vi.useFakeTimers()
     const match = { id: 'abcdefghijklmnopqrst', name: 'Demo Dancer' }
     search.mockResolvedValue([match])
@@ -13,7 +13,8 @@ describe('private public-profile reference', () => {
     await vi.advanceTimersByTimeAsync(400)
     expect(search.mock.calls[0][0]).toBe('Demo Dancer')
     expect(w.props('modelValue')).toEqual(match)
-    await w.findAll('button').find(b => b.text() === 'Unlink')!.trigger('click')
+    await w.get('[aria-label="Edit dancer profile"]').trigger('click')
+    await w.get('[aria-label="Clear dancer profile"]').trigger('click')
     expect(w.props('modelValue')).toBeNull()
     await vi.advanceTimersByTimeAsync(500)
     expect(search).toHaveBeenCalledTimes(1)
@@ -57,7 +58,7 @@ describe('private public-profile reference', () => {
     const w = mount(PublicDancerLink, { props: { firstName: 'Demo', lastName: 'Dancer', 'onUpdate:modelValue': value => w.setProps({ modelValue: value }) } })
     await vi.advanceTimersByTimeAsync(400)
     expect(w.props('modelValue')).toBeUndefined()
-    await w.findAll('button').find(b => b.text() === 'Find ScotDance.app profile')!.trigger('click')
+    await w.findAll('button').find(b => b.text() === 'Find a dancer profile')!.trigger('click')
     await vi.advanceTimersByTimeAsync(400)
     await w.findAll('button').find(b => b.text() === 'Link')!.trigger('click')
     expect(w.props('modelValue')).toEqual(match)

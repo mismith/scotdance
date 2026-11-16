@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import DancerPage from './DancerPage.vue'
 import type { Dancer } from './account'
-import { ChevronRight, Plus, Users, Info } from '@lucide/vue'
+import { ChevronRight, Plus, Users, Shield } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { useConnectAccount } from './account'
@@ -16,16 +16,11 @@ function edit(dancer?: Dancer) { editing.value = dancer; store.error = ''; open.
 <template>
   <section>
     <h1 class="sr-only">Dancers</h1>
-    <aside class="mb-6 flex gap-3 rounded-2xl bg-blue-paper p-4 text-callout text-muted-foreground">
-      <Info class="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
-      <p>Your private dancer profiles help prefill forms across the ScotDance.app family of <a href="https://toolkit.scotdance.app" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-4">tools</a>.</p>
-    </aside>
-    <div v-if="store.dancers.length" class="mb-4 flex justify-start">
+    <div class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
       <Button @click="edit()" variant="primary"><Plus aria-hidden="true" /> Add dancer</Button>
+      <span class="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><Shield class="size-4 shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true" />Shared only when you consent</span>
     </div>
-    <EmptyState v-if="!store.dancers.length" :icon="Users" title="No dancers yet" description="Add yourself or a dancer you manage.">
-      <Button @click="edit()" variant="primary"><Plus aria-hidden="true" /> Add dancer</Button>
-    </EmptyState>
+    <EmptyState v-if="!store.dancers.length" :icon="Users" title="No dancers yet" description="Add yourself or a dancer you manage." />
     <ul v-else class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
       <li v-for="dancer in store.dancers" :key="dancer.id">
         <button type="button" @click="edit(dancer)" class="press-row focus-inset flex w-full text-left min-h-20 items-center gap-3 px-4 py-3">

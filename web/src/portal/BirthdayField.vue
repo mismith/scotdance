@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// Parity: also inspect mismith/scotdance-entries/src/ui/BirthdayField.vue when changing behavior. See ./AGENTS.md.
 import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
 import { daysInMonth } from './profileFields'
 import Popover from './Popover.vue'
@@ -10,6 +11,33 @@ import Popover from './Popover.vue'
  */
 const props = defineProps<{ modelValue: string; label: string; id?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
+
+// Keep birthday typing behavior aligned with the other app's BirthdayField.vue.
+function formatBirthday(raw: string, finish = false) {
+  const separated = /^(\d{4})\D+(\d{1,2})\D+(\d{1,2})$/.exec(raw.trim())
+  if (separated && (finish || separated[3]!.length === 2)) return `${separated[1]}-${separated[2]!.padStart(2, '0')}-${separated[3]!.padStart(2, '0')}`
+  const month = /^(\d{4})\D+(\d{1,2})\D+$/.exec(raw)
+  if (month) return `${month[1]}-${month[2]!.padStart(2, '0')}-`
+  if (/^\d{4}\D+$/.test(raw)) return raw.slice(0, 4) + '-'
+  const digits = raw.replace(/\D/g, '').slice(0, 8)
+  return [digits.slice(0, 4), digits.slice(4, 6), digits.slice(6, 8)].filter(Boolean).join('-')
+}
+function typeBirthday(event: Event) {
+  const target = event.target as HTMLInputElement
+  const cursor = target.selectionStart ?? target.value.length
+  const atEnd = cursor === target.value.length
+  let raw = target.value
+  if ((event as InputEvent).inputType === 'deleteContentBackward' && /[-/]/.test(props.modelValue[cursor] || '') && cursor > 0)
+    raw = raw.slice(0, cursor - 1) + raw.slice(cursor)
+  const formatted = formatBirthday(raw, ['insertFromPaste', 'insertReplacementText'].includes((event as InputEvent).inputType))
+  const before = raw.slice(0, cursor).replace(/\D/g, '').length
+  let position = 0, seen = 0
+  while (position < formatted.length && seen < before) { if (/\d/.test(formatted[position]!)) seen++; position++ }
+  target.value = formatted
+  emit('update:modelValue', formatted)
+  void nextTick(() => target.setSelectionRange(atEnd ? formatted.length : position, atEnd ? formatted.length : position))
+}
+function settleBirthday() { touched.value = true; emit('update:modelValue', formatBirthday(props.modelValue, true)) }
 
 const auto = useId()
 const fieldId = computed(() => props.id ?? auto)
@@ -236,14 +264,15 @@ const title = computed(() => `${props.label}`)
             placeholder="YYYY-MM-DD"
             name="bday"
             autocomplete="section-dancer bday"
-            maxlength="10"
+            maxlength="16"
+            inputmode="numeric"
             :aria-invalid="touched && !!birthdayProblem"
             :aria-describedby="touched && birthdayProblem ? `${fieldId}-problem` : undefined"
             @click.stop
             @keydown.down.stop.prevent="open = true"
-            @blur="touched = true"
+            @blur="settleBirthday"
             @invalid="touched = true"
-            @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+            @input="typeBirthday"
           />
           <button type="button" class="trigger" :aria-expanded="open" aria-haspopup="dialog" :aria-label="`Choose ${label.toLowerCase()}`">
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">

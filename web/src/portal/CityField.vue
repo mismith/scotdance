@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// Parity: also inspect mismith/scotdance-entries/src/ui/PlaceField.vue when changing behavior. See ./AGENTS.md.
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { Search, LoaderCircle, X, ChevronDown } from '@lucide/vue'
 import { fetchTownSuggestions, resolveTown, placesAvailable, type PlaceSuggestion } from '@/lib/maps'
@@ -72,7 +73,7 @@ onBeforeUnmount(stop)
 </script>
 <template>
   <div ref="root" class="min-w-0" @focusout="settle">
-    <label v-if="!manual" :for="id" class="block text-callout font-medium">City</label>
+    <div v-if="!manual" class="flex items-baseline justify-between gap-2"><label :for="id" class="text-callout font-medium">City</label><slot name="label-action" :changed="manual ? JSON.stringify(draft) !== JSON.stringify(modelValue) : query !== (modelValue ? placeLabel(modelValue) : '')" /></div>
     <div v-if="!manual" class="relative mt-1.5">
       <Search class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-primary" aria-hidden="true" />
       <input :id="id" ref="input" v-model="query" class="field h-12 w-full rounded-xl pl-10 pr-12 text-base" placeholder="Search for a city" role="combobox" autocomplete="off" maxlength="120" aria-autocomplete="list" :aria-controls="`${id}-list`" :aria-expanded="!!suggestions.length" :aria-activedescendant="active >= 0 ? `${id}-${active}` : undefined" @input="search" @keydown="key" />
@@ -87,7 +88,7 @@ onBeforeUnmount(stop)
       </div>
     </div>
     <div v-if="manual" class="grid grid-cols-2 gap-3" @keydown.enter.prevent="settle()">
-      <label class="col-span-2 text-callout">City<span class="relative mt-1.5 block"><input v-model="draft.town" class="field h-12 w-full rounded-xl pl-3 pr-10 text-base" maxlength="120" /><SaveIndicator :status="saveStatus" /></span></label>
+      <div class="col-span-2"><div class="flex items-baseline justify-between gap-2"><label :for="`${id}-manual`" class="text-callout font-medium">City</label><slot name="label-action" :changed="manual ? JSON.stringify(draft) !== JSON.stringify(modelValue) : query !== (modelValue ? placeLabel(modelValue) : '')" /></div><span class="relative mt-1.5 block"><input :id="`${id}-manual`" v-model="draft.town" class="field h-12 w-full rounded-xl pl-3 pr-10 text-base" maxlength="120" /><SaveIndicator :status="saveStatus" /></span></div>
       <label v-if="needsRegion(draft.country)" class="text-callout">{{ draft.country === 'Canada' ? 'Province' : 'State' }}<span class="relative mt-1.5 block"><select v-model="draft.province" class="field h-12 w-full appearance-none rounded-xl pl-3 pr-10 text-base"><option value="">Choose…</option><option v-for="region in regions" :key="region.code" :value="region.code">{{ region.name }}</option></select><ChevronDown class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /></span></label>
       <label v-else class="text-callout">Region<input v-model="draft.province" :class="field" maxlength="120" /></label>
       <label class="text-callout">Country<span class="relative mt-1.5 block"><select v-model="draft.country" class="field h-12 w-full appearance-none rounded-xl pl-3 pr-10 text-base" @change="draft.province = ''"><option v-for="country in countries" :key="country">{{ country }}</option></select><ChevronDown class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /></span></label>
