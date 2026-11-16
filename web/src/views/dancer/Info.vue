@@ -17,7 +17,7 @@ import { heroTitle } from '@/lib/heroTitle'
 import { profileColumns, profileHeader } from '@/lib/profile'
 import { useAuthStore } from '@/stores/auth'
 
-// A dancer across every competition, with results rather than old bibs.
+// A dancer across every competition, with results rather than old numbers.
 // Signed in: every competition, a season at a time. Otherwise: the latest
 // few competitions and a way in to the rest.
 const setHeader = injectInfoHeaderSetter()

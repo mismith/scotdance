@@ -125,7 +125,7 @@ test('on competition day, whoever has dances to come comes first, and a finished
   const days = page.locator('main article')
   await expect(days.first()).toContainText(next.name)
   await expect(days.nth(1)).toContainText(done.name)
-  // Finished: the bib and its ribbons, no dances still to come.
+  // Finished: the number and its ribbons, no dances still to come.
   await expect(card(page, done).getByRole('img', { name: /place/ }).first()).toBeVisible()
   await expect(card(page, done).getByRole('link')).toHaveCount(1)
   await expect(card(page, next).getByText(/^Platform [AB] · from /)).toBeVisible()

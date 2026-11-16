@@ -631,7 +631,7 @@ html:not([data-native])::before {
   }
 }
 /* Pressed into the paper (date tiles): no fill of its own, just the shade
-   and lit lip of a blind stamp, so it can't be mistaken for a bib. */
+   and lit lip of a blind stamp, so it can't be mistaken for a number. */
 @utility deboss {
   background-color: var(--deboss-fill);
   box-shadow:

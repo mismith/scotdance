@@ -107,7 +107,7 @@ const fresh = computed(() => {
     </p>
 
     <template v-else>
-      <!-- Their number card at poster size: the bib they're wearing today. -->
+      <!-- Their number card at poster size: the number they're wearing today. -->
       <header :ref="setHeader" class="flex flex-col items-center pt-2 text-center">
         <DancerLookButton
           v-if="dancer.dancerId"

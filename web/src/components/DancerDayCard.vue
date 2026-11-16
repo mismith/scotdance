@@ -14,7 +14,7 @@ import { successHaptic } from '@/lib/haptics'
 // One followed dancer at one competition, led by the number card they wear
 // there. Frameless, like their row in a list: a stripe of their colour (or
 // tartan) down the edge, fading across the block. Placings pin on beside the
-// bib as ribbons as they're posted; under them, one line of what the
+// number as ribbons as they're posted; under them, one line of what the
 // schedule says about the next dance, when it says anything. A dancer
 // entered in more than one age group (Premier plus a Broadsword event) is one
 // card under one number, and so are their teams' entries (ADR 0012), each
@@ -66,7 +66,7 @@ const sub = computed(() => {
 // they wear as theirs, and its placings and Overall are the team's: each
 // is named for its team, never pinned on as the dancer's own.
 const own = computed(() => shown.value.filter((d) => !d.dancer.team))
-const bib = computed(() => own.value[0] ?? null)
+const competitionDancer = computed(() => own.value[0] ?? null)
 
 // What's pinned on so far: callbacks, a ribbon per placing (Overall last, as a trophy),
 // championship points, and what's still to come in.
@@ -176,13 +176,13 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
   >
     <span v-if="color && !bare" class="dancer-sash [--sash-width:78%]" :style="{ '--dc': color }" aria-hidden="true" />
     <template v-if="!bare">
-      <!-- The bib, the name, and the placings pinned on: beside the name when
+      <!-- The number, the name, and the placings pinned on: beside the name when
            the card has room, under it on a phone. -->
       <RouterLink
         :to="{ name: 'competition.dancer', params: { competitionId, dancerId: day.dancer.id } }"
         class="press-row focus-inset grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-3 p-4 @min-[34rem]:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
       >
-        <NumberCard v-if="showNumber && bib" :number="bib.dancer.number" :color="color" size="md" />
+        <NumberCard v-if="showNumber && competitionDancer" :number="competitionDancer.dancer.number" :color="color" size="md" />
         <span v-else class="flex w-[5.5rem] justify-center"><Avatar :name="name || day.dancer.fullName" :color="color" size="lg" /></span>
         <span class="min-w-0">
           <span class="block text-[1.25rem] leading-tight font-bold tracking-[-0.01em] break-words">{{ name || day.dancer.fullName }}</span>

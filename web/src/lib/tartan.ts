@@ -274,7 +274,7 @@ export function weave(ctx: CanvasRenderingContext2D, w: number, h: number, runs:
 
 /**
  * A tile's width in CSS pixels: every look is cut from cloth of one scale,
- * about 0.3px a thread, so a 40px avatar or a bib's band shows a whole
+ * about 0.3px a thread, so a 40px avatar or a number's band shows a whole
  * repeat or more rather than a corner of one. Clamped so a small check
  * keeps squares big enough to see and a huge sett keeps its finest lines.
  * Even, so the twill's 4px rib (at 2x) meets itself at the tile's edges.

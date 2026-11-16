@@ -4,7 +4,7 @@ import { getOrdinalSuffix } from '@/lib/results'
 
 // A placing as a ribbon: one colour for every place (Highland dancing has no
 // gold/silver/bronze), the number big inside it, and a "Tie" tag pinned across
-// its foot. Its own shape, so it never reads as a bib number or an avatar.
+// its foot. Its own shape, so it never reads as a number or an avatar.
 const props = withDefaults(
   defineProps<{
     place: number | null
@@ -61,7 +61,7 @@ const label = computed(() => {
       <path d="M6 3h32v15c0 11.6-7.2 21-16 21S6 29.6 6 18z" :class="tier.fill" />
       <path d="M6.75 3.75h30.5V18c0 11.2-6.9 20.25-15.25 20.25S6.75 29.2 6.75 18z" fill="none" stroke-width="1.5" stroke-linejoin="round" :class="tier.edge" />
     </svg>
-    <!-- Square shoulders would read as a bib; a V-cut foot reads as a ribbon. -->
+    <!-- Square shoulders would read as a number; a V-cut foot reads as a ribbon. -->
     <svg v-else viewBox="0 0 44 48" preserveAspectRatio="none" class="absolute inset-0 size-full" aria-hidden="true">
       <path d="M0 9a9 9 0 0 1 9-9h26a9 9 0 0 1 9 9v39l-22-8-22 8z" :class="tier.fill" />
       <path

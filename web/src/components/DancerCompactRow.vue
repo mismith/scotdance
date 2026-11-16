@@ -32,7 +32,7 @@ const days = computed(() => f.value?.days ?? [])
 const day = computed(() => days.value.find((d) => d.dances.length) ?? days.value[0] ?? null)
 // Their own number: a team's (ADR 0012) isn't one they wear as theirs.
 const own = computed(() => days.value.filter((d) => !d.dancer.team))
-const bib = computed(() => own.value.find((d) => d.dances.length) ?? own.value[0] ?? null)
+const competitionDancer = computed(() => own.value.find((d) => d.dances.length) ?? own.value[0] ?? null)
 const stage = computed(() => (f.value?.phase === 'today' && days.value.length ? dayStage(days.value) : null))
 const best = computed(() => {
   // Their own best; a team's only when they dance in nothing else.
@@ -76,8 +76,8 @@ const to = computed(() =>
     >
       <span class="flex w-11 shrink-0 justify-center">
         <NumberCard
-          v-if="f?.phase !== 'after' && bib?.dancer.number != null"
-          :number="bib.dancer.number"
+          v-if="f?.phase !== 'after' && competitionDancer?.dancer.number != null"
+          :number="competitionDancer.dancer.number"
           size="xs"
           :color="color"
         />
