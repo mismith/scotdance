@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Parity: also inspect mismith/scotdance-entries/src/ui/BirthdayField.vue when changing behavior. See ./AGENTS.md.
-import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
+import { computed, nextTick, ref, useId, watch } from 'vue'
 import { daysInMonth } from './profileFields'
 import Popover from './Popover.vue'
 
@@ -45,58 +45,8 @@ const open = ref(false)
 const input = ref<HTMLInputElement>()
 const touched = ref(false)
 
-// On wide screens the picker is a Popover (it opens inside an open dialog, over the form, so nothing reflows). On a
-// phone inside a dialog (the Add a dancer sheet) a second sheet would sit over the first, so the same picker opens
-// in place, under the field, within the sheet it is already in.
+// Float above the form at every viewport size; never expand the dancer sheet.
 const root = ref<HTMLElement>()
-const inDialog = ref(false)
-const wide = ref(true)
-let media: MediaQueryList | undefined
-const onMedia = (e: MediaQueryListEvent) => (wide.value = e.matches)
-onMounted(() => {
-  inDialog.value = !!root.value?.closest('dialog')
-  media = window.matchMedia('(min-width: 900px)')
-  wide.value = media.matches
-  media.addEventListener('change', onMedia)
-})
-onBeforeUnmount(() => media?.removeEventListener('change', onMedia))
-const Inline = defineComponent({
-  props: { open: Boolean, title: String, width: Number },
-  emits: ['update:open'],
-  setup(p, { slots, emit }) {
-    const close = () => emit('update:open', false)
-    return () =>
-      h('div', null, [
-        h('div', { onClick: () => emit('update:open', !p.open) }, slots.anchor?.()),
-        p.open
-          ? h(
-              'div',
-              {
-                class: 'bf-inline',
-                onKeydown: (event: KeyboardEvent) => {
-                  if (event.key !== 'Escape') return
-                  event.preventDefault()
-                  event.stopPropagation()
-                  close()
-                },
-              },
-              [
-                h(
-                  'button',
-                  { type: 'button', class: 'bf-x', 'aria-label': 'Close', onClick: close },
-                  h('svg', { viewBox: '0 0 24 24', width: 18, height: 18, 'aria-hidden': 'true' }, [
-                    h('path', { d: 'M6 6l12 12M18 6 6 18' }),
-                  ]),
-                ),
-                slots.default?.(),
-              ],
-            )
-          : null,
-      ])
-  },
-})
-const Host = computed(() => (inDialog.value && !wide.value ? Inline : Popover))
-
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const FULL_MONTHS = [
   'January',
@@ -250,9 +200,9 @@ const title = computed(() => `${props.label}`)
 </script>
 
 <template>
-  <div ref="root" class="bf" :class="{ spread: open && Host !== Popover }">
+  <div ref="root" class="bf">
     <label :for="fieldId">{{ label }}</label>
-    <component :is="Host" v-model:open="open" :title="title" :width="332">
+    <Popover v-model:open="open" :title="title" :width="332">
       <template #anchor>
         <div class="birthday-control">
           <input
@@ -358,7 +308,7 @@ const title = computed(() => `${props.label}`)
           </template>
         </div>
       </div>
-    </component>
+    </Popover>
     <p v-if="touched && birthdayProblem" :id="`${fieldId}-problem`" class="birthday-problem" role="alert">
       {{ birthdayProblem }}
     </p>
@@ -366,41 +316,6 @@ const title = computed(() => `${props.label}`)
 </template>
 
 <style scoped>
-.bf.spread {
-  grid-column: 1 / -1;
-}
-:global(.bf-inline) {
-  position: relative;
-  margin: 8px 0 0;
-  padding: 10px 14px 14px;
-  border-radius: var(--radius-xl);
-  background: var(--blue-paper);
-}
-:global(.bf-inline .bf-x) {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 0;
-  border-radius: 50%;
-  color: var(--foreground);
-  background: none;
-  cursor: pointer;
-}
-:global(.bf-inline .bf-x svg) {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.2;
-  stroke-linecap: round;
-}
-:global(.bf-inline .bf-x:focus-visible) {
-  outline: 3px solid var(--primary);
-  outline-offset: 0;
-}
 .bf label {
   display: block;
 }
