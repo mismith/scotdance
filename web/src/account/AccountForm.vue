@@ -156,6 +156,8 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
         <p v-if="displayNameError" class="text-destructive text-sm font-medium" role="alert">Your name didn’t save. Try again.</p>
       </header>
 
+      <slot name="profile-details" />
+      <h2 v-if="$slots['profile-details']" class="pt-3 text-heading">Sign-in details</h2>
       <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
         <li>
           <div class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left">

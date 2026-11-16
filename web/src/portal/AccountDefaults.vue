@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import DancerDetails from './DancerDetails.vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
+import CityField from './CityField.vue'
+import { tidy } from './profileFields'
 import { useConnectAccount, type Dancer } from './account'
 const store = useConnectAccount()
 const draft = ref<{ studio: string; location?: Dancer['location'] }>({ studio: '' })
 const pending = new Set<'studio' | 'location'>()
 const saving = ref(false)
+const studioDirty = ref(false)
+let studioTimer: ReturnType<typeof setTimeout> | undefined
+function inputStudio() { studioDirty.value = true; clearTimeout(studioTimer); studioTimer = setTimeout(settleStudio, 600) }
+function settleStudio() { clearTimeout(studioTimer); if (!studioDirty.value) return; draft.value.studio = tidy(draft.value.studio); studioDirty.value = false; save('studio') }
+onBeforeUnmount(() => clearTimeout(studioTimer))
 const error = ref('')
-watch(() => store.defaults, value => { if (!saving.value && !pending.size) draft.value = JSON.parse(JSON.stringify(value)) }, { immediate: true })
+watch(() => store.defaults, value => { if (!saving.value && !pending.size && !studioDirty.value) draft.value = JSON.parse(JSON.stringify(value)) }, { immediate: true })
 function save(field: 'category' | 'studio' | 'location') {
   if (field === 'category') return
   pending.add(field)
@@ -29,10 +35,13 @@ async function flush() {
 }
 </script>
 <template>
-  <section class="space-y-3">
-    <div class="flex items-center justify-between gap-3"><h2 class="text-heading">Studio &amp; location</h2><span class="min-h-5 text-sm text-muted-foreground" role="status">{{ saving ? 'Saving…' : '' }}</span></div>
-    <p class="text-callout text-muted-foreground">Starting details for new dancers. Each dancer keeps their own saved copy.</p>
-    <DancerDetails v-model="draft" :fields="['studio', 'location']" @changed="save" />
-    <p v-if="error" role="alert" class="text-sm text-destructive">{{ error }} <button type="button" class="text-primary underline" @click="flush">Try again</button></p>
+  <section class="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+    <label class="text-callout font-medium">Studio<input v-model="draft.studio" class="field mt-1.5 h-12 w-full rounded-xl px-3 text-base" placeholder="Teacher or studio" maxlength="120" @input="inputStudio" @blur="settleStudio" @keydown.enter.prevent="settleStudio" /></label>
+    <CityField v-model="draft.location" @changed="save('location')" />
+    <div class="flex min-h-5 items-start justify-between gap-3 sm:col-span-2">
+      <p class="text-xs text-muted-foreground">Used to prefill new dancers. Optional; changes save automatically.</p>
+      <span role="status" class="w-12 shrink-0 text-right text-xs text-muted-foreground">{{ saving ? 'Saving…' : '' }}</span>
+    </div>
+    <p v-if="error" role="alert" class="text-sm text-destructive sm:col-span-2">{{ error }} <button type="button" class="text-primary underline" @click="flush">Try again</button></p>
   </section>
 </template>

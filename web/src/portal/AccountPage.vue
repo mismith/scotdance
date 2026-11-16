@@ -39,7 +39,7 @@ onBeforeUnmount(controller.dispose)
       @changed="store.run(store.load)"
       @deleted="store.clear"
     >
-      <template #details><AccountDefaults class="px-4" /></template>
+      <template #profile-details><AccountDefaults /></template>
     </AccountForm>
     <div v-else-if="error" class="space-y-3">
       <p role="alert" class="text-destructive">{{ error }}</p>
