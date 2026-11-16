@@ -6,6 +6,8 @@ import { useMorph } from '@/lib/morph'
 import Dialog from '@/components/Dialog.vue'
 import Button from '@/components/ui/Button.vue'
 import Avatar from '@/components/Avatar.vue'
+import SaveIndicator from './SaveIndicator.vue'
+import { useSaveFeedback } from './save-feedback'
 const props = defineProps<{ account: AccountSettings }>()
 const auth = props.account
 function formatDate(value?: string) {
@@ -24,6 +26,8 @@ const passwordDate = computed(() => formatDate(auth.user?.metadata?.passwordUpda
 const emit = defineEmits<{ changed: []; deleted: [] }>()
 // Display name (debounced save)
 const displayName = ref('')
+const nameFeedback = useSaveFeedback()
+const nameSaveStatus = nameFeedback.status
 const displayNameSaving = ref(false)
 const displayNameError = ref<string | null>(null)
 let displayNameTimer: ReturnType<typeof setTimeout> | null = null
@@ -39,6 +43,7 @@ watch(
 )
 
 function onDisplayNameInput() {
+  if (!displayNameSaving.value) nameFeedback.reset()
   if (displayNameTimer) clearTimeout(displayNameTimer)
   displayNameTimer = setTimeout(saveDisplayName, 600)
 }
@@ -48,12 +53,14 @@ async function saveDisplayName() {
   const next = displayName.value.trim()
   if (next === (auth.displayName ?? '')) return
   displayNameSaving.value = true
+  nameFeedback.start()
   displayNameError.value = null
   let saved = false
   try {
     await auth.updateDisplayName(next)
     saved = true
   } catch (e) {
+    nameFeedback.reset()
     displayNameError.value = e instanceof Error ? e.message : 'Could not save.'
   } finally {
     displayNameSaving.value = false
@@ -61,7 +68,7 @@ async function saveDisplayName() {
   // Keep the final keystrokes if another edit arrived while the request was saving.
   if (saved) {
     if (displayName.value.trim() !== next) void saveDisplayName()
-    else emit('changed')
+    else { nameFeedback.done(); emit('changed') }
   }
 }
 
@@ -155,15 +162,18 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
         <div class="flex items-end gap-4">
           <Avatar :name="displayName || auth.user?.email || '?'" :email="auth.user?.email" :image="auth.photoURL" size="lg" you />
         <label class="block min-w-0 flex-1 space-y-1.5">
-          <span class="flex items-center justify-between gap-2 text-callout font-medium">Full name<span v-if="displayNameSaving" role="status" class="text-sm font-normal text-muted-foreground">Saving…</span></span>
+          <span class="flex items-center justify-between gap-2 text-callout font-medium">Full name</span>
+          <span class="relative block">
           <input
             v-model="displayName"
             type="text"
             autocomplete="name"
-            class="field h-12 w-full rounded-xl px-3 text-base"
+            class="field h-12 w-full rounded-xl pl-3 pr-10 text-base"
             @input="onDisplayNameInput"
             @blur="saveDisplayName"
           />
+          <SaveIndicator :status="nameSaveStatus" />
+          </span>
         </label>
         </div>
         <p class="text-sm text-muted-foreground">Your picture comes from <a href="https://gravatar.com/" target="_blank" rel="noopener" class="font-semibold text-primary">Gravatar</a>.</p>

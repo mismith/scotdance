@@ -4,8 +4,10 @@ import { Search, LoaderCircle, X, ChevronDown } from '@lucide/vue'
 import { fetchTownSuggestions, resolveTown, placesAvailable, type PlaceSuggestion } from '@/lib/maps'
 import { countryNames, needsRegion, placeLabel, PROVINCES, STATES } from './places'
 import { tidy } from './profileFields'
+import SaveIndicator from '@/account/SaveIndicator.vue'
+import type { SaveStatus } from '@/account/save-feedback'
 type Place = { town: string; province: string; country: string }
-const props = defineProps<{ modelValue?: Place }>()
+const props = defineProps<{ modelValue?: Place; saveStatus?: SaveStatus }>()
 const emit = defineEmits<{ 'update:modelValue': [value: Place]; changed: [] }>()
 const query = ref(props.modelValue ? placeLabel(props.modelValue) : '')
 const manual = ref(!placesAvailable)
@@ -74,7 +76,8 @@ onBeforeUnmount(stop)
     <div v-if="!manual" class="relative mt-1.5">
       <Search class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-primary" aria-hidden="true" />
       <input :id="id" ref="input" v-model="query" class="field h-12 w-full rounded-xl pl-10 pr-12 text-base" placeholder="Search for a city" role="combobox" autocomplete="off" maxlength="120" aria-autocomplete="list" :aria-controls="`${id}-list`" :aria-expanded="!!suggestions.length" :aria-activedescendant="active >= 0 ? `${id}-${active}` : undefined" @input="search" @keydown="key" />
-      <LoaderCircle v-if="busy" class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-5 animate-spin text-primary" aria-label="Finding cities" />
+      <SaveIndicator v-if="saveStatus" :status="saveStatus" />
+      <LoaderCircle v-else-if="busy" class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-5 animate-spin text-primary" aria-label="Finding cities" />
       <button v-else-if="props.modelValue?.town" type="button" class="absolute right-0 top-1/2 -translate-y-1/2 flex size-12 items-center justify-center text-muted-foreground" aria-label="Clear city" @click="clear"><X class="size-4" aria-hidden="true" /></button>
       <div v-if="query !== (props.modelValue ? placeLabel(props.modelValue) : '')" class="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-border bg-background shadow-xl">
         <ul v-if="suggestions.length" :id="`${id}-list`" role="listbox" aria-label="Cities" class="max-h-64 overflow-y-auto overscroll-contain">
@@ -84,7 +87,7 @@ onBeforeUnmount(stop)
       </div>
     </div>
     <div v-if="manual" class="grid grid-cols-2 gap-3" @keydown.enter.prevent="settle()">
-      <label class="col-span-2 text-callout">City<input v-model="draft.town" :class="field" maxlength="120" /></label>
+      <label class="col-span-2 text-callout">City<span class="relative mt-1.5 block"><input v-model="draft.town" class="field h-12 w-full rounded-xl pl-3 pr-10 text-base" maxlength="120" /><SaveIndicator :status="saveStatus" /></span></label>
       <label v-if="needsRegion(draft.country)" class="text-callout">{{ draft.country === 'Canada' ? 'Province' : 'State' }}<span class="relative mt-1.5 block"><select v-model="draft.province" class="field h-12 w-full appearance-none rounded-xl pl-3 pr-10 text-base"><option value="">Choose…</option><option v-for="region in regions" :key="region.code" :value="region.code">{{ region.name }}</option></select><ChevronDown class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /></span></label>
       <label v-else class="text-callout">Region<input v-model="draft.province" :class="field" maxlength="120" /></label>
       <label class="text-callout">Country<span class="relative mt-1.5 block"><select v-model="draft.country" class="field h-12 w-full appearance-none rounded-xl pl-3 pr-10 text-base" @change="draft.province = ''"><option v-for="country in countries" :key="country">{{ country }}</option></select><ChevronDown class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /></span></label>
