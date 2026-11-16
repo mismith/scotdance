@@ -34,10 +34,12 @@ export const useConnectAccount = defineStore('connect-account', () => {
   const ready = ref(false)
   const pageReady = ref(false)
   const error = ref('')
+  let loadGeneration = 0
   let identityPass = ''
   let identityUntil = 0
 
   function clear() {
+    loadGeneration++
     pageReady.value = false
     account.value = null
     dancers.value = []
@@ -59,7 +61,9 @@ export const useConnectAccount = defineStore('connect-account', () => {
     return body
   }
   async function load() {
+    const generation = ++loadGeneration
     const data = await api('load')
+    if (generation !== loadGeneration) return
     account.value = data.account
     dancers.value = data.dancers
     defaults.value = data.defaults ?? { studio: '' }
@@ -137,7 +141,9 @@ export const useConnectAccount = defineStore('connect-account', () => {
     })
   }
   async function saveDefaults(values: Partial<{ studio: string; location: NonNullable<Dancer['location']> }>) {
+    loadGeneration++
     const result = await api('defaults', { defaults: values, revision: defaultsRevision.value, requestId: crypto.randomUUID() })
+    loadGeneration++
     defaults.value = result.defaults
     defaultsRevision.value = result.defaultsRevision
   }

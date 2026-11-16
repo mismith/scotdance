@@ -75,8 +75,8 @@ async function persist(updateDefaults = false, remove = false) {
       </div>
       <form v-else ref="form" class="space-y-5" @submit.prevent="save">
         <fieldset :disabled="store.busy || preparing" class="grid min-w-0 grid-cols-2 gap-4">
-          <label class="text-callout font-medium">First name<input v-model="draft.firstName" :class="field" required maxlength="120" autocomplete="off" @blur="draft.firstName = tidy(draft.firstName)" /></label>
-          <label class="text-callout font-medium">Last name<input v-model="draft.lastName" :class="field" required maxlength="120" autocomplete="off" @blur="draft.lastName = tidy(draft.lastName)" /></label>
+          <label class="text-callout font-medium">First name<input v-model="draft.firstName" :class="field" required maxlength="120" name="given-name" autocomplete="section-dancer given-name" @blur="draft.firstName = tidy(draft.firstName)" /></label>
+          <label class="text-callout font-medium">Last name<input v-model="draft.lastName" :class="field" required maxlength="120" name="family-name" autocomplete="section-dancer family-name" @blur="draft.lastName = tidy(draft.lastName)" /></label>
           <BirthdayField v-model="draft.birthday" label="Birthday" class="col-span-2 sm:col-span-1" />
           <label class="col-span-2 text-callout font-medium sm:col-span-1">Registration number<input v-model="draft.registrationNumber" :class="field" maxlength="120" autocomplete="off" @blur="settleNumber" /><span v-if="numberIssue" role="alert" class="mt-1 block text-sm text-destructive">{{ numberIssue }}</span></label>
           <DancerDetails ref="details" v-model="draft" class="col-span-2" />

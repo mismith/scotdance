@@ -52,7 +52,7 @@ async function flush() {
   <section class="space-y-4 pt-3" aria-labelledby="private-details-title">
     <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
       <h2 id="private-details-title" class="text-title text-foreground">Private details</h2>
-      <span class="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><Shield class="size-4 shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true" />Shared only with your consent</span>
+      <span class="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><Shield class="size-4 shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true" />Shared only when you consent</span>
     </div>
     <div class="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
     <label class="text-callout font-medium">Teacher studio<span class="relative mt-1.5 block"><input v-model="draft.studio" class="field h-12 w-full rounded-xl pl-3 pr-10 text-base" placeholder="e.g. Glenmore School of Dance" maxlength="120" @input="inputStudio" @blur="settleStudio" @keydown.enter.prevent="settleStudio" /><SaveIndicator :status="studioStatus" /></span></label>

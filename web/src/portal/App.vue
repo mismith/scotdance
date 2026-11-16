@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { Users, UserRound, LogOut, LockKeyhole } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
@@ -16,7 +16,19 @@ const sections = [
 ]
 const isCurrent = (path: string) => route.path === path || route.path.startsWith(`${path}/`)
 const loading = computed(() => !route.meta.public && (!store.ready || (route.path === '/account' && !!store.account && !store.pageReady)))
-onMounted(() => { void store.initialize(!route.meta.public) })
+async function refreshOnReturn() {
+  if (document.visibilityState === 'hidden' || !store.ready || !store.account || store.busy) return
+  try { await store.load() } catch (error) { store.error = error instanceof Error ? error.message : 'Could not refresh your account.' }
+}
+onMounted(() => {
+  void store.initialize(!route.meta.public)
+  window.addEventListener('focus', refreshOnReturn)
+  document.addEventListener('visibilitychange', refreshOnReturn)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('focus', refreshOnReturn)
+  document.removeEventListener('visibilitychange', refreshOnReturn)
+})
 </script>
 <template>
   <div class="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-(--safe-top) sm:px-6">
