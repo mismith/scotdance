@@ -15,6 +15,11 @@ const controller = createFirebaseSettings({
   refreshSession: store.refresh,
 })
 const settings = controller.settings
+function syncAccount() {
+  if (!store.account) return
+  store.account.name = settings.displayName ?? ''
+  store.account.email = settings.user?.email ?? ''
+}
 async function load() {
   error.value = ''
   store.pageReady = false
@@ -36,7 +41,7 @@ onBeforeUnmount(controller.dispose)
       v-if="ready"
       :account="settings"
       class="-mx-4"
-      @changed="store.run(store.load)"
+      @changed="syncAccount"
       @deleted="store.clear"
     >
       <template #profile-details><AccountDefaults /></template>

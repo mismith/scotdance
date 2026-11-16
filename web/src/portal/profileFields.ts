@@ -1,3 +1,6 @@
+// Studio names can be acronyms or deliberately styled; only tidy whitespace.
+export function tidyStudio(text: string) { return text.trim().replace(/\s+/g, ' ') }
+
 // Shared interaction rules ported from Entries. Preserve mixed-case names.
 export function tidy(text: string) {
   const clean = text.trim().replace(/\s+/g, ' ')

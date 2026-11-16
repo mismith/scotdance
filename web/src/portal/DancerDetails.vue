@@ -4,7 +4,7 @@ import { Pencil, X, LoaderCircle } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import { fetchTownSuggestions, placesAvailable, resolveTown, type PlaceSuggestion } from '@/lib/maps'
 import { countryNames, needsRegion, placeLabel, PROVINCES, STATES } from './places'
-import { tidy } from './profileFields'
+import { tidy, tidyStudio } from './profileFields'
 type Place = { town: string; province: string; country: string }
 type Detail = 'category' | 'studio' | 'location'
 const props = withDefaults(defineProps<{ fields?: Detail[] }>(), { fields: () => ['category', 'studio', 'location'] })
@@ -50,7 +50,7 @@ function commitPending(): boolean {
   const key = active.value
   if (!key) return true
   if (key === 'studio' && value.value.trim()) {
-    model.value.studio = tidy(value.value)
+    model.value.studio = tidyStudio(value.value)
     emit('changed', key)
   } else if (key === 'location' && (location.value.town.trim() || value.value.trim())) {
     if (!complete()) { issue.value = manual.value ? 'Enter a city, country and region where required.' : 'Choose a city or enter it manually.'; return false }

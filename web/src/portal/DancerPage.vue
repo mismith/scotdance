@@ -5,7 +5,7 @@ import Dialog from '@/components/Dialog.vue'
 import DancerDetails from './DancerDetails.vue'
 import PublicDancerLink from './PublicDancerLink.vue'
 import BirthdayField from './BirthdayField.vue'
-import { tidy } from './profileFields'
+import { tidy, tidyStudio } from './profileFields'
 import { tidyRegistration, registrationCategory, registrationProblem } from './registration'
 import { useConnectAccount, type Dancer } from './account'
 const props = defineProps<{ dancer?: Dancer }>()
@@ -45,7 +45,7 @@ async function save() {
   if (details.value?.commitPending() === false || !form.value?.reportValidity()) return
   draft.value.firstName = tidy(draft.value.firstName)
   draft.value.lastName = tidy(draft.value.lastName)
-  draft.value.studio = tidy(draft.value.studio)
+  draft.value.studio = tidyStudio(draft.value.studio)
   settleNumber()
   if (numberIssue.value) return
   preparing.value = true

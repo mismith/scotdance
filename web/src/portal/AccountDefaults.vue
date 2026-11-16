@@ -3,7 +3,7 @@ import { onBeforeUnmount, ref, watch } from 'vue'
 import CityField from './CityField.vue'
 import SaveIndicator from '@/account/SaveIndicator.vue'
 import { useSaveFeedback } from '@/account/save-feedback'
-import { tidy } from './profileFields'
+import { tidyStudio } from './profileFields'
 import { useConnectAccount, type Dancer } from './account'
 const store = useConnectAccount()
 const draft = ref<{ studio: string; location?: Dancer['location'] }>({ studio: '' })
@@ -15,7 +15,7 @@ const locationStatus = feedback.location.status
 const studioDirty = ref(false)
 let studioTimer: ReturnType<typeof setTimeout> | undefined
 function inputStudio() { if (studioStatus.value !== 'saving') feedback.studio.reset(); studioDirty.value = true; clearTimeout(studioTimer); studioTimer = setTimeout(settleStudio, 600) }
-function settleStudio() { clearTimeout(studioTimer); if (!studioDirty.value) return; draft.value.studio = tidy(draft.value.studio); studioDirty.value = false; save('studio') }
+function settleStudio() { clearTimeout(studioTimer); if (!studioDirty.value) return; draft.value.studio = tidyStudio(draft.value.studio); studioDirty.value = false; save('studio') }
 onBeforeUnmount(() => clearTimeout(studioTimer))
 const error = ref('')
 watch(() => store.defaults, value => { if (!saving.value && !pending.size && !studioDirty.value) draft.value = JSON.parse(JSON.stringify(value)) }, { immediate: true })
@@ -48,9 +48,15 @@ async function flush() {
 }
 </script>
 <template>
-  <section class="relative grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+  <section class="space-y-4 pt-3" aria-labelledby="private-details-title">
+    <div class="space-y-2">
+      <h2 id="private-details-title" class="text-title">Private details</h2>
+      <p class="text-sm text-muted-foreground">Your teacher studio, city and email aren’t shared publicly.</p>
+    </div>
+    <div class="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
     <label class="text-callout font-medium">Teacher studio<span class="relative mt-1.5 block"><input v-model="draft.studio" class="field h-12 w-full rounded-xl pl-3 pr-10 text-base" placeholder="e.g. Glenmore School of Dance" maxlength="120" @input="inputStudio" @blur="settleStudio" @keydown.enter.prevent="settleStudio" /><SaveIndicator :status="studioStatus" /></span></label>
     <CityField v-model="draft.location" :save-status="locationStatus" @changed="save('location')" />
     <p v-if="error" role="alert" class="text-sm text-destructive sm:col-span-2">{{ error }} <button type="button" class="text-primary underline" @click="flush">Try again</button></p>
+    </div>
   </section>
 </template>
