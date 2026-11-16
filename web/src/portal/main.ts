@@ -5,7 +5,7 @@ import App from './App.vue'
 import DancersPage from './DancersPage.vue'
 import AccountPage from './AccountPage.vue'
 import PolicyPage from './PolicyPage.vue'
-import SupportPage from './SupportPage.vue'
+import { openSupport } from './support'
 import { vProximity } from '@/directives/proximity'
 import '@/composables/useTheme'
 import '@fontsource-variable/atkinson-hyperlegible-next/wght.css'
@@ -18,11 +18,16 @@ const router = createRouter({
     { path: '/dancers', component: DancersPage, meta: { title: 'Dancers' } },
     { path: '/account', component: AccountPage, meta: { title: 'Account' } },
     { path: '/privacy', component: PolicyPage, meta: { title: 'Privacy and terms', public: true } },
-    { path: '/support', redirect: '/help' },
-    { path: '/help', component: SupportPage, meta: { title: 'Help & feedback', public: true } },
+    { path: '/support', redirect: '/' },
+    { path: '/help', redirect: '/' },
     { path: '/:pathMatch(.*)*', redirect: '/dancers' },
   ],
   scrollBehavior: (_to, _from, saved) => saved ?? { top: 0 },
+})
+router.afterEach(to => {
+  if (['/help', '/support'].includes(to.redirectedFrom?.path ?? '')) {
+    void openSupport().catch(console.error)
+  }
 })
 router.afterEach(to => { document.title = `${String(to.meta.title)} · ScotDance Connect` })
 const app = createApp(App)
