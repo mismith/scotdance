@@ -39,6 +39,14 @@ function setup(overrides: Record<string, object> = {}) {
   return { ...controller, calls, refreshSession, acquireToken }
 }
 describe('direct account settings', () => {
+  it('reads Firebase account dates and retains them when an update response omits metadata', async () => {
+    const c = setup({ lookup: { users: [{ ...user, createdAt: '1484124142000', lastLoginAt: '1484628946000' }] } })
+    await c.load()
+    const dates = { creationTime: new Date(1484124142000).toISOString(), lastSignInTime: new Date(1484628946000).toISOString() }
+    expect(c.settings.user?.metadata).toEqual(dates)
+    await c.settings.updateDisplayName('New name')
+    expect(c.settings.user?.metadata).toEqual(dates)
+  })
   it('binds the identity token to the Connect owner before reading private account data', async () => {
     const c = setup({ lookup: { users: [{ ...user, localId: 'someone-else' }] } })
     await expect(c.load()).rejects.toMatchObject({ code: 'auth/user-mismatch' })

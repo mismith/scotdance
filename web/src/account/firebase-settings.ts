@@ -9,6 +9,8 @@ interface Identity {
   localId: string
   email?: string
   displayName?: string
+  createdAt?: string
+  lastLoginAt?: string
   photoUrl?: string
   providerUserInfo?: { providerId: string }[]
 }
@@ -55,7 +57,7 @@ export function createFirebaseSettings(options: SettingsOptions) {
   let tokenUntil = 0
   let active = true
   const profile = reactive({
-    user: null as { email: string | null } | null,
+    user: null as AccountSettings['user'],
     displayName: null as string | null,
     photoURL: null as string | null,
     hasPassword: false,
@@ -102,7 +104,15 @@ export function createFirebaseSettings(options: SettingsOptions) {
   }
   function apply(user: Identity) {
     assertOwner(user)
-    profile.user = { email: user.email ?? null }
+    const metadata = { ...profile.user?.metadata }
+    for (const [source, target] of [['createdAt', 'creationTime'], ['lastLoginAt', 'lastSignInTime']] as const) {
+      if (user[source] !== undefined) {
+        const value = Number(user[source])
+        const date = new Date(value)
+        metadata[target] = value > 0 && Number.isFinite(date.getTime()) ? date.toISOString() : undefined
+      }
+    }
+    profile.user = { email: user.email ?? null, metadata }
     profile.displayName = user.displayName ?? null
     profile.photoURL = user.photoUrl ?? null
     profile.hasPassword =

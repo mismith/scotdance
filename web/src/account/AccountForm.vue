@@ -8,6 +8,14 @@ import Button from '@/components/ui/Button.vue'
 import Avatar from '@/components/Avatar.vue'
 const props = defineProps<{ account: AccountSettings }>()
 const auth = props.account
+const accountDates = computed(() => [
+  { label: 'Created', value: auth.user?.metadata?.creationTime },
+  { label: 'Last sign-in', value: auth.user?.metadata?.lastSignInTime },
+].flatMap(({ label, value }) => {
+  if (!value) return []
+  const date = new Date(value)
+  return Number.isFinite(date.getTime()) ? [{ label, iso: date.toISOString(), text: date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }), full: date.toLocaleString() }] : []
+}))
 const emit = defineEmits<{ changed: []; deleted: [] }>()
 // Display name (debounced save)
 const displayName = ref('')
@@ -175,9 +183,16 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
             <button type="button" aria-label="Change password" class="text-primary text-callout press-row focus-inset min-h-11 rounded-full px-3 font-semibold" @click="openModal('password')">Change</button>
           </div>
         </li>
+        <li>
+          <div class="flex min-h-14 w-full items-center gap-3 px-4 py-2">
+            <div class="min-w-0 flex-1 space-y-1 text-xs text-muted-foreground">
+              <p v-for="date in accountDates" :key="date.label">{{ date.label }} <time :datetime="date.iso" :title="date.full">{{ date.text }}</time></p>
+            </div>
+            <button type="button" class="text-destructive text-callout press-row focus-inset min-h-11 shrink-0 rounded-full px-3 font-semibold" @click="openModal('delete')">Delete account</button>
+          </div>
+        </li>
       </ul>
       <slot name="details" />
-      <button type="button" class="text-destructive press-row mx-auto block h-12 w-fit rounded-full px-4 text-callout font-semibold" @click="openModal('delete')">Delete account</button>
     <Dialog v-if="modal" :open="sheet.open" :morph="sheet" variant="sheet" @close="closeModal">
       <template #header>
         <h2 class="text-title">
