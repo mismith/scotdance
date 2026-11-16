@@ -4,7 +4,6 @@
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import AccountForm from './AccountForm.vue'
-import AccountHeader from './AccountHeader.vue'
 const auth = useAuthStore()
 const me = useMeStore()
 const settings = {
@@ -29,11 +28,6 @@ const settings = {
 </script>
 <template>
   <main v-if="auth.authReady && auth.user" class="mx-auto max-w-3xl p-4">
-    <AccountHeader
-      :name="me.displayName || me.email || '?'"
-      :email="me.email"
-      :image="me.photoURL"
-    />
     <AccountForm :account="settings" class="-mx-4" />
   </main>
 </template>

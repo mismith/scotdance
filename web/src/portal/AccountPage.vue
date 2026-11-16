@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import AccountForm from '@/account/AccountForm.vue'
-import AccountHeader from '@/account/AccountHeader.vue'
 import Button from '@/components/ui/Button.vue'
 import { createFirebaseSettings } from '@/account/firebase-settings'
 import { useConnectAccount } from './account'
@@ -28,11 +27,6 @@ onBeforeUnmount(controller.dispose)
 </script>
 <template>
   <section>
-    <AccountHeader
-      :name="settings.displayName || store.account?.name || store.account?.email || '?'"
-      :email="settings.user?.email || store.account?.email"
-      :image="settings.photoURL"
-    />
     <AccountForm
       v-if="ready"
       :account="settings"

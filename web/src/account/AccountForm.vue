@@ -5,6 +5,7 @@ import type { AccountSettings } from './settings'
 import { useMorph } from '@/lib/morph'
 import Dialog from '@/components/Dialog.vue'
 import Button from '@/components/ui/Button.vue'
+import Avatar from '@/components/Avatar.vue'
 const props = defineProps<{ account: AccountSettings }>()
 const auth = props.account
 const emit = defineEmits<{ changed: []; deleted: [] }>()
@@ -140,8 +141,11 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
 </script>
 <template>
   <div class="space-y-5 px-4 py-3">
-      <section class="space-y-2">
-        <label class="block space-y-1.5">
+      <header class="space-y-2">
+        <h1 class="sr-only">Account</h1>
+        <div class="flex items-end gap-4">
+          <Avatar :name="displayName || auth.user?.email || '?'" :email="auth.user?.email" :image="auth.photoURL" size="lg" you />
+        <label class="block min-w-0 flex-1 space-y-1.5">
           <span class="text-callout font-medium">Your name</span>
           <input
             v-model="displayName"
@@ -152,9 +156,11 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
             @blur="saveDisplayName"
           />
         </label>
+        </div>
+        <p class="text-sm text-muted-foreground">Your picture comes from <a href="https://gravatar.com/" target="_blank" rel="noopener" class="font-semibold text-primary">Gravatar</a>.</p>
         <p v-if="displayNameSaving" class="text-muted-foreground text-sm">Saving…</p>
         <p v-if="displayNameError" class="text-destructive text-sm font-medium" role="alert">Your name didn’t save. Try again.</p>
-      </section>
+      </header>
 
       <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
         <li>
