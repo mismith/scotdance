@@ -70,7 +70,7 @@ onBeforeUnmount(stop)
 </script>
 <template>
   <div ref="root" class="min-w-0" @focusout="settle">
-    <label v-if="!manual" :for="id" class="text-callout font-medium">City</label>
+    <label v-if="!manual" :for="id" class="block text-callout font-medium">City</label>
     <div v-if="!manual" class="relative mt-1.5">
       <Search class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-primary" aria-hidden="true" />
       <input :id="id" ref="input" v-model="query" class="field h-12 w-full rounded-xl pl-10 pr-12 text-base" placeholder="Search for a city" role="combobox" autocomplete="off" maxlength="120" aria-autocomplete="list" :aria-controls="`${id}-list`" :aria-expanded="!!suggestions.length" :aria-activedescendant="active >= 0 ? `${id}-${active}` : undefined" @input="search" @keydown="key" />
