@@ -79,7 +79,11 @@ test('signs in, sends to the competition tapped, and opens its Import dancers, s
   // Its Import dancers opens with the list in the preview: already signed in,
   // since signing in over the tool signed in to ScotDance.app
   await expect(popup).toHaveURL(new RegExp(`/competitions/${competition.id}/manage/dancers/import\\?inbox=${key}$`))
-  await expect(popup.getByRole('cell', { name: 'Ava Ross', exact: true })).toBeVisible({ timeout: 15_000 })
+  // This CSV has separate first/last-name columns; verify both in the same dancer row.
+  const ava = popup.getByRole('row').filter({ has: popup.getByRole('cell', { name: '101', exact: true }) })
+  await expect(ava.getByRole('cell', { name: 'Ava', exact: true })).toBeVisible({ timeout: 15_000 })
+  await expect(ava.getByRole('cell', { name: 'Ross', exact: true })).toBeVisible()
+  await expect(ava.getByRole('cell', { name: 'Calgary, AB', exact: true })).toBeVisible()
   await expect(popup.getByRole('button', { name: /Import 2 dancers/ })).toBeVisible()
 
   await expect(s.getByRole('heading', { name: `Sent to ${competition.name}` })).toBeVisible()

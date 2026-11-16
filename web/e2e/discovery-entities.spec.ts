@@ -54,13 +54,14 @@ test('a venue page has directions, a map and its competitions', { tag: '@seed' }
   await expect(page.getByRole('link', { name: /Evelyn Nicholsen Leinweber/ })).toBeVisible()
 })
 
-test('a dancer page shows every competition with their number there', { tag: '@seed' }, async ({ page }) => {
+test('a dancer history links to competition entries without old bib numbers', { tag: '@seed' }, async ({ page }) => {
   await page.goto(`/dancers/${DANCER}/info`)
   await expect(page.getByRole('heading', { level: 1, name: dancer })).toBeVisible()
   await expect(page.getByText(/5 competitions since 2018/)).toBeVisible()
   const nationals = page.getByRole('link', { name: /Nationals/ })
-  // Their number there, as the card they wore.
-  await expect(nationals.getByRole('img', { name: 'Number 1088' })).toBeVisible()
+  // Historical bibs are deliberately hidden; the entry link still reaches their results.
+  await expect(nationals).toBeVisible()
+  await expect(nationals.getByRole('img', { name: /^Number / })).toHaveCount(0)
   await nationals.click()
   await expect(page).toHaveURL(/\/competitions\/-L9Sc9TQWQclq_7oA3ij\/dancers\/[^/]+$/)
 })
