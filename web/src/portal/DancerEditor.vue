@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
 import ConnectBrand from './ConnectBrand.vue'
 import DancerDefaults from './DancerDefaults.vue'
+import DancerPhoto from './DancerPhoto.vue'
 import PublicDancerLink from './PublicDancerLink.vue'
 import BirthdayField from './BirthdayField.vue'
 import { tidy, tidyStudio } from './profileFields'
@@ -22,6 +23,8 @@ const props = defineProps<
 const emit = defineEmits<{ close: []; saved: [result: EditorResult] }>()
 const busy = ref(false)
 const error = ref('')
+const photo = ref(props.photo?.value ?? null)
+const photoEditing = ref(false)
 const opened = ref(true)
 let lastWrite = '',
   requestId = ''
@@ -106,7 +109,7 @@ function close() {
   }
 }
 async function save() {
-  if (preparing.value || busy.value) return
+  if (preparing.value || busy.value || photoEditing.value) return
   if (!form.value?.reportValidity()) return
   draft.value.firstName = tidy(draft.value.firstName)
   draft.value.lastName = tidy(draft.value.lastName)
@@ -134,6 +137,7 @@ async function persist(updateDefaults = false, remove = false) {
   busy.value = true
   error.value = ''
   const body = {
+    ...(props.photo && photo.value !== props.photo.value ? { photo: photo.value } : {}),
     action: remove ? ('delete' as const) : ('save' as const),
     dancer: JSON.parse(JSON.stringify(draft.value)) as Dancer,
     defaults: updateDefaults ? { ...changedDefaults.value } : {},
@@ -166,7 +170,9 @@ async function persist(updateDefaults = false, remove = false) {
     @close="close"
     @closed="emit('close')"
   >
-    <template #header><h2 class="flex min-w-0"><ConnectBrand /></h2></template>
+    <template #header
+      ><h2 class="flex min-w-0"><ConnectBrand /></h2
+    ></template>
     <template #header-actions>
       <button
         v-if="props.dancer && !deleting && !confirmDefaults"
@@ -313,20 +319,36 @@ async function persist(updateDefaults = false, remove = false) {
             :defaults="props.defaults"
             class="col-span-2"
           />
+          <DancerPhoto
+            v-if="props.photo"
+            class="col-span-2 sm:col-span-1"
+            v-model="photo"
+            @editing="photoEditing = $event"
+          />
           <PublicDancerLink
             ref="publicLink"
             v-model="draft.publicDancer"
             :first-name="draft.firstName"
             :last-name="draft.lastName"
-            class="col-span-2"
+            :class="props.photo ? 'col-span-2 sm:col-span-1' : 'col-span-2'"
           />
         </fieldset>
         <footer class="flex items-center justify-between gap-4">
           <p class="text-muted-foreground flex items-center gap-1.5 text-sm">
-            <Shield class="size-4 shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true" />
+            <Shield
+              class="size-4 shrink-0 text-amber-500 dark:text-amber-400"
+              aria-hidden="true"
+            />
             <span>Shared only when you consent.</span>
           </p>
-          <Button class="shrink-0" type="submit" variant="primary" :busy="busy || preparing">Save</Button>
+          <Button
+            class="shrink-0"
+            type="submit"
+            variant="primary"
+            :busy="busy || preparing"
+            :disabled="photoEditing"
+            >Save</Button
+          >
         </footer>
       </form>
       <p v-if="error" role="alert" class="text-destructive mt-4">{{ error }}</p>
