@@ -19,11 +19,13 @@ export const useConnectAccount = defineStore('connect-account', () => {
   const dancers = ref<Dancer[]>([])
   const busy = ref(false)
   const ready = ref(false)
+  const pageReady = ref(false)
   const error = ref('')
   let identityPass = ''
   let identityUntil = 0
 
   function clear() {
+    pageReady.value = false
     account.value = null
     dancers.value = []
     identityPass = ''
@@ -109,5 +111,5 @@ export const useConnectAccount = defineStore('connect-account', () => {
       await load()
     })
   }
-  return { account, dancers, busy, ready, error, clear, initialize, login, logout, refresh, identityToken, load, save, run }
+  return { account, dancers, busy, ready, pageReady, error, clear, initialize, login, logout, refresh, identityToken, load, save, run }
 })

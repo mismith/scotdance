@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { Users, UserRound, LogOut } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
@@ -7,8 +7,10 @@ import SidebarLink from '@/components/nav/SidebarLink.vue'
 import LogoMark from '@/components/LogoMark.vue'
 import { useConnectAccount } from './account'
 import { openSupport } from './support'
+import PageSkeleton from './PageSkeleton.vue'
 const route = useRoute()
 const store = useConnectAccount()
+const loading = computed(() => !route.meta.public && (!store.ready || (route.path === '/account' && !!store.account && !store.pageReady)))
 onMounted(() => { void store.initialize(!route.meta.public) })
 </script>
 <template>
@@ -18,18 +20,20 @@ onMounted(() => { void store.initialize(!route.meta.public) })
         <LogoMark class="size-7 shrink-0 text-primary" />
         <span class="truncate text-heading font-bold tracking-tight">ScotDance <span class="font-extrabold text-primary">Connect</span></span>
       </RouterLink>
-      <Button v-if="store.account" variant="plain" size="sm" :disabled="store.busy" @click="store.logout()">
+      <Button v-if="store.account" v-show="!loading" variant="plain" size="sm" :disabled="store.busy" @click="store.logout()">
         <LogOut aria-hidden="true" /> Sign out
       </Button>
     </header>
-    <nav v-if="store.account" aria-label="Your account" class="-mx-1 flex gap-1 pb-5">
+    <nav v-if="store.account || loading" :inert="loading" :aria-hidden="loading || undefined" :class="{ 'invisible': loading }" aria-label="Your account" class="-mx-1 flex gap-1 pb-5">
       <SidebarLink to="/account" :icon="UserRound" label="Account" :state="route.path === '/account' ? 'current' : null" />
       <SidebarLink to="/dancers" :icon="Users" label="Dancers" :state="route.path.startsWith('/dancers') ? 'current' : null" />
     </nav>
     <main id="main" class="flex-1 pb-8 pt-4">
-      <RouterView v-if="route.meta.public || (store.ready && store.account)" :key="route.path" />
-      <p v-else-if="!store.ready" role="status" class="text-muted-foreground">Opening your account…</p>
-      <section v-else class="space-y-5 py-12">
+      <PageSkeleton v-if="loading" :account="route.path === '/account'" />
+      <div v-if="route.meta.public || (store.ready && store.account)" v-show="!loading">
+        <RouterView :key="route.path" />
+      </div>
+      <section v-else-if="!loading" class="space-y-5 py-12">
         <h1 class="text-hero">Your ScotDance account</h1>
         <p class="max-w-md text-base text-muted-foreground">Manage your account and your dancers.</p>
         <Button variant="primary" :busy="store.busy" @click="store.login()">Sign in with ScotDance</Button>

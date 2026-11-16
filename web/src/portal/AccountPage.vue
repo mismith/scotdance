@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button.vue'
 import { createFirebaseSettings } from '@/account/firebase-settings'
 import { useConnectAccount } from './account'
 const store = useConnectAccount()
+store.pageReady = false
 const ready = ref(false)
 const error = ref('')
 const controller = createFirebaseSettings({
@@ -15,11 +16,14 @@ const controller = createFirebaseSettings({
 const settings = controller.settings
 async function load() {
   error.value = ''
+  store.pageReady = false
   try {
     await controller.load()
     ready.value = true
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Could not open your account.'
+  } finally {
+    store.pageReady = true
   }
 }
 onMounted(load)
@@ -38,6 +42,5 @@ onBeforeUnmount(controller.dispose)
       <p role="alert" class="text-destructive">{{ error }}</p>
       <Button @click="load">Try again</Button>
     </div>
-    <p v-else role="status" class="text-muted-foreground">Opening your account…</p>
   </section>
 </template>
