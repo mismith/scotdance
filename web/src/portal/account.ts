@@ -10,6 +10,7 @@ export interface Dancer {
   category: string
   studio: string
   registrationNumber: string
+  publicDancer?: { id: string; name: string } | null
   location?: { town: string; province: string; country: string }
 }
 // A non-sensitive preference: explicit sign-out must suppress automatic SSO.
@@ -123,8 +124,8 @@ export const useConnectAccount = defineStore('connect-account', () => {
   }
   async function save(dancer: Dancer, remove = false) {
     return run(async () => {
-      const { id, revision, firstName, lastName, birthday, category, studio, registrationNumber, location } = dancer
-      const details = { firstName, lastName, birthday, category, studio, registrationNumber, ...(location ? { location } : {}) }
+      const { id, revision, firstName, lastName, birthday, category, studio, registrationNumber, location, publicDancer } = dancer
+      const details = { firstName, lastName, birthday, category, studio, registrationNumber, ...(location ? { location } : {}), ...(publicDancer !== undefined ? { publicDancer } : {}) }
       await api(remove ? 'delete' : 'save', { id, revision, requestId: crypto.randomUUID(), dancer: details })
       await load()
     })

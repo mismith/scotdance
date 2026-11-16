@@ -158,6 +158,8 @@ const step = computed<Step>(() => {
   if (unreadable.value) return 'unreadable'
   if (sent.value) return 'sent'
   if (!auth.authReady) return 'loading'
+  // Silent session handoffs must not mount a hidden password form.
+  if (handingOff.value && audience.value === 'connect') return 'loading'
   if (!auth.isSignedIn || handingOff.value) return 'signin'
   if (audience.value) return 'continue'
   if (!competitions.value) return 'loading'

@@ -4,6 +4,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { ChevronLeft } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import DancerDetails from './DancerDetails.vue'
+import PublicDancerLink from './PublicDancerLink.vue'
 import { useConnectAccount, type Dancer } from './account'
 const store = useConnectAccount()
 const route = useRoute()
@@ -29,13 +30,14 @@ async function save(remove = false) {
     <h1 class="mb-6 text-hero">{{ missing ? 'Dancer not found' : title }}</h1>
     <p v-if="missing" class="text-muted-foreground">This dancer may have been deleted.</p>
     <form v-else class="space-y-6" @submit.prevent="save()">
-      <p class="text-muted-foreground">Only their name is required for now. Changes also update this dancer in Entries.</p>
+      <p class="text-muted-foreground">Only their name is required. Save other details if you’d like to reuse them across ScotDance.app tools.</p>
       <fieldset :disabled="store.busy" class="grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2">
         <label class="text-callout font-medium">First name<input v-model="draft.firstName" :class="field" required maxlength="120" autocomplete="off" /></label>
         <label class="text-callout font-medium">Last name<input v-model="draft.lastName" :class="field" required maxlength="120" autocomplete="off" /></label>
         <label class="text-callout font-medium">Birthday <span class="text-muted-foreground">(optional)</span><input v-model="draft.birthday" :class="field" type="date" min="1900-01-01" :max="new Date().toISOString().slice(0, 10)" /></label>
         <label class="text-callout font-medium">Registration number <span class="text-muted-foreground">(optional)</span><input v-model="draft.registrationNumber" :class="field" maxlength="120" /></label>
         <DancerDetails ref="details" v-model="draft" class="sm:col-span-2" />
+        <PublicDancerLink v-model="draft.publicDancer" :first-name="draft.firstName" :last-name="draft.lastName" class="sm:col-span-2" />
       </fieldset>
       <div v-if="!deleting" class="flex flex-wrap items-center gap-2">
         <Button type="submit" variant="primary" :busy="store.busy">Save dancer</Button>

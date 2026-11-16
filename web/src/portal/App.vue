@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { Users, UserRound, LogOut } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
+import ScotDanceSignInButton from '@/components/ScotDanceSignInButton.vue'
 import SidebarLink from '@/components/nav/SidebarLink.vue'
 import LogoMark from '@/components/LogoMark.vue'
 import { useConnectAccount } from './account'
@@ -39,8 +40,8 @@ onMounted(() => { void store.initialize(!route.meta.public) })
       </div>
       <section v-else-if="!loading" class="space-y-5 py-12">
         <h1 class="text-hero">Your ScotDance account</h1>
-        <p class="max-w-md text-base text-muted-foreground">One ScotDance account for you and your dancers. Keep your details up to date here and reuse them in Entries, without filling them in again.</p>
-        <Button variant="primary" :busy="store.busy" @click="store.login()">Sign in with ScotDance</Button>
+        <p class="max-w-md text-base text-muted-foreground">Your account details, in one private place. Manage what you save and reuse it across the ScotDance.app family of <a href="https://toolkit.scotdance.app" class="text-primary underline underline-offset-4">tools</a>—with less typing and more control over your privacy.</p>
+        <ScotDanceSignInButton :busy="store.busy" @click="store.login()" />
       </section>
       <p v-if="store.error" role="alert" class="mt-5 text-destructive">{{ store.error }}</p>
     </main>

@@ -216,3 +216,23 @@ test('closing Sign in with ScotDance.app tells the tool nothing', async ({ page,
   await sheet(page).getByRole('button', { name: 'Close' }).click()
   await expect.poll(() => result(page)).toEqual({ signedIn: false })
 })
+
+test('silent Connect handoff never mounts password fields', async ({ page, baseURL }) => {
+  const email = `${uid('connect')}@example.test`
+  await ensureUser(email)
+  await signIn(page, email)
+  await page.addInitScript(() => {
+    const observer = new MutationObserver(() => {
+      if (location.pathname === '/connect.html' && document.querySelector('input[autocomplete="current-password"]')) {
+        console.error('UNEXPECTED_HIDDEN_PASSWORD_FORM')
+      }
+    })
+    observer.observe(document, { subtree: true, childList: true })
+  })
+  const hiddenForms: string[] = []
+  page.on('console', message => { if (message.text() === 'UNEXPECTED_HIDDEN_PASSWORD_FORM') hiddenForms.push(message.text()) })
+  await openTool(page, baseURL!, `ScotDance.signIn({ audience: 'connect' })`)
+  await expect.poll(() => result(page)).toMatchObject({ signedIn: true })
+  await expect(page.locator('scotdance-connect')).toHaveCount(0)
+  expect(hiddenForms).toEqual([])
+})

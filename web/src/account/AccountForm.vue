@@ -174,7 +174,7 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
         </li>
       </ul>
       <button type="button" class="text-destructive press-row mx-auto block h-12 w-fit rounded-full px-4 text-callout font-semibold" @click="openModal('delete')">Delete account</button>
-    <Dialog :open="sheet.open" :morph="sheet" variant="sheet" @close="closeModal">
+    <Dialog v-if="modal" :open="sheet.open" :morph="sheet" variant="sheet" @close="closeModal">
       <template #header>
         <h2 class="text-title">
           <template v-if="modal === 'email'">Change your email</template>
