@@ -12,6 +12,8 @@ import { canEdit, friendlyError } from '@/lib/admin/write'
 import { formatLongDate } from '@/lib/format'
 import { useMorph } from '@/lib/morph'
 import { useMeStore } from '@/stores/me'
+const pendingSubmit = ref(false)
+
 
 // A system admin's control on a dancer's profile, for when a family asks:
 // hiding it turns off the signed-in extra (every competition, not just the
@@ -41,6 +43,10 @@ watch(
 )
 
 async function submit() {
+  if (pendingSubmit.value) return
+  pendingSubmit.value = true
+  try {
+
   if (busy.value || loading.value || !canEdit.value) return
   const hide = !hidden.value
   busy.value = true
@@ -53,6 +59,8 @@ async function submit() {
   } finally {
     busy.value = false
   }
+
+  } finally { pendingSubmit.value = false }
 }
 </script>
 

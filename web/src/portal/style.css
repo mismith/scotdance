@@ -3,6 +3,7 @@
 /* The separate entry only needs its pages and the shared components it uses. */
 @source './';
 @source '../components/ui/Button.vue';
+@source '../components/AsyncButton.vue';
 @source '../components/nav/SidebarLink.vue';
 @source '../components/AdminMark.vue';
 @source '../components/LogoMark.vue';

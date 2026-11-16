@@ -12,6 +12,8 @@ import { canEdit, friendlyError } from '@/lib/admin/write'
 import { formatRelative } from '@/lib/format'
 import { isNative } from '@/lib/native'
 import { useAuthStore } from '@/stores/auth'
+const pendingInvite = ref(false)
+
 
 // Who can manage a competition or an organisation. Invites are emailed by the
 // server; the person accepts from the link and gets access. Removing someone
@@ -49,6 +51,10 @@ const emailError = ref<string | null>(null)
 const sending = ref(false)
 
 async function invite() {
+  if (pendingInvite.value) return
+  pendingInvite.value = true
+  try {
+
   if (sending.value) return
   const value = email.value.trim().toLowerCase()
   emailError.value = null
@@ -72,6 +78,8 @@ async function invite() {
   } finally {
     sending.value = false
   }
+
+  } finally { pendingInvite.value = false }
 }
 
 async function resend(i: Invite) {

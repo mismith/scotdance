@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, ref } from 'vue'
 import { makeDraggable } from '@vue-dnd-kit/core'
 import { GripVertical, Trash2 } from '@lucide/vue'
@@ -112,7 +113,7 @@ async function remove() {
           "
         />
       </div>
-      <button
+      <AsyncButton
         v-if="!b.readonly.value"
         type="button"
         :aria-label="`Delete ${row.name || 'row'}`"
@@ -122,7 +123,7 @@ async function remove() {
         @keydown.space.stop
       >
         <Trash2 class="size-4" />
-      </button>
+      </AsyncButton>
     </div>
   </div>
 

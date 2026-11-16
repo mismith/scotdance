@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { ChevronDown, ChevronLeft, Link2 } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
@@ -177,7 +178,7 @@ watch(
       </div>
       <ul class="divide-y pb-[var(--safe-bottom)]">
         <li v-for="x in choices" :key="x.c.id">
-          <button
+          <AsyncButton
             type="button"
             class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left disabled:opacity-(--disabled-opacity)"
             :disabled="!!x.blocked"
@@ -191,7 +192,7 @@ watch(
               </span>
             </span>
             <Link2 class="text-primary size-5 shrink-0" aria-hidden="true" />
-          </button>
+          </AsyncButton>
         </li>
         <li v-if="!choices.length" class="text-muted-foreground px-4 py-3 text-sm">
           {{ query.trim() ? `Nothing you manage matches “${query.trim()}”.` : 'No other competitions you manage. Ask its organisers to link it from theirs.' }}

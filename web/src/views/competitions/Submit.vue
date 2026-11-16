@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { endAt, get, onValue, orderByChild, query, startAt } from 'firebase/database'
@@ -1025,13 +1026,13 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
                 <h2 id="match-here" class="text-callout text-muted-foreground font-medium">Already on ScotDance.app</h2>
                 <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
                   <li v-for="c in suggestions.here" :key="c.id">
-                    <button type="button" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-3 pr-3 pl-4 text-left" @click="alreadyHere(c)">
+                    <AsyncButton type="button" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-3 pr-3 pl-4 text-left" @click="alreadyHere(c)">
                       <span class="min-w-0 flex-1 space-y-1">
                         <span class="block text-base font-semibold break-words">{{ c.name }}</span>
                         <span class="text-muted-foreground block text-sm">{{ hereLine(c) }}</span>
                       </span>
                       <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
-                    </button>
+                    </AsyncButton>
                   </li>
                 </ul>
               </section>

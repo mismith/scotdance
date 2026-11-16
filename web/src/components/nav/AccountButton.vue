@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { RouterLink, useRouter, type RouteLocationRaw } from 'vue-router'
 import { LogIn, LogOut, Settings, UserRound } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
@@ -116,9 +117,9 @@ const row =
           <button type="button" :class="row" @click="go({ name: 'settings' })">
             <Settings class="size-5" /> Settings
           </button>
-          <button type="button" :class="row" @click="signOut">
+          <AsyncButton type="button" :class="row" @click="signOut">
             <LogOut class="size-5" /> Sign out
-          </button>
+          </AsyncButton>
         </div>
       </nav>
     </template>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, ref, useId } from 'vue'
 import { Bell, BellOff, BellRing, History, Smartphone, Sun } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
@@ -166,13 +167,13 @@ async function clearHistory() {
       <section class="space-y-2">
         <h2 class="text-section">This device</h2>
         <div class="rows-engraved -mx-4 [--inset:3rem] [--inset-end:1rem]">
-          <button type="button" :class="rowClass" @click="clearHistory">
+          <AsyncButton type="button" :class="rowClass" @click="clearHistory">
             <History class="text-primary" />
             <span class="min-w-0 flex-1">
               <span class="block text-base font-medium">Clear history</span>
               <span class="text-muted-foreground block text-sm">Recent searches, recently viewed, and copies kept for offline use</span>
             </span>
-          </button>
+          </AsyncButton>
         </div>
       </section>
     </main>

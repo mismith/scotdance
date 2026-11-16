@@ -1,4 +1,5 @@
 <script setup lang="ts" generic="T extends CollectionItem">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, nextTick, onBeforeUnmount, reactive, ref, shallowRef, watch, watchEffect } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { VueDraggable } from 'vue-draggable-plus'
@@ -32,6 +33,8 @@ import { ALL_SECTIONS } from '@/lib/admin/sections'
 import { useMorph } from '@/lib/morph'
 import { planAdd, planAddPresets, planRemove, planReorder, planSetField, planSetFieldOn } from '@shared/plans/collection'
 import type { LinkPart } from '@/lib/linked'
+const pendingSubmitDraft = ref(false)
+
 
 // One editable list: search, select several to change or delete at once,
 // drag to reorder (or move from the keyboard), swipe one left to delete it,
@@ -359,6 +362,10 @@ watch(
 // A double tap on Add shouldn't add it twice.
 const submitting = ref(false)
 async function submitDraft(another: boolean) {
+  if (pendingSubmitDraft.value) return
+  pendingSubmitDraft.value = true
+  try {
+
   if (submitting.value) return
   let firstError: string | null = null
   const fields = fieldsOf(draft)
@@ -409,6 +416,8 @@ async function submitDraft(another: boolean) {
   } finally {
     submitting.value = false
   }
+
+  } finally { pendingSubmitDraft.value = false }
 }
 
 // --- Presets
@@ -830,12 +839,12 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
     </template>
     <ul class="divide-y pb-[var(--safe-bottom)]">
       <li v-if="!bulkField?.required">
-        <button type="button" class="press-row focus-inset flex min-h-13 w-full items-center px-4 text-left text-base font-medium" @click="applyBulk(null)">None</button>
+        <AsyncButton type="button" class="press-row focus-inset flex min-h-13 w-full items-center px-4 text-left text-base font-medium" @click="applyBulk(null)">None</AsyncButton>
       </li>
       <li v-for="o in bulkField?.options?.() ?? []" :key="o.value">
-        <button type="button" class="press-row focus-inset flex min-h-13 w-full items-center px-4 py-2 text-left text-base font-medium" @click="applyBulk(o.value)">
+        <AsyncButton type="button" class="press-row focus-inset flex min-h-13 w-full items-center px-4 py-2 text-left text-base font-medium" @click="applyBulk(o.value)">
           {{ o.label }}
-        </button>
+        </AsyncButton>
       </li>
     </ul>
   </Dialog>

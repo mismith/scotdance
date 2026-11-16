@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import { Eye, EyeOff, ExternalLink } from '@lucide/vue'
 import type { AccountSettings } from './settings'
@@ -8,6 +9,8 @@ import Button from '@/components/ui/Button.vue'
 import Avatar from '@/components/Avatar.vue'
 import SaveIndicator from './SaveIndicator.vue'
 import { useSaveFeedback } from './save-feedback'
+const pendingSubmitModal = ref(false)
+
 const props = defineProps<{ account: AccountSettings }>()
 const auth = props.account
 function formatDate(value?: string) {
@@ -114,6 +117,10 @@ function closeModal() {
 }
 
 async function submitModal() {
+  if (pendingSubmitModal.value) return
+  pendingSubmitModal.value = true
+  try {
+
   modalError.value = null
   submitting.value = true
   try {
@@ -142,6 +149,8 @@ async function submitModal() {
   } finally {
     submitting.value = false
   }
+
+  } finally { pendingSubmitModal.value = false }
 }
 
 const submitDisabled = computed(() => {
@@ -249,9 +258,9 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
               </button>
             </span>
           </label>
-          <button type="button" class="text-primary press h-11 text-sm font-semibold" @click="sendPasswordLink">
+          <AsyncButton type="button" class="text-primary press h-11 text-sm font-semibold" @click="sendPasswordLink">
             Send password reset link
-          </button>
+          </AsyncButton>
           <p v-if="passwordLinkSent" class="text-done-foreground text-sm font-medium" role="status">
             A password reset link is on its way to {{ auth.user?.email }}.
           </p>

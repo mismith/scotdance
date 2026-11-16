@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { CircleAlert, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
@@ -110,14 +111,14 @@ async function runAction(id: number, run: () => unknown) {
           <p class="min-w-0 flex-1 py-1.5 text-callout font-medium" :class="t.tone === 'error' && 'pl-1'">
             <span v-if="t.tone === 'error'" class="sr-only">Error: </span>{{ t.message }}
           </p>
-          <button
+          <AsyncButton
             v-if="t.action"
             type="button"
             class="press h-10 shrink-0 rounded-xl px-3 text-callout font-semibold text-(--hud-link)"
             @click="runAction(t.id, t.action.run)"
           >
             {{ t.action.label }}
-          </button>
+          </AsyncButton>
           <button
             type="button"
             aria-label="Dismiss"

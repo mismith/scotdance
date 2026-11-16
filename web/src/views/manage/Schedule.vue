@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { DnDProvider } from '@vue-dnd-kit/core'
@@ -172,7 +173,7 @@ const missing = computed(() =>
             class="field h-11 rounded-xl px-3 text-base disabled:opacity-(--disabled-opacity)"
             @change="setDayDate"
           />
-          <button
+          <AsyncButton
             v-if="!b.readonly.value"
             type="button"
             :aria-label="`Delete ${day.label}`"
@@ -180,7 +181,7 @@ const missing = computed(() =>
             @click="removeDay"
           >
             <Trash2 class="size-4" />
-          </button>
+          </AsyncButton>
           <p v-if="weekdayClash" class="text-next-foreground basis-full text-sm font-medium">
             That date is a {{ weekdayClash }}. Families see the name, so check which is right.
           </p>

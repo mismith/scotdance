@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, nextTick, ref } from 'vue'
 import { Bell, Star } from '@lucide/vue'
 import { askForAlerts } from '@/components/AlertsPrompt.vue'
@@ -55,7 +56,7 @@ async function handleClick(e: Event) {
 </script>
 
 <template>
-  <button
+  <AsyncButton
     type="button"
     :aria-pressed="isFavorite"
     :aria-label="labelled ? undefined : `${word}${name ? ` ${alerts ? 'for ' : ''}${name}` : ''}`"
@@ -89,5 +90,5 @@ async function handleClick(e: Event) {
       @animationend="animating = false"
     />
     <template v-if="labelled">{{ word }}</template>
-  </button>
+  </AsyncButton>
 </template>
