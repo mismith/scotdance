@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
+import { Trash2 } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
 import DancerDetails from './DancerDetails.vue'
@@ -60,6 +61,9 @@ async function persist(updateDefaults = false, remove = false) {
 <template>
   <Dialog :open="true" :morph="false" variant="sheet" size="lg" :closable="!store.busy && !preparing" @close="close">
     <template #header><h2 class="text-title">{{ deleting ? 'Delete dancer?' : confirmDefaults ? 'Use these details for new dancers?' : title }}</h2></template>
+    <template #header-actions>
+      <button v-if="props.dancer && !deleting && !confirmDefaults" type="button" class="press-row relative flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-destructive after:absolute after:-inset-1" aria-label="Delete dancer" :disabled="store.busy || preparing" @click="deleting = true"><Trash2 class="size-4" aria-hidden="true" /></button>
+    </template>
     <div class="p-4">
       <div v-if="deleting" class="space-y-4">
         <p>Delete {{ draft.firstName }} {{ draft.lastName }}? Existing competition entries stay unchanged.</p>
@@ -78,10 +82,8 @@ async function persist(updateDefaults = false, remove = false) {
           <DancerDetails ref="details" v-model="draft" class="col-span-2" />
           <PublicDancerLink ref="publicLink" v-model="draft.publicDancer" :first-name="draft.firstName" :last-name="draft.lastName" class="col-span-2" />
         </fieldset>
-        <div class="flex flex-wrap items-center gap-2">
-          <Button type="submit" variant="primary" :busy="store.busy || preparing">Save dancer</Button>
-          <Button variant="plain" :disabled="store.busy || preparing" @click="close">Cancel</Button>
-          <Button v-if="props.dancer" variant="plain" class="ml-auto" :disabled="store.busy || preparing" @click="deleting = true">Delete dancer</Button>
+        <div class="flex justify-end">
+          <Button type="submit" variant="primary" :busy="store.busy || preparing">Save</Button>
         </div>
       </form>
       <p v-if="store.error" role="alert" class="mt-4 text-destructive">{{ store.error }}</p>

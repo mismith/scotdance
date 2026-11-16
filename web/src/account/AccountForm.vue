@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onScopeDispose, ref, watch } from 'vue'
-import { Eye, EyeOff } from '@lucide/vue'
+import { Eye, EyeOff, ExternalLink } from '@lucide/vue'
 import type { AccountSettings } from './settings'
 import { useMorph } from '@/lib/morph'
 import Dialog from '@/components/Dialog.vue'
@@ -176,7 +176,7 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
           </span>
         </label>
         </div>
-        <p class="text-sm text-muted-foreground">Your picture comes from <a href="https://gravatar.com/" target="_blank" rel="noopener" class="font-semibold text-primary">Gravatar</a>.</p>
+        <p class="text-sm text-muted-foreground">Your picture comes from <a href="https://gravatar.com/" target="_blank" rel="noopener" class="inline-flex items-baseline gap-1 font-semibold text-primary">Gravatar<ExternalLink class="size-3 self-center" aria-hidden="true" /></a>.</p>
         <p v-if="displayNameError" class="text-destructive text-sm font-medium" role="alert">Your name didn’t save. Try again.</p>
       </header>
 

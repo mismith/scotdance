@@ -69,10 +69,11 @@ watch(value, (query) => {
   stopSearch()
   if (active.value !== 'location' || manual.value || query.trim().length < 2) return
   const version = request
+  failed.value = false
   searching.value = true
   timer = setTimeout(async () => {
     try { const result = await fetchTownSuggestions(query); if (version === request) { suggestions.value = result; highlighted.value = result.length ? 0 : -1 } }
-    catch { if (version === request) { failed.value = true; manual.value = true; location.value.town = query.trim() } }
+    catch { if (version === request) { failed.value = true } }
     finally { if (version === request) searching.value = false }
   }, 250)
 })
@@ -83,7 +84,7 @@ async function choose(suggestion: PlaceSuggestion) {
   try {
     const result = await resolveTown(suggestion.placeId)
     if (version === request) { location.value = result; if (complete()) commitPending(); else manual.value = true }
-  } catch { if (version === request) { failed.value = true; manual.value = true; location.value.town = suggestion.primaryText } }
+  } catch { if (version === request) { failed.value = true } }
   finally { choosing.value = false }
 }
 function keydown(event: KeyboardEvent) {
@@ -140,6 +141,7 @@ onBeforeUnmount(stopSearch)
               <span class="block font-semibold">{{ suggestion.primaryText }}</span><span class="text-sm text-muted-foreground">{{ suggestion.secondaryText }}</span>
             </li>
           </ul>
+          <p v-if="failed" role="status" class="mt-1 text-sm text-muted-foreground">City search is unavailable. Try again or enter it manually.</p>
           <div class="flex flex-wrap items-center justify-between gap-x-2">
             <Button variant="plain" size="sm" class="-ml-3.5" @click="typeManually">Enter city manually</Button>
             <span v-if="suggestions.length" class="text-xs text-muted-foreground">Powered by Google</span>

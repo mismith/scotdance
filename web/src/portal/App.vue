@@ -20,26 +20,26 @@ onMounted(() => { void store.initialize(!route.meta.public) })
 </script>
 <template>
   <div class="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-(--safe-top) sm:px-6">
-    <header class="flex h-16 shrink-0 items-center justify-between gap-4">
-      <RouterLink to="/account" class="focus-inset -ml-2 flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-2" aria-label="ScotDance Connect">
+    <header class="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 md:grid-cols-[auto_minmax(0,1fr)_auto]">
+      <RouterLink to="/account" class="focus-inset -ml-2 my-2.5 flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-2" aria-label="ScotDance Connect">
         <LogoMark class="size-7 shrink-0 text-primary" />
         <span class="truncate text-heading font-bold tracking-tight">ScotDance <span class="font-extrabold text-primary">Connect</span></span>
       </RouterLink>
-      <Button v-if="store.account" v-show="!loading" variant="plain" size="sm" :disabled="store.busy" @click="store.logout()">
+      <Button v-if="store.account" v-show="!loading" variant="plain" size="sm" class="col-start-2 row-start-1 justify-self-end md:col-start-3" :disabled="store.busy" @click="store.logout()">
         <LogOut aria-hidden="true" /> Sign out
       </Button>
-    </header>
-    <nav v-if="store.account || loading" :inert="loading" :aria-hidden="loading || undefined" :class="{ 'invisible': loading }" aria-label="Your account" class="pb-5">
-      <div class="grid w-full max-w-sm grid-cols-2 gap-1 rounded-2xl border border-border bg-background p-1">
+    <nav v-if="store.account || loading" :inert="loading" :aria-hidden="loading || undefined" :class="{ 'invisible': loading }" aria-label="Your account" class="col-span-2 row-start-2 pb-5 md:col-span-1 md:col-start-2 md:row-start-1 md:justify-self-center md:pb-0">
+      <div class="grid w-full max-w-sm grid-cols-2 md:w-auto gap-1 rounded-2xl border border-border bg-background p-0.5">
         <RouterLink v-for="section in sections" :key="section.to" :to="section.to"
           :aria-current="isCurrent(section.to) ? 'page' : undefined"
-          class="press-row focus-inset flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-callout font-semibold"
+          class="press-row focus-inset flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 text-callout font-semibold"
           :class="isCurrent(section.to) ? 'bg-primary/20 text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'">
           <component :is="section.icon" class="size-5 shrink-0" aria-hidden="true" />
           {{ section.label }}
         </RouterLink>
       </div>
     </nav>
+    </header>
     <main id="main" class="flex-1 pb-8 pt-4">
       <PageSkeleton v-if="loading" :account="route.path === '/account'" />
       <div v-if="route.meta.public || (store.ready && store.account)" v-show="!loading">

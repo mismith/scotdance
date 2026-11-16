@@ -57,7 +57,7 @@ describe('private public-profile reference', () => {
     const w = mount(PublicDancerLink, { props: { firstName: 'Demo', lastName: 'Dancer', 'onUpdate:modelValue': value => w.setProps({ modelValue: value }) } })
     await vi.advanceTimersByTimeAsync(400)
     expect(w.props('modelValue')).toBeUndefined()
-    await w.findAll('button').find(b => b.text() === 'Search')!.trigger('click')
+    await w.findAll('button').find(b => b.text() === 'Find ScotDance.app profile')!.trigger('click')
     await vi.advanceTimersByTimeAsync(400)
     await w.findAll('button').find(b => b.text() === 'Link')!.trigger('click')
     expect(w.props('modelValue')).toEqual(match)

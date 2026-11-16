@@ -36,7 +36,7 @@ function search() {
   busy.value = true
   timer = setTimeout(async () => {
     try { const found = await fetchTownSuggestions(text); if (request === version) { suggestions.value = found; active.value = found.length ? 0 : -1 } }
-    catch { if (request === version) { manual.value = true; draft.value.town = text; error.value = 'Search is unavailable. Enter your city below.' } }
+    catch { if (request === version) { error.value = 'City search is unavailable. Try again or enter it manually.' } }
     finally { if (request === version) busy.value = false }
   }, 250)
 }
@@ -51,7 +51,7 @@ async function pick(suggestion: PlaceSuggestion) {
     draft.value = place
     if (place.town && place.country && (!needsRegion(place.country) || place.province)) { manual.value = false; publish(place) }
     else manual.value = true
-  } catch { if (request === version) { manual.value = true; draft.value.town = suggestion.primaryText; error.value = 'Enter the city details below.' } }
+  } catch { if (request === version) { error.value = 'Could not load this city. Try again or enter it manually.' } }
   finally { if (request === version) busy.value = false }
 }
 function key(event: KeyboardEvent) {

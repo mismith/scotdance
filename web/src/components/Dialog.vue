@@ -364,6 +364,7 @@ const dragStyle = computed(() =>
         <div :id="headerId" class="min-w-0 flex-1 space-y-1">
           <slot name="header" />
         </div>
+        <slot name="header-actions" />
         <button
           v-if="closable"
           type="button"

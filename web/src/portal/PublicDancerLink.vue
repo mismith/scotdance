@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { Link, ExternalLink, X, LoaderCircle } from '@lucide/vue'
+import { Link, Search, ExternalLink, X, LoaderCircle } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import { normalizeName } from '../../../shared/normalize'
 import { findPublicDancers, type PublicDancer } from './publicDancers'
@@ -61,17 +61,22 @@ onBeforeUnmount(cancel)
 <template>
   <div class="min-w-0">
     <div class="flex min-h-11 flex-wrap items-center gap-x-2 text-callout">
-      <LoaderCircle v-if="searching && !manual" class="size-4 shrink-0 animate-spin text-primary" aria-label="Finding public profile" />
-      <Link v-else class="size-4 shrink-0 text-primary" aria-hidden="true" />
-      <a v-if="model" :href="`https://next.scotdance.app/dancers/${encodeURIComponent(model.id)}`" target="_blank" rel="noopener" class="inline-flex min-w-0 flex-1 items-center gap-1 text-primary" :title="model.name"><span class="truncate">{{ model.name }}</span><ExternalLink class="size-3 shrink-0" aria-hidden="true" /></a>
-      <span v-else class="min-w-0 flex-1 text-muted-foreground">{{ searching && !manual ? 'Finding public profile…' : 'ScotDance.app profile' }}</span>
-      <Button variant="plain" size="sm" @click="search">{{ model ? 'Change' : 'Search' }}</Button>
-      <Button v-if="model" variant="plain" size="sm" @click="unlink">Unlink</Button>
+      <template v-if="model">
+        <Link class="size-4 shrink-0 text-primary" aria-hidden="true" />
+        <a :href="`https://next.scotdance.app/dancers/${encodeURIComponent(model.id)}`" target="_blank" rel="noopener" class="inline-flex min-w-0 max-w-full items-center gap-1 text-primary" :title="model.name"><span class="truncate">{{ model.name }}</span><ExternalLink class="size-3 shrink-0" aria-hidden="true" /></a>
+        <Button variant="plain" size="sm" @click="search">Change</Button>
+        <Button variant="plain" size="sm" @click="unlink">Unlink</Button>
+      </template>
+      <button v-else type="button" class="press-row -ml-2 inline-flex min-h-11 items-center gap-2 rounded-xl px-2 text-left font-semibold text-primary" @click="search">
+        <LoaderCircle v-if="searching && !manual" class="size-4 shrink-0 animate-spin" aria-hidden="true" />
+        <Search v-else class="size-4 shrink-0" aria-hidden="true" />
+        {{ searching && !manual ? 'Finding ScotDance.app profile…' : 'Find ScotDance.app profile' }}
+      </button>
     </div>
     <div v-if="manual" class="mt-2 space-y-2">
-      <div class="flex items-center gap-2">
-        <label class="min-w-0 flex-1"><span class="sr-only">Search public dancers</span><input v-model="query" class="field h-12 w-full rounded-xl px-3 text-base" maxlength="240" /></label>
-        <button type="button" class="press-row flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground" aria-label="Close profile search" @click="manual = false"><X class="size-5" aria-hidden="true" /></button>
+      <div class="relative">
+        <label class="block min-w-0"><span class="sr-only">Search public dancers</span><input v-model="query" class="field h-12 w-full rounded-xl pl-3 pr-12 text-base" maxlength="240" /></label>
+        <button type="button" class="press-row absolute right-0.5 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground" aria-label="Close profile search" @click="manual = false"><X class="size-5" aria-hidden="true" /></button>
       </div>
       <p v-if="searching || error" role="status" class="text-sm text-muted-foreground">{{ error || 'Searching…' }}</p>
       <ul v-else-if="matches.length" class="space-y-1">

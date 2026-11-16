@@ -20,7 +20,7 @@ function edit(dancer?: Dancer) { editing.value = dancer; store.error = ''; open.
       <Info class="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
       <p>Your private dancer profiles help prefill forms across the ScotDance.app family of <a href="https://toolkit.scotdance.app" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-4">tools</a>.</p>
     </aside>
-    <div v-if="store.dancers.length" class="mb-6 flex justify-end">
+    <div v-if="store.dancers.length" class="mb-4 flex justify-start">
       <Button @click="edit()" variant="primary"><Plus aria-hidden="true" /> Add dancer</Button>
     </div>
     <EmptyState v-if="!store.dancers.length" :icon="Users" title="No dancers yet" description="Add yourself or a dancer you manage.">

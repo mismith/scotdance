@@ -376,10 +376,10 @@ const title = computed(() => `${props.label}`)
 }
 .birthday-control {
   position: relative;
+  margin-top: 6px;
 }
 .birthday-control input {
   padding-right: 44px;
-  margin-top: 6px;
 }
 .birthday-problem {
   color: var(--destructive);
@@ -388,7 +388,8 @@ const title = computed(() => `${props.label}`)
 }
 .trigger {
   position: absolute;
-  top: 4px;
+  top: 50%;
+  transform: translateY(-50%);
   right: 2px;
   display: flex;
   align-items: center;
