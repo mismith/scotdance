@@ -7,8 +7,7 @@
   "TestRenderModel": {
     "app": {
       "name": "ScotDance.app",
-      "url": "https://scotdance.app",
-      "assets": "https://next.scotdance.app",
+      "url": "https://next.scotdance.app",
       "preview": null
     },
     "inviter": {
