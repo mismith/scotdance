@@ -71,6 +71,39 @@ describe('Entries signed requests', () => {
     await expect(call({ ...registration(), registrationURL: 'https://entries.scotdance.app/enter/association/sun' })).rejects.toThrow(/link/)
     await expect(call({ ...registration(), registrationEnd: 1790000000000 })).rejects.toThrow(/after/)
   })
+
+  it('accepts the Entries event page and the older entry form, and no other Entries page', async () => {
+    const { call, tree } = setup()
+    const at = (path: string) => `https://entries.scotdance.app${path}`
+    expect(await call({ ...registration(1), registrationURL: at('/info/association/sat') })).toMatchObject({ applied: true })
+    expect(tree.read('competitions/sat/registrationURL')).toBe(at('/info/association/sat'))
+    expect(await call({ ...registration(2), registrationURL: at('/enter/association/sat') })).toMatchObject({ applied: true })
+    expect(tree.read('competitions/sat/registrationURL')).toBe(at('/enter/association/sat'))
+    for (const path of ['/organise/association/sat', '/info/association/sun', '/info/association/sat/extra', '/info/association/sat?x=1', '/info/association/sat#x']) {
+      await expect(call({ ...registration(3), registrationURL: at(path) }), path).rejects.toThrow(/link/)
+    }
+    await expect(call({ ...registration(3), registrationURL: 'https://evil.test/info/association/sat' })).rejects.toThrow(/link/)
+    expect(tree.read('competitions/sat/entriesRegistration/revision')).toBe(2)
+  })
+
+  it.each(['info', 'enter'])('release clears the /%s link and leaves a replacement link alone', async (page) => {
+    const { call, tree } = setup()
+    const { bindingId } = await call({ action: 'claim' })
+    const url = `https://entries.scotdance.app/${page}/association/sat`
+    await call({ ...registration(1), registrationURL: url })
+    tree.write({ 'competitions/sat/registrationURL': 'https://other.example/register' })
+    await call({ action: 'release', bindingId })
+    expect(tree.read('competitions/sat')).toMatchObject({ registrationURL: 'https://other.example/register', registrationStart: 1800000000000 })
+    expect(tree.read('competitions/sat/entriesRegistration')).toBeNull()
+
+    const again = await call({ action: 'claim' })
+    await call({ ...registration(1), registrationURL: url })
+    await call({ action: 'release', bindingId: again.bindingId })
+    const after = tree.read('competitions/sat')
+    expect(after.registrationURL ?? null).toBeNull()
+    expect(after.registrationStart ?? null).toBeNull()
+    expect(after.entriesRegistration ?? null).toBeNull()
+  })
 })
 
 describe('Entries registration ownership', () => {

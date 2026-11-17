@@ -70,6 +70,12 @@ export async function registrationTarget(db: any, competitionId: string): Promis
   return link.primary;
 }
 
+// Entries links to its event page (/info); competitions published before
+// 2026-11-15 stored the entry form (/enter). Publication and release share
+// this list so they cannot drift apart.
+const registrationPaths = (p: Record<string, any>) => ['info', 'enter']
+  .map((page) => `/${page}/${encodeURIComponent(p.organisationId)}/${encodeURIComponent(p.competitionId)}`);
+
 function dates(p: Record<string, any>) {
   for (const field of ['registrationStart', 'registrationEnd']) {
     if (p[field] != null && (!Number.isSafeInteger(p[field]) || p[field] <= 0)) throw new HttpsError('invalid-argument', 'Registration dates must be timestamps or empty.');
@@ -82,7 +88,7 @@ function dates(p: Record<string, any>) {
   try { url = new URL(p.registrationURL); } catch { throw new HttpsError('invalid-argument', 'An Entries registration link is required.'); }
   const local = isEmulator() && ['http://localhost:5290', 'http://127.0.0.1:5290'].includes(url.origin);
   if ((url.origin !== ENTRIES_ISSUER && !local)
-    || url.pathname !== `/enter/${encodeURIComponent(p.organisationId)}/${encodeURIComponent(p.competitionId)}`
+    || !registrationPaths(p).includes(url.pathname)
     || url.username || url.password || url.hash || url.search) {
     throw new HttpsError('invalid-argument', 'Registration must link to ScotDance Entries.');
   }
@@ -116,7 +122,7 @@ export function getOnEntriesCompetition(secret: () => string, db: any) {
         const next = { ...current };
         delete next.entriesRegistration;
         // Never erase a replacement URL that somebody has since set on ScotDance.app.
-        if (next.registrationURL === `${ENTRIES_ISSUER}/enter/${encodeURIComponent(p.organisationId)}/${encodeURIComponent(p.competitionId)}`) {
+        if (registrationPaths(p).some((path) => next.registrationURL === `${ENTRIES_ISSUER}${path}`)) {
           delete next.registrationURL;
           delete next.registrationStart;
           delete next.registrationEnd;
