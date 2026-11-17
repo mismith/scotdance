@@ -199,7 +199,7 @@ const title = computed(() => `${props.label}`)
 
 <template>
   <div ref="root" class="bf">
-    <label :for="fieldId">{{ label }}</label>
+    <label :for="fieldId" class="text-callout font-medium">{{ label }}</label>
     <Popover v-model:open="open" :title="title" :width="332">
       <template #anchor>
         <div class="birthday-control">
