@@ -238,9 +238,9 @@ watch(() => route.hash, applyHash)
         <!-- Wraps at the comma, not mid-phrase -->
         <p><span class="inline-block">Built by a Highland dance family,</span> <span class="inline-block">for Highland dance families.</span></p>
         <p class="flex flex-wrap justify-center gap-x-3">
-          <button v-if="crisp.available" type="button" class="text-primary py-2 font-semibold" @click="crisp.open()">Help</button>
-          <RouterLink :to="{ name: 'policies' }" class="text-primary py-2 font-semibold">Privacy and terms</RouterLink>
-          <a href="https://github.com/mismith/scotdance" target="_blank" rel="noopener" class="text-primary py-2 font-semibold">Source code</a>
+          <button v-if="crisp.available" type="button" class="text-primary py-2 font-semibold" @click="crisp.open()">Help &amp; feedback</button>
+          <RouterLink :to="{ name: 'policies' }" class="text-primary py-2 font-semibold">Privacy &amp; terms</RouterLink>
+          <a href="https://github.com/mismith/scotdance" target="_blank" rel="noopener" class="text-primary py-2 font-semibold">Code</a>
         </p>
         <p>
           2017–{{ year }} · <a href="https://mur.bot" target="_blank" rel="noopener" class="hover:underline">Murray Rowan</a> · {{ platformLabel }} · v{{ version }}
