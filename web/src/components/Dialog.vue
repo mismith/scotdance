@@ -29,6 +29,7 @@ const props = withDefaults(
   { variant: 'center', size: 'sm', closable: true, morph: undefined },
 )
 
+// Only the dialog’s own cancel event closes it; file-picker cancel events bubble.
 // close: asks to close (a tap outside, Escape, ×); closed: it has, and any
 // slide out has finished.
 const emit = defineEmits<{ close: []; closed: [] }>()
@@ -344,7 +345,7 @@ const dragStyle = computed(() =>
     ]"
     @pointerdown="onPointerDown"
     @click="onBackdropClick"
-    @cancel.prevent="emit('close')"
+    @cancel.self.prevent="emit('close')"
     @close="emit('closed')"
     @toggle="onToggle"
     @keydown="onKeydown"
