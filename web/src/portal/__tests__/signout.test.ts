@@ -16,7 +16,7 @@ beforeEach(() => {
   setActivePinia(createPinia()); vi.stubGlobal('fetch', fetcher)
   Object.assign(window, { ScotDance: { signIn } })
 })
-afterEach(() => { vi.unstubAllGlobals(); delete (window as any).ScotDance })
+afterEach(() => { vi.unstubAllGlobals(); Reflect.deleteProperty(window, 'ScotDance') })
 it('keeps an explicit sign-out across reloads until an explicit sign-in', async () => {
   const first = useConnectAccount(); await first.initialize(true)
   expect(first.account?.uid).toBe('owner')

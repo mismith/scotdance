@@ -21,14 +21,14 @@ const icons: Partial<Record<Audience, string>> = {
   binder: new URL('../../public/img/tools/binder.svg', import.meta.url).href,
   entries: new URL('../../public/img/tools/entries.svg', import.meta.url).href,
 }
-async function load() {
+async function loadTools() {
   error.value = ''
   try { tools.value = await props.load() }
   catch { error.value = 'Could not load connected tools.' }
   finally { loading.value = false }
 }
 function ask(tool: Audience) { actionError.value = ''; selected.value = tool }
-async function signOut() {
+async function confirmSignOut() {
   const tool = selected.value
   if (!tool || busy.value) return
   busy.value = true
@@ -40,7 +40,7 @@ async function signOut() {
   } catch (e) { actionError.value = e instanceof Error ? e.message : 'Please try again.' }
   finally { busy.value = false }
 }
-onMounted(load)
+onMounted(loadTools)
 </script>
 <template>
   <section class="space-y-2 pt-3" aria-labelledby="connected-tools-title">
@@ -62,7 +62,7 @@ onMounted(load)
     <div v-if="loading" role="status" aria-label="Loading connected tools" aria-busy="true" class="space-y-3 py-2">
       <div v-for="n in 3" :key="n" aria-hidden="true" class="flex h-14 items-center gap-3 motion-safe:animate-pulse"><span class="size-10 rounded-xl bg-muted" /><span class="h-4 w-36 rounded bg-muted" /></div>
     </div>
-    <p v-else-if="error" role="alert" class="text-sm text-destructive">{{ error }} <Button variant="plain" @click="load">Try again</Button></p>
+    <p v-else-if="error" role="alert" class="text-sm text-destructive">{{ error }} <Button variant="plain" @click="loadTools">Try again</Button></p>
     <ul v-else-if="tools.length" class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
       <li v-for="{ tool, link } in tools" :key="tool" class="flex min-h-16 items-center gap-2 py-1 pr-2 pl-4">
         <a :href="`https://${TOOLS[tool].hostname}`" target="_blank" rel="noopener" class="press-row focus-inset flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-xl">
@@ -81,7 +81,7 @@ onMounted(load)
         <h3 class="text-heading pr-10">Sign out of {{ TOOLS[selected].name }}?</h3>
         <p class="text-sm text-muted-foreground">You’ll be signed out on every device within an hour. Your data in {{ TOOLS[selected].name }} stays there. You can sign in again anytime.</p>
         <p v-if="actionError" role="alert" class="text-sm text-destructive">{{ actionError }}</p>
-        <div class="flex justify-end gap-2"><Button variant="plain" :disabled="busy" @click="selected = null">Cancel</Button><Button variant="destructive" :busy="busy" @click="signOut">Sign out</Button></div>
+        <div class="flex justify-end gap-2"><Button variant="plain" :disabled="busy" @click="selected = null">Cancel</Button><Button variant="destructive" :busy="busy" @click="confirmSignOut">Sign out</Button></div>
       </div>
     </Dialog>
   </section>

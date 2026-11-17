@@ -214,8 +214,8 @@ describe('Entries account deletion delivery', () => {
     const { db, tree } = setup()
     const calls: Record<string, unknown>[] = []
     let fail = true
-    const send = async (_url: string, body: any) => {
-      const pass = JSON.parse(Buffer.from(body.data.pass.split('.')[1], 'base64url').toString())
+    const send = async (_url: string, body: unknown) => {
+      const pass = JSON.parse(Buffer.from((body as { data: { pass: string } }).data.pass.split('.')[1], 'base64url').toString())
       calls.push(pass)
       return { ok: !fail, status: fail ? 503 : 200 }
     }

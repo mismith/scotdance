@@ -2,7 +2,7 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { onValue } from 'firebase/database'
-import { Bot, ChevronRight, Copy, LogOut, Plus } from '@lucide/vue'
+import { Bot, Copy, LogOut, Plus } from '@lucide/vue'
 import { dataRef } from '@/firebase'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { friendlyError } from '@/lib/admin/write'
