@@ -32,6 +32,15 @@ watch(
 )
 onScopeDispose(() => offConnections?.())
 const assistants = computed(() => connectionsFrom(connectionRecords.value))
+function assistantLogo(connection: Connection) {
+  // Client names are self-reported; identify brand marks by the OAuth client's host.
+  let host = ''
+  try { host = new URL(connection.client?.id || '').hostname } catch { return null }
+  const onHost = (domain: string) => host === domain || host.endsWith(`.${domain}`)
+  if (['claude.ai', 'claude.com', 'anthropic.com'].some(onHost)) return '/img/assistants/claude.svg'
+  if (['chatgpt.com', 'openai.com'].some(onHost)) return '/img/assistants/chatgpt.svg'
+  return null
+}
 const disconnecting = ref<string | null>(null)
 async function disconnectAssistant(c: Connection) {
   const name = c.client?.name || 'this AI assistant'
@@ -93,25 +102,32 @@ async function handleSignOut() {
         <a href="https://connect.scotdance.app/account" class="text-primary text-callout font-semibold">Edit your ScotDance account →</a>
       </section>
 
-      <section v-if="me.canManageAny || assistants.length" class="space-y-1">
-        <h2 class="text-heading">AI assistants</h2>
-        <p class="text-muted-foreground text-sm">Claude, ChatGPT and other AI assistants that manage your competitions for you. Tap one to see what it changed.</p>
+      <section v-if="me.canManageAny || assistants.length" class="space-y-2">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-heading">AI assistants</h2>
+          <Button size="sm" aria-label="Connect an AI assistant" @click="connectOpen = true"><Plus /> Connect</Button>
+        </div>
+        <p class="text-muted-foreground text-sm">Organisers can use AI assistants to manage their ScotDance competitions.</p>
         <ul v-if="assistants.length" class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
-          <li v-for="c in assistants" :key="c.id" class="flex min-h-16 items-center gap-1 py-1 pr-2">
-            <button type="button" :aria-label="`What ${c.client?.name || 'this AI assistant'} changed`" class="press-row focus-inset flex min-h-14 min-w-0 flex-1 items-center gap-3 py-1 pr-1 pl-4 text-left" @click="showChanges(c)">
-              <span class="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-[0.625rem]"><Bot class="size-5" /></span>
+          <li v-for="c in assistants" :key="c.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+            <div class="flex min-w-0 flex-[1_1_16rem] items-center gap-3">
+              <span class="flex size-10 shrink-0 items-center justify-center rounded-[0.625rem]" :class="assistantLogo(c) ? 'bg-white' : 'bg-muted text-muted-foreground'">
+                <img v-if="assistantLogo(c)" :src="assistantLogo(c)!" alt="" class="size-7" />
+                <Bot v-else class="size-5" />
+              </span>
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-base font-semibold">{{ c.client?.name || 'An AI assistant' }}</span>
-                <span class="text-muted-foreground block truncate text-sm">
+                <span class="text-muted-foreground block text-sm">
                   Connected {{ connectionDate(c.createdAt) }}<template v-if="c.lastUsedAt && connectionDate(c.lastUsedAt) !== connectionDate(c.createdAt)"> · Last used {{ connectionDate(c.lastUsedAt) }}</template>
                 </span>
               </span>
-              <ChevronRight class="text-muted-foreground/70 size-5 shrink-0" />
-            </button>
-            <Button variant="plain" class="text-destructive!" :busy="disconnecting === c.id" @click="disconnectAssistant(c)">Disconnect</Button>
+            </div>
+            <div class="ml-auto flex items-center gap-1">
+              <Button variant="plain" :aria-label="`Audit log for ${c.client?.name || 'this AI assistant'}`" @click="showChanges(c)">Audit log</Button>
+              <Button variant="plain" class="text-destructive!" :busy="disconnecting === c.id" @click="disconnectAssistant(c)">Disconnect</Button>
+            </div>
           </li>
         </ul>
-        <div class="pt-1"><Button @click="connectOpen = true"><Plus /> Connect an AI assistant</Button></div>
       </section>
 
       <div class="space-y-2">
