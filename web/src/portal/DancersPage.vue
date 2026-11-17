@@ -66,9 +66,9 @@ async function edit(dancer?: Dancer, event?: MouseEvent) {
     </div>
     <p v-if="problem" role="alert" class="mb-4 text-sm text-destructive">{{ problem }}</p>
     <EmptyState v-if="!store.dancers.length" :icon="ContactRound" title="No dancers yet" description="Add yourself or a dancer you manage." />
-    <ul v-else class="grid grid-cols-1 gap-3 md:grid-cols-2">
+    <ul v-else class="rows-engraved w-full md:w-1/2 md:max-w-100 [--inset:4rem] [--inset-end:0.5rem]">
       <li v-for="{ dancer, description } in dancers" :key="dancer.id" class="min-w-0">
-        <button type="button" :aria-busy="loading === dancer.id || undefined" :disabled="loading !== null" @click="edit(dancer, $event)" class="focus-inset flex w-full text-left min-h-20 items-center gap-3 rounded-xl border border-border bg-foreground/3 px-3 py-3 hover:bg-foreground/5 focus-visible:bg-foreground/5">
+        <button type="button" :aria-busy="loading === dancer.id || undefined" :disabled="loading !== null" @click="edit(dancer, $event)" class="press-row focus-inset flex w-full text-left min-h-20 items-center gap-3 px-2 py-3">
           <DancerThumbnail :dancer="dancer" />
           <span class="min-w-0 flex-1">
             <span class="block truncate text-base font-semibold">{{ dancer.firstName }} {{ dancer.lastName }}</span>
