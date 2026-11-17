@@ -18,6 +18,7 @@ const id = useId()
 const source = ref('')
 const image = ref<HTMLImageElement>()
 const busy = ref(false)
+const dragging = ref(false)
 const error = ref('')
 const zoom = ref(1),
   x = ref(0),
@@ -49,7 +50,25 @@ function reset() {
 async function choose(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
   ;(event.target as HTMLInputElement).value = ''
-  if (!file) return
+  if (file) await loadFile(file)
+}
+function dragOver(event: DragEvent) {
+  if (!event.dataTransfer?.types.includes('Files')) return
+  event.preventDefault()
+  event.stopPropagation()
+  event.dataTransfer.dropEffect = busy.value ? 'none' : 'copy'
+  dragging.value = !busy.value
+}
+function dragLeave(event: DragEvent) {
+  if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null))
+    dragging.value = false
+}
+async function drop(event: DragEvent) {
+  dragging.value = false
+  const file = event.dataTransfer?.files[0]
+  if (file && !busy.value) await loadFile(file)
+}
+async function loadFile(file: File) {
   reset()
   error.value = photoFileProblem(file)
   if (error.value) return
@@ -173,7 +192,14 @@ onBeforeUnmount(reset)
       Dancer photo
       <span class="text-muted-foreground text-sm font-normal">(optional)</span>
     </h4>
-    <div class="field mt-1.5 flex h-12 min-w-0 items-center gap-1 rounded-xl px-2">
+    <div
+      class="field mt-1.5 flex h-12 min-w-0 items-center gap-1 rounded-xl px-2"
+      :class="{ 'ring-primary ring-2': dragging }"
+      @dragenter="dragOver"
+      @dragover="dragOver"
+      @dragleave="dragLeave"
+      @drop.prevent.stop="drop"
+    >
       <button
         type="button"
         class="text-primary flex h-full min-w-0 flex-1 items-center gap-2 text-left"

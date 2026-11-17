@@ -20,7 +20,8 @@ host that cannot persist it. Teacher/studio-only photos remain out of scope.
 
 Backend: `scotdance-worktrees/connect-photo-api`, owner-authenticated native API
 and exact Entries/Binder-owner service routes. Objects live only in the
-`scotdance-connect-private-photos` bucket in project `scotdance-connect`.
+standard Firebase Storage bucket `scotdance-connect.firebasestorage.app` in
+project `scotdance-connect` (Firebase Console → Storage).
 No public URLs or Firebase download tokens. Metadata contains a version reference,
 not photo bytes. List/registration/submission snapshots never contain images.
 
