@@ -68,7 +68,7 @@ const to = computed(() =>
 </script>
 
 <template>
-  <li class="relative isolate flex items-center" :style="color ? { '--dc': color } : undefined">
+  <li class="relative isolate flex items-center hover:z-10" :style="color ? { '--dc': color } : undefined">
     <span v-if="color" class="dancer-sash" aria-hidden="true" />
     <RouterLink
       :to="to"
