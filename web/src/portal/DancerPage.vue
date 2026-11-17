@@ -1,22 +1,12 @@
 <script setup lang="ts">
-import { watch, ref, onMounted } from 'vue'
-import Dialog from '@/components/Dialog.vue'
-import Button from '@/components/ui/Button.vue'
+import { watch } from 'vue'
 import DancerEditor from './DancerEditor.vue'
 import { useConnectAccount, type Dancer } from './account'
 import type { EditorWrite, EditorResult, AccessRequest } from './editor/types'
-const props = defineProps<{ dancer?: Dancer }>()
+const props = defineProps<{ dancer?: Dancer; photo: { value: string | null } }>()
 const emit = defineEmits<{ close: [] }>()
 const store = useConnectAccount()
 const owner = store.account?.uid
-const photo = ref<{ value: string | null }>()
-const photoError = ref('')
-async function loadPhoto() {
-  photoError.value = ''
-  try { photo.value = { value: props.dancer?.photoVersion ? await store.loadPhoto(props.dancer.id) : null } }
-  catch (e) { photoError.value = e instanceof Error ? e.message : 'Could not load photo.' }
-}
-onMounted(loadPhoto)
 watch(
   () => store.account?.uid,
   (uid) => {
@@ -59,7 +49,6 @@ async function persist(write: EditorWrite): Promise<EditorResult> {
 </script>
 <template>
   <DancerEditor
-    v-if="photo"
     :photo="photo"
     :dancer="dancer"
     :defaults="defaults"
@@ -69,10 +58,4 @@ async function persist(write: EditorWrite): Promise<EditorResult> {
     :manage-access="manageAccess"
     @close="emit('close')"
   />
-  <Dialog v-else :open="true" :morph="false" @close="emit('close')" aria-label="Dancer">
-    <div v-if="photoError" role="alert">{{ photoError }} <Button @click="loadPhoto">Try again</Button></div>
-    <div v-else class="space-y-4 animate-pulse motion-reduce:animate-none" aria-busy="true" aria-label="Loading dancer">
-      <div class="h-8 w-1/2 rounded bg-foreground/10" /><div class="h-40 rounded bg-foreground/10" />
-    </div>
-  </Dialog>
 </template>

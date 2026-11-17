@@ -13,3 +13,11 @@
 @source '../components/Dialog.vue';
 
 @source '../components/ScotDanceSignInButton.vue';
+
+/* Field values must not inherit the medium weight of their wrapping labels.
+   Shared by native account pages and the hosted dancer editor. */
+input.field,
+select.field,
+textarea.field {
+  font-weight: 400;
+}
