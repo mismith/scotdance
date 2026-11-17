@@ -253,7 +253,8 @@ onBeforeUnmount(reset)
       <div class="space-y-4">
         <h2 class="text-heading pr-10 font-semibold">Crop photo</h2>
         <p class="text-muted-foreground text-sm">
-          Front-facing headshot, plain background, no filters. Drag to position.
+          A clear, front-facing photo of just your dancer, cropped to show their head and shoulders.
+          Drag to position.
         </p>
         <div
           class="focus-visible:outline-primary relative mx-auto aspect-square w-full max-w-80 touch-none overflow-hidden rounded-lg bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2"
