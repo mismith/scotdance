@@ -26,6 +26,7 @@ import type {
 const props = defineProps<
   EditorContext & {
     persist: (request: EditorWrite) => Promise<EditorResult>
+    verifyEmail?: () => Promise<void>
     manageAccess?: (request: AccessRequest) => Promise<unknown>
   }
 >()
@@ -218,6 +219,7 @@ async function persist(updateDefaults = false, remove = false) {
           v-if="props.dancer && props.manageAccess && !deleting && !confirmDefaults"
           :id="props.dancer.id"
           :request="props.manageAccess"
+          :verify-email="props.verifyEmail"
           :disabled="busy || preparing"
           @removed="opened = false"
           @changed="shared = $event"

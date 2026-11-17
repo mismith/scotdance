@@ -127,6 +127,7 @@ export function audienceFor(value: unknown, origin: string, { dev = false, local
 
 export type FromTool =
   | { channel: typeof CHANNEL; type: 'send'; item: unknown }
+  | { channel: typeof CHANNEL; type: 'verifyEmail'; audience: unknown; uid: unknown }
   | { channel: typeof CHANNEL; type: 'signIn'; audience: unknown; register?: unknown }
 
 export type ToTool =
@@ -134,10 +135,11 @@ export type ToTool =
   | { type: 'ready'; scheme: 'light' | 'dark' }
   | { type: 'sent'; competitionId: string; competitionName: string; url: string }
   | { type: 'signedIn'; pass: string; uid: string; email: string | null; name: string | null }
+  | { type: 'verificationResult'; error?: string }
   | { type: 'closed' }
 
 export function isFromTool(data: unknown): data is FromTool {
   if (!data || typeof data !== 'object' || (data as FromTool).channel !== CHANNEL) return false
   const type = (data as FromTool).type
-  return type === 'send' || type === 'signIn'
+  return type === 'send' || type === 'signIn' || type === 'verifyEmail'
 }

@@ -1,32 +1,27 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import AccountForm from '@/account/AccountForm.vue'
 import AccountDefaults from './AccountDefaults.vue'
 import ConnectedTools from '@/account/ConnectedTools.vue'
 import Button from '@/components/ui/Button.vue'
-import { createFirebaseSettings } from '@/account/firebase-settings'
+import { useConnectSettings } from './connectSettings'
 import { useConnectAccount } from './account'
 const store = useConnectAccount()
 store.pageReady = false
 const ready = ref(false)
 const error = ref('')
-const controller = createFirebaseSettings({
-  uid: store.account!.uid,
-  acquireToken: store.identityToken,
-  refreshSession: store.refresh,
-  ...(import.meta.env.DEV && import.meta.env.MODE === 'fixture' ? {
-    acquireToken: async () => 'local-fixture-token',
-    authURL: `${location.origin}/__fixture/auth`,
-    databaseURL: `${location.origin}/__fixture/database`,
-    functionsURL: `${location.origin}/__fixture/functions`,
-    namespace: 'fixture',
-  } : {}),
-})
+const controller = useConnectSettings()
 const settings = controller.settings
+watch(() => store.account?.emailVerified, async () => {
+  if (ready.value && settings.checkEmailVerification) {
+    try { await settings.checkEmailVerification() } catch { /* Next return retries. */ }
+  }
+})
 function syncAccount() {
   if (!store.account) return
   store.account.name = settings.displayName ?? ''
   store.account.email = settings.user?.email ?? ''
+  store.account.emailVerified = settings.user?.emailVerified === true
 }
 async function load() {
   error.value = ''
@@ -41,7 +36,6 @@ async function load() {
   }
 }
 onMounted(load)
-onBeforeUnmount(controller.dispose)
 </script>
 <template>
   <section>

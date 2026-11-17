@@ -3,6 +3,7 @@ import AsyncButton from '@/components/AsyncButton.vue'
 import MeAvatar from '@/components/MeAvatar.vue'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { get } from 'firebase/database'
+import { verifyEmailForOwner } from './verifyEmail'
 import { httpsCallable } from 'firebase/functions'
 import { Check, ChevronRight, LoaderCircle } from '@lucide/vue'
 import { dataRef, functions } from '@/firebase'
@@ -63,6 +64,16 @@ function onMessage(e: MessageEvent) {
   if (e.source !== window.parent || toolOrigin.value || !isAllowedOrigin(e.origin, { dev, localTools })) return
   if (!isFromTool(e.data)) return
   toolOrigin.value = e.origin
+  if (e.data.type === 'verifyEmail') {
+    const target = audienceFor(e.data.audience, e.origin, { dev, localTools })
+    const uid = e.data.uid
+    if (!target || typeof uid !== 'string' || !uid || uid.length > 128) {
+      tell({ type: 'verificationResult', error: 'Open verification from your signed-in account.' })
+      return
+    }
+    verificationUid.value = uid
+    return
+  }
   mode.value = e.data.type
   if (e.data.type === 'signIn') {
     audience.value = audienceFor(e.data.audience, e.origin, { dev, localTools })
@@ -75,6 +86,21 @@ function onMessage(e: MessageEvent) {
   }
   open.value = true
 }
+
+// Email stays within the identity origin. Tools receive only success/failure.
+const verificationUid = ref<string>()
+let verifying = false
+watch([verificationUid, () => auth.authReady], async ([uid, ready]) => {
+  if (!uid || !ready || verifying) return
+  verifying = true
+  try {
+    await verifyEmailForOwner(() => auth.user, uid)
+    tell({ type: 'verificationResult' })
+  } catch (error) {
+    const code = (error as { code?: string }).code
+    tell({ type: 'verificationResult', error: code === 'auth/too-many-requests' ? 'Too many requests. Please wait before trying again.' : error instanceof Error && !code ? error.message : 'Could not send the verification email. Please try again.' })
+  }
+})
 
 onMounted(() => {
   if (!embedded) return

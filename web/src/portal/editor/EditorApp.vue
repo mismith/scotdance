@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import DancerEditor from '../DancerEditor.vue'
+import FeedbackHost from '@/components/admin/FeedbackHost.vue'
+import { toasts } from '@/lib/admin/feedback'
 import { channel, editorMessage, editorOrigin } from './protocol'
 import type { EditorContext, EditorWrite, EditorResult, AccessRequest } from './types'
 const query = new URLSearchParams(location.search)
@@ -10,7 +12,7 @@ const allowed =
   window.parent !== window &&
   editorOrigin(origin, import.meta.env.DEV) &&
   /^[a-f0-9-]{36}$/.test(session)
-const context = ref<EditorContext & { canManageAccess?: boolean }>()
+const context = ref<EditorContext & { canManageAccess?: boolean; canVerifyEmail?: boolean }>()
 let pending:
   | {
       id: string
@@ -84,11 +86,13 @@ onBeforeUnmount(() => {
 })
 </script>
 <template>
+  <FeedbackHost v-if="toasts.length" />
   <DancerEditor
     v-if="context"
     v-bind="context"
     :persist="persist"
     :manage-access="context.canManageAccess ? manageAccess : undefined"
+    :verify-email="context.canVerifyEmail && context.dancer ? async () => { await manageAccess({ action: 'verify-email', id: context!.dancer!.id }) } : undefined"
     @saved="result = $event"
     @close="send('closed', { result })"
   />

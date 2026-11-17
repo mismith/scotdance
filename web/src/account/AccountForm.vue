@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import AsyncButton from '@/components/AsyncButton.vue'
-import { computed, onScopeDispose, ref, watch } from 'vue'
-import { Eye, EyeOff, ExternalLink, X } from '@lucide/vue'
+import { computed, onScopeDispose, onMounted, ref, watch } from 'vue'
+import { Eye, EyeOff, ExternalLink, X, BadgeCheck } from '@lucide/vue'
 import type { AccountSettings } from './settings'
 import { useMorph } from '@/lib/morph'
 import Dialog from '@/components/Dialog.vue'
 import Button from '@/components/ui/Button.vue'
 import Avatar from '@/components/Avatar.vue'
 import SaveIndicator from './SaveIndicator.vue'
+import VerifyEmailButton from './VerifyEmailButton.vue'
 import { useSaveFeedback } from './save-feedback'
 const pendingSubmitModal = ref(false)
 
@@ -76,6 +77,17 @@ async function saveDisplayName() {
     else { nameFeedback.done(); emit('changed') }
   }
 }
+
+// Check Firebase when returning from the email link, without replacing the form.
+let checkingVerification = false
+async function refreshVerification() {
+  if (checkingVerification || !auth.checkEmailVerification || document.visibilityState === 'hidden') return
+  checkingVerification = true
+  try { await auth.checkEmailVerification(); emit('changed') } catch { /* A later focus or Verify retries. */ }
+  finally { checkingVerification = false }
+}
+onMounted(() => window.addEventListener('focus', refreshVerification))
+onScopeDispose(() => window.removeEventListener('focus', refreshVerification))
 
 // Modal state
 type ModalKind = 'email' | 'password' | 'delete' | null
@@ -199,8 +211,9 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
           <div class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left">
             <span class="min-w-0 flex-1">
               <span class="block text-base font-medium">Email</span>
-              <span class="text-muted-foreground block truncate text-sm">{{ auth.user?.email ?? '—' }}</span>
+              <span id="email" class="text-muted-foreground flex items-center gap-1.5 text-sm"><span class="min-w-0 truncate">{{ auth.user?.email ?? '—' }}</span><BadgeCheck v-if="auth.user?.emailVerified" class="size-4 shrink-0 text-green-700 dark:text-green-400" role="img" aria-label="Email verified" /></span>
             </span>
+            <VerifyEmailButton v-if="auth.sendVerificationEmail && !auth.user?.emailVerified" :key="auth.user?.email || ''" :send="auth.sendVerificationEmail" @sent="refreshVerification" />
             <button type="button" aria-label="Change email" class="text-primary text-callout press-row focus-inset min-h-11 rounded-full px-3 font-semibold" @click="openModal('email')">Change</button>
           </div>
         </li>

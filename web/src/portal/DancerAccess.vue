@@ -2,11 +2,13 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { LoaderCircle, Mail, UsersRound } from '@lucide/vue'
 import Popover from './Popover.vue'
+import VerifyEmailButton from '@/account/VerifyEmailButton.vue'
 import Button from '@/components/ui/Button.vue'
 import type { AccessRequest, AccessState } from './editor/types'
 const props = defineProps<{
   id: string
   disabled?: boolean
+  verifyEmail?: () => Promise<void>
   request: (request: AccessRequest) => Promise<unknown>
 }>()
 const emit = defineEmits<{
@@ -227,7 +229,7 @@ onMounted(() => {
             {{
               state && state.owners.length > 1
                 ? 'These accounts can manage this dancer alongside you.'
-                : 'Invite someone to manage this dancer alongside you.'
+                : 'Invite someone, such as another parent, to manage this dancer alongside you.'
             }}
           </p>
         </header>
@@ -315,17 +317,11 @@ onMounted(() => {
               <Button type="submit" variant="tonal" size="sm" :busy="busy">Invite</Button>
             </fieldset>
           </form>
-          <p v-if="!state.emailVerified" class="text-muted-foreground text-xs">
-            Verify your email in
-            <a
-              href="https://connect.scotdance.app/account"
-              target="_blank"
-              rel="noopener"
-              class="text-primary underline"
-              >Account</a
-            >
-            to invite someone.
-          </p>
+          <div v-if="!state.emailVerified" class="flex flex-wrap items-center gap-x-1 text-sm text-amber-700 dark:text-amber-400">
+            <span>Verify your email to invite someone.</span>
+            <VerifyEmailButton v-if="verifyEmail" :send="verifyEmail" @sent="refresh" />
+            <a v-else href="https://connect.scotdance.app/account#email" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center font-semibold underline">Verify in Account</a>
+          </div>
         </template>
         <p
           v-else-if="busy"

@@ -74,3 +74,9 @@ Entries hides both; Connect and Binder show both by default. Hidden controls are
 mounted (no photo download or public-profile lookup) and those fields are omitted
 from saves, preserving existing private values. This is presentation, not an access
 control boundary. Add future optional field names to the typed contract deliberately.
+
+## Email verification
+
+Account and native Sharing send Firebase's existing verification email, show the shared toast, and refresh verified status on return. The owner must still pass the server's fresh email-verification check before inviting anyone. The optional hosted-editor `verifyEmail` callback runs in the host, with the existing origin/source/session validation. Entries supplies its session UID; Binder resolves the parent UID from the authenticated access response (signup credentials take precedence over a studio user's session). Both call `ScotDance.verifyEmail({ audience, uid })` in the central identity frame. That frame validates the tool origin/audience and the currently signed-in UID before sending. It returns only success/failure, never credentials. A missing or different central session asks the user to sign in again. Old hosts keep the Account link until upgraded.
+
+Release order: ScotDance identity `embed.js`/`connect.html`, Connect Hosting, then Entries and Binder clients. This needs no new backend worker, secret or permission. Local fixture mode includes an unverified account, sample dancer and `/__fixture/inbox`; verify/reset there without sending external mail. Fixture mode is rejected by production builds.

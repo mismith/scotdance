@@ -8,6 +8,8 @@ import ConnectBrand from './ConnectBrand.vue'
 import { useConnectAccount } from './account'
 import { openSupport } from './support'
 import PageSkeleton from './PageSkeleton.vue'
+import FeedbackHost from '@/components/admin/FeedbackHost.vue'
+import { toasts } from '@/lib/admin/feedback'
 const route = useRoute()
 const store = useConnectAccount()
 const sections = [
@@ -36,6 +38,7 @@ onBeforeUnmount(() => {
 })
 </script>
 <template>
+  <FeedbackHost v-if="toasts.length" />
   <div class="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-(--safe-top) sm:px-6">
     <header class="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 md:grid-cols-[auto_minmax(0,1fr)_auto]">
       <RouterLink to="/account" class="focus-inset -ml-2 my-2.5 flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-2" aria-label="ScotDance Connect">

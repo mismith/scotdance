@@ -22,7 +22,7 @@ export type EditorResult =
   { id: string; dancer: Dancer; deleted?: false } | { id: string; deleted: true }
 
 export interface AccessRequest {
-  action: 'access' | 'invite'
+  action: 'access' | 'invite' | 'verify-email'
   id: string
   operation?: 'list' | 'remove' | 'leave' | 'revoke'
   ownerUid?: string

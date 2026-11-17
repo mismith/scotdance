@@ -2,7 +2,7 @@
 const CHANNEL = 'scotdance:dancer-editor:v1'
 const ORIGIN = new URL(import.meta.url).origin
 let active = false
-export function openDancerEditor({ load, save, manageAccess, signal, opener: requestedOpener }) {
+export function openDancerEditor({ load, save, manageAccess, verifyEmail, signal, opener: requestedOpener }) {
   if (active) return Promise.reject(new Error('A dancer editor is already open.'))
   if (signal?.aborted) return Promise.resolve(undefined)
   active = true
@@ -84,7 +84,7 @@ export function openDancerEditor({ load, save, manageAccess, signal, opener: req
       if (!data || data.channel !== CHANNEL || data.session !== session) return
       if (data.type === 'hello' && !initialized) {
         initialized = true
-        try { context = await load(); if (!ended) send('init', { context: { ...context, canManageAccess: typeof manageAccess === 'function' } }) }
+        try { context = await load(); if (!ended) send('init', { context: { ...context, canManageAccess: typeof manageAccess === 'function', canVerifyEmail: typeof verifyEmail === 'function' } }) }
         catch (error) { finish(error) }
       } else if (data.type === 'ready' && context && !revealed) {
         clearTimeout(timeout)
@@ -109,10 +109,11 @@ export function openDancerEditor({ load, save, manageAccess, signal, opener: req
         finally { writing = false }
       } else if (data.type === 'access' && context?.dancer && !writing && typeof manageAccess === 'function') {
         const request = data.request
-        if (!request || !['access', 'invite'].includes(request.action) || request.id !== context.dancer.id || typeof data.requestId !== 'string') return
+        if (!request || !['access', 'invite', 'verify-email'].includes(request.action) || request.id !== context.dancer.id || typeof data.requestId !== 'string') return
+        if (request.action === 'verify-email' && typeof verifyEmail !== 'function') return
         writing = true
         try {
-          const result = await manageAccess(request)
+          const result = request.action === 'verify-email' ? await verifyEmail() : await manageAccess(request)
           if (request.action === 'access' && request.operation === 'leave') lastResult = { id: request.id, deleted: true }
           if (!ended) {
             send('access-result', { requestId: data.requestId, result })

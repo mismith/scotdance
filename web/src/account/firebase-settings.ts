@@ -9,6 +9,7 @@ const API_KEY = 'AIzaSyCxvA2RMvlCQ3WCzAqPotD8IOhnmCtQ1xM'
 interface Identity {
   localId: string
   email?: string
+  emailVerified?: boolean
   displayName?: string
   passwordUpdatedAt?: number
   createdAt?: string
@@ -42,6 +43,7 @@ const codes: Record<string, string> = {
   USER_NOT_FOUND: 'user-not-found',
   USER_DISABLED: 'user-disabled',
   WEAK_PASSWORD: 'weak-password',
+  TOO_MANY_ATTEMPTS_TRY_LATER: 'too-many-requests',
 }
 const fail = (code: string) =>
   Object.assign(new Error('Could not update your account.'), { code: `auth/${code}` })
@@ -104,7 +106,7 @@ export function createFirebaseSettings(options: SettingsOptions) {
     apply(user)
     return token
   }
-  function apply(user: Identity) {
+  function apply(user: Identity, preserveVerification = false) {
     assertOwner(user)
     const metadata = { ...profile.user?.metadata }
     for (const [source, target] of [['createdAt', 'creationTime'], ['lastLoginAt', 'lastSignInTime'], ['passwordUpdatedAt', 'passwordUpdatedTime']] as const) {
@@ -114,7 +116,7 @@ export function createFirebaseSettings(options: SettingsOptions) {
         metadata[target] = value > 0 && Number.isFinite(date.getTime()) ? date.toISOString() : undefined
       }
     }
-    profile.user = { email: user.email ?? null, metadata }
+    profile.user = { email: user.email ?? null, emailVerified: user.emailVerified ?? (preserveVerification && user.email === profile.user?.email ? profile.user?.emailVerified : false) ?? false, metadata }
     profile.displayName = user.displayName ?? null
     profile.photoURL = user.photoUrl ?? null
     profile.hasPassword =
@@ -142,6 +144,13 @@ export function createFirebaseSettings(options: SettingsOptions) {
     const result = await database(`users:tools/${options.uid}`)
     assertActive()
     return linkedTools(result).filter(({ tool }) => tool !== 'connect')
+  }
+  async function checkEmailVerification() {
+    const result = await auth<{ users: Identity[] }>('lookup', { idToken: await identityToken() })
+    const user = result.users?.[0]
+    if (!user) throw fail('user-not-found')
+    apply(user)
+    return user.emailVerified === true
   }
   async function signOutTool(tool: Audience) {
     if (tool === 'connect') throw new Error('Use Sign out to leave Connect.')
@@ -180,7 +189,7 @@ export function createFirebaseSettings(options: SettingsOptions) {
       returnSecureToken: true,
     })
     remember(result)
-    apply(result)
+    apply(result, true)
     if (renewSession) await options.refreshSession(token)
   }
   const settings: AccountSettings = {
@@ -222,6 +231,14 @@ export function createFirebaseSettings(options: SettingsOptions) {
     async resetPassword(email) {
       if (email !== profile.user?.email) throw fail('user-mismatch')
       await auth('sendOobCode', { requestType: 'PASSWORD_RESET', email })
+    },
+    checkEmailVerification,
+    async sendVerificationEmail() {
+      if (await checkEmailVerification()) return
+      if (!profile.user?.email) throw fail('user-not-found')
+      // Firebase sends to the authenticated account, never a caller-supplied address.
+      // Its existing hosted action handler applies the email code.
+      await auth('sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: await identityToken() })
     },
     async deleteAccount(password) {
       await reauthenticate(password)

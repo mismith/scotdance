@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { watch } from 'vue'
+import { useConnectSettings } from './connectSettings'
 import DancerEditor from './DancerEditor.vue'
 import { useConnectAccount, type Dancer } from './account'
 import type { EditorWrite, EditorResult, AccessRequest } from './editor/types'
 const props = defineProps<{ dancer?: Dancer; photo: { value: string | null } }>()
 const emit = defineEmits<{ close: [] }>()
 const store = useConnectAccount()
+const verification = useConnectSettings()
 const owner = store.account?.uid
 watch(
   () => store.account?.uid,
@@ -56,6 +58,7 @@ async function persist(write: EditorWrite): Promise<EditorResult> {
     :other-dancers="otherDancers"
     :persist="persist"
     :manage-access="manageAccess"
+    :verify-email="verification.settings.sendVerificationEmail"
     @close="emit('close')"
   />
 </template>

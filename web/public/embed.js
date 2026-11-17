@@ -86,6 +86,31 @@
     return open(request, { signedIn: false })
   }
 
+  // A user-requested verification send in the existing identity session. No credentials leave this frame.
+  function verifyEmail(options) {
+    return new Promise((resolve, reject) => {
+      const frame = document.createElement('iframe')
+      frame.hidden = true
+      frame.title = 'Verify ScotDance email'
+      const timer = setTimeout(() => done(new Error('Could not reach ScotDance. Please try again.')), TIMEOUT)
+      function done(error) {
+        clearTimeout(timer)
+        window.removeEventListener('message', receive)
+        frame.remove()
+        if (error) reject(error)
+        else resolve()
+      }
+      function receive(event) {
+        if (event.source !== frame.contentWindow || event.origin !== ORIGIN || event.data?.channel !== CHANNEL) return
+        if (event.data.type === 'hello') frame.contentWindow.postMessage({ channel: CHANNEL, type: 'verifyEmail', audience: options.audience, uid: options.uid }, ORIGIN)
+        if (event.data.type === 'verificationResult') done(event.data.error ? new Error(event.data.error) : undefined)
+      }
+      window.addEventListener('message', receive)
+      frame.src = `${ORIGIN}/connect.html`
+      document.body.appendChild(frame)
+    })
+  }
+
   function open(request, unfinished) {
     if (active) return active.promise
     let resolve
@@ -189,5 +214,5 @@
     return promise
   }
 
-  window.ScotDance = { send, signIn, origin: ORIGIN }
+  window.ScotDance = { send, signIn, verifyEmail, origin: ORIGIN }
 })()

@@ -147,3 +147,36 @@ describe('connected tool management', () => {
     await expect(c.signOutTool('binder')).rejects.toThrow('Could not sign out')
   })
 })
+
+describe('email verification', () => {
+  it('sends only to the authenticated identity and does not claim the email is verified after sending', async () => {
+    const c = setup({ lookup: { users: [{ ...user, emailVerified: false }] } })
+    await c.settings.sendVerificationEmail!()
+    const send = c.calls.find(call => call.url.includes('accounts:sendOobCode'))!
+    expect(send.body).toEqual({ requestType: 'VERIFY_EMAIL', idToken: 'initial-token' })
+    expect(c.settings.user?.emailVerified).toBe(false)
+  })
+  it('reads fresh identity state after the email link, despite caching the identity token', async () => {
+    const lookup = { users: [{ ...user, emailVerified: false }] }
+    const c = setup({ lookup })
+    await c.load()
+    expect(await c.settings.checkEmailVerification!()).toBe(false)
+    lookup.users[0]!.emailVerified = true
+    expect(await c.settings.checkEmailVerification!()).toBe(true)
+    expect(c.settings.user?.emailVerified).toBe(true)
+    await c.settings.sendVerificationEmail!()
+    expect(c.calls.some(call => call.url.includes('accounts:sendOobCode'))).toBe(false)
+    lookup.users[0]!.emailVerified = false
+    expect(await c.settings.checkEmailVerification!()).toBe(false)
+  })
+  it('refuses to send if the identity belongs to another account', async () => {
+    const c = setup({ lookup: { users: [{ ...user, localId: 'someone-else' }] } })
+    await expect(c.settings.sendVerificationEmail!()).rejects.toMatchObject({ code: 'auth/user-mismatch' })
+    expect(c.calls.some(call => call.url.includes('accounts:sendOobCode'))).toBe(false)
+  })
+  it('surfaces Firebase throttling without marking the account verified', async () => {
+    const c = setup({ sendOobCode: { error: { message: 'TOO_MANY_ATTEMPTS_TRY_LATER' } } })
+    await expect(c.settings.sendVerificationEmail!()).rejects.toMatchObject({ code: 'auth/too-many-requests' })
+    expect(c.settings.user?.emailVerified).toBe(false)
+  })
+})

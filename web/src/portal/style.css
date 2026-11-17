@@ -23,3 +23,6 @@ textarea.field {
 }
 
 @source "../account/ConnectedTools.vue";
+
+@source '../account/VerifyEmailButton.vue';
+@source '../components/admin/FeedbackHost.vue';
