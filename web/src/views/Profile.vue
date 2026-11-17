@@ -98,8 +98,8 @@ async function handleSignOut() {
       </header>
 
       <section class="space-y-2">
-        <p class="text-base">Manage your name, email, password and dancers in ScotDance Connect.</p>
-        <a href="https://connect.scotdance.app/account" class="text-primary text-callout font-semibold">Edit your ScotDance account →</a>
+        <p class="text-base">Your ScotDance.app account works across multiple tools. ScotDance Connect lets you update your details in one place and control which tools can use them.</p>
+        <a href="https://connect.scotdance.app/account" class="text-primary text-callout font-semibold">Manage your account →</a>
       </section>
 
       <section v-if="me.canManageAny || assistants.length" class="space-y-2">
