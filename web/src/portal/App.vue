@@ -15,7 +15,9 @@ const sections = [
   { to: '/dancers', label: 'Dancers', icon: ContactRound },
 ]
 const isCurrent = (path: string) => route.path === path || route.path.startsWith(`${path}/`)
-const loading = computed(() => !route.meta.public && (!store.ready || (route.path === '/account' && !!store.account && !store.pageReady)))
+// Session loading owns the shell; a tab's data loading only owns its content.
+const shellLoading = computed(() => !route.meta.public && !store.ready)
+const loading = computed(() => shellLoading.value || (!route.meta.public && route.path === '/account' && !!store.account && !store.pageReady))
 async function refreshOnReturn() {
   if (document.visibilityState === 'hidden' || !store.ready || !store.account || store.busy) return
   try { await store.load() } catch (error) { store.error = error instanceof Error ? error.message : 'Could not refresh your account.' }
@@ -39,10 +41,10 @@ onBeforeUnmount(() => {
       <RouterLink to="/account" class="focus-inset -ml-2 my-2.5 flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-2" aria-label="ScotDance Connect">
         <ConnectBrand />
       </RouterLink>
-      <Button v-if="store.account" v-show="!loading" variant="plain" size="sm" class="col-start-2 row-start-1 justify-self-end md:col-start-3" :disabled="store.busy" @click="store.logout()">
+      <Button v-if="store.account" v-show="!shellLoading" variant="plain" size="sm" class="col-start-2 row-start-1 justify-self-end md:col-start-3" :disabled="store.busy" @click="store.logout()">
         <LogOut aria-hidden="true" /> Sign out
       </Button>
-    <nav v-if="store.account || loading" :inert="loading" :aria-hidden="loading || undefined" :class="{ 'invisible': loading }" aria-label="Your account" class="col-span-2 row-start-2 pb-5 md:col-span-1 md:col-start-2 md:row-start-1 md:justify-self-center md:pb-0">
+    <nav v-if="store.account || shellLoading" :inert="shellLoading" :aria-hidden="shellLoading || undefined" :class="{ 'invisible': shellLoading }" aria-label="Your account" class="col-span-2 row-start-2 pb-5 md:col-span-1 md:col-start-2 md:row-start-1 md:justify-self-center md:pb-0">
       <div class="grid w-full max-w-sm grid-cols-2 md:w-auto gap-1 rounded-2xl border border-border bg-background p-0.5">
         <RouterLink v-for="section in sections" :key="section.to" :to="section.to"
           :aria-current="isCurrent(section.to) ? 'page' : undefined"
