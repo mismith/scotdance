@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, useId } from 'vue'
-import { Camera, Trash2, LoaderCircle } from '@lucide/vue'
+import { computed, onBeforeUnmount, ref, useId, watch } from 'vue'
+import { Camera, Pencil, X, ExternalLink, LoaderCircle } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
 import {
@@ -12,6 +12,22 @@ import {
   decodePhoto,
 } from './photo'
 const photo = defineModel<string | null>({ default: null })
+const photoPreview = ref('')
+watch(
+  photo,
+  (value, _, cleanup) => {
+    photoPreview.value = ''
+    if (!value) return
+    // Browsers block top-level data URLs; a local image Blob opens safely in a tab.
+    const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(value)
+    if (!match) return
+    const bytes = Uint8Array.from(atob(match[2]!), (char) => char.charCodeAt(0))
+    const url = URL.createObjectURL(new Blob([bytes], { type: match[1] }))
+    photoPreview.value = url
+    cleanup(() => URL.revokeObjectURL(url))
+  },
+  { immediate: true },
+)
 const emit = defineEmits<{ editing: [value: boolean] }>()
 const input = ref<HTMLInputElement>()
 const id = useId()
@@ -41,6 +57,7 @@ const imageStyle = computed(() => ({
 }))
 function reset() {
   generation++
+  pointers.clear()
   if (source.value) URL.revokeObjectURL(source.value)
   source.value = ''
   image.value = undefined
@@ -136,39 +153,78 @@ function apply() {
     error.value = e instanceof Error ? e.message : 'Could not prepare this photo.'
   }
 }
-let drag: { px: number; py: number; x: number; y: number; width: number } | undefined
+const pointers = new Map<number, { x: number; y: number }>()
+function gesture() {
+  const [first, second] = [...pointers.values()]
+  if (!first) return
+  return second
+    ? {
+        x: (first.x + second.x) / 2,
+        y: (first.y + second.y) / 2,
+        distance: Math.hypot(first.x - second.x, first.y - second.y),
+      }
+    : { ...first, distance: 0 }
+}
+function transform(
+  target: HTMLElement,
+  before: { x: number; y: number },
+  after: { x: number; y: number },
+  factor = 1,
+) {
+  const rect = target
+    .querySelector<HTMLElement>('[data-photo-crop]')!
+    .getBoundingClientRect()
+  if (!rect.width) return
+  const scale = PHOTO_WIDTH / rect.width
+  const previous = frame.value
+  // Anchor the same image point under the fingers or wheel cursor.
+  const anchorX = ((before.x - rect.left) * scale - previous.left) / previous.width
+  const anchorY = ((before.y - rect.top) * scale - previous.top) / previous.height
+  zoom.value = Math.max(1, Math.min(MAX_PHOTO_ZOOM, zoom.value * factor))
+  const next = frame.value
+  const left = (after.x - rect.left) * scale - anchorX * next.width
+  const top = (after.y - rect.top) * scale - anchorY * next.height
+  x.value =
+    next.width > PHOTO_WIDTH
+      ? Math.max(-1, Math.min(1, (-2 * left) / (next.width - PHOTO_WIDTH) - 1))
+      : 0
+  y.value =
+    next.height > PHOTO_HEIGHT
+      ? Math.max(-1, Math.min(1, (-2 * top) / (next.height - PHOTO_HEIGHT) - 1))
+      : 0
+}
 function start(event: PointerEvent) {
-  if (event.button !== 0) return
-  const target = event.currentTarget as HTMLElement
-  target.setPointerCapture(event.pointerId)
-  drag = {
-    px: event.clientX,
-    py: event.clientY,
-    x: x.value,
-    y: y.value,
-    width: target.querySelector<HTMLElement>('[data-photo-crop]')!.clientWidth,
-  }
+  if (event.button !== 0 || pointers.size >= 2) return
+  pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
+  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
 }
 function move(event: PointerEvent) {
-  if (!drag) return
-  const ratio = PHOTO_WIDTH / drag.width
-  const f = frame.value
-  if (f.width > PHOTO_WIDTH)
-    x.value = Math.max(
-      -1,
-      Math.min(
-        1,
-        drag.x - ((event.clientX - drag.px) * ratio * 2) / (f.width - PHOTO_WIDTH),
-      ),
-    )
-  if (f.height > PHOTO_HEIGHT)
-    y.value = Math.max(
-      -1,
-      Math.min(
-        1,
-        drag.y - ((event.clientY - drag.py) * ratio * 2) / (f.height - PHOTO_HEIGHT),
-      ),
-    )
+  if (!pointers.has(event.pointerId)) return
+  const before = gesture()!
+  pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
+  const after = gesture()!
+  transform(
+    event.currentTarget as HTMLElement,
+    before,
+    after,
+    before.distance > 0 && after.distance > 0 ? after.distance / before.distance : 1,
+  )
+}
+function end(event: PointerEvent) {
+  pointers.delete(event.pointerId)
+}
+function wheel(event: WheelEvent) {
+  if (pointers.size) return
+  const target = event.currentTarget as HTMLElement
+  const unit =
+    event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? target.clientHeight : 1
+  const point = { x: event.clientX, y: event.clientY }
+  transform(
+    target,
+    point,
+    point,
+    Math.exp(-Math.max(-300, Math.min(300, event.deltaY * unit)) * 0.002),
+  )
 }
 function positionWithKeys(event: KeyboardEvent) {
   const step = event.shiftKey ? 0.1 : 0.03
@@ -200,38 +256,56 @@ onBeforeUnmount(reset)
       @dragleave="dragLeave"
       @drop.prevent.stop="drop"
     >
-      <button
-        type="button"
-        class="text-primary flex h-full min-w-0 flex-1 items-center gap-2 text-left"
-        :aria-label="photo ? 'Replace dancer photo' : 'Add dancer photo'"
-        :disabled="busy"
-        @click="input?.click()"
+      <a
+        v-if="photo"
+        :href="photoPreview || undefined"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-primary flex min-h-11 min-w-0 flex-1 items-center gap-2"
+        aria-label="View dancer photo in a new tab"
       >
         <img
-          v-if="photo"
           :src="photo"
           alt="Dancer portrait"
           class="h-10 w-8 shrink-0 rounded object-cover"
-        />
+        /><span>View</span><ExternalLink class="size-4 shrink-0" aria-hidden="true" />
+      </a>
+      <button
+        v-else
+        type="button"
+        class="text-primary flex h-full min-w-0 flex-1 items-center gap-2 text-left"
+        aria-label="Add dancer photo"
+        :disabled="busy"
+        @click="input?.click()"
+      >
         <LoaderCircle
-          v-else-if="busy"
+          v-if="busy"
           class="ml-1 size-4 shrink-0 animate-spin motion-reduce:animate-none"
           aria-hidden="true"
         />
         <Camera v-else class="ml-1 size-4 shrink-0" aria-hidden="true" />
-        <span class="truncate text-base">{{
-          photo ? 'Replace photo' : 'Add photo'
-        }}</span>
+        <span class="truncate text-base">Add photo</span>
       </button>
-      <button
-        v-if="photo"
-        type="button"
-        class="press-row text-muted-foreground hover:text-destructive -mr-1 flex size-11 shrink-0 items-center justify-center rounded-full"
-        aria-label="Remove dancer photo"
-        @click="removePhoto"
-      >
-        <Trash2 class="size-4" aria-hidden="true" />
-      </button>
+      <template v-if="photo">
+        <button
+          type="button"
+          class="press-row text-muted-foreground hover:text-destructive flex size-11 shrink-0 items-center justify-center rounded-full"
+          aria-label="Remove dancer photo"
+          :disabled="busy"
+          @click="removePhoto"
+        >
+          <X class="size-4" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          class="press-row text-primary -mr-1 flex size-11 shrink-0 items-center justify-center rounded-full"
+          aria-label="Edit dancer photo"
+          :disabled="busy"
+          @click="input?.click()"
+        >
+          <Pencil class="size-4" aria-hidden="true" />
+        </button>
+      </template>
     </div>
     <input
       ref="input"
@@ -245,19 +319,22 @@ onBeforeUnmount(reset)
       v-if="source && image"
       :open="true"
       :morph="false"
-      variant="center"
+      variant="sheet"
       aria-label="Crop photo"
       size="sm"
       @close="reset"
     >
-      <div class="space-y-4">
-        <h2 class="text-heading pr-10 font-semibold">Crop photo</h2>
+      <template #header><h2 class="text-heading font-semibold">Crop photo</h2></template>
+      <template #header-actions
+        ><Button variant="primary" @click="apply">Use photo</Button></template
+      >
+      <div class="space-y-4 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <p class="text-muted-foreground text-sm">
-          A clear, front-facing photo of just your dancer, cropped to show their head and shoulders.
-          Drag to position.
+          A clear, front-facing photo of just your dancer, cropped to show their head and
+          shoulders. Drag to position. Pinch or scroll to zoom.
         </p>
         <div
-          class="focus-visible:outline-primary relative mx-auto aspect-square w-full max-w-80 touch-none overflow-hidden rounded-lg bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2"
+          class="focus-visible:outline-primary relative mx-auto aspect-square w-[min(100%,20rem,max(8rem,calc(100svh-18rem)))] touch-none overflow-hidden rounded-lg bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2"
           tabindex="0"
           role="group"
           aria-label="Photo position"
@@ -265,9 +342,10 @@ onBeforeUnmount(reset)
           @keydown="positionWithKeys"
           @pointerdown="start"
           @pointermove="move"
-          @pointerup="drag = undefined"
-          @pointercancel="drag = undefined"
-          @lostpointercapture="drag = undefined"
+          @pointerup="end"
+          @pointercancel="end"
+          @lostpointercapture="end"
+          @wheel.prevent="wheel"
         >
           <div data-photo-crop class="absolute top-[6.25%] left-[15%] h-[87.5%] w-[70%]">
             <img
@@ -284,7 +362,8 @@ onBeforeUnmount(reset)
           </div>
         </div>
         <span :id="`${id}-position-help`" class="sr-only"
-          >Drag the photo or use the arrow keys to reposition it.</span
+          >Drag the photo or use the arrow keys to reposition it. Pinch, scroll, or use
+          the slider to zoom.</span
         >
         <label :for="`${id}-zoom`" class="block text-sm"
           >Zoom<input
@@ -297,9 +376,6 @@ onBeforeUnmount(reset)
             step="0.01"
         /></label>
         <p v-if="error" role="alert" class="text-destructive text-sm">{{ error }}</p>
-        <div class="flex justify-end">
-          <Button variant="primary" @click="apply">Use photo</Button>
-        </div>
       </div>
     </Dialog>
     <p v-if="error && !source" role="alert" class="text-destructive mt-2 text-sm">
