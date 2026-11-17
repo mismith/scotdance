@@ -32,6 +32,12 @@ const me = useMeStore()
 
 const embedded = window.parent !== window
 const dev = import.meta.env.DEV || import.meta.env.MODE === 'emulator'
+const localTools = {
+  entries: import.meta.env.VITE_LOCAL_ENTRIES_ORIGIN,
+  connect: import.meta.env.VITE_LOCAL_CONNECT_ORIGIN,
+  binder: import.meta.env.VITE_LOCAL_BINDER_ORIGIN,
+  challenge: import.meta.env.VITE_LOCAL_CHALLENGE_ORIGIN,
+}
 
 // The tool that opened us, once it has handed over its list.
 const toolOrigin = ref<string | null>(null)
@@ -54,12 +60,12 @@ function tell(message: ToTool) {
 
 function onMessage(e: MessageEvent) {
   // Only the window that framed us, from one of ScotDance.app's own sites, once.
-  if (e.source !== window.parent || toolOrigin.value || !isAllowedOrigin(e.origin, { dev })) return
+  if (e.source !== window.parent || toolOrigin.value || !isAllowedOrigin(e.origin, { dev, localTools })) return
   if (!isFromTool(e.data)) return
   toolOrigin.value = e.origin
   mode.value = e.data.type
   if (e.data.type === 'signIn') {
-    audience.value = audienceFor(e.data.audience, e.origin, { dev })
+    audience.value = audienceFor(e.data.audience, e.origin, { dev, localTools })
     unreadable.value = !audience.value
     // Asked for from a tool's "Create one": the new-account form first (signed in already, they just continue)
     if (e.data.register === true) loginStep.value = 'register'

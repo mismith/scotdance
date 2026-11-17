@@ -45,7 +45,13 @@ const isStudioSite = (hostname: string) => STUDIO_SITE.test(hostname)
  */
 export const isEntriesPreview = (hostname: string) => /^scotdance-entries--[a-z0-9-]+\.web\.app$/.test(hostname)
 
-export function isAllowedOrigin(origin: string, { dev = false } = {}): boolean {
+interface OriginOptions {
+  dev?: boolean
+  /** Explicit local tool origins; development mode alone never authorizes a recipient. */
+  localTools?: Partial<Record<Audience, string>>
+}
+
+export function isAllowedOrigin(origin: string, { dev = false, localTools = {} }: OriginOptions = {}): boolean {
   let url: URL
   try {
     url = new URL(origin)
@@ -57,6 +63,7 @@ export function isAllowedOrigin(origin: string, { dev = false } = {}): boolean {
   if (url.protocol === 'https:' && isStudioSite(url.hostname)) return true
   if (url.protocol === 'https:' && isEntriesPreview(url.hostname)) return true
   return dev && url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
+    && Object.values(localTools).includes(origin)
 }
 
 /** The item from a tool's `send`, or null when it isn't one we take. */
@@ -109,13 +116,13 @@ export const TOOLS = {
 } as const
 export type Audience = keyof typeof TOOLS
 
-export function audienceFor(value: unknown, origin: string, { dev = false } = {}): Audience | null {
+export function audienceFor(value: unknown, origin: string, { dev = false, localTools = {} }: OriginOptions = {}): Audience | null {
   if (typeof value !== 'string' || !Object.hasOwn(TOOLS, value)) return null
   const audience = value as Audience
-  if (!isAllowedOrigin(origin, { dev })) return null
+  if (!isAllowedOrigin(origin, { dev, localTools })) return null
   const { hostname, protocol } = new URL(origin)
   if (protocol === 'https:' && TOOLS[audience].serves(hostname)) return audience
-  return dev && protocol === 'http:' ? audience : null
+  return dev && protocol === 'http:' && localTools[audience] === origin ? audience : null
 }
 
 export type FromTool =

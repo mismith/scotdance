@@ -30,8 +30,8 @@ describe('isAllowedOrigin', () => {
 
   it('takes local sites only while developing', () => {
     expect(isAllowedOrigin('http://localhost:5190')).toBe(false)
-    expect(isAllowedOrigin('http://localhost:5190', { dev: true })).toBe(true)
-    expect(isAllowedOrigin('http://127.0.0.1:5190', { dev: true })).toBe(true)
+    expect(isAllowedOrigin('http://localhost:5190', { dev: true, localTools: { entries: 'http://localhost:5190' } })).toBe(true)
+    expect(isAllowedOrigin('http://127.0.0.1:5190', { dev: true })).toBe(false)
     expect(isAllowedOrigin('http://192.168.1.4:5190', { dev: true })).toBe(false)
   })
 })
@@ -110,6 +110,36 @@ describe('audienceFor', () => {
 
   it('takes a local site while developing', () => {
     expect(audienceFor('challenge', 'http://localhost:5173')).toBeNull()
-    expect(audienceFor('challenge', 'http://localhost:5173', { dev: true })).toBe('challenge')
+    expect(audienceFor('challenge', 'http://localhost:5173', { dev: true, localTools: { challenge: 'http://localhost:5173' } })).toBe('challenge')
+  })
+})
+
+// A second local page must not steal the central session by posing as Connect.
+describe('local sign-in isolation', () => {
+  it('does not grant any audience merely because the caller is localhost', () => {
+    for (const audience of ['connect', 'entries', 'binder', 'challenge']) {
+      expect(audienceFor(audience, 'http://127.0.0.1:6001', { dev: true })).toBeNull()
+    }
+  })
+})
+
+
+describe('explicit local tool bindings', () => {
+  const localTools = { entries: 'http://127.0.0.1:5397', connect: 'http://127.0.0.1:5399' }
+  const options = { dev: true, localTools }
+  it('allows only the configured audience at each exact origin', () => {
+    expect(audienceFor('entries', localTools.entries, options)).toBe('entries')
+    expect(audienceFor('connect', localTools.connect, options)).toBe('connect')
+    expect(audienceFor('connect', localTools.entries, options)).toBeNull()
+    expect(audienceFor('entries', localTools.connect, options)).toBeNull()
+    for (const origin of ['http://127.0.0.1:6001', 'http://localhost:5397', 'http://127.0.0.1:5397.evil.example', 'null']) {
+      expect(isAllowedOrigin(origin, options)).toBe(false)
+      expect(audienceFor('connect', origin, options)).toBeNull()
+    }
+  })
+  it('ignores local configuration in a release build and refuses non-loopback configuration', () => {
+    expect(audienceFor('entries', localTools.entries, { localTools })).toBeNull()
+    const origin = 'http://evil.example'
+    expect(audienceFor('connect', origin, { dev: true, localTools: { connect: origin } })).toBeNull()
   })
 })

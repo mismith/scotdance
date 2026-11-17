@@ -21,7 +21,8 @@ const SEND = `ScotDance.send({ source: 'Splits', name: 'entries.csv', text: ${JS
 const SIGN_IN = `ScotDance.signIn({ audience: 'challenge' })`
 
 async function openTool(page: Page, baseURL: string, call = SEND) {
-  await page.route(`${TOOL}/**`, (route) =>
+  const toolOrigin = call.includes("audience: 'connect'") ? 'http://localhost:5298' : TOOL
+  await page.route(`${toolOrigin}/**`, (route) =>
     route.fulfill({
       contentType: 'text/html',
       body: `<!doctype html><title>Tool</title><button id="send">Send</button>
@@ -33,7 +34,7 @@ async function openTool(page: Page, baseURL: string, call = SEND) {
         </script>`,
     }),
   )
-  await page.goto(`${TOOL}/`)
+  await page.goto(`${toolOrigin}/`)
   await page.getByRole('button', { name: 'Send' }).click()
 }
 
