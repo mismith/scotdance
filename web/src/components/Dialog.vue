@@ -389,13 +389,16 @@ const dragStyle = computed(() =>
       <X class="size-4" stroke-width="2.5" />
     </button>
 
-    <div v-if="variant === 'sheet'" class="overflow-y-auto">
+    <div v-if="variant === 'sheet'" class="min-h-0 overflow-y-auto">
       <slot />
     </div>
     <slot v-else-if="variant === 'dropdown'" />
     <div v-else class="space-y-4">
       <slot />
     </div>
+    <footer v-if="variant === 'sheet' && slots.footer" class="shrink-0 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <slot name="footer" />
+    </footer>
   </dialog>
 </template>
 

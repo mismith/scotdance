@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // The single owner-profile editor, used directly here and by the hosted entry.
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, useId, watch } from 'vue'
 import { Trash2, ChevronDown, Shield } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
@@ -79,6 +79,7 @@ function toggleCategory() {
   }
 }
 const form = ref<HTMLFormElement>()
+const formId = useId()
 const publicLink = ref<InstanceType<typeof PublicDancerLink>>()
 const preparing = ref(false)
 const field = 'field mt-1.5 h-12 w-full rounded-xl px-3 text-base'
@@ -263,7 +264,7 @@ async function persist(updateDefaults = false, remove = false) {
           >
         </div>
       </div>
-      <form v-else ref="form" class="space-y-5" @submit.prevent="save">
+      <form v-else :id="formId" ref="form" class="space-y-5" @submit.prevent="save">
         <fieldset :disabled="busy || preparing" class="grid min-w-0 grid-cols-2 gap-4">
           <label class="text-callout font-medium"
             >First name<input
@@ -366,25 +367,28 @@ async function persist(updateDefaults = false, remove = false) {
             :class="showPhoto ? 'col-span-2 sm:col-span-1' : 'col-span-2'"
           />
         </fieldset>
-        <footer class="flex items-center justify-between gap-4">
-          <p class="text-muted-foreground flex items-center gap-1.5 text-sm">
-            <Shield
-              class="size-4 shrink-0 text-amber-500 dark:text-amber-400"
-              aria-hidden="true"
-            />
-            <span>Shared only when you consent.</span>
-          </p>
-          <Button
-            class="ml-auto shrink-0"
-            type="submit"
-            variant="primary"
-            :busy="busy || preparing"
-            :disabled="accessBusy || photoEditing"
-            >Save</Button
-          >
-        </footer>
       </form>
       <p v-if="error" role="alert" class="text-destructive mt-4">{{ error }}</p>
     </div>
+    <template v-if="!deleting && !confirmDefaults" #footer>
+      <div class="flex items-center justify-between gap-4">
+        <p class="text-muted-foreground flex items-center gap-1.5 text-sm">
+          <Shield
+            class="size-4 shrink-0 text-amber-500 dark:text-amber-400"
+            aria-hidden="true"
+          />
+          <span>Shared only when you consent.</span>
+        </p>
+        <Button
+          class="ml-auto shrink-0"
+          type="submit"
+          :form="formId"
+          variant="primary"
+          :busy="busy || preparing"
+          :disabled="accessBusy || photoEditing"
+          >Save</Button
+        >
+      </div>
+    </template>
   </Dialog>
 </template>

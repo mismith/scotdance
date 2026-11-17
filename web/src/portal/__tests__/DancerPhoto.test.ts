@@ -13,6 +13,33 @@ vi.mock('../photo', async (original) => ({
 }))
 
 describe('photo picker interactions', () => {
+  it('shows preparation immediately and discards a decode cancelled while loading', async () => {
+    let finish!: (value: Awaited<ReturnType<typeof decodePhoto>>) => void
+    vi.mocked(decodePhoto).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        }),
+    )
+    const wrapper = mount(DancerPhoto, {
+      global: { stubs: { Dialog: { template: '<div><slot /></div>' } } },
+    })
+    const file = new File(['photo'], 'portrait.jpg', { type: 'image/jpeg' })
+    await wrapper.get('.field').trigger('drop', { dataTransfer: { files: [file] } })
+    expect(wrapper.get('[role="status"]').text()).toBe('Preparing photo…')
+    await vi.waitFor(() => expect(finish).toBeTypeOf('function'))
+    wrapper.findComponent(Dialog).vm.$emit('close')
+    await flushPromises()
+    finish({
+      url: 'blob:cancelled',
+      image: { naturalWidth: 800, naturalHeight: 1000 } as HTMLImageElement,
+    })
+    await flushPromises()
+    expect(wrapper.find('[role="status"]').exists()).toBe(false)
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+    wrapper.unmount()
+  })
+
   it('does not close the containing dialog when the file chooser is cancelled', async () => {
     const wrapper = mount(Dialog, {
       props: { open: false, morph: false },
@@ -35,7 +62,7 @@ describe('photo picker interactions', () => {
     expect(field.classes()).toContain('ring-2')
     await field.trigger('drop', { dataTransfer })
     await flushPromises()
-    expect(decodePhoto).toHaveBeenCalledWith(file)
+    await vi.waitFor(() => expect(decodePhoto).toHaveBeenCalledWith(file))
     expect(wrapper.find('dialog-stub[aria-label="Crop photo"]').exists()).toBe(true)
     expect(wrapper.emitted('update:modelValue')).toBeUndefined()
     expect(field.classes()).not.toContain('ring-2')

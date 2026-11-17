@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, useId, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { Camera, Pencil, X, ExternalLink, LoaderCircle } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
@@ -34,6 +34,7 @@ const id = useId()
 const source = ref('')
 const image = ref<HTMLImageElement>()
 const busy = ref(false)
+const applying = ref(false)
 const dragging = ref(false)
 const error = ref('')
 const zoom = ref(1),
@@ -62,6 +63,7 @@ function reset() {
   source.value = ''
   image.value = undefined
   busy.value = false
+  applying.value = false
   emit('editing', false)
 }
 async function choose(event: Event) {
@@ -85,6 +87,13 @@ async function drop(event: DragEvent) {
   const file = event.dataTransfer?.files[0]
   if (file && !busy.value) await loadFile(file)
 }
+async function paintLoading() {
+  await nextTick()
+  // Let the loading sheet paint before decoding or encoding a large image.
+  await new Promise<void>((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+  )
+}
 async function loadFile(file: File) {
   reset()
   error.value = photoFileProblem(file)
@@ -94,6 +103,8 @@ async function loadFile(file: File) {
   emit('editing', true)
   let url = ''
   try {
+    await paintLoading()
+    if (request !== generation) return
     const decoded = await decodePhoto(file)
     url = decoded.url
     const img = decoded.image
@@ -127,13 +138,17 @@ function removePhoto() {
   photo.value = null
   reset()
 }
-function apply() {
-  if (!image.value) return
+async function apply() {
+  if (!image.value || applying.value) return
   if (frame.value.width / image.value.naturalWidth > 2) {
     error.value = 'Zoom out a little or choose a larger photo to keep it clear.'
     return
   }
+  applying.value = true
+  const request = generation
   try {
+    await paintLoading()
+    if (request !== generation || !image.value) return
     const canvas = document.createElement('canvas')
     const ratio = Math.min(1, image.value.naturalWidth / frame.value.width)
     canvas.width = Math.round(PHOTO_WIDTH * ratio)
@@ -151,6 +166,8 @@ function apply() {
     error.value = ''
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Could not prepare this photo.'
+  } finally {
+    applying.value = false
   }
 }
 const pointers = new Map<number, { x: number; y: number }>()
@@ -316,25 +333,35 @@ onBeforeUnmount(reset)
       @change="choose"
     />
     <Dialog
-      v-if="source && image"
+      v-if="busy || (source && image)"
       :open="true"
       :morph="false"
       variant="sheet"
       aria-label="Crop photo"
+      :closable="!applying"
       size="sm"
       @close="reset"
     >
       <template #header><h2 class="text-heading font-semibold">Crop photo</h2></template>
-      <template #header-actions
-        ><Button variant="primary" @click="apply">Use photo</Button></template
+      <div
+        v-if="busy"
+        role="status"
+        class="text-muted-foreground flex min-h-48 items-center justify-center gap-3 p-6"
+        aria-live="polite"
       >
-      <div class="space-y-4 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <LoaderCircle
+          class="size-5 shrink-0 animate-spin motion-reduce:animate-none"
+          aria-hidden="true"
+        />
+        <span>Preparing photo…</span>
+      </div>
+      <div v-else :inert="applying" class="space-y-4 p-4">
         <p class="text-muted-foreground text-sm">
           A clear, front-facing photo of just your dancer, cropped to show their head and
           shoulders. Drag to position. Pinch or scroll to zoom.
         </p>
         <div
-          class="focus-visible:outline-primary relative mx-auto aspect-square w-[min(100%,20rem,max(8rem,calc(100svh-18rem)))] touch-none overflow-hidden rounded-lg bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2"
+          class="focus-visible:outline-primary relative mx-auto aspect-square w-[min(100%,20rem,max(8rem,calc(100svh-23rem)))] touch-none overflow-hidden rounded-lg bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2"
           tabindex="0"
           role="group"
           aria-label="Photo position"
@@ -377,6 +404,11 @@ onBeforeUnmount(reset)
         /></label>
         <p v-if="error" role="alert" class="text-destructive text-sm">{{ error }}</p>
       </div>
+      <template v-if="!busy" #footer>
+        <div class="flex justify-end">
+          <Button variant="primary" :busy="applying" @click="apply">Use photo</Button>
+        </div>
+      </template>
     </Dialog>
     <p v-if="error && !source" role="alert" class="text-destructive mt-2 text-sm">
       {{ error }}
