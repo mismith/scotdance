@@ -1,6 +1,6 @@
 {{{ @content }}}
 
 --
-{{ app.name }}: Highland dance competitions, live on every family’s phone.
+{{ app.name }}: Built by a Highland dance family, for Highland dance families.
 {{ app.url }}{{#app.preview}}
 Sent from {{.}}, the preview site.{{/app.preview}}

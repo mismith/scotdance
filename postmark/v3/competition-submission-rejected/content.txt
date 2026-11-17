@@ -15,4 +15,4 @@ If you’ve any questions, just reply to this email.
 
 ---
 
-{{ app.name }} | {{ app.description }} | {{ app.url }}
+{{ app.name }} | Built by a Highland dance family, for Highland dance families. | {{ app.url }}

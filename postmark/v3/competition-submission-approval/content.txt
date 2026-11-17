@@ -10,4 +10,4 @@ An approval is required for {{ competition.name }}.
 
 ---
 
-{{ app.name }} | {{ app.description }} | {{ app.url }}
+{{ app.name }} | Built by a Highland dance family, for Highland dance families. | {{ app.url }}
