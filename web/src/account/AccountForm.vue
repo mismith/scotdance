@@ -180,12 +180,12 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
             ref="nameInput"
             type="text"
             autocomplete="name"
-            class="field h-12 w-full rounded-xl pl-3 pr-24 text-base"
+            class="field h-12 w-full rounded-xl pl-3 pr-12 text-base"
             @input="onDisplayNameInput"
             @blur="saveDisplayName"
           />
-          <SaveIndicator :status="nameSaveStatus" :style="{ right: displayName ? '3.25rem' : undefined }" />
-          <button v-if="displayName" type="button" class="absolute right-0 top-1/2 -translate-y-1/2 flex size-12 items-center justify-center text-muted-foreground" aria-label="Clear full name" @pointerdown.prevent @click="clearName"><X class="size-4" aria-hidden="true" /></button>
+          <SaveIndicator :status="nameSaveStatus" />
+          <button v-if="displayName" v-show="!nameSaveStatus" type="button" class="absolute right-0 top-1/2 -translate-y-1/2 flex size-12 items-center justify-center text-muted-foreground" aria-label="Clear full name" @pointerdown.prevent @click="clearName"><X class="size-4" aria-hidden="true" /></button>
           </span>
         </label>
         </div>
