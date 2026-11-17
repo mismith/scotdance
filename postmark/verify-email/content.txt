@@ -1,0 +1,9 @@
+Verify your email
+
+Hello{{#account.name}} {{.}}{{/account.name}},
+
+Confirm that {{ account.email }} is your email address.
+
+Verify email: {{ verification.link }}
+
+If you didn’t request this, you can ignore this email.

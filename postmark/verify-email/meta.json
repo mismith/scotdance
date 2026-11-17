@@ -1,0 +1,21 @@
+{
+  "Name": "Verify email",
+  "Alias": "verify-email",
+  "Subject": "Verify your email for ScotDance",
+  "TemplateType": "Standard",
+  "LayoutTemplate": "scotdance",
+  "TestRenderModel": {
+    "app": {
+      "name": "ScotDance.app",
+      "url": "https://next.scotdance.app",
+      "preview": null
+    },
+    "account": {
+      "name": "Murray",
+      "email": "parent@example.test"
+    },
+    "verification": {
+      "link": "https://connect.scotdance.app/verify-email?oobCode=example"
+    }
+  }
+}

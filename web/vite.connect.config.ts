@@ -35,6 +35,7 @@ export default defineConfig(({ command, mode }) => {
     rollupOptions: {
       input: {
         main: fileURLToPath(new URL('./portal/index.html', import.meta.url)),
+        verification: fileURLToPath(new URL('./portal/verify-email.html', import.meta.url)),
         editor: fileURLToPath(new URL('./portal/dancer-editor.html', import.meta.url)),
       },
     },

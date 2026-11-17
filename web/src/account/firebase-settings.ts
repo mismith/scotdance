@@ -1,4 +1,5 @@
 import { reactive } from 'vue'
+import { sendVerificationEmail } from './send-verification'
 import { linkedTools, type Audience } from './tool-links'
 import type { AccountSettings } from './settings'
 
@@ -236,9 +237,7 @@ export function createFirebaseSettings(options: SettingsOptions) {
     async sendVerificationEmail() {
       if (await checkEmailVerification()) return
       if (!profile.user?.email) throw fail('user-not-found')
-      // Firebase sends to the authenticated account, never a caller-supplied address.
-      // Its existing hosted action handler applies the email code.
-      await auth('sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: await identityToken() })
+      await sendVerificationEmail(await identityToken(), request, `${functionsURL}/sendVerificationEmail`)
     },
     async deleteAccount(password) {
       await reauthenticate(password)

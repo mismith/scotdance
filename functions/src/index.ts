@@ -4,6 +4,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { app as functionsApp } from 'firebase-functions/v1';
 import Invites from './invites';
+import { getOnSendVerificationEmail } from './emailVerification';
 import Submissions from './submissions';
 import * as Dancers from './dancers';
 import * as Competitions from './competitions';
@@ -62,6 +63,10 @@ const appConfig = {
   email: 'admin@scotdance.app',
   url: isEmulator() ? 'http://localhost:5273' : 'https://scotdance.app',
 };
+
+export const sendVerificationEmail = https({ secrets: [runtimeConfig] }).onCall(
+  getOnSendVerificationEmail(getAuth(app), getDatabase(app).ref('private:emailVerification')),
+);
 
 const configDatabase = database({ secrets: [runtimeConfig] });
 

@@ -48,6 +48,7 @@ export function connectFixtures(): Plugin {
           if (url.pathname === '/api/load') result = { account: { uid, name, email: identity.email, emailVerified: verified }, dancers, defaults, defaultsRevision: 1 }
           else if (url.pathname === '/api/access' && data.id === 'isla' && data.operation === 'list') result = { id: 'isla', name: 'Isla Fraser', shared: false, emailVerified: verified, accessRevision: 0, owners: [{ uid, name, you: true }], invitations, dancers: [{ id: 'isla', name: 'Isla Fraser' }] }
           else if (url.pathname === '/api/invite') { if (!verified) throw Error('Verify your email first'); invitations.push({ id: crypto.randomUUID(), email: String(data.email), delivery: 'sent' }); result = { ok: true } }
+          else if (url.pathname === '/__fixture/functions/sendVerificationEmail') { verificationCode = crypto.randomUUID(); result = { result: { sent: true } } }
           else if (url.pathname === '/__fixture/auth/accounts:sendOobCode' && data.requestType === 'VERIFY_EMAIL' && data.idToken === 'local-fixture-token') { verificationCode = crypto.randomUUID(); result = { email: identity.email } }
           else if (url.pathname === '/api/logout') result = { ok: true }
           else if (url.pathname === '/__fixture/auth/accounts:lookup') result = { users: [identity] }

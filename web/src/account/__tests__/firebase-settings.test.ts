@@ -15,6 +15,7 @@ function setup(overrides: Record<string, object> = {}) {
     calls.push({ url, body })
     const action = url.match(/accounts:(\w+)/)?.[1]
     const result =
+      (url.endsWith('/sendVerificationEmail') && (overrides.verification ?? { result: { sent: true } })) ||
       (action && overrides[action]) ||
       (action === 'lookup'
         ? { users: [user] }
@@ -152,8 +153,8 @@ describe('email verification', () => {
   it('sends only to the authenticated identity and does not claim the email is verified after sending', async () => {
     const c = setup({ lookup: { users: [{ ...user, emailVerified: false }] } })
     await c.settings.sendVerificationEmail!()
-    const send = c.calls.find(call => call.url.includes('accounts:sendOobCode'))!
-    expect(send.body).toEqual({ requestType: 'VERIFY_EMAIL', idToken: 'initial-token' })
+    const send = c.calls.find(call => call.url.endsWith('/sendVerificationEmail'))!
+    expect(send.body).toEqual({ data: {} })
     expect(c.settings.user?.emailVerified).toBe(false)
   })
   it('reads fresh identity state after the email link, despite caching the identity token', async () => {
@@ -165,17 +166,17 @@ describe('email verification', () => {
     expect(await c.settings.checkEmailVerification!()).toBe(true)
     expect(c.settings.user?.emailVerified).toBe(true)
     await c.settings.sendVerificationEmail!()
-    expect(c.calls.some(call => call.url.includes('accounts:sendOobCode'))).toBe(false)
+    expect(c.calls.some(call => call.url.endsWith('/sendVerificationEmail'))).toBe(false)
     lookup.users[0]!.emailVerified = false
     expect(await c.settings.checkEmailVerification!()).toBe(false)
   })
   it('refuses to send if the identity belongs to another account', async () => {
     const c = setup({ lookup: { users: [{ ...user, localId: 'someone-else' }] } })
     await expect(c.settings.sendVerificationEmail!()).rejects.toMatchObject({ code: 'auth/user-mismatch' })
-    expect(c.calls.some(call => call.url.includes('accounts:sendOobCode'))).toBe(false)
+    expect(c.calls.some(call => call.url.endsWith('/sendVerificationEmail'))).toBe(false)
   })
   it('surfaces Firebase throttling without marking the account verified', async () => {
-    const c = setup({ sendOobCode: { error: { message: 'TOO_MANY_ATTEMPTS_TRY_LATER' } } })
+    const c = setup({ verification: { error: { status: 'RESOURCE_EXHAUSTED' } } })
     await expect(c.settings.sendVerificationEmail!()).rejects.toMatchObject({ code: 'auth/too-many-requests' })
     expect(c.settings.user?.emailVerified).toBe(false)
   })
