@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, nextTick, ref, useId } from 'vue'
 import { Plus, X } from '@lucide/vue'
 import AdminField from '@/components/admin/AdminField.vue'
@@ -300,14 +301,14 @@ defineExpose({ addDancer, several })
           <NameSuggestions v-if="listFor(i)" :id="listId" :suggestions="suggestions" :active="active" @pick="pick" />
         </li>
       </ul>
-      <button
+      <AsyncButton
         type="button"
         class="press-row focus-inset text-primary flex min-h-12 w-full items-center gap-2 rounded-none rounded-b-xl border-t px-3 font-semibold"
         :disabled="!canEdit || busy"
         @click="addDancer"
       >
         <Plus class="size-5" aria-hidden="true" /> Add another dancer
-      </button>
+      </AsyncButton>
     </div>
   </AdminField>
 </template>

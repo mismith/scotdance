@@ -7,6 +7,7 @@ import Dialog from '@/components/Dialog.vue'
 import DancerAccess from './DancerAccess.vue'
 import ConnectBrand from './ConnectBrand.vue'
 import DancerDefaults from './DancerDefaults.vue'
+import DancerPhoto from './DancerPhoto.vue'
 import PublicDancerLink from './PublicDancerLink.vue'
 import BirthdayField from './BirthdayField.vue'
 import { tidy, tidyStudio } from './profileFields'
@@ -33,6 +34,10 @@ const accessBusy = ref(false),
   shared = ref(!!props.dancer?.shared)
 const busy = ref(false)
 const error = ref('')
+const photo = ref(props.photo?.value ?? null)
+const photoEditing = ref(false)
+const showPhoto = computed(() => !!props.photo && !props.hiddenFields?.includes('photo'))
+const showPublicDancer = computed(() => !props.hiddenFields?.includes('publicDancer'))
 const opened = ref(true)
 let lastWrite = '',
   requestId = ''
@@ -117,7 +122,7 @@ function close() {
   }
 }
 async function save() {
-  if (preparing.value || busy.value || accessBusy.value) return
+  if (preparing.value || busy.value || photoEditing.value || accessBusy.value) return
   if (!form.value?.reportValidity()) return
   draft.value.firstName = tidy(draft.value.firstName)
   draft.value.lastName = tidy(draft.value.lastName)
@@ -145,9 +150,14 @@ async function persist(updateDefaults = false, remove = false) {
   if (busy.value) return
   busy.value = true
   error.value = ''
+  const dancer = JSON.parse(JSON.stringify(draft.value)) as Dancer
+  if (!showPublicDancer.value) delete dancer.publicDancer
   const body = {
+    ...(showPhoto.value && photo.value !== props.photo?.value
+      ? { photo: photo.value }
+      : {}),
     action: remove ? ('delete' as const) : ('save' as const),
-    dancer: JSON.parse(JSON.stringify(draft.value)) as Dancer,
+    dancer,
     defaults: updateDefaults ? { ...changedDefaults.value } : {},
     defaultsRevision: props.defaultsRevision,
   }
@@ -339,12 +349,19 @@ async function persist(updateDefaults = false, remove = false) {
             :defaults="props.defaults"
             class="col-span-2"
           />
+          <DancerPhoto
+            v-if="showPhoto"
+            :class="showPublicDancer ? 'col-span-2 sm:col-span-1' : 'col-span-2'"
+            v-model="photo"
+            @editing="photoEditing = $event"
+          />
           <PublicDancerLink
+            v-if="showPublicDancer"
             ref="publicLink"
             v-model="draft.publicDancer"
             :first-name="draft.firstName"
             :last-name="draft.lastName"
-            class="col-span-2"
+            :class="showPhoto ? 'col-span-2 sm:col-span-1' : 'col-span-2'"
           />
         </fieldset>
         <footer class="flex items-center justify-between gap-4">
@@ -360,7 +377,7 @@ async function persist(updateDefaults = false, remove = false) {
             type="submit"
             variant="primary"
             :busy="busy || preparing"
-            :disabled="accessBusy"
+            :disabled="accessBusy || photoEditing"
             >Save</Button
           >
         </footer>

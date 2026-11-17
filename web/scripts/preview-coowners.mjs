@@ -6,9 +6,10 @@ import { createServer } from 'vite'
 if (
   !/^demo-/.test(process.env.GCLOUD_PROJECT || '') ||
   !/^127\.0\.0\.1:/.test(process.env.FIRESTORE_EMULATOR_HOST || '') ||
-  !/^127\.0\.0\.1:/.test(process.env.FIREBASE_AUTH_EMULATOR_HOST || '')
+  !/^127\.0\.0\.1:/.test(process.env.FIREBASE_AUTH_EMULATOR_HOST || '') ||
+  !/^127\.0\.0\.1:/.test(process.env.FIREBASE_STORAGE_EMULATOR_HOST || '')
 )
-  throw new Error('Isolated local Auth/Firestore emulators and a demo project required.')
+  throw new Error('Isolated local Auth/Firestore/Storage emulators and a demo project required.')
 const backend =
   process.env.CONNECT_PREVIEW_BACKEND ||
   fileURLToPath(

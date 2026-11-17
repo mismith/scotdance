@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { connected } from '@/lib/offline'
 import { useMorph } from '@/lib/morph'
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
@@ -644,10 +645,10 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         >
           <MapPin class="text-muted-foreground size-5 shrink-0" /> Show the map
         </button>
-        <button type="button" :class="MENU_ROW" @click="copyAddress(true)">
+        <AsyncButton type="button" :class="MENU_ROW" @click="copyAddress(true)">
           <component :is="copied ? Check : Copy" :class="['size-5 shrink-0', copied ? 'text-done-foreground' : 'text-muted-foreground']" />
           {{ copied ? 'Address copied' : 'Copy address' }}
-        </button>
+        </AsyncButton>
       </nav>
     </Dialog>
 

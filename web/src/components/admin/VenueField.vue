@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, onBeforeUnmount, ref, useId } from 'vue'
 import { MapPin, School } from '@lucide/vue'
 import AdminField from '@/components/admin/AdminField.vue'
@@ -231,7 +232,7 @@ function onBlur() {
             role="option"
             :aria-selected="i === active"
           >
-            <button
+            <AsyncButton
               type="button"
               tabindex="-1"
               :class="[
@@ -260,7 +261,7 @@ function onBlur() {
                   }}</span>
                 </span>
               </template>
-            </button>
+            </AsyncButton>
           </li>
         </ul>
       </div>

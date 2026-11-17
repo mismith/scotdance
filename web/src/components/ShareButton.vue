@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { ref } from 'vue'
 import { Check, Share } from '@lucide/vue'
 import { isNative } from '@/lib/native'
@@ -35,7 +36,7 @@ async function share() {
 </script>
 
 <template>
-  <button
+  <AsyncButton
     type="button"
     class="press hover:bg-accent relative flex size-9 items-center justify-center rounded-full"
     :aria-label="copied ? 'Link copied' : 'Share this page'"
@@ -59,5 +60,5 @@ async function share() {
       </span>
     </span>
     <span class="sr-only" aria-live="polite">{{ copied ? 'Link copied' : '' }}</span>
-  </button>
+  </AsyncButton>
 </template>

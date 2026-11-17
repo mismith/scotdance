@@ -128,7 +128,7 @@ export async function openAccountForm(page: Page) {
   )
   await expect(page.getByRole('button', { name: 'Delete account', exact: true })).toHaveCount(0)
   await page.goto('/account-test.html')
-  await expect(page.getByRole('textbox', { name: 'Your name', exact: true })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'Full name', exact: true })).toBeVisible()
 }
 
 /** Sign out from the Account page. */

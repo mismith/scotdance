@@ -44,6 +44,8 @@ import { formatDateTime, formatExternalURL, formatHumanURL, parseDate } from '@/
 import { registrationNote, registrationToSave } from '@/lib/registration'
 import { planAddLink, planAddOrganisation, planRemoveLink, planRemoveOrganisation, planSetDetail, planListed, planPublished, planSetLinkName, planSetLinkUrl, planSetVenue } from '@shared/plans/details'
 import { placesAvailable, type VenueFields } from '@/lib/maps'
+const pendingSubmitLink = ref(false)
+
 
 const m = useManagedCompetition()
 const router = useRouter()
@@ -187,6 +189,10 @@ async function addLink(url?: string, name?: string) {
 const linkError = ref<string | null>(null)
 let submittingLink = false
 async function submitLink() {
+  if (pendingSubmitLink.value) return
+  pendingSubmitLink.value = true
+  try {
+
   const u = newUrl.value.trim()
   if (!u || submittingLink) return
   linkError.value = looksLikeLink(u) ? null : LINK_PROBLEM
@@ -197,6 +203,8 @@ async function submitLink() {
   } finally {
     submittingLink = false
   }
+
+  } finally { pendingSubmitLink.value = false }
 }
 async function onFile(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
@@ -506,7 +514,7 @@ async function deleteCompetition() {
                   </label>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                  <Button type="submit" variant="tonal" :disabled="!canEdit || !newUrl.trim()">
+                  <Button type="submit" variant="tonal" :disabled="!canEdit || !newUrl.trim()" :busy="pendingSubmitLink">
                     <Plus /> Add link
                   </Button>
                   <Button :disabled="!canEdit" :busy="uploading" @click="fileInput?.click()">

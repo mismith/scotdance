@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
@@ -36,6 +37,8 @@ import { formatExternalURL } from '@/lib/format'
 import { useMorph } from '@/lib/morph'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
+const pendingSubmitLink = ref(false)
+
 
 // One organisation, for its admins: its page (logo, names, where it's based,
 // website, description, links), the competitions it's run by or part of,
@@ -100,10 +103,16 @@ async function addLink(url?: string, name?: string) {
   }
 }
 async function submitLink() {
+  if (pendingSubmitLink.value) return
+  pendingSubmitLink.value = true
+  try {
+
   const u = newLinkUrl.value.trim()
   if (!u) return
   linkError.value = looksLikeLink(u) ? null : LINK_PROBLEM
   if (!linkError.value) await addLink()
+
+  } finally { pendingSubmitLink.value = false }
 }
 async function onFile(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
@@ -288,7 +297,7 @@ async function deleteOrganisation() {
                   </label>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                  <Button type="submit" variant="tonal" :disabled="!canEdit || !newLinkUrl.trim()"><Plus /> Add link</Button>
+                  <Button type="submit" variant="tonal" :disabled="!canEdit || !newLinkUrl.trim()" :busy="pendingSubmitLink"><Plus /> Add link</Button>
                   <Button :disabled="!canEdit" :busy="uploading" @click="fileInput?.click()">
                     <FileUp v-if="!uploading" /> {{ uploading ? 'Uploading…' : 'Upload a PDF or image' }}
                   </Button>
@@ -371,14 +380,14 @@ async function deleteOrganisation() {
       </div>
       <ul class="divide-y pb-[var(--safe-bottom)]">
         <li v-for="c in pickChoices" :key="c.id">
-          <button type="button" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left" @click="addCompetition(c.id, c.name)">
+          <AsyncButton type="button" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left" @click="addCompetition(c.id, c.name)">
             <DateTile :date="c.date" below="year" :managed="me.organises(c.id)" />
             <span class="min-w-0 flex-1">
               <span class="block truncate text-base font-semibold">{{ c.name || 'Untitled' }}</span>
               <span v-if="c.venue || c.location" class="text-muted-foreground block truncate text-sm">{{ c.venue || c.location }}</span>
             </span>
             <Plus class="text-primary size-5 shrink-0" aria-hidden="true" />
-          </button>
+          </AsyncButton>
         </li>
         <li v-if="!pickChoices.length" class="text-muted-foreground px-4 py-3 text-sm">
           {{ pickQuery.trim() ? `Nothing matches “${pickQuery.trim()}”.` : 'Type a name to find a competition.' }}

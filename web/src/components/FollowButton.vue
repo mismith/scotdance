@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, nextTick, ref } from 'vue'
 import { Bell, BellOff, Star } from '@lucide/vue'
 import { useFollowing, type FollowableDancer } from '@/composables/useFollowing'
@@ -71,7 +72,7 @@ async function onBell(e: Event) {
 </script>
 
 <template>
-  <button
+  <AsyncButton
     v-if="dancer.dancerId && size === 'row'"
     v-bind="$attrs"
     type="button"
@@ -86,11 +87,11 @@ async function onBell(e: Event) {
       aria-hidden="true"
       @animationend="popping = false"
     />
-  </button>
+  </AsyncButton>
   <!-- The full width of a phone (the two share it once the bell is there); on
        wider pages a button's width, not a bar. -->
   <div v-else-if="dancer.dancerId" v-bind="$attrs" class="flex w-full items-center justify-center gap-2 sm:w-auto">
-    <button
+    <AsyncButton
       type="button"
       :aria-pressed="on"
       :aria-label="`Favourite ${name}`"
@@ -107,14 +108,14 @@ async function onBell(e: Event) {
         @animationend="popping = false"
       />
       Favourite
-    </button>
+    </AsyncButton>
     <Transition
       enter-active-class="transition-[opacity,scale] duration-(--dur-base) ease-snappy"
       enter-from-class="scale-90 opacity-0"
       leave-active-class="transition-opacity duration-(--dur-quick) ease-exit"
       leave-to-class="opacity-0"
     >
-      <button
+      <AsyncButton
         v-if="on"
         type="button"
         :aria-label="`${alerts ? 'Alerts on' : 'Alerts off'} for ${first || name}`"
@@ -129,7 +130,7 @@ async function onBell(e: Event) {
           @animationend="ringing = false"
         />
         {{ alerts ? 'Alerts' : 'Alerts off' }}
-      </button>
+      </AsyncButton>
     </Transition>
   </div>
 </template>

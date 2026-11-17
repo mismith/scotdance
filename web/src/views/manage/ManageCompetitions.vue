@@ -29,6 +29,8 @@ import { competitionPhase } from '@/lib/dancerDay'
 import { useMorph } from '@/lib/morph'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
+const pendingCreate = ref(false)
+
 
 // Every competition you can manage. System admins see all of them and can
 // create one directly; organisers submit theirs for approval.
@@ -100,6 +102,10 @@ const newName = ref('')
 const newDate = ref('')
 const createError = ref<string | null>(null)
 async function create() {
+  if (pendingCreate.value) return
+  pendingCreate.value = true
+  try {
+
   createError.value = null
   if (!newName.value.trim() || !newDate.value) {
     createError.value = 'Add a name and a date.'
@@ -116,6 +122,8 @@ async function create() {
   } catch (e) {
     createError.value = friendlyError(e)
   }
+
+  } finally { pendingCreate.value = false }
 }
 </script>
 
@@ -214,7 +222,7 @@ async function create() {
         <FormInput v-model="newName" label="Name" required placeholder="e.g. Canadian Championship 2027" />
         <FormInput v-model="newDate" label="Date" kind="date" required />
         <p v-if="createError" class="text-destructive text-sm font-medium" role="alert">{{ createError }}</p>
-        <Button type="submit" variant="primary" size="lg" block :disabled="!canEdit">Create</Button>
+        <Button type="submit" variant="primary" size="lg" block :disabled="!canEdit" :busy="pendingCreate">Create</Button>
       </form>
     </Dialog>
   </div>

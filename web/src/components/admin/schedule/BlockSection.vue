@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, nextTick, ref } from 'vue'
 import { makeDraggable, makeDroppable } from '@vue-dnd-kit/core'
 import { GripVertical, Plus, Trash2 } from '@lucide/vue'
@@ -159,7 +160,7 @@ async function remove() {
             @update:model-value="b.renameBlock(blockId, $event)"
           />
         </h2>
-        <button
+        <AsyncButton
           v-if="!b.readonly.value"
           type="button"
           :aria-label="`Delete ${block.name || 'session'}`"
@@ -169,7 +170,7 @@ async function remove() {
           @keydown.space.stop
         >
           <Trash2 class="size-4" />
-        </button>
+        </AsyncButton>
       </div>
       <div class="col-span-full mb-3 pr-1 pl-6 text-sm contain-inline-size">
         <InlineEdit

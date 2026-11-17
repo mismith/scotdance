@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 
 export interface Dancer {
   id: string
+  photoVersion?: string | null
   revision: number
   shared?: boolean
   ownerCount?: number
@@ -134,11 +135,11 @@ export const useConnectAccount = defineStore('connect-account', () => {
     identityUntil = Date.now() + 50 * 60 * 1000
     await load()
   }
-  async function save(dancer: Dancer, remove = false, chosenDefaults: { studio?: boolean; location?: boolean } = {}, requestId: string = crypto.randomUUID(), expectedDefaultsRevision = defaultsRevision.value) {
+  async function save(dancer: Dancer, remove = false, chosenDefaults: { studio?: boolean; location?: boolean } = {}, requestId: string = crypto.randomUUID(), expectedDefaultsRevision = defaultsRevision.value, photo?: string | null) {
     return run(async () => {
       const { id, revision, firstName, lastName, birthday, category, studio, registrationNumber, location, publicDancer } = dancer
       const details = { firstName, lastName, birthday, category, studio, registrationNumber, ...(location ? { location } : {}), ...(publicDancer !== undefined ? { publicDancer } : {}) }
-      await api(remove ? 'delete' : 'save', { id, revision, requestId, dancer: details, defaults: chosenDefaults, defaultsRevision: expectedDefaultsRevision })
+      await api(remove ? 'delete' : 'save', { id, revision, requestId, dancer: details, defaults: chosenDefaults, defaultsRevision: expectedDefaultsRevision, ...(photo !== undefined ? { photo } : {}) })
       await load()
     })
   }
@@ -149,5 +150,11 @@ export const useConnectAccount = defineStore('connect-account', () => {
     defaults.value = result.defaults
     defaultsRevision.value = result.defaultsRevision
   }
-  return { account, dancers, defaults, defaultsRevision, saveDefaults, busy, ready, pageReady, error, clear, initialize, login, logout, refresh, identityToken, load, save, run, request: api }
+  async function loadPhoto(id: string, thumbnail = false): Promise<string | null> {
+    const owner = account.value?.uid
+    const result = await api('photo', { id, thumbnail })
+    if (!owner || account.value?.uid !== owner) throw new Error('Sign in again.')
+    return result.photo
+  }
+  return { loadPhoto, account, dancers, defaults, defaultsRevision, saveDefaults, busy, ready, pageReady, error, clear, initialize, login, logout, refresh, identityToken, load, save, run, request: api }
 })

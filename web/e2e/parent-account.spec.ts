@@ -50,7 +50,7 @@ test('deleting your account removes your favourites, alerts, colours and record'
   await expect(s.getByRole('alert')).toHaveText('That password isn’t right. Check it and try again.')
   await s.locator('input[autocomplete=current-password]').fill('password')
   await s.getByRole('button', { name: 'Delete my account' }).click()
-  await expect(page.getByRole('textbox', { name: 'Your name', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('textbox', { name: 'Full name', exact: true })).toHaveCount(0)
   await page.goto('/')
   await expect(page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
 

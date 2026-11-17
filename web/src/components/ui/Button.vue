@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useButtonAction, type ButtonAction } from '@/lib/buttonAction'
 import { computed } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import { LoaderCircle } from '@lucide/vue'
@@ -17,12 +18,13 @@ const props = withDefaults(
     to?: RouteLocationRaw
     href?: string
     type?: 'button' | 'submit' | 'reset'
+    onClick?: ButtonAction | ButtonAction[]
     busy?: boolean
     disabled?: boolean
     /** Replace the default router navigation. */
     replace?: boolean
   }>(),
-  { variant: 'secondary', size: 'md', type: 'button', to: undefined, href: undefined },
+  { variant: 'secondary', size: 'md', type: 'button', onClick: undefined, to: undefined, href: undefined },
 )
 
 const SIZE = {
@@ -39,7 +41,8 @@ const VARIANT = {
   destructive: 'bg-destructive-fill text-destructive-foreground press-fill',
 }
 
-const inactive = computed(() => props.disabled || props.busy)
+const action = useButtonAction(props)
+const inactive = action.disabled
 const classes = computed(() => [
   // High contrast drops fills and shadows: an edge keeps it a button.
   'inline-flex shrink-0 items-center justify-center rounded-full font-semibold whitespace-nowrap select-none forced-colors:border',
@@ -52,13 +55,15 @@ const classes = computed(() => [
 
 <template>
   <RouterLink
-    v-if="to"
+v-if="to"
     v-proximity="variant === 'primary'"
     :to="to"
     :replace="replace"
     :class="classes"
     :aria-disabled="inactive || undefined"
     :tabindex="inactive ? -1 : undefined"
+    @click.capture="action.guard"
+    @click="action.click"
   >
     <slot />
   </RouterLink>
@@ -68,6 +73,8 @@ const classes = computed(() => [
     :href="href"
     :class="classes"
     :aria-disabled="inactive || undefined"
+    @click.capture="action.guard"
+    @click="action.click"
   >
     <slot />
   </a>
@@ -75,12 +82,14 @@ const classes = computed(() => [
     v-else
     v-proximity="variant === 'primary'"
     :type="type"
-    :disabled="disabled"
-    :aria-busy="busy || undefined"
-    :aria-disabled="busy || undefined"
+    :disabled="inactive"
+    :aria-busy="action.busy.value || undefined"
+    :aria-disabled="action.busy.value || undefined"
     :class="classes"
+    @click="action.click"
   >
-    <LoaderCircle v-if="busy" class="animate-spin" aria-hidden="true" />
-    <slot />
+    <LoaderCircle v-if="action.busy.value" class="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+    <slot v-if="!action.busy.value" />
+    <span v-else class="contents" :class="{ '[&>svg]:hidden': action.busy.value }"><slot /></span>
   </button>
 </template>

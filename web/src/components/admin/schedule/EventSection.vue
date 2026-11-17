@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, ref } from 'vue'
 import { makeDraggable, makeDroppable } from '@vue-dnd-kit/core'
 import { GripVertical, Plus, Trash2 } from '@lucide/vue'
@@ -137,7 +138,7 @@ async function remove() {
       />
       <div class="ml-auto flex items-center gap-1">
         <AutoFillMenu v-if="!b.readonly.value" :block-id="blockId" :event-id="eventId" />
-        <button
+        <AsyncButton
           v-if="!b.readonly.value"
           type="button"
           :aria-label="`Delete ${event.name || 'event'}`"
@@ -147,7 +148,7 @@ async function remove() {
           @keydown.space.stop
         >
           <Trash2 class="size-4" />
-        </button>
+        </AsyncButton>
       </div>
     </div>
     <div class="col-span-full py-1.5 pr-1 pl-6 text-sm contain-inline-size">

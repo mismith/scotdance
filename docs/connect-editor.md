@@ -66,3 +66,11 @@ The form remains one component. Existing dancers open a compact Sharing popover 
 Native lists and first-party hosts refresh while visible and on focus. Drafts retain their opening revision: a stale save asks the owner to reopen instead of overwriting another owner's changes. Binder continues to submit separate studio snapshots. Local two-parent preview: `web/scripts/preview-coowners.mjs`; browser check: `web/scripts/test-coowners-preview.mjs`. The preview requires demo Auth/Firestore emulators and the sibling Connect API worktree; it cannot proxy a production API or send real emails. Production mail setup and backup/restore verification remain release prerequisites.
 
 Sharing popover verification: `web/scripts/test-access-panel.mjs` checks native and hosted popovers, mobile bounds, draft preservation, Toggle/Escape focus, invitation delivery through the host and forged-message rejection. `/_preview/embed` is a local-only host harness. API access/invite delegation is restricted to Entries and Binder-owner services; Binder's legacy prefill stays read-only, invitation acceptance/account credentials remain native. Release the API and authenticated host adapters before enabling this UI; older hosts without the optional adapter omit Sharing.
+
+### Optional fields
+
+Hosts may pass `hiddenFields: ['photo', 'publicDancer']` in their loaded editor context.
+Entries hides both; Connect and Binder show both by default. Hidden controls are not
+mounted (no photo download or public-profile lookup) and those fields are omitted
+from saves, preserving existing private values. This is presentation, not an access
+control boundary. Add future optional field names to the typed contract deliberately.

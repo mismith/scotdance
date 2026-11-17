@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncButton from '@/components/AsyncButton.vue'
 import MeAvatar from '@/components/MeAvatar.vue'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { get } from 'firebase/database'
@@ -312,16 +313,16 @@ watch(
           Continue as {{ me.displayName || me.email }}
         </Button>
         <p v-if="passError" class="text-destructive text-callout font-medium" role="alert">{{ passError }}</p>
-        <button type="button" class="text-primary press-row text-callout block h-11 w-full rounded-full font-semibold" @click="auth.signOut()">
+        <AsyncButton type="button" class="text-primary press-row text-callout block h-11 w-full rounded-full font-semibold" @click="auth.signOut()">
           Use another account
-        </button>
+        </AsyncButton>
       </div>
 
       <div v-else-if="step === 'destination' && destination" class="space-y-4">
         <p class="text-muted-foreground text-callout">The dancers go to Import dancers, where you check them before saving.</p>
         <Button variant="primary" size="lg" block :busy="!!sending" @click="send(destination)">Review dancers in {{ destination.name }}</Button>
         <p v-if="sendError" class="text-destructive text-callout" role="alert">{{ sendError }}</p>
-        <button type="button" class="text-primary press text-callout font-semibold" @click="auth.signOut()">Use another account</button>
+        <AsyncButton type="button" class="text-primary press text-callout font-semibold" @click="auth.signOut()">Use another account</AsyncButton>
       </div>
 
       <EmptyState
@@ -335,7 +336,7 @@ watch(
           <h3 class="text-section">{{ list.label }}</h3>
           <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
             <li v-for="c in list.rows" :key="c.id">
-              <button
+              <AsyncButton
                 type="button"
                 class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-2.5 pr-3 pl-4 text-left disabled:opacity-(--disabled-opacity)"
                 :disabled="!!sending && sending !== c.id"
@@ -349,14 +350,14 @@ watch(
                 </span>
                 <LoaderCircle v-if="sending === c.id" class="text-muted-foreground size-5 shrink-0 animate-spin" />
                 <ChevronRight v-else class="text-muted-foreground size-5 shrink-0" />
-              </button>
+              </AsyncButton>
             </li>
           </ul>
         </section>
         <p v-if="sendError" class="text-destructive text-callout font-medium" role="alert">{{ sendError }}</p>
         <p class="text-muted-foreground text-sm">
           It goes to its Import dancers, to check before saving. Signed in as {{ me.email }}.
-          <button type="button" class="text-primary press font-semibold" @click="auth.signOut()">Not you?</button>
+          <AsyncButton type="button" class="text-primary press font-semibold" @click="auth.signOut()">Not you?</AsyncButton>
         </p>
       </div>
 
@@ -368,9 +369,9 @@ watch(
         description="Add yours to ScotDance.app, then send your dancers to it."
       >
         <Button variant="primary" :href="addUrl" target="_blank" rel="noopener">Add a competition</Button>
-        <button type="button" class="text-primary press text-callout font-semibold" @click="auth.signOut()">
+        <AsyncButton type="button" class="text-primary press text-callout font-semibold" @click="auth.signOut()">
           Use another account
-        </button>
+        </AsyncButton>
       </EmptyState>
 
       <div v-else-if="step === 'sent' && sent" class="flex flex-col items-center gap-4 pt-2 text-center">

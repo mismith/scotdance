@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
+import DancerThumbnail from './DancerThumbnail.vue'
 import DancerPage from './DancerPage.vue'
 import type { Dancer } from './account'
 import { ChevronRight, Plus, ContactRound, UsersRound, Shield } from '@lucide/vue'
@@ -24,10 +25,10 @@ function edit(dancer?: Dancer, event?: MouseEvent) { if (event?.currentTarget in
       <span class="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><Shield class="size-4 shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true" />Shared only when you consent</span>
     </div>
     <EmptyState v-if="!store.dancers.length" :icon="ContactRound" title="No dancers yet" description="Add yourself or a dancer you manage." />
-    <ul v-else class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
+    <ul v-else class="-mx-3 space-y-1">
       <li v-for="dancer in store.dancers" :key="dancer.id">
-        <button type="button" @click="edit(dancer, $event)" class="press-row focus-inset flex w-full text-left min-h-20 items-center gap-3 px-4 py-3">
-          <span class="flex size-11 shrink-0 items-center justify-center rounded-full bg-blue-paper text-heading font-semibold text-primary" aria-hidden="true">{{ dancer.firstName.slice(0, 1) }}</span>
+        <button type="button" @click="edit(dancer, $event)" class="focus-inset flex w-full text-left min-h-20 items-center gap-3 rounded-xl px-3 py-3 hover:bg-foreground/3 focus-visible:bg-foreground/3">
+          <DancerThumbnail :dancer="dancer" />
           <span class="min-w-0 flex-1">
             <span class="block truncate text-base font-semibold">{{ dancer.firstName }} {{ dancer.lastName }}</span>
             <span v-if="dancer.category || dancer.studio" class="block truncate text-sm text-muted-foreground">{{ [dancer.category, dancer.studio].filter(Boolean).join(' · ') }}</span>
