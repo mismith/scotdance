@@ -1,6 +1,7 @@
 /** Hosted UI only. Credentials and authenticated persistence remain in the calling app. */
 const CHANNEL = 'scotdance:dancer-editor:v1'
 const ORIGIN = new URL(import.meta.url).origin
+const CLOSE_WAIT = 10000
 let active = false
 export function openDancerEditor({ load, save, manageAccess, verifyEmail, signal, opener: requestedOpener }) {
   if (active) return Promise.reject(new Error('A dancer editor is already open.'))
@@ -128,7 +129,11 @@ export function openDancerEditor({ load, save, manageAccess, verifyEmail, signal
         // Reading the sharing list never waits for, or holds up, a change.
         if (request.action === 'access' && request.operation === 'list') void run()
         else queue(run)
-      } else if (data.type === 'closed') queue(async () => finish())
+      } else if (data.type === 'closed') {
+        // Close once running changes settle, so the host still gets the saved result. The frame
+        // only closes mid-change after it gave up waiting, so a hung host call can't hold it open.
+        void Promise.race([changes, new Promise(done => setTimeout(done, CLOSE_WAIT))]).then(() => finish())
+      }
     }
     function writeProblem(write) {
       if (!['save', 'delete'].includes(write.action) || typeof write.dancer?.id !== 'string') return 'Could not save. Please try again.'

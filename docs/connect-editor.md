@@ -87,7 +87,7 @@ Invitation links are acceptance actions: after sign-in, the invitation route sub
 
 ## Replies and ordering
 
-Every `write` and `access` request from the frame gets exactly one reply (`result` or `access-result`) with its request ID, including rejections (stale revision, unknown action, missing host adapter). The loader runs saves, deletes and sharing changes one at a time in arrival order. Reading the sharing list (the 15-second and on-focus poll) runs immediately and never waits for, or holds up, a change. `closed` queues behind any running change, so the host still receives the saved result.
+Every `write` and `access` request from the frame gets exactly one reply (`result` or `access-result`) with its request ID, including rejections (stale revision, unknown action, missing host adapter). The loader runs saves, deletes and sharing changes one at a time in arrival order. Reading the sharing list (the 15-second and on-focus poll) runs immediately and never waits for, or holds up, a change. `closed` waits for a running change (up to 10 seconds), so the host still receives the saved result but a hung host call cannot hold the modal open.
 
 The frame rejects any request unanswered after 60 seconds with a "check your connection" error and re-enables the form. A retry reuses the save's request ID, so the host treats it as the same receipt; a late reply to a timed-out request is ignored.
 

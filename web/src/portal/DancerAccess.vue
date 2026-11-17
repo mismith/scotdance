@@ -59,22 +59,25 @@ let lastInvite = '',
   live = true,
   refreshing = false
 let timer: ReturnType<typeof setInterval>
-watch(busy, (value) => emit('busy', value))
+// Only changes hold up the editor's Save; loading the list never does.
+const changing = ref(false)
+watch(changing, (value) => emit('busy', value))
 onBeforeUnmount(() => {
   live = false
   clearInterval(timer)
   window.removeEventListener('focus', refresh)
 })
-async function perform(work: () => Promise<void>) {
+async function perform(work: () => Promise<void>, change = true) {
   if (busy.value || !live) return
   busy.value = true
+  changing.value = change
   error.value = ''
   try {
     await work()
   } catch (e) {
     if (live) error.value = e instanceof Error ? e.message : 'Please try again.'
   } finally {
-    if (live) busy.value = false
+    if (live) busy.value = changing.value = false
   }
 }
 async function load() {
@@ -152,7 +155,7 @@ async function refresh() {
   }
 }
 onMounted(() => {
-  void perform(load)
+  void perform(load, false)
   timer = setInterval(refresh, 15000)
   window.addEventListener('focus', refresh)
 })
@@ -311,7 +314,7 @@ onMounted(() => {
         </p>
       </template>
       <p v-if="error" role="alert" class="text-destructive text-sm">{{ error }}</p>
-      <Button v-if="error" size="sm" :disabled="busy" @click="perform(load)"
+      <Button v-if="error" size="sm" :disabled="busy" @click="perform(load, false)"
         >Try again</Button
       >
     </div>

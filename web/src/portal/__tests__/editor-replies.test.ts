@@ -100,6 +100,16 @@ describe('hosted editor loader', () => {
     await expect(opened).resolves.toEqual(result)
     expect(document.querySelector('dialog[data-scotdance-editor]')).toBeNull()
   })
+  it('still closes when a save never answers', async () => {
+    vi.useFakeTimers()
+    const { opened, post } = await openLoader({ save: () => new Promise(() => {}) })
+    await post('write', write('save-1'))
+    await post('closed')
+    expect(document.querySelector('dialog[data-scotdance-editor]')).not.toBeNull()
+    await vi.advanceTimersByTimeAsync(10_000)
+    await expect(opened).resolves.toBeUndefined()
+    expect(document.querySelector('dialog[data-scotdance-editor]')).toBeNull()
+  })
 })
 
 describe('editor frame requests', () => {
