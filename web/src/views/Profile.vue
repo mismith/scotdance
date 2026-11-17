@@ -6,7 +6,6 @@ import { Bot, ChevronRight, Copy, ExternalLink, LogOut, Plus } from '@lucide/vue
 import { dataRef } from '@/firebase'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { friendlyError } from '@/lib/admin/write'
-import { TOOLS, linkedTools, toolDate, unlinkTool, type Audience } from '@/lib/tools'
 import { assistantAddress, connectionDate, connectionsFrom, disconnect, type Connection } from '@/lib/assistants'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
@@ -23,39 +22,6 @@ const router = useRouter()
 const roles = useRoles()
 const rolesLabel = computed(() => ROLES.filter((r) => roles.has(r.id)).map((r) => r.label).join(', ') || 'Not answered yet')
 
-
-// The ScotDance tools they sign in to with this account (ADR 0017)
-const toolLinks = ref<unknown>(null)
-let offTools: (() => void) | null = null
-watch(
-  () => auth.uid,
-  (uid) => {
-    offTools?.()
-    offTools = uid ? onValue(dataRef(`users:tools/${uid}`), (snap) => (toolLinks.value = snap.val())) : null
-  },
-  { immediate: true },
-)
-onScopeDispose(() => offTools?.())
-const tools = computed(() => linkedTools(toolLinks.value))
-const unlinking = ref<Audience | null>(null)
-async function unlink(tool: Audience) {
-  const { name } = TOOLS[tool]
-  const ok = await confirm({
-    title: `Unlink ${name}?`,
-    message: `You’ll be signed out of ${name} on every device within the hour. Your work there stays as it is. To use it again, sign in with ScotDance.app.`,
-    confirmLabel: `Unlink ${name}`,
-    destructive: true,
-  })
-  if (!ok) return
-  unlinking.value = tool
-  try {
-    await unlinkTool(tool)
-  } catch (e) {
-    toast(friendlyError(e), { tone: 'error' })
-  } finally {
-    unlinking.value = null
-  }
-}
 
 // The AI assistants (Claude, ChatGPT) they've connected to manage their competitions (ADR 0018)
 const connectionRecords = ref<unknown>(null)
@@ -128,7 +94,7 @@ async function handleSignOut() {
 
       <section class="space-y-2">
         <p class="text-base">Manage your name, email, password and dancers in ScotDance Connect.</p>
-        <a href="https://connect.scotdance.app/?section=account" class="text-primary text-callout font-semibold">Edit your ScotDance account →</a>
+        <a href="https://connect.scotdance.app/account" class="text-primary text-callout font-semibold">Edit your ScotDance account →</a>
       </section>
       <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
         <li>
@@ -141,25 +107,6 @@ async function handleSignOut() {
           </button>
         </li>
       </ul>
-
-      <section v-if="tools.length" class="space-y-1">
-        <h2 class="text-heading">Tools</h2>
-        <p class="text-muted-foreground text-sm">Other ScotDance tools you sign in to with this account.</p>
-        <ul class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
-          <li v-for="{ tool, link } in tools" :key="tool" class="flex min-h-16 items-center gap-2 py-1 pr-2 pl-4">
-            <a :href="`https://${TOOLS[tool].hostname}`" target="_blank" rel="noopener" class="press-row focus-inset flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-xl">
-              <img :src="TOOLS[tool].icon" alt="" class="size-10 shrink-0 rounded-[0.625rem]" />
-              <span class="min-w-0 flex-1">
-                <span class="text-primary flex items-center gap-1 text-base font-semibold">
-                  <span class="truncate">{{ TOOLS[tool].name }}</span><ExternalLink class="size-3.5 shrink-0" aria-label="Opens in a new tab" />
-                </span>
-                <span v-if="link.signedInAt" class="text-muted-foreground block truncate text-sm">Signed in {{ toolDate(link.signedInAt) }}</span>
-              </span>
-            </a>
-            <Button variant="plain" class="text-destructive!" :busy="unlinking === tool" @click="unlink(tool)">Unlink</Button>
-          </li>
-        </ul>
-      </section>
 
       <section v-if="me.canManageAny || assistants.length" class="space-y-1">
         <h2 class="text-heading">AI assistants</h2>

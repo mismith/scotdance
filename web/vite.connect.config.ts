@@ -1,15 +1,19 @@
 import { defineConfig } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
 import vue from '@vitejs/plugin-vue'
+import { connectFixtures } from './scripts/connect-fixtures'
 import tailwindcss from '@tailwindcss/vite'
 
 // A separate site built from the same components and theme as ScotDance.
 // No production API proxy: local previews must use fictional fixtures.
-export default defineConfig({
+export default defineConfig(({ command, mode }) => {
+  if (command === 'build' && mode === 'fixture') throw new Error('Connect fixtures are local development only')
+  return {
   root: fileURLToPath(new URL('./portal', import.meta.url)),
   envDir: fileURLToPath(new URL('.', import.meta.url)),
   publicDir: fileURLToPath(new URL('./portal/public', import.meta.url)),
   plugins: [
+    ...(mode === 'fixture' ? [connectFixtures()] : []),
     vue(),
     tailwindcss(),
     {
@@ -41,4 +45,5 @@ export default defineConfig({
     strictPort: true,
     watch: { usePolling: process.env.CONNECT_POLLING === 'true' },
   },
+}
 })

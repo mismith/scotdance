@@ -16,3 +16,11 @@ See `docs/connect-editor.md` at the repository root for contract, local checks a
 Equal ownership: the same editor now handles a dancer with multiple owners. `shared` and `ownerCount` are server-supplied display metadata, never authorization. Shared edits must not offer to update personal defaults. Sharing opens DancerAccess.vue in a compact popover beside Edit dancer, preserving the mounted draft. Account initials precede Sharing only when there is more than one owner. Invitations from this popover share only the current dancer. Native and hosted adapters authenticate list/invite/remove/revoke operations; email invitation acceptance stays on the native invitation route. Dismissal/Escape returns focus to Sharing. Other owners' changes refresh visible lists, while open drafts retain their original revision and reject stale saves. See the Connect API repository's `docs/coowners.md` for the local implementation/release sequence.
 
 Icon mapping approved 16 November 2026: `ContactRound` for Dancers navigation and empty state; `UserRound` for Account; `UsersRound` for shared dancers; account initials in the Sharing control and owner list. Keep the yellow `Shield` for privacy/consent, not the shared-owner status. Preserve dancer initials as their row avatars.
+
+## Local account review
+
+Run `npm --prefix web run dev:connect -- --mode fixture --port 5357` and open
+`http://127.0.0.1:5357/account`. This runs the actual Connect app with a loopback
+fixture backend for account details and connected-tool sign-out. No real account
+or production API is used. Restart the server to reset the fictional connections.
+The fixture mode is rejected by the production build. Do not create copied preview UIs.

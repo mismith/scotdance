@@ -2,6 +2,7 @@
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import AccountForm from '@/account/AccountForm.vue'
 import AccountDefaults from './AccountDefaults.vue'
+import ConnectedTools from '@/account/ConnectedTools.vue'
 import Button from '@/components/ui/Button.vue'
 import { createFirebaseSettings } from '@/account/firebase-settings'
 import { useConnectAccount } from './account'
@@ -13,6 +14,13 @@ const controller = createFirebaseSettings({
   uid: store.account!.uid,
   acquireToken: store.identityToken,
   refreshSession: store.refresh,
+  ...(import.meta.env.DEV && import.meta.env.MODE === 'fixture' ? {
+    acquireToken: async () => 'local-fixture-token',
+    authURL: `${location.origin}/__fixture/auth`,
+    databaseURL: `${location.origin}/__fixture/database`,
+    functionsURL: `${location.origin}/__fixture/functions`,
+    namespace: 'fixture',
+  } : {}),
 })
 const settings = controller.settings
 function syncAccount() {
@@ -45,6 +53,7 @@ onBeforeUnmount(controller.dispose)
       @deleted="store.clear"
     >
       <template #profile-details><AccountDefaults /></template>
+      <template #details><ConnectedTools :load="controller.loadTools" :sign-out="controller.signOutTool" /></template>
     </AccountForm>
     <div v-else-if="error" class="space-y-3">
       <p role="alert" class="text-destructive">{{ error }}</p>

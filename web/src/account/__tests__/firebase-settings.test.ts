@@ -22,7 +22,11 @@ function setup(overrides: Record<string, object> = {}) {
           ? { ...user, idToken: 'fresh-password', expiresIn: '3600' }
           : action === 'update'
             ? { ...user, ...body, idToken: 'updated', expiresIn: '3600' }
-            : url.includes('/users/owner-1.json')
+            : url.includes('/users:tools/owner-1.json')
+              ? (overrides.tools ?? {})
+              : url.endsWith('/unlinkTool')
+                ? (overrides.unlink ?? { result: { unlinked: ['binder'] } })
+                : url.includes('/users/owner-1.json')
               ? { displayName: 'Existing name' }
               : {})
     return new Response(JSON.stringify(result), { status: 'error' in result ? 400 : 200 })
@@ -122,5 +126,24 @@ describe('direct account settings', () => {
       code: 'auth/user-mismatch',
     })
     expect(c.calls).toHaveLength(count)
+  })
+})
+
+
+describe('connected tool management', () => {
+  it('reads only the current owner’s tools and excludes Connect itself', async () => {
+    const c = setup({ tools: { connect: { signedInAt: 1 }, binder: { signedInAt: 2 }, unknown: {} } })
+    expect(await c.loadTools()).toEqual([{ tool: 'binder', link: { signedInAt: 2 } }])
+    expect(c.calls.at(-1)?.url).toContain('/production/users:tools/owner-1.json')
+  })
+  it('uses the existing authenticated endpoint without supplying another owner', async () => {
+    const c = setup()
+    await c.signOutTool('binder')
+    expect(c.calls.at(-1)).toEqual({ url: 'https://us-central1-firebase-scotdance.cloudfunctions.net/unlinkTool', body: { data: { tool: 'binder' } } })
+    await expect(c.signOutTool('connect')).rejects.toThrow('Use Sign out')
+  })
+  it('reports an endpoint failure rather than claiming the tool was disconnected', async () => {
+    const c = setup({ unlink: { error: { message: 'UNAVAILABLE' } } })
+    await expect(c.signOutTool('binder')).rejects.toThrow('Could not sign out')
   })
 })

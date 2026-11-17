@@ -1,4 +1,5 @@
 import { reactive } from 'vue'
+import { linkedTools, type Audience } from './tool-links'
 import type { AccountSettings } from './settings'
 
 // Firebase's user-scoped REST API accepts the existing sign-in handoff token.
@@ -137,6 +138,23 @@ export function createFirebaseSettings(options: SettingsOptions) {
     assertActive()
     if (typeof record?.displayName === 'string') profile.displayName = record.displayName
   }
+  async function loadTools() {
+    const result = await database(`users:tools/${options.uid}`)
+    assertActive()
+    return linkedTools(result).filter(({ tool }) => tool !== 'connect')
+  }
+  async function signOutTool(tool: Audience) {
+    if (tool === 'connect') throw new Error('Use Sign out to leave Connect.')
+    const idToken = await identityToken()
+    const response = await request(`${functionsURL}/unlinkTool`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ data: { tool } }),
+    })
+    const result = await response.json()
+    assertActive()
+    if (!response.ok || result.error) throw new Error('Could not sign out of this tool. Please try again.')
+  }
   async function reauthenticate(password?: string) {
     await identityToken()
     if (profile.hasPassword && profile.user?.email) {
@@ -248,5 +266,5 @@ export function createFirebaseSettings(options: SettingsOptions) {
     tokenUntil = 0
     profile.user = null
   }
-  return { settings, load, dispose }
+  return { settings, load, loadTools, signOutTool, dispose }
 }

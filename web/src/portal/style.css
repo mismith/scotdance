@@ -21,3 +21,5 @@ select.field,
 textarea.field {
   font-weight: 400;
 }
+
+@source "../account/ConnectedTools.vue";
