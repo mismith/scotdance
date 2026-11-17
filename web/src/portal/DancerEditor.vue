@@ -4,6 +4,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { Trash2, ChevronDown, Shield } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
+import DancerAccess from './DancerAccess.vue'
 import ConnectBrand from './ConnectBrand.vue'
 import DancerDefaults from './DancerDefaults.vue'
 import PublicDancerLink from './PublicDancerLink.vue'
@@ -15,11 +16,21 @@ import {
   registrationProblem,
 } from './registration'
 import type { Dancer } from './account'
-import type { EditorContext, EditorWrite, EditorResult } from './editor/types'
+import type {
+  EditorContext,
+  EditorWrite,
+  EditorResult,
+  AccessRequest,
+} from './editor/types'
 const props = defineProps<
-  EditorContext & { persist: (request: EditorWrite) => Promise<EditorResult> }
+  EditorContext & {
+    persist: (request: EditorWrite) => Promise<EditorResult>
+    manageAccess?: (request: AccessRequest) => Promise<unknown>
+  }
 >()
 const emit = defineEmits<{ close: []; saved: [result: EditorResult] }>()
+const accessBusy = ref(false),
+  shared = ref(!!props.dancer?.shared)
 const busy = ref(false)
 const error = ref('')
 const opened = ref(true)
@@ -101,12 +112,12 @@ function settleNumber() {
     : ''
 }
 function close() {
-  if (!busy.value && !preparing.value) {
+  if (!busy.value && !preparing.value && !accessBusy.value) {
     opened.value = false
   }
 }
 async function save() {
-  if (preparing.value || busy.value) return
+  if (preparing.value || busy.value || accessBusy.value) return
   if (!form.value?.reportValidity()) return
   draft.value.firstName = tidy(draft.value.firstName)
   draft.value.lastName = tidy(draft.value.lastName)
@@ -121,6 +132,7 @@ async function save() {
     preparing.value = false
   }
   if (
+    !shared.value &&
     props.otherDancers &&
     (changedDefaults.value.studio || changedDefaults.value.location)
   ) {
@@ -162,37 +174,51 @@ async function persist(updateDefaults = false, remove = false) {
     :morph="false"
     variant="sheet"
     size="lg"
-    :closable="!busy && !preparing"
+    :closable="!busy && !preparing && !accessBusy"
     @close="close"
     @closed="emit('close')"
   >
-    <template #header><h2 class="flex min-w-0"><ConnectBrand /></h2></template>
+    <template #header
+      ><h2 class="flex min-w-0"><ConnectBrand /></h2
+    ></template>
     <template #header-actions>
       <button
         v-if="props.dancer && !deleting && !confirmDefaults"
         type="button"
         class="press-row text-muted-foreground hover:text-destructive relative flex size-9 shrink-0 items-center justify-center rounded-full after:absolute after:-inset-1"
         aria-label="Delete dancer"
-        :disabled="busy || preparing"
+        :disabled="busy || preparing || accessBusy"
         @click="deleting = true"
       >
         <Trash2 class="size-4" aria-hidden="true" />
       </button>
     </template>
     <div class="p-4">
-      <h3 class="text-heading mb-4 font-semibold">
-        {{
-          deleting
-            ? 'Delete dancer?'
-            : confirmDefaults
-              ? 'Use these details for new dancers?'
-              : title
-        }}
-      </h3>
+      <div class="mb-4 flex items-center justify-between gap-2">
+        <h3 class="text-heading font-semibold">
+          {{
+            deleting
+              ? 'Delete dancer?'
+              : confirmDefaults
+                ? 'Use these details for new dancers?'
+                : title
+          }}
+        </h3>
+        <DancerAccess
+          v-if="props.dancer && props.manageAccess && !deleting && !confirmDefaults"
+          :id="props.dancer.id"
+          :request="props.manageAccess"
+          :disabled="busy || preparing"
+          @removed="opened = false"
+          @changed="shared = $event"
+          @busy="accessBusy = $event"
+        />
+      </div>
       <div v-if="deleting" class="space-y-4">
         <p>
-          Delete {{ draft.firstName }} {{ draft.lastName }}? Existing entries and studio
-          records stay unchanged.
+          Delete {{ draft.firstName }} {{ draft.lastName
+          }}{{ shared ? ' for all owners' : '' }}? Existing entries and studio records
+          stay unchanged.
         </p>
         <div class="flex flex-wrap gap-2">
           <Button variant="destructive" :busy="busy" @click="persist(false, true)"
@@ -323,10 +349,20 @@ async function persist(updateDefaults = false, remove = false) {
         </fieldset>
         <footer class="flex items-center justify-between gap-4">
           <p class="text-muted-foreground flex items-center gap-1.5 text-sm">
-            <Shield class="size-4 shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true" />
+            <Shield
+              class="size-4 shrink-0 text-amber-500 dark:text-amber-400"
+              aria-hidden="true"
+            />
             <span>Shared only when you consent.</span>
           </p>
-          <Button class="shrink-0" type="submit" variant="primary" :busy="busy || preparing">Save</Button>
+          <Button
+            class="ml-auto shrink-0"
+            type="submit"
+            variant="primary"
+            :busy="busy || preparing"
+            :disabled="accessBusy"
+            >Save</Button
+          >
         </footer>
       </form>
       <p v-if="error" role="alert" class="text-destructive mt-4">{{ error }}</p>

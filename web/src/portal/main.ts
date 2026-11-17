@@ -5,6 +5,8 @@ import App from './App.vue'
 import DancersPage from './DancersPage.vue'
 import AccountPage from './AccountPage.vue'
 import PolicyPage from './PolicyPage.vue'
+import DancerAccessPage from './DancerAccessPage.vue'
+import InvitationPage from './InvitationPage.vue'
 import { openSupport } from './support'
 import { vProximity } from '@/directives/proximity'
 import '@/composables/useTheme'
@@ -15,6 +17,8 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', redirect: route => ({ path: route.query.section === 'dancers' ? '/dancers' : '/account', query: {} }) },
+    { path: '/dancers/:id/access', component: DancerAccessPage, props: true, meta: { title: 'Dancer access' } },
+    { path: '/invite/:token', component: InvitationPage, props: true, meta: { title: 'Dancer invitation' } },
     { path: '/dancers', component: DancersPage, meta: { title: 'Dancers' } },
     { path: '/account', component: AccountPage, meta: { title: 'Account' } },
     { path: '/privacy', component: PolicyPage, meta: { title: 'Privacy and terms', public: true } },

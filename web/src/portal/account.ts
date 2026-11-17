@@ -4,6 +4,8 @@ import { defineStore } from 'pinia'
 export interface Dancer {
   id: string
   revision: number
+  shared?: boolean
+  ownerCount?: number
   firstName: string
   lastName: string
   birthday: string
@@ -147,5 +149,5 @@ export const useConnectAccount = defineStore('connect-account', () => {
     defaults.value = result.defaults
     defaultsRevision.value = result.defaultsRevision
   }
-  return { account, dancers, defaults, defaultsRevision, saveDefaults, busy, ready, pageReady, error, clear, initialize, login, logout, refresh, identityToken, load, save, run }
+  return { account, dancers, defaults, defaultsRevision, saveDefaults, busy, ready, pageReady, error, clear, initialize, login, logout, refresh, identityToken, load, save, run, request: api }
 })

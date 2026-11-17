@@ -2,7 +2,7 @@
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import DancerEditor from '../DancerEditor.vue'
 import { channel, editorMessage, editorOrigin } from './protocol'
-import type { EditorContext, EditorWrite, EditorResult } from './types'
+import type { EditorContext, EditorWrite, EditorResult, AccessRequest } from './types'
 const query = new URLSearchParams(location.search)
 const origin = query.get('parent') || ''
 const session = query.get('session') || ''
@@ -10,7 +10,7 @@ const allowed =
   window.parent !== window &&
   editorOrigin(origin, import.meta.env.DEV) &&
   /^[a-f0-9-]{36}$/.test(session)
-const context = ref<EditorContext>()
+const context = ref<EditorContext & { canManageAccess?: boolean }>()
 let pending:
   | {
       id: string
@@ -18,6 +18,25 @@ let pending:
       reject: (reason: Error) => void
     }
   | undefined
+let accessPending:
+  | { id: string; resolve: (value: unknown) => void; reject: (reason: Error) => void }
+  | undefined
+function manageAccess(request: AccessRequest): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    if (accessPending) {
+      reject(new Error('Wait for the current change.'))
+      return
+    }
+    const id = crypto.randomUUID()
+    accessPending = { id, resolve, reject }
+    try {
+      send('access', { request: JSON.parse(JSON.stringify(request)), requestId: id })
+    } catch (error) {
+      accessPending = undefined
+      reject(error instanceof Error ? error : new Error('Could not manage access.'))
+    }
+  })
+}
 let result: EditorResult | undefined
 function send(type: string, data = {}) {
   if (allowed) parent.postMessage({ channel, session, type, ...data }, origin)
@@ -38,6 +57,15 @@ async function receive(event: MessageEvent) {
     send('ready', {
       scheme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
     })
+  } else if (
+    data.type === 'access-result' &&
+    accessPending &&
+    accessPending.id === data.requestId
+  ) {
+    const current = accessPending
+    accessPending = undefined
+    if (typeof data.error === 'string') current.reject(new Error(data.error))
+    else current.resolve(data.result)
   } else if (data.type === 'result' && pending && pending.id === data.requestId) {
     const current = pending
     pending = undefined
@@ -52,6 +80,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('message', receive)
   pending?.reject(new Error('Editor closed.'))
+  accessPending?.reject(new Error('Editor closed.'))
 })
 </script>
 <template>
@@ -59,6 +88,7 @@ onBeforeUnmount(() => {
     v-if="context"
     v-bind="context"
     :persist="persist"
+    :manage-access="context.canManageAccess ? manageAccess : undefined"
     @saved="result = $event"
     @close="send('closed', { result })"
   />

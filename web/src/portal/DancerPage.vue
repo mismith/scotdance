@@ -2,7 +2,7 @@
 import { watch } from 'vue'
 import DancerEditor from './DancerEditor.vue'
 import { useConnectAccount, type Dancer } from './account'
-import type { EditorWrite, EditorResult } from './editor/types'
+import type { EditorWrite, EditorResult, AccessRequest } from './editor/types'
 const props = defineProps<{ dancer?: Dancer }>()
 const emit = defineEmits<{ close: [] }>()
 const store = useConnectAccount()
@@ -17,6 +17,14 @@ watch(
 const defaults = structuredClone(JSON.parse(JSON.stringify(store.defaults)))
 const defaultsRevision = store.defaultsRevision
 const otherDancers = store.dancers.some((d) => d.id !== props.dancer?.id)
+async function manageAccess({ action, ...body }: AccessRequest) {
+  if (!owner || store.account?.uid !== owner)
+    throw new Error('Sign in again to manage access.')
+  const result = await store.request(action, body)
+  if (store.account?.uid !== owner) throw new Error('Sign in again to manage access.')
+  if (action === 'invite' || body.operation !== 'list') await store.load()
+  return result
+}
 async function persist(write: EditorWrite): Promise<EditorResult> {
   if (!owner || store.account?.uid !== owner)
     throw new Error('Sign in again to edit your dancers.')
@@ -45,6 +53,7 @@ async function persist(write: EditorWrite): Promise<EditorResult> {
     :defaults-revision="defaultsRevision"
     :other-dancers="otherDancers"
     :persist="persist"
+    :manage-access="manageAccess"
     @close="emit('close')"
   />
 </template>

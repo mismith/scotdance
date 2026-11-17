@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
-import { Users, UserRound, LogOut, LockKeyhole } from '@lucide/vue'
+import { ContactRound, UserRound, LogOut, LockKeyhole } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import ScotDanceSignInButton from '@/components/ScotDanceSignInButton.vue'
 import ConnectBrand from './ConnectBrand.vue'
@@ -12,7 +12,7 @@ const route = useRoute()
 const store = useConnectAccount()
 const sections = [
   { to: '/account', label: 'Account', icon: UserRound },
-  { to: '/dancers', label: 'Dancers', icon: Users },
+  { to: '/dancers', label: 'Dancers', icon: ContactRound },
 ]
 const isCurrent = (path: string) => route.path === path || route.path.startsWith(`${path}/`)
 const loading = computed(() => !route.meta.public && (!store.ready || (route.path === '/account' && !!store.account && !store.pageReady)))
@@ -20,12 +20,15 @@ async function refreshOnReturn() {
   if (document.visibilityState === 'hidden' || !store.ready || !store.account || store.busy) return
   try { await store.load() } catch (error) { store.error = error instanceof Error ? error.message : 'Could not refresh your account.' }
 }
+let refreshTimer: ReturnType<typeof setInterval>
 onMounted(() => {
+  refreshTimer = setInterval(() => { void refreshOnReturn() }, 15000)
   void store.initialize(!route.meta.public)
   window.addEventListener('focus', refreshOnReturn)
   document.addEventListener('visibilitychange', refreshOnReturn)
 })
 onBeforeUnmount(() => {
+  clearInterval(refreshTimer)
   window.removeEventListener('focus', refreshOnReturn)
   document.removeEventListener('visibilitychange', refreshOnReturn)
 })
@@ -56,7 +59,7 @@ onBeforeUnmount(() => {
       <div v-if="route.meta.public || (store.ready && store.account)" v-show="!loading">
         <RouterView v-slot="{ Component }">
           <KeepAlive include="AccountPage,DancersPage">
-            <component :is="Component" />
+            <component :is="Component" :key="route.path" />
           </KeepAlive>
         </RouterView>
       </div>

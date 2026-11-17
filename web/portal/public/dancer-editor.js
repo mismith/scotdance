@@ -2,7 +2,7 @@
 const CHANNEL = 'scotdance:dancer-editor:v1'
 const ORIGIN = new URL(import.meta.url).origin
 let active = false
-export function openDancerEditor({ load, save, signal, opener: requestedOpener }) {
+export function openDancerEditor({ load, save, manageAccess, signal, opener: requestedOpener }) {
   if (active) return Promise.reject(new Error('A dancer editor is already open.'))
   if (signal?.aborted) return Promise.resolve(undefined)
   active = true
@@ -84,7 +84,7 @@ export function openDancerEditor({ load, save, signal, opener: requestedOpener }
       if (!data || data.channel !== CHANNEL || data.session !== session) return
       if (data.type === 'hello' && !initialized) {
         initialized = true
-        try { context = await load(); if (!ended) send('init', { context }) }
+        try { context = await load(); if (!ended) send('init', { context: { ...context, canManageAccess: typeof manageAccess === 'function' } }) }
         catch (error) { finish(error) }
       } else if (data.type === 'ready' && context && !revealed) {
         clearTimeout(timeout)
@@ -106,6 +106,19 @@ export function openDancerEditor({ load, save, signal, opener: requestedOpener }
           lastResult = await save({ ...write, defaultsRevision: context.defaultsRevision })
           if (!ended) send('result', { requestId: write.requestId, result: lastResult })
         } catch (error) { if (!ended) send('result', { requestId: write.requestId, error: error instanceof Error ? error.message : 'Could not save. Please try again.' }) }
+        finally { writing = false }
+      } else if (data.type === 'access' && context?.dancer && !writing && typeof manageAccess === 'function') {
+        const request = data.request
+        if (!request || !['access', 'invite'].includes(request.action) || request.id !== context.dancer.id || typeof data.requestId !== 'string') return
+        writing = true
+        try {
+          const result = await manageAccess(request)
+          if (request.action === 'access' && request.operation === 'leave') lastResult = { id: request.id, deleted: true }
+          if (!ended) {
+            send('access-result', { requestId: data.requestId, result })
+            if (request.action === 'invite' || request.operation !== 'list') window.dispatchEvent(new Event('connect-profiles-changed'))
+          }
+        } catch (error) { if (!ended) send('access-result', { requestId: data.requestId, error: error instanceof Error ? error.message : 'Could not manage access. Please try again.' }) }
         finally { writing = false }
       } else if (data.type === 'closed' && !writing) finish()
     }
