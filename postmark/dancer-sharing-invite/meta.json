@@ -1,0 +1,22 @@
+{
+  "Name": "Dancer sharing invite",
+  "Alias": "dancer-sharing-invite",
+  "Subject": "{{ inviter.name }} invited you to share dancers on ScotDance",
+  "TemplateType": "Standard",
+  "LayoutTemplate": "scotdance",
+  "TestRenderModel": {
+    "app": {
+      "name": "ScotDance.app",
+      "url": "https://scotdance.app",
+      "assets": "https://next.scotdance.app",
+      "preview": null
+    },
+    "inviter": {
+      "name": "Alex Grant"
+    },
+    "invite": {
+      "email": "parent@example.test",
+      "link": "https://connect.scotdance.app/invite/example"
+    }
+  }
+}

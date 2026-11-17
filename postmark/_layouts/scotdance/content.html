@@ -22,7 +22,7 @@
         font-style: normal;
         font-weight: 200 800;
         font-display: swap;
-        src: url('{{ app.url }}/email/atkinson-hyperlegible-next.woff2') format('woff2');
+        src: url('{{#app.assets}}{{.}}{{/app.assets}}{{^app.assets}}{{ app.url }}{{/app.assets}}/email/atkinson-hyperlegible-next.woff2') format('woff2');
       }
 
       /* Base */
@@ -154,7 +154,7 @@
             <table role="presentation" class="column" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td class="masthead">
-                  <a href="{{ app.url }}"><img class="logo" src="{{ app.url }}/email/icon.png" width="40" height="40" alt="{{ app.name }}" /></a>
+                  <a href="{{ app.url }}"><img class="logo" src="{{#app.assets}}{{.}}{{/app.assets}}{{^app.assets}}{{ app.url }}{{/app.assets}}/email/icon.png" width="40" height="40" alt="{{ app.name }}" /></a>
                 </td>
               </tr>
               <tr>

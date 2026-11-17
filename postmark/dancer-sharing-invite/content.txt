@@ -1,0 +1,12 @@
+Manage dancers together
+
+{{ inviter.name }} has invited you to share dancer profiles in ScotDance Connect.
+
+You’ll both be able to edit the dancers’ details, enter competitions on their behalf and manage who can access their profiles. Your personal account details stay separate.
+
+Review invitation:
+{{ invite.link }}
+
+Sign in or create an account with {{ invite.email }} and verify your email to accept. This invitation expires in seven days.
+
+Not expecting this? You can ignore it. Nothing is shared with you unless you accept.
