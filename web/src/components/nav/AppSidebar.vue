@@ -7,7 +7,6 @@ import LogoMark from '@/components/LogoMark.vue'
 import AccountButton from '@/components/nav/AccountButton.vue'
 import SidebarLink from '@/components/nav/SidebarLink.vue'
 import { useCrisp } from '@/composables/useCrisp'
-import { useRoles } from '@/composables/useRoles'
 import { useUpdate } from '@/composables/useUpdate'
 import { useMeStore } from '@/stores/me'
 
@@ -23,10 +22,8 @@ import { useMeStore } from '@/stores/me'
 // (style.css, .sidebar).
 const route = useRoute()
 const me = useMeStore()
-const roles = useRoles()
 const crisp = useCrisp()
 const update = useUpdate()
-const canManage = computed(() => me.canManageAny || roles.has('organizer'))
 
 const name = computed(() => String(route.name ?? ''))
 // Inside a competition's pages, or one you manage (both have their own layout).
@@ -91,7 +88,7 @@ const browse = [
         <li v-if="!inManage">
           <SidebarLink :to="{ name: 'competitions.add' }" :icon="SquarePlus" label="Add a competition" :state="state(name === 'competitions.add')" />
         </li>
-        <li v-if="canManage">
+        <li v-if="me.canManageAny">
           <SidebarLink
             :to="{ name: 'manage.competitions' }"
             :icon="ClipboardList"

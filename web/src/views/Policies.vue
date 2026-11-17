@@ -62,7 +62,6 @@ const crisp = useCrisp()
             your favourites, the competitions you get alerts for, and the colours you pick
             for your dancers (these are private to you)
           </li>
-          <li>how you use the app (dancer, parent, teacher, organiser), should you say</li>
         </ul>
 
         <p>

@@ -11,8 +11,6 @@ import AlertsPrompt from '@/components/AlertsPrompt.vue'
 import AlertBanner from '@/components/AlertBanner.vue'
 import OfflineNotice from '@/components/OfflineNotice.vue'
 import { confirmRequest, toasts } from '@/lib/admin/feedback'
-import RolesSheet from '@/components/RolesSheet.vue'
-import { useRoles } from '@/composables/useRoles'
 import { startLiveAlerts } from '@/composables/useLiveAlerts'
 import SupportLauncher from '@/components/SupportLauncher.vue'
 import UpdateDialog from '@/components/UpdateDialog.vue'
@@ -60,9 +58,6 @@ const bare = computed(() => route.matched.some((r) => r.meta.bare))
 // Appearance and text size preferences (Settings) live on <html>.
 useDisplayPrefs()
 
-// Asks new accounts how they use the app (see useRoles).
-useRoles()
-
 // Placing alerts for followed dancers while the app is open.
 startLiveAlerts()
 
@@ -107,7 +102,6 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
   <AlertsPrompt />
   <OfflineNotice />
   <FeedbackHost v-if="feedbackUsed" />
-  <RolesSheet />
   <UpdateDialog />
   <WhatsNewSheet />
   <WhatsNewNote />

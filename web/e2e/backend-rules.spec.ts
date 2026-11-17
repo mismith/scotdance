@@ -147,7 +147,6 @@ test('public reads: published data and profiles yes, private data and other peop
 
 test('a parent can save their own things and nothing else', async () => {
   const me = parent.uid
-  await allowed('roles (useRoles)', as(parent, 'PATCH', `users/${me}`, { roles: { parent: true }, rolesAnsweredAt: Date.now() }))
   await allowed('display name', as(parent, 'PATCH', `users/${me}`, { displayName: 'Rules Parent' }))
   await allowed('favourite a dancer (name as the value)', as(parent, 'PUT', `users:favorites/${me}/dancers/-Agg1`, 'Rules Dancer'))
   await allowed('turn on a competition’s alerts', as(parent, 'PUT', `users:favorites/${me}/competitions/${pub}`, true))

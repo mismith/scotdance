@@ -53,8 +53,9 @@ test('creates an account, with clear errors for a taken email and a short passwo
   await expect(s.getByRole('alert')).toHaveText('Choose a password with at least 6 characters.')
 
   await submitPassword(page, fresh, 'password1')
-  // Signed in: the sheet goes, and a brand-new account is asked how it uses the app.
-  await expect(page.getByRole('heading', { name: 'How do you use ScotDance.app?' })).toBeVisible()
+  // Signup returns to the app without a follow-up questionnaire.
+  await expect(sheet(page)).toHaveCount(0)
+  await expect(page.getByText('How do you use ScotDance.app?', { exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toHaveCount(0)
 })
 

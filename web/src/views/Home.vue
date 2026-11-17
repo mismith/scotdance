@@ -10,7 +10,6 @@ import Button from '@/components/ui/Button.vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import DancerDayCard from '@/components/DancerDayCard.vue'
 import DancerCompactRow from '@/components/DancerCompactRow.vue'
-import { useRoles } from '@/composables/useRoles'
 import { useLiveAlertState } from '@/composables/useLiveAlerts'
 import Skeleton from '@/components/Skeleton.vue'
 import { useDancerCards, type DancerCard } from '@/composables/useDancerCards'
@@ -71,9 +70,8 @@ const people = computed(() =>
 const { cards, loading, resultsAt } = useDancerCards(people)
 
 // A class of favourites, not two kids: one line each.
-const roles = useRoles()
 const compact = computed(
-  () => !showingRecent.value && (roles.has('teacher') || followedPeople.value.length > 6),
+  () => !showingRecent.value && followedPeople.value.length > 6,
 )
 
 // Home shows the few that matter now: everyone dancing today, most pressing
@@ -322,20 +320,6 @@ const { freshKey: liveFresh } = useLiveAlertState()
             </div>
           </div>
         </Transition>
-
-        <!-- Never above the dancers: it waits for a day without a competition. -->
-        <button
-          v-if="auth.isSignedIn && roles.pending.value && !roles.answered.value && !todays.length"
-          type="button"
-          class="press-row focus-inset -mx-4 flex w-[calc(100%+2rem)] items-center gap-3 py-3 pr-3 pl-4 text-left"
-          @click="roles.open()"
-        >
-          <span class="min-w-0 flex-1">
-            <span class="block text-base font-semibold">How do you use ScotDance.app?</span>
-            <span class="text-muted-foreground block text-sm">Dancer, parent, teacher, organiser: it helps fit the app to you.</span>
-          </span>
-          <ChevronRight class="text-muted-foreground size-5 shrink-0" />
-        </button>
 
         <!-- Today: each competition, with its dancers underneath -->
         <section

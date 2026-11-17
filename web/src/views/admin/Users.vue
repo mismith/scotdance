@@ -36,7 +36,6 @@ interface UserRecord {
   email?: string
   displayName?: string
   photoURL?: string
-  roles?: Record<string, boolean>
 }
 interface Perms {
   admin?: boolean
@@ -131,8 +130,6 @@ async function unlink(tool: Audience) {
   }
 }
 
-const ROLE_NAMES: Record<string, string> = { parent: 'Parent', dancer: 'Dancer', teacher: 'Teacher', organizer: 'Organiser', judge: 'Judge', piper: 'Piper' }
-
 async function setAdmin(on: boolean) {
   const id = uid.value
   if (!id) return
@@ -224,9 +221,6 @@ function pick(id: string) {
           <Avatar :name="current.displayName || current.email || '?'" :email="current.email" :image="current.photoURL" size="lg" />
           <h2 class="text-display break-words">{{ current.displayName || current.email || 'No name' }}</h2>
           <p v-if="current.displayName && current.email" class="text-muted-foreground text-base">{{ current.email }}</p>
-          <p v-if="current.roles" class="text-muted-foreground text-sm">
-            {{ Object.keys(current.roles).filter((r) => current!.roles![r]).map((r) => ROLE_NAMES[r] ?? r).join(', ') }}
-          </p>
         </header>
         <TextField :model-value="current.displayName" label="Name" :save="saveName(current.id)" />
 

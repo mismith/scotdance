@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
 import { ArrowDownToLine, ClipboardList, ExternalLink, Gavel, Info, Landmark, LifeBuoy, Music, School, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
 import AdminMark from '@/components/AdminMark.vue'
@@ -7,7 +6,6 @@ import Dialog from '@/components/Dialog.vue'
 import { useCrisp } from '@/composables/useCrisp'
 import { useUpdate } from '@/composables/useUpdate'
 import { useMeStore } from '@/stores/me'
-import { useRoles } from '@/composables/useRoles'
 import type { Morph } from '@/lib/morph'
 
 // The More tab's menu: grows out of the tab, one tap to the people lists,
@@ -18,10 +16,7 @@ const props = defineProps<{ menu: Morph }>()
 
 const router = useRouter()
 const me = useMeStore()
-const roles = useRoles()
-// Organisers (and anyone who said they run competitions) and system admins
-// find their tools at the bottom, here and in the account menu.
-const canManage = computed(() => me.canManageAny || roles.has('organizer'))
+// Management tools follow actual competition, organisation or system access.
 const crisp = useCrisp()
 const update = useUpdate()
 
@@ -89,7 +84,7 @@ const row =
         <button type="button" :class="row" :data-current="here({ name: 'competitions.add' })" @click="go({ name: 'competitions.add' })">
           <SquarePlus class="size-5" /> Add a competition
         </button>
-        <button v-if="canManage" type="button" :class="row" :data-current="here({ name: 'manage.competitions' })" @click="go({ name: 'manage.competitions' })">
+        <button v-if="me.canManageAny" type="button" :class="row" :data-current="here({ name: 'manage.competitions' })" @click="go({ name: 'manage.competitions' })">
           <span class="relative flex text-muted-foreground"><ClipboardList class="size-5" /><AdminMark ring="raised" /></span> Manage
         </button>
         <button v-if="me.isAdmin" type="button" :class="row" :data-current="here({ name: 'admin' })" @click="go({ name: 'admin' })">

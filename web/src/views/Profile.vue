@@ -2,7 +2,7 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { onValue } from 'firebase/database'
-import { Bot, ChevronRight, Copy, ExternalLink, LogOut, Plus } from '@lucide/vue'
+import { Bot, ChevronRight, Copy, LogOut, Plus } from '@lucide/vue'
 import { dataRef } from '@/firebase'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { friendlyError } from '@/lib/admin/write'
@@ -14,14 +14,10 @@ import Dialog from '@/components/Dialog.vue'
 import AssistantChanges from '@/components/AssistantChanges.vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
-import { ROLES, useRoles } from '@/composables/useRoles'
 
 const auth = useAuthStore()
 const me = useMeStore()
 const router = useRouter()
-const roles = useRoles()
-const rolesLabel = computed(() => ROLES.filter((r) => roles.has(r.id)).map((r) => r.label).join(', ') || 'Not answered yet')
-
 
 // The AI assistants (Claude, ChatGPT) they've connected to manage their competitions (ADR 0018)
 const connectionRecords = ref<unknown>(null)
@@ -96,17 +92,6 @@ async function handleSignOut() {
         <p class="text-base">Manage your name, email, password and dancers in ScotDance Connect.</p>
         <a href="https://connect.scotdance.app/account" class="text-primary text-callout font-semibold">Edit your ScotDance account →</a>
       </section>
-      <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
-        <li>
-          <button type="button" class="press-row focus-inset flex min-h-14 w-full items-center gap-3 py-2 pr-3 pl-4 text-left" @click="roles.open()">
-            <span class="min-w-0 flex-1">
-              <span class="block text-base font-medium">How you use ScotDance.app</span>
-              <span class="text-muted-foreground block truncate text-sm">{{ rolesLabel }}</span>
-            </span>
-            <ChevronRight class="text-muted-foreground/70 size-5 shrink-0" />
-          </button>
-        </li>
-      </ul>
 
       <section v-if="me.canManageAny || assistants.length" class="space-y-1">
         <h2 class="text-heading">AI assistants</h2>

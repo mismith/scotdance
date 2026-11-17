@@ -50,9 +50,6 @@ export const useAuthStore = defineStore('auth', () => {
   const loginSheet = useMorph()
   const loginDialogOpen = computed(() => loginSheet.open)
   const loginReason = ref<LoginReason | null>(null)
-  /** Set when an account was just created: the reason it happened, if any. */
-  const newAccount = ref<{ reason: LoginReason['reason'] | null } | null>(null)
-  const markNew = () => (newAccount.value = { reason: loginReason.value?.reason ?? null })
   const pendingActions = ref<PostLoginAction[]>([])
 
   function openLogin(reason: LoginReason | null = null) {
@@ -106,7 +103,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function registerWithEmail(email: string, password: string) {
     await createUserWithEmailAndPassword(auth, email, password)
-    markNew()
   }
 
   async function resetPassword(email: string) {
@@ -202,7 +198,6 @@ export const useAuthStore = defineStore('auth', () => {
     loginDialogOpen,
     loginSheet,
     loginReason,
-    newAccount,
     hasPassword,
     openLogin,
     closeLogin,

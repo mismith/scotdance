@@ -15,9 +15,8 @@ import { clearDeviceHistory } from '@/lib/deviceHistory'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { isNative } from '@/lib/native'
 
-// Settings: alerts, appearance and this device. Your account (and how you
-// use ScotDance, and signing out) lives on the Account page; help, the
-// questions and the fine print are on About.
+// Settings: alerts, appearance and this device. Account details and signing
+// out live on the Account page; help, questions and fine print are on About.
 usePageTitle(['Settings'])
 
 const alerts = useAlerts()
