@@ -44,7 +44,6 @@ const sessions = new Map(),
 const delivery = invitationDelivery(
   db,
   {
-    find: async (id) => inbox.find((m) => m.id === id)?.id || null,
     send: async (to, inviter, token, id) => {
       inbox.push({ to, inviter, token, id })
       return id
