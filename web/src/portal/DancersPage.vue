@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useIntervalFn, useNow } from '@vueuse/core'
 import { onBeforeRouteLeave } from 'vue-router'
 import DancerThumbnail from './DancerThumbnail.vue'
 import DancerPage from './DancerPage.vue'
@@ -9,6 +10,19 @@ import Button from '@/components/ui/Button.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { useConnectAccount } from './account'
 const store = useConnectAccount()
+const today = useNow({ scheduler: update => useIntervalFn(update, 60_000) })
+function ageLabel(birthday: string, now: Date): string | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthday)) return
+  const [year, month, day] = birthday.split('-').map(Number)
+  const birth = new Date(year, month - 1, day)
+  if (birth.getFullYear() !== year || birth.getMonth() !== month - 1 || birth.getDate() !== day || birth > now) return
+  const birthdayAhead = now.getMonth() + 1 < month || (now.getMonth() + 1 === month && now.getDate() < day)
+  return `Age ${now.getFullYear() - year - Number(birthdayAhead)}`
+}
+const dancers = computed(() => store.dancers.map(dancer => ({
+  dancer,
+  description: [dancer.category, ageLabel(dancer.birthday, today.value)].filter(Boolean).join(' · '),
+})))
 const editing = ref<Dancer>()
 const open = ref(false)
 const loading = ref<string | null>(null)
@@ -52,13 +66,13 @@ async function edit(dancer?: Dancer, event?: MouseEvent) {
     </div>
     <p v-if="problem" role="alert" class="mb-4 text-sm text-destructive">{{ problem }}</p>
     <EmptyState v-if="!store.dancers.length" :icon="ContactRound" title="No dancers yet" description="Add yourself or a dancer you manage." />
-    <ul v-else class="-mx-3 space-y-1">
-      <li v-for="dancer in store.dancers" :key="dancer.id">
-        <button type="button" :aria-busy="loading === dancer.id || undefined" :disabled="loading !== null" @click="edit(dancer, $event)" class="focus-inset flex w-full text-left min-h-20 items-center gap-3 rounded-xl px-3 py-3 hover:bg-foreground/3 focus-visible:bg-foreground/3">
+    <ul v-else class="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <li v-for="{ dancer, description } in dancers" :key="dancer.id" class="min-w-0">
+        <button type="button" :aria-busy="loading === dancer.id || undefined" :disabled="loading !== null" @click="edit(dancer, $event)" class="focus-inset flex w-full text-left min-h-20 items-center gap-3 rounded-xl border border-border bg-foreground/3 px-3 py-3 hover:bg-foreground/5 focus-visible:bg-foreground/5">
           <DancerThumbnail :dancer="dancer" />
           <span class="min-w-0 flex-1">
             <span class="block truncate text-base font-semibold">{{ dancer.firstName }} {{ dancer.lastName }}</span>
-            <span v-if="dancer.category || dancer.studio" class="block truncate text-sm text-muted-foreground">{{ [dancer.category, dancer.studio].filter(Boolean).join(' · ') }}</span>
+            <span v-if="description" class="block truncate text-sm text-muted-foreground">{{ description }}</span>
           </span>
           <UsersRound v-if="(dancer.ownerCount ?? 1) > 1" class="size-4 shrink-0 text-muted-foreground" aria-label="Shared dancer" />
           <LoaderCircle v-if="loading === dancer.id" class="size-5 shrink-0 animate-spin text-primary motion-reduce:animate-none" aria-label="Opening dancer" />
