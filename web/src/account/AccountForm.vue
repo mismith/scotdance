@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AsyncButton from '@/components/AsyncButton.vue'
 import { computed, onScopeDispose, ref, watch } from 'vue'
-import { Eye, EyeOff, ExternalLink } from '@lucide/vue'
+import { Eye, EyeOff, ExternalLink, X } from '@lucide/vue'
 import type { AccountSettings } from './settings'
 import { useMorph } from '@/lib/morph'
 import Dialog from '@/components/Dialog.vue'
@@ -29,6 +29,8 @@ const passwordDate = computed(() => formatDate(auth.user?.metadata?.passwordUpda
 const emit = defineEmits<{ changed: []; deleted: [] }>()
 // Display name (debounced save)
 const displayName = ref('')
+const nameInput = ref<HTMLInputElement>()
+function clearName() { displayName.value = ''; onDisplayNameInput(); nameInput.value?.focus() }
 const nameFeedback = useSaveFeedback()
 const nameSaveStatus = nameFeedback.status
 const displayNameSaving = ref(false)
@@ -54,7 +56,7 @@ function onDisplayNameInput() {
 async function saveDisplayName() {
   if (displayNameSaving.value) return
   const next = displayName.value.trim()
-  if (next === (auth.displayName ?? '')) return
+  if (!next || next === (auth.displayName ?? '')) return
   displayNameSaving.value = true
   nameFeedback.start()
   displayNameError.value = null
@@ -175,13 +177,15 @@ onScopeDispose(() => { if (displayNameTimer) clearTimeout(displayNameTimer) })
           <span class="relative block">
           <input
             v-model="displayName"
+            ref="nameInput"
             type="text"
             autocomplete="name"
-            class="field h-12 w-full rounded-xl pl-3 pr-10 text-base"
+            class="field h-12 w-full rounded-xl pl-3 pr-24 text-base"
             @input="onDisplayNameInput"
             @blur="saveDisplayName"
           />
-          <SaveIndicator :status="nameSaveStatus" />
+          <SaveIndicator :status="nameSaveStatus" :style="{ right: displayName ? '3.25rem' : undefined }" />
+          <button v-if="displayName" type="button" class="absolute right-0 top-1/2 -translate-y-1/2 flex size-12 items-center justify-center text-muted-foreground" aria-label="Clear full name" @pointerdown.prevent @click="clearName"><X class="size-4" aria-hidden="true" /></button>
           </span>
         </label>
         </div>
