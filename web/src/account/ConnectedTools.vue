@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { ExternalLink } from '@lucide/vue'
+import { ArrowUpRight, ExternalLink } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
 import { TOOLS, toolDate, type Audience, type ToolLink } from './tool-links'
+const toolkitIcon = new URL('../../public/img/toolkit.png', import.meta.url).href
 const props = defineProps<{
   load: () => Promise<{ tool: Audience; link: ToolLink }[]>
   signOut: (tool: Audience) => Promise<void>
@@ -43,8 +44,21 @@ onMounted(load)
 </script>
 <template>
   <section class="space-y-2 pt-3" aria-labelledby="connected-tools-title">
-    <h2 id="connected-tools-title" class="text-title">Connected tools</h2>
-    <p class="text-sm text-muted-foreground">Tools you sign in to with your ScotDance account.</p>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 id="connected-tools-title" class="text-title">Connected tools</h2>
+        <p class="text-sm text-muted-foreground">Tools you sign in to with your ScotDance.app account.</p>
+      </div>
+      <a href="https://toolkit.scotdance.app" target="_blank" rel="noopener noreferrer"
+        class="focus-inset inline-flex min-h-11 shrink-0 items-center gap-3 rounded-full bg-foreground/5 px-3 py-1.5 ring-1 ring-foreground/10 transition-colors hover:bg-foreground/10">
+        <img :src="toolkitIcon" alt="" class="size-7 rounded-md" />
+        <span class="flex flex-col items-start -space-y-0.5">
+          <span class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Explore the</span>
+          <span class="text-base font-semibold text-foreground">ScotDance Toolkit<span class="text-primary" aria-hidden="true">.</span></span>
+        </span>
+        <ArrowUpRight class="size-4 text-muted-foreground" aria-label="Opens in a new tab" />
+      </a>
+    </div>
     <div v-if="loading" role="status" aria-label="Loading connected tools" aria-busy="true" class="space-y-3 py-2">
       <div v-for="n in 3" :key="n" aria-hidden="true" class="flex h-14 items-center gap-3 motion-safe:animate-pulse"><span class="size-10 rounded-xl bg-muted" /><span class="h-4 w-36 rounded bg-muted" /></div>
     </div>
