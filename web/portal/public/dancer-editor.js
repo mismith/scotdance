@@ -30,7 +30,7 @@ export function openDancerEditor({ load, save, manageAccess, verifyEmail, signal
     // or modal is shown until the editor's ready message includes loaded fields/fonts.
     shadow.innerHTML = `<style>iframe{position:absolute;inset:0;width:100%;height:100%;border:0;visibility:hidden}</style><iframe title="ScotDance Connect" referrerpolicy="origin"></iframe>`
     const frame = shadow.querySelector('iframe')
-    let ended = false, writing = false, context, lastResult, initialized = false, revealed = false
+    let ended = false, changing = 0, changes = Promise.resolve(), context, lastResult, initialized = false, revealed = false
     const button = opener instanceof HTMLButtonElement ? opener : null
     const previousBusy = button?.getAttribute('aria-busy')
     const previousPosition = button?.style.position
@@ -58,6 +58,10 @@ export function openDancerEditor({ load, save, manageAccess, verifyEmail, signal
       else button.setAttribute('aria-busy', previousBusy)
     }
     let timeout = setTimeout(() => finish(new Error('ScotDance Connect did not open. Please try again.')), 20000)
+    function queue(task) {
+      changing++
+      changes = changes.then(task).catch(() => {}).finally(() => { changing-- })
+    }
     function send(type, values = {}) { frame.contentWindow?.postMessage({ channel: CHANNEL, session, type, ...values }, ORIGIN) }
     function finish(error) {
       if (ended) return
@@ -96,34 +100,46 @@ export function openDancerEditor({ load, save, manageAccess, verifyEmail, signal
         dialog.showModal()
         document.documentElement.style.overflow = 'hidden'
         frame.focus()
-      } else if (data.type === 'write' && context && !writing) {
+      } else if (data.type === 'write' && context && typeof data.write?.requestId === 'string') {
         const write = data.write
-        if (!write || !['save', 'delete'].includes(write.action) || typeof write.requestId !== 'string' || !write.dancer || typeof write.dancer.id !== 'string') return
-        if (context.dancer && (write.dancer.id !== context.dancer.id || write.dancer.revision !== context.dancer.revision)) return
-        if (!context.dancer && (write.action === 'delete' || write.dancer.revision !== 0)) return
-        writing = true
-        try {
-          lastResult = await save({ ...write, defaultsRevision: context.defaultsRevision })
-          if (!ended) send('result', { requestId: write.requestId, result: lastResult })
-        } catch (error) { if (!ended) send('result', { requestId: write.requestId, error: error instanceof Error ? error.message : 'Could not save. Please try again.' }) }
-        finally { writing = false }
-      } else if (data.type === 'access' && context?.dancer && !writing && typeof manageAccess === 'function') {
+        const problem = writeProblem(write)
+        if (problem) return send('result', { requestId: write.requestId, error: problem })
+        // Changes run one at a time, in order; each one always gets a reply.
+        queue(async () => {
+          try {
+            lastResult = await save({ ...write, defaultsRevision: context.defaultsRevision })
+            if (!ended) send('result', { requestId: write.requestId, result: lastResult })
+          } catch (error) { if (!ended) send('result', { requestId: write.requestId, error: error instanceof Error ? error.message : 'Could not save. Please try again.' }) }
+        })
+      } else if (data.type === 'access' && context && typeof data.requestId === 'string') {
         const request = data.request
-        if (!request || !['access', 'invite', 'verify-email'].includes(request.action) || request.id !== context.dancer.id || typeof data.requestId !== 'string') return
-        if (request.action === 'verify-email' && typeof verifyEmail !== 'function') return
-        writing = true
-        try {
-          const result = request.action === 'verify-email' ? await verifyEmail() : await manageAccess(request)
-          if (request.action === 'access' && request.operation === 'leave') lastResult = { id: request.id, deleted: true }
-          if (!ended) {
-            send('access-result', { requestId: data.requestId, result })
-            if (request.action === 'invite' || request.operation !== 'list') window.dispatchEvent(new Event('connect-profiles-changed'))
-          }
-        } catch (error) { if (!ended) send('access-result', { requestId: data.requestId, error: error instanceof Error ? error.message : 'Could not manage access. Please try again.' }) }
-        finally { writing = false }
-      } else if (data.type === 'closed' && !writing) finish()
+        const problem = accessProblem(request)
+        if (problem) return send('access-result', { requestId: data.requestId, error: problem })
+        const run = async () => {
+          try {
+            const result = request.action === 'verify-email' ? await verifyEmail() : await manageAccess(request)
+            if (request.action === 'access' && request.operation === 'leave') lastResult = { id: request.id, deleted: true }
+            if (!ended) {
+              send('access-result', { requestId: data.requestId, result })
+              if (request.action === 'invite' || request.operation !== 'list') window.dispatchEvent(new Event('connect-profiles-changed'))
+            }
+          } catch (error) { if (!ended) send('access-result', { requestId: data.requestId, error: error instanceof Error ? error.message : 'Could not manage access. Please try again.' }) }
+        }
+        // Reading the sharing list never waits for, or holds up, a change.
+        if (request.action === 'access' && request.operation === 'list') void run()
+        else queue(run)
+      } else if (data.type === 'closed') queue(async () => finish())
     }
-    dialog.addEventListener('cancel', event => { event.preventDefault(); if (!context && !writing) finish() })
+    function writeProblem(write) {
+      if (!['save', 'delete'].includes(write.action) || typeof write.dancer?.id !== 'string') return 'Could not save. Please try again.'
+      if (context.dancer ? write.dancer.id !== context.dancer.id || write.dancer.revision !== context.dancer.revision : write.action === 'delete' || write.dancer.revision !== 0)
+        return 'This dancer has changed. Close and reopen to edit.'
+    }
+    function accessProblem(request) {
+      if (typeof manageAccess !== 'function' || !context.dancer || !['access', 'invite', 'verify-email'].includes(request?.action) || request.id !== context.dancer.id) return 'Could not manage access. Please try again.'
+      if (request.action === 'verify-email' && typeof verifyEmail !== 'function') return 'Could not send the email. Please try again.'
+    }
+    dialog.addEventListener('cancel', event => { event.preventDefault(); if (!context && !changing) finish() })
     signal?.addEventListener('abort', abort, { once: true })
     window.addEventListener('message', receive)
     document.addEventListener('keydown', cancelPending, true)

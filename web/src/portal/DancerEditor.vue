@@ -146,9 +146,9 @@ async function save() {
     confirmDefaults.value = true
     return
   }
-  await persist()
+  await write()
 }
-async function persist(updateDefaults = false, remove = false) {
+async function write(updateDefaults = false, remove = false) {
   if (busy.value) return
   busy.value = true
   error.value = ''
@@ -234,7 +234,7 @@ async function persist(updateDefaults = false, remove = false) {
           stay unchanged.
         </p>
         <div class="flex flex-wrap gap-2">
-          <Button variant="destructive" :busy="busy" @click="persist(false, true)"
+          <Button variant="destructive" :busy="busy" @click="write(false, true)"
             >Delete dancer</Button
           ><Button :disabled="busy || preparing" @click="deleting = false"
             >Keep dancer</Button
@@ -252,9 +252,9 @@ async function persist(updateDefaults = false, remove = false) {
           as your account defaults? Your other dancers keep their own details.
         </p>
         <div class="flex flex-wrap gap-2">
-          <Button variant="primary" :busy="busy" @click="persist(false)"
+          <Button variant="primary" :busy="busy" @click="write(false)"
             >Just this dancer</Button
-          ><Button :disabled="busy || preparing" @click="persist(true)"
+          ><Button :disabled="busy || preparing" @click="write(true)"
             >Update defaults too</Button
           ><Button
             variant="plain"
