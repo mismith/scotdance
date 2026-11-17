@@ -7,7 +7,7 @@ export function connectFixtures(): Plugin {
   let verified = false
   let verificationCode = ''
   const invitations: { id: string; email: string; delivery: string }[] = []
-  const dancers = [{ id: 'isla', revision: 0, firstName: 'Isla', lastName: 'Fraser', birthday: '2018-03-12', category: 'Beginner', studio: 'Glenmore School of Dance', registrationNumber: '', ownerCount: 1 }]
+  const dancers = [{ id: 'isla', revision: 0, firstName: 'Isla', lastName: 'Fraser', birthday: '2018-03-12', category: 'Beginner', studio: 'Glenmore School of Dance', registrationNumber: '', ownerCount: 2, shared: true, owners: [{ uid, name }, { uid: 'other-parent', name: 'alexandra@fictional-dance-family.example' }] }]
   const defaults = { studio: 'Glenmore School of Dance', location: { town: 'Calgary', province: 'AB', country: 'Canada' } }
   const tools: Record<string, { linkedAt: number; signedInAt: number }> = Object.fromEntries(
     ['challenge', 'binder', 'entries'].map((tool, i) => [tool, { linkedAt: Date.now() - 86400000 * 30, signedInAt: Date.now() - i * 86400000 }]),
@@ -46,7 +46,7 @@ export function connectFixtures(): Plugin {
           const identity = { localId: uid, displayName: name, email: 'parent@example.test', emailVerified: verified, createdAt: '1609459200000', lastLoginAt: String(Date.now()), providerUserInfo: [{ providerId: 'password' }] }
           let result: unknown
           if (url.pathname === '/api/load') result = { account: { uid, name, email: identity.email, emailVerified: verified }, dancers, defaults, defaultsRevision: 1 }
-          else if (url.pathname === '/api/access' && data.id === 'isla' && data.operation === 'list') result = { id: 'isla', name: 'Isla Fraser', shared: false, emailVerified: verified, accessRevision: 0, owners: [{ uid, name, you: true }], invitations, dancers: [{ id: 'isla', name: 'Isla Fraser' }] }
+          else if (url.pathname === '/api/access' && data.id === 'isla' && data.operation === 'list') result = { id: 'isla', name: 'Isla Fraser', shared: true, emailVerified: verified, accessRevision: 0, owners: [{ uid, name, you: true }, { uid: 'other-parent', name: 'alexandra@fictional-dance-family.example', you: false }], invitations, dancers: [{ id: 'isla', name: 'Isla Fraser' }] }
           else if (url.pathname === '/api/invite') { if (!verified) throw Error('Verify your email first'); invitations.push({ id: crypto.randomUUID(), email: String(data.email), delivery: 'sent' }); result = { ok: true } }
           else if (url.pathname === '/__fixture/functions/sendVerificationEmail') { verificationCode = crypto.randomUUID(); result = { result: { sent: true } } }
           else if (url.pathname === '/__fixture/auth/accounts:sendOobCode' && data.requestType === 'VERIFY_EMAIL' && data.idToken === 'local-fixture-token') { verificationCode = crypto.randomUUID(); result = { email: identity.email } }

@@ -7,6 +7,7 @@ export interface Dancer {
   revision: number
   shared?: boolean
   ownerCount?: number
+  owners?: { uid: string; name: string }[]
   firstName: string
   lastName: string
   birthday: string

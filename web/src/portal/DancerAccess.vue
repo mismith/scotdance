@@ -2,6 +2,7 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { LoaderCircle, Mail, UsersRound } from '@lucide/vue'
 import Popover from './Popover.vue'
+import OwnerAvatars from './OwnerAvatars.vue'
 import VerifyEmailButton from '@/account/VerifyEmailButton.vue'
 import Button from '@/components/ui/Button.vue'
 import type { AccessRequest, AccessState } from './editor/types'
@@ -173,28 +174,7 @@ onMounted(() => {
         :disabled="disabled"
         @click="disabled && $event.stopPropagation()"
       >
-        <span
-          v-if="state && state.owners.length > 1"
-          class="flex -space-x-2"
-          aria-hidden="true"
-        >
-          <span
-            v-for="(person, index) in state.owners.slice(0, 3)"
-            :key="person.uid"
-            class="border-background grid size-7 place-items-center rounded-full border-2 text-[10px] font-semibold"
-            :class="
-              index % 2
-                ? 'bg-stone-200 text-stone-700 dark:bg-stone-700 dark:text-stone-200'
-                : 'bg-blue-paper text-primary'
-            "
-            >{{ initials(person.name) }}</span
-          >
-          <span
-            v-if="state.owners.length > 3"
-            class="bg-blue-paper text-primary border-background grid size-7 place-items-center rounded-full border-2 text-[10px] font-semibold"
-            >+{{ state.owners.length - 3 }}</span
-          >
-        </span>
+        <OwnerAvatars v-if="state && state.owners.length > 1" :owners="state.owners" />
         <UsersRound v-else class="size-4 shrink-0" aria-hidden="true" />
         <span>Sharing</span>
       </button>
@@ -250,7 +230,7 @@ onMounted(() => {
                 aria-hidden="true"
                 >{{ initials(person.name) }}</span
               >
-              <span class="min-w-0 flex-1 text-sm wrap-anywhere"
+              <span class="min-w-0 flex-1 truncate text-sm" :title="person.name"
                 >{{ person.name
                 }}<span v-if="person.you" class="text-muted-foreground">
                   (you)</span
@@ -276,9 +256,8 @@ onMounted(() => {
               class="flex min-h-11 items-center gap-2"
             >
               <Mail class="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
-              <span class="min-w-0 flex-1 text-sm wrap-anywhere"
-                >{{ pending.email
-                }}<small class="text-muted-foreground block">{{
+              <span class="min-w-0 flex-1 text-sm"
+                ><span class="block truncate" :title="pending.email">{{ pending.email }}</span><small class="text-muted-foreground block">{{
                   pending.delivery === 'sent'
                     ? 'Invited'
                     : pending.delivery === 'failed'

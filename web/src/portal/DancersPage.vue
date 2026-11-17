@@ -3,9 +3,10 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useIntervalFn, useNow } from '@vueuse/core'
 import { onBeforeRouteLeave } from 'vue-router'
 import DancerThumbnail from './DancerThumbnail.vue'
+import OwnerAvatars from './OwnerAvatars.vue'
 import DancerPage from './DancerPage.vue'
 import type { Dancer } from './account'
-import { ChevronRight, LoaderCircle, Plus, ContactRound, UsersRound, Shield } from '@lucide/vue'
+import { ChevronRight, LoaderCircle, Plus, ContactRound, Shield } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { useConnectAccount } from './account'
@@ -74,7 +75,7 @@ async function edit(dancer?: Dancer, event?: MouseEvent) {
             <span class="block truncate text-base font-semibold">{{ dancer.firstName }} {{ dancer.lastName }}</span>
             <span v-if="description" class="block truncate text-sm text-muted-foreground">{{ description }}</span>
           </span>
-          <UsersRound v-if="(dancer.ownerCount ?? 1) > 1" class="size-4 shrink-0 text-muted-foreground" aria-label="Shared dancer" />
+          <OwnerAvatars v-if="dancer.owners" :owners="dancer.owners" />
           <LoaderCircle v-if="loading === dancer.id" class="size-5 shrink-0 animate-spin text-primary motion-reduce:animate-none" aria-label="Opening dancer" />
           <ChevronRight v-else class="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
         </button>
