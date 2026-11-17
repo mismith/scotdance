@@ -10,8 +10,6 @@ import { useOrganisations } from '@/composables/useOrganisations'
 import type { Morph } from '@/lib/morph'
 import { acronym, organisationKey, type OrganisationDraft } from '@/lib/organisationSuggestions'
 import type { OrganisationListItem } from '@/types/organisation'
-const pendingCreate = ref(false)
-
 
 // Choose an organisation, or start a new one, in a sheet. Yours come first,
 // then (where you may pick any) the rest: a few before you type, so it's
@@ -102,10 +100,6 @@ const duplicateNote = computed(() => {
 const saving = ref(false)
 const saveError = ref('')
 async function create() {
-  if (pendingCreate.value) return
-  pendingCreate.value = true
-  try {
-
   if (saving.value) return
   if (duplicate.value) {
     if (props.any || props.mine.includes(duplicate.value.id)) pick(duplicate.value)
@@ -128,8 +122,6 @@ async function create() {
   } finally {
     saving.value = false
   }
-
-  } finally { pendingCreate.value = false }
 }
 function pick(org: OrganisationListItem) {
   if (!props.chosen.includes(org.id)) emit('pick', org)

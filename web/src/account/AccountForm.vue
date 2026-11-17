@@ -10,8 +10,6 @@ import Avatar from '@/components/Avatar.vue'
 import SaveIndicator from './SaveIndicator.vue'
 import VerifyEmailButton from './VerifyEmailButton.vue'
 import { useSaveFeedback } from './save-feedback'
-const pendingSubmitModal = ref(false)
-
 const props = defineProps<{ account: AccountSettings }>()
 const auth = props.account
 function formatDate(value?: string) {
@@ -131,10 +129,7 @@ function closeModal() {
 }
 
 async function submitModal() {
-  if (pendingSubmitModal.value) return
-  pendingSubmitModal.value = true
-  try {
-
+  if (submitting.value) return
   modalError.value = null
   submitting.value = true
   try {
@@ -163,8 +158,6 @@ async function submitModal() {
   } finally {
     submitting.value = false
   }
-
-  } finally { pendingSubmitModal.value = false }
 }
 
 const submitDisabled = computed(() => {

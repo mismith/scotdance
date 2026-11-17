@@ -33,8 +33,6 @@ import { ALL_SECTIONS } from '@/lib/admin/sections'
 import { useMorph } from '@/lib/morph'
 import { planAdd, planAddPresets, planRemove, planReorder, planSetField, planSetFieldOn } from '@shared/plans/collection'
 import type { LinkPart } from '@/lib/linked'
-const pendingSubmitDraft = ref(false)
-
 
 // One editable list: search, select several to change or delete at once,
 // drag to reorder (or move from the keyboard), swipe one left to delete it,
@@ -362,10 +360,6 @@ watch(
 // A double tap on Add shouldn't add it twice.
 const submitting = ref(false)
 async function submitDraft(another: boolean) {
-  if (pendingSubmitDraft.value) return
-  pendingSubmitDraft.value = true
-  try {
-
   if (submitting.value) return
   let firstError: string | null = null
   const fields = fieldsOf(draft)
@@ -416,8 +410,6 @@ async function submitDraft(another: boolean) {
   } finally {
     submitting.value = false
   }
-
-  } finally { pendingSubmitDraft.value = false }
 }
 
 // --- Presets

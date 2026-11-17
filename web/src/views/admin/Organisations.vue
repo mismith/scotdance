@@ -27,8 +27,6 @@ import { familyName, familyTags, groupFamilies, organisationsInNames, suggest, t
 import { visibilityOf } from '@/lib/visibility'
 import { organisationLabel, type OrganisationListItem } from '@/types/organisation'
 import type { Competition } from '@/types/competition'
-const pendingStartDraft = ref(false)
-
 
 // Every organisation, and a tool for putting the competitions already on
 // ScotDance.app under theirs: each competition's years are one family,
@@ -199,10 +197,7 @@ function startFrom(n: NewOrganisation, e: Event) {
   startingFrom.show(e)
 }
 async function startDraft() {
-  if (pendingStartDraft.value) return
-  pendingStartDraft.value = true
-  try {
-
+  if (draft.busy) return
   const name = draft.name.trim()
   if (!name) return void (draft.error = 'It needs a name.')
   draft.busy = true
@@ -216,8 +211,6 @@ async function startDraft() {
   } finally {
     draft.busy = false
   }
-
-  } finally { pendingStartDraft.value = false }
 }
 const competitionsLabel = (n: number) => (n === 1 ? '1 competition' : `${n} competitions`)
 

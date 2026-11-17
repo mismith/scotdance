@@ -9,8 +9,6 @@ import SectionHeader from '@/components/admin/SectionHeader.vue'
 import NotificationCard from '@/components/NotificationCard.vue'
 import { dataRef, functions } from '@/firebase'
 import { confirm } from '@/lib/admin/feedback'
-const pendingRun = ref(false)
-
 
 // Rebuilding what's worked out from competitions: search, profiles, the
 // followers lists alerts go to, map positions. Each keeps itself up to date
@@ -79,11 +77,8 @@ async function rebuildProfiles(key: string) {
 const profileBusy = (key: string) => job(`agg${key}`).running || job(`bp${key}`).running
 
 async function run(key: string, fn: string, payload?: unknown) {
-  if (pendingRun.value) return
-  pendingRun.value = true
-  try {
-
   const j = jobs[key]
+  if (j.running) return
   j.running = true
   j.error = null
   j.result = null
@@ -97,8 +92,6 @@ async function run(key: string, fn: string, payload?: unknown) {
   } finally {
     j.running = false
   }
-
-  } finally { pendingRun.value = false }
 }
 
 const REINDEX = [

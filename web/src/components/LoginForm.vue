@@ -3,8 +3,6 @@ import { nextTick, ref, useId } from 'vue'
 import { Check, Eye, EyeOff } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import Button from '@/components/ui/Button.vue'
-const pendingSubmit = ref(false)
-
 
 // The sign-in form itself, wherever sign-in is asked for: the app's sign-in
 // sheet (LoginDialog) and the page organisers' other tools open (connect).
@@ -76,10 +74,6 @@ function friendly(e: unknown): string {
 }
 
 async function submit() {
-  if (pendingSubmit.value) return
-  pendingSubmit.value = true
-  try {
-
   if (busy.value) return
   // Password managers may fill the DOM without emitting Vue's input event.
   if (formEl.value) {
@@ -103,8 +97,6 @@ async function submit() {
   } finally {
     busy.value = false
   }
-
-  } finally { pendingSubmit.value = false }
 }
 </script>
 

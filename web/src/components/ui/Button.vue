@@ -55,7 +55,7 @@ const classes = computed(() => [
 
 <template>
   <RouterLink
-v-if="to"
+    v-if="to"
     v-proximity="variant === 'primary'"
     :to="to"
     :replace="replace"

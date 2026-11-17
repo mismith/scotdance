@@ -103,16 +103,16 @@ async function addLink(url?: string, name?: string) {
   }
 }
 async function submitLink() {
-  if (pendingSubmitLink.value) return
+  const u = newLinkUrl.value.trim()
+  if (!u || pendingSubmitLink.value) return
+  linkError.value = looksLikeLink(u) ? null : LINK_PROBLEM
+  if (linkError.value) return
   pendingSubmitLink.value = true
   try {
-
-  const u = newLinkUrl.value.trim()
-  if (!u) return
-  linkError.value = looksLikeLink(u) ? null : LINK_PROBLEM
-  if (!linkError.value) await addLink()
-
-  } finally { pendingSubmitLink.value = false }
+    await addLink()
+  } finally {
+    pendingSubmitLink.value = false
+  }
 }
 async function onFile(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]

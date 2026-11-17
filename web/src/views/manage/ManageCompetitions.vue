@@ -103,15 +103,13 @@ const newDate = ref('')
 const createError = ref<string | null>(null)
 async function create() {
   if (pendingCreate.value) return
-  pendingCreate.value = true
-  try {
-
   createError.value = null
   if (!newName.value.trim() || !newDate.value) {
     createError.value = 'Add a name and a date.'
     return
   }
   const id = newKey()
+  pendingCreate.value = true
   try {
     await write({ [`competitions/${id}`]: { name: newName.value.trim(), date: newDate.value, listed: false, published: false } })
     creating.dismiss()
@@ -121,9 +119,9 @@ async function create() {
     await router.push({ name: 'manage.details', params: { competitionId: id } })
   } catch (e) {
     createError.value = friendlyError(e)
+  } finally {
+    pendingCreate.value = false
   }
-
-  } finally { pendingCreate.value = false }
 }
 </script>
 

@@ -11,8 +11,6 @@ import { usePageTitle } from '@/composables/usePageTitle'
 import { answerRequest, lookUpRequest, type AssistantRequest } from '@/lib/assistants'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
-const pendingAnswer = ref(false)
-
 
 // An AI assistant (Claude, ChatGPT) has asked to manage this person's competitions and sent them here (ADR 0018).
 // Signing in comes first, and the address stays, so they land back here. There is nothing to pick: what it can
@@ -63,10 +61,6 @@ usePageTitle(['Connect an AI assistant'])
 const busy = ref(false)
 const problem = ref('')
 async function answer(deny?: true) {
-  if (pendingAnswer.value) return
-  pendingAnswer.value = true
-  try {
-
   if (busy.value) return
   busy.value = true
   problem.value = ''
@@ -79,8 +73,6 @@ async function answer(deny?: true) {
     problem.value = 'That didn’t work. Check your connection and try again.'
   }
   busy.value = false
-
-  } finally { pendingAnswer.value = false }
 }
 </script>
 
