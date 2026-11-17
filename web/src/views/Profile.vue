@@ -103,11 +103,13 @@ async function handleSignOut() {
       </section>
 
       <section v-if="me.canManageAny || assistants.length" class="space-y-2">
-        <div class="flex items-center justify-between gap-3">
-          <h2 class="text-heading">AI assistants</h2>
-          <Button size="sm" aria-label="Connect an AI assistant" @click="connectOpen = true"><Plus /> Connect</Button>
+        <div class="flex items-center justify-between gap-4">
+          <div class="min-w-0">
+            <h2 class="text-heading">AI assistants</h2>
+            <p class="text-muted-foreground text-sm">Organisers can use AI assistants to manage their ScotDance competitions.</p>
+          </div>
+          <Button size="sm" class="shrink-0" aria-label="Connect an AI assistant" @click="connectOpen = true"><Plus /> Connect</Button>
         </div>
-        <p class="text-muted-foreground text-sm">Organisers can use AI assistants to manage their ScotDance competitions.</p>
         <ul v-if="assistants.length" class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
           <li v-for="c in assistants" :key="c.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
             <div class="flex min-w-0 flex-[1_1_16rem] items-center gap-3">
