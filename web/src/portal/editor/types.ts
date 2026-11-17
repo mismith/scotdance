@@ -1,5 +1,7 @@
 import type { Dancer } from '../account'
 export interface EditorContext {
+  /** Presentation only. Hidden fields are omitted from writes, never cleared. */
+  hiddenFields?: Array<'photo' | 'publicDancer'>
   /** Opt-in only: host must persist photos in the account owner’s private store. */
   photo?: { value: string | null }
   dancer?: Dancer

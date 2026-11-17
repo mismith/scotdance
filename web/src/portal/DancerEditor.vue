@@ -25,6 +25,8 @@ const busy = ref(false)
 const error = ref('')
 const photo = ref(props.photo?.value ?? null)
 const photoEditing = ref(false)
+const showPhoto = computed(() => !!props.photo && !props.hiddenFields?.includes('photo'))
+const showPublicDancer = computed(() => !props.hiddenFields?.includes('publicDancer'))
 const opened = ref(true)
 let lastWrite = '',
   requestId = ''
@@ -136,10 +138,14 @@ async function persist(updateDefaults = false, remove = false) {
   if (busy.value) return
   busy.value = true
   error.value = ''
+  const dancer = JSON.parse(JSON.stringify(draft.value)) as Dancer
+  if (!showPublicDancer.value) delete dancer.publicDancer
   const body = {
-    ...(props.photo && photo.value !== props.photo.value ? { photo: photo.value } : {}),
+    ...(showPhoto.value && photo.value !== props.photo?.value
+      ? { photo: photo.value }
+      : {}),
     action: remove ? ('delete' as const) : ('save' as const),
-    dancer: JSON.parse(JSON.stringify(draft.value)) as Dancer,
+    dancer,
     defaults: updateDefaults ? { ...changedDefaults.value } : {},
     defaultsRevision: props.defaultsRevision,
   }
@@ -320,17 +326,18 @@ async function persist(updateDefaults = false, remove = false) {
             class="col-span-2"
           />
           <DancerPhoto
-            v-if="props.photo"
-            class="col-span-2 sm:col-span-1"
+            v-if="showPhoto"
+            :class="showPublicDancer ? 'col-span-2 sm:col-span-1' : 'col-span-2'"
             v-model="photo"
             @editing="photoEditing = $event"
           />
           <PublicDancerLink
+            v-if="showPublicDancer"
             ref="publicLink"
             v-model="draft.publicDancer"
             :first-name="draft.firstName"
             :last-name="draft.lastName"
-            :class="props.photo ? 'col-span-2 sm:col-span-1' : 'col-span-2'"
+            :class="showPhoto ? 'col-span-2 sm:col-span-1' : 'col-span-2'"
           />
         </fieldset>
         <footer class="flex items-center justify-between gap-4">

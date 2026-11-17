@@ -58,3 +58,11 @@ Released after local review: Connect API `37f5402`, Connect UI `18fe3ae7`, Entri
 Live checks used only the dedicated fictional reviewer. Binder signup sessions and portal authentication load the same owner profiles; signed-out requests and invalid signup sessions reject, including invalid sessions supplied alongside a valid login. A temporary profile created through signup was edited through Entries and deleted through Binder. Retries were idempotent and explicit public-profile unlinking survived each app. The temporary profile was removed and original profiles/defaults were verified unchanged.
 
 Actual browser sign-in, embedded form rendering, consent footer, desktop/mobile bounds, cancellation and focus restoration passed on live Entries and the fictional studio signup. The deployed loader matches its source; live headers allow the intended editor embeds while ordinary Connect pages remain unframeable. Native and embedded views both import `DancerEditor.vue`; the old instructions to keep duplicate forms aligned were removed.
+
+### Optional fields
+
+Hosts may pass `hiddenFields: ['photo', 'publicDancer']` in their loaded editor context.
+Entries hides both; Connect and Binder show both by default. Hidden controls are not
+mounted (no photo download or public-profile lookup) and those fields are omitted
+from saves, preserving existing private values. This is presentation, not an access
+control boundary. Add future optional field names to the typed contract deliberately.
