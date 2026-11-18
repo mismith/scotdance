@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onScopeDispose, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 import { onValue } from 'firebase/database'
 import { CircleCheck, LoaderCircle, MailOpen, MailX } from '@lucide/vue'
@@ -18,6 +18,7 @@ import { useMeStore } from '@/stores/me'
 // Accepting asks the server to give this account access to manage it.
 
 const route = useRoute()
+const router = useRouter()
 const auth = useAuthStore()
 const me = useMeStore()
 const isOrganisation = computed(() => !!route.params.organisationId)
@@ -90,10 +91,13 @@ watch(
 onScopeDispose(() => clearTimeout(slowTimer))
 
 const error = ref<string | null>(null)
+// Accepted here, just now: the spinner stays from the press until they are on the page they manage it from.
+const accepted = ref(false)
 async function accept() {
   error.value = null
   try {
     await write({ [`${invitePath.value}/accepted`]: new Date().toISOString() })
+    accepted.value = true
   } catch (e) {
     // Refused: someone accepted it first, or it was cancelled or deleted.
     error.value = /permission.denied/i.test(String(e)) ? `This invite can’t be accepted any more. Ask ${asker.value} to invite you again.` : friendlyError(e)
@@ -103,6 +107,10 @@ const name = computed(() => competition.value?.name ?? (isOrganisation.value ? '
 const manageRoute = computed(() =>
   isOrganisation.value ? { name: 'organisation.manage', params: { organisationId: ownerId.value } } : { name: 'manage', params: { competitionId: ownerId.value } },
 )
+// One press: once the server has given access, go straight there. If that fails, the button is still offered.
+watch(state, (s) => {
+  if (s === 'yours' && accepted.value) router.replace(manageRoute.value).catch(() => (accepted.value = false))
+})
 </script>
 
 <template>
@@ -138,7 +146,7 @@ const manageRoute = computed(() =>
         title="Your access isn’t set up yet"
         :description="`It’s taking much longer than it should. Ask ${asker} to delete this invite and invite you again.`"
       />
-      <div v-else-if="state === 'accepting'" class="flex flex-col items-center gap-3 py-20 text-center">
+      <div v-else-if="state === 'accepting' || (state === 'yours' && accepted)" class="flex flex-col items-center gap-3 py-20 text-center">
         <LoaderCircle class="text-primary size-8 animate-spin" />
         <p class="text-base font-medium">Setting up your access…</p>
       </div>
