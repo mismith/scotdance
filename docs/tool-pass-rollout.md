@@ -35,7 +35,7 @@ Challenge will not deploy without it.
 
 - Entries: production and development.
 - Binder, then give its new `deleteScotDanceAccount` the same public-invoker setting as its other callables.
-- Challenge, likewise for its `deleteScotDanceAccount`.
+- Challenge. Its callables need no invoker step.
 
 Nothing changes for people yet: the hub is still sending old passes, and the tools still take them.
 
