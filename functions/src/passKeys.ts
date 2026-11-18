@@ -4,7 +4,7 @@ import { createHash, createPrivateKey, createPublicKey, type KeyObject } from 'n
 // here is public: a tool can check a pass with these keys but can never make one.
 
 /** ScotDance.app's pass keys, as base64 SPKI DER. Two entries only while a key is being replaced. */
-export const PASS_PUBLIC_KEYS: readonly string[] = [];
+export const PASS_PUBLIC_KEYS: readonly string[] = ['MCowBQYDK2VwAyEAr+BvOW1R4YmTxauKzEwMBFumgeO9m4MGR5YWkP30fqQ='];
 
 const PKCS8_ED25519 = Buffer.from('302e020100300506032b657004220420', 'hex');
 
