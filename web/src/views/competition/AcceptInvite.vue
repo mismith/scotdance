@@ -66,7 +66,9 @@ const state = computed(() => {
   if (!loaded.value) return 'loading'
   const i = invite.value
   if (!i?.created) return 'missing'
-  if (isOrganisation.value ? me.hasOrganisationPerm(ownerId.value) : me.hasCompetitionPerm(ownerId.value)) return 'yours'
+  // Only once they were made an admin of it. A system admin can manage everything already, but is listed as one
+  // of its admins (and has it in Entries) only by accepting, so they are offered the invite like anyone else.
+  if ((isOrganisation.value ? me.managedOrganisationIds : me.managedCompetitionIds).includes(ownerId.value)) return 'yours'
   const status = inviteStatus(i)
   if (status === 'accepted') return i.acceptedBy === auth.uid ? 'accepting' : 'taken'
   return status === 'pending' ? 'open' : status
