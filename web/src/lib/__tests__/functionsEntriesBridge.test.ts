@@ -8,6 +8,7 @@ import {
   sendEntriesAccountDeletion, retryEntriesAccountDeletions,
 } from '../../../../functions/src/entriesBridge'
 import { ENTRIES_URLS } from '../../../../functions/src/entriesBridge'
+import { DELETION_URLS, retryAccountDeletions, sendAccountDeletion } from '../../../../functions/src/accountDeletion'
 import { SERVICES, serviceToken } from '../../../../functions/src/service'
 import { getOnLink, getOnCompetitionUpdated } from '../../../../functions/src/links'
 
@@ -274,6 +275,53 @@ describe('Entries account deletion delivery', () => {
     expect(calls[1]).toMatchObject({ aud: 'entries:delete', sub: 'parent', deletedAt: queued.deletedAt })
     await deleted({ uid: 'parent' })
     expect(calls).toHaveLength(2)
+  })
+})
+
+describe.each(['binder', 'challenge'] as const)('%s account deletion delivery', (tool) => {
+  const url = `http://${tool}.test/delete`
+  const queue = `${tool}:accountDeletions`
+  it('is queued with the Entries one, each under its own path and idempotently', async () => {
+    const { db, tree } = setup()
+    await queueAccountDeletion(db, 'parent')
+    const queued = tree.read(`${queue}/parent`) as { deletedAt: number; state: string }
+    expect(queued).toMatchObject({ state: 'pending', deletedAt: expect.any(Number) })
+    expect(tree.read('entries:accountDeletions/parent')).toMatchObject({ state: 'pending' })
+    await sendAccountDeletion(tool, db, url, 'parent', async () => ({ ok: true, status: 200 }), proof)
+    await queueAccountDeletion(db, 'parent')
+    expect(tree.read(`${queue}/parent`)).toMatchObject({ state: 'complete', deletedAt: queued.deletedAt })
+  })
+  it('sends uid, deletedAt and a service proof for the production audience, never a pass, then completes', async () => {
+    const { db, tree } = setup()
+    await queueAccountDeletion(db, 'parent')
+    const audiences: string[] = []
+    const bodies: any[] = []
+    await sendAccountDeletion(tool, db, url, 'parent', async (_u, body) => { bodies.push(body); return { ok: true, status: 200 } },
+      async (audience) => { audiences.push(audience); return 'stub-service-proof' })
+    expect(audiences).toEqual([`https://us-central1-scotdance-${tool}.cloudfunctions.net/deleteScotDanceAccount`])
+    expect(DELETION_URLS[tool]).toBe(audiences[0])
+    const deletedAt = (tree.read(`${queue}/parent`) as { deletedAt: number }).deletedAt
+    expect(bodies).toEqual([{ data: { uid: 'parent', deletedAt, service: 'stub-service-proof' } }])
+    expect(tree.read(`${queue}/parent`)).toMatchObject({ state: 'complete' })
+    await sendAccountDeletion(tool, db, url, 'parent', async () => { throw new Error('sent twice') }, proof)
+  })
+  it('stays pending on failure and is retried by the sweep', async () => {
+    const { db, tree } = setup()
+    await queueAccountDeletion(db, 'parent')
+    await expect(sendAccountDeletion(tool, db, url, 'parent', async () => ({ ok: false, status: 503 }), proof)).rejects.toThrow(/503/)
+    expect(tree.read(`${queue}/parent`)).toMatchObject({ state: 'pending' })
+    await retryAccountDeletions(tool, db, url, async () => ({ ok: true, status: 200 }), proof)
+    expect(tree.read(`${queue}/parent`)).toMatchObject({ state: 'complete' })
+  })
+  it('sends nothing, and stays pending, when no service proof is available', async () => {
+    const { db, tree } = setup()
+    await queueAccountDeletion(db, 'parent')
+    let sent = 0
+    const send = async () => { sent++; return { ok: true, status: 200 } }
+    await expect(sendAccountDeletion(tool, db, url, 'parent', send, async () => undefined)).rejects.toThrow(/service proof/)
+    await retryAccountDeletions(tool, db, url, send, async () => undefined)
+    expect(sent).toBe(0)
+    expect(tree.read(`${queue}/parent`)).toMatchObject({ state: 'pending' })
   })
 })
 

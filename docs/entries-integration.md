@@ -88,6 +88,14 @@ queued requests; `retryEntriesAccountDeletion` reads at most 100 indexed pending
 with a 45-second work budget. Completed requests
 retain a small server-only acknowledgement so repeated Auth events cannot start a different deletion.
 
+Binder and Challenge get the same durable delivery from the same pipeline (`functions/src/accountDeletion.ts`):
+the hook also queues `binder:accountDeletions/{uid}` and `challenge:accountDeletions/{uid}` (each indexed on
+`state`), delivered by `deliverBinderAccountDeletion` / `retryBinderAccountDeletion` and the Challenge
+equivalents to each tool's `deleteScotDanceAccount` with `{ uid, deletedAt, service }`. They never take the old
+pass: without a service proof the delivery fails and is retried. On the emulator set
+`BINDER_ACCOUNT_DELETE_URL` / `CHALLENGE_ACCOUNT_DELETE_URL`; with none set, nothing is sent. Deploy each tool's
+receiver before the matching trigger.
+
 Entries keeps a permanent server-only `deletedAccounts/{uid}` tombstone to block stale sign-in passes and
 in-flight writes. It deletes the saved parent/dancer profile tree, memberships, pending notifications and Auth
 account; removes birthdays, contact/location data and correction history; and retains paid roster names,

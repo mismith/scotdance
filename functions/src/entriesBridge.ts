@@ -5,6 +5,7 @@ import { isEmulator } from './utility/env';
 import { entriesDances } from './entriesDances';
 import { SERVICES, verifyService } from './service';
 import { serviceProof } from './toolPass';
+import { post, retryAccountDeletions, sendAccountDeletion, type Send } from './accountDeletion';
 
 // ADR 0019: a narrow server-to-server bridge. The caller proves itself with its
 // Google service identity (service.ts, the `service` field); neither a browser's
@@ -251,8 +252,6 @@ export function getOnEntriesCompetition(secret: () => string, db: any) {
   };
 }
 
-type Send = (url: string, body: unknown) => Promise<{ ok: boolean; status: number }>;
-const post: Send = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(10_000) });
 
 /** Read current authority on every attempt. A delayed removal must not undo a later re-invitation. */
 export async function sendEntriesMembership(db: any, secret: string, url: string, organisationId: string, uid: string, send: Send = post, proof = serviceProof) {
@@ -293,22 +292,11 @@ export async function retryEntriesMemberships(db: any, secret: string, url: stri
 }
 
 /** Account deletion is distinct from unlinking a tool: persist the request before delivery. */
-export async function sendEntriesAccountDeletion(db: any, secret: string, url: string, uid: string, send: Send = post, proof = serviceProof) {
-  const pending = db.child(`entries:accountDeletions/${uid}`);
-  const request = await read(db, `entries:accountDeletions/${uid}`);
-  if (!request || request.state === 'complete') return;
-  const service = await proof(ENTRIES_URLS.deletion);
-  const pass = signEntriesMessage(secret, { iss: 'https://scotdance.app', aud: 'entries:delete', sub: uid, deletedAt: request.deletedAt }); // LEGACY(tool-pass-secret)
-  const result = await send(url, { data: { uid, deletedAt: request.deletedAt, ...(service ? { service } : {}), pass } });
-  if (!result.ok) throw new Error(`Entries account deletion answered ${result.status}`);
-  await pending.update({ state: 'complete', completedAt: Date.now() });
-}
+const entriesDeletionPass = (secret: string, uid: string) => (deletedAt: number) =>
+  signEntriesMessage(secret, { iss: 'https://scotdance.app', aud: 'entries:delete', sub: uid, deletedAt }); // LEGACY(tool-pass-secret)
 
-export async function retryEntriesAccountDeletions(db: any, secret: string, url: string, send: Send = post, proof = serviceProof) {
-  const requests = (await db.child('entries:accountDeletions').orderByChild('state').equalTo('pending').limitToFirst(100).get()).val() ?? {};
-  const deadline = Date.now() + 45_000;
-  for (const uid of Object.keys(requests)) {
-    if (Date.now() >= deadline) break;
-    await sendEntriesAccountDeletion(db, secret, url, uid, send, proof).catch((error) => console.error('Entries account deletion retry failed', uid, error));
-  }
-}
+export const sendEntriesAccountDeletion = (db: any, secret: string, url: string, uid: string, send: Send = post, proof = serviceProof) =>
+  sendAccountDeletion('entries', db, url, uid, send, proof, entriesDeletionPass(secret, uid));
+
+export const retryEntriesAccountDeletions = (db: any, secret: string, url: string, send: Send = post, proof = serviceProof) =>
+  retryAccountDeletions('entries', db, url, send, proof, (uid, deletedAt) => entriesDeletionPass(secret, uid)(deletedAt));

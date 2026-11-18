@@ -12,6 +12,12 @@
       "entries:accountDeletions": {
         ".indexOn": ["state"]
       },
+      "binder:accountDeletions": {
+        ".indexOn": ["state"]
+      },
+      "challenge:accountDeletions": {
+        ".indexOn": ["state"]
+      },
       "faqs": {
         ".read": true
       },

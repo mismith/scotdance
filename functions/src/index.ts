@@ -27,6 +27,7 @@ import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
 import { runtimeConfig, geocodingApiKey, toolPassSecret, toolPassPrivateKey, passSigningKey } from './utility/config';
 import { UNLINK_URLS, getOnToolPass, getOnUnlinkTool } from './toolPass';
+import { DELETION_URLS, retryAccountDeletions, sendAccountDeletion } from './accountDeletion';
 import { getOnEntriesCompetition, getOnEntriesMembership, retryEntriesMemberships, sendEntriesAccountDeletion, retryEntriesAccountDeletions } from './entriesBridge';
 import { database, https, request } from './utility/triggers';
 import { mcpApp } from './mcp/app';
@@ -149,6 +150,23 @@ export const retryEntriesAccountDeletion = onSchedule({ schedule: 'every 5 minut
   const url = entriesAccountDeleteUrl();
   if (url) await retryEntriesAccountDeletions(appConfig.db, toolPassSecret.value(), url);
 });
+// Binder and Challenge are new receivers: they never took a pass, so these hold no secret and need a service proof.
+const toolAccountDeleteUrl = (tool: 'binder' | 'challenge') => isEmulator()
+  ? process.env[`${tool.toUpperCase()}_ACCOUNT_DELETE_URL`] || null
+  : DELETION_URLS[tool];
+const deliverAccountDeletion = (tool: 'binder' | 'challenge') => database({ retry: true })
+  .ref(`/${env}/${tool}:accountDeletions/{uid}`).onCreate(async (_snapshot, ctx) => {
+    const url = toolAccountDeleteUrl(tool);
+    if (url) await sendAccountDeletion(tool, appConfig.db, url, ctx.params.uid);
+  });
+const retryAccountDeletion = (tool: 'binder' | 'challenge') => onSchedule({ schedule: 'every 5 minutes' }, async () => {
+  const url = toolAccountDeleteUrl(tool);
+  if (url) await retryAccountDeletions(tool, appConfig.db, url);
+});
+export const deliverBinderAccountDeletion = deliverAccountDeletion('binder');
+export const retryBinderAccountDeletion = retryAccountDeletion('binder');
+export const deliverChallengeAccountDeletion = deliverAccountDeletion('challenge');
+export const retryChallengeAccountDeletion = retryAccountDeletion('challenge');
 // Unlinking one signs them out of it (ADR 0017). In the emulator only a tool
 // named in TOOL_UNLINK_URL_<TOOL> (its own emulator) is called.
 export const unlinkTool = https({ secrets: [toolPassSecret] }).onCall(getOnUnlinkTool(
