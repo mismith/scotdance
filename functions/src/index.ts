@@ -25,7 +25,7 @@ import { getOnFindCapitals } from './capitals';
 import { getOnChange } from './changed';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
-import { runtimeConfig, geocodingApiKey, toolPassSecret, toolPassPrivateKey, passSigningKey } from './utility/config';
+import { runtimeConfig, geocodingApiKey, toolPassPrivateKey, passSigningKey } from './utility/config';
 import { UNLINK_URLS, getOnToolPass, getOnUnlinkTool } from './toolPass';
 import { DELETION_URLS, retryAccountDeletions, sendAccountDeletion } from './accountDeletion';
 import { getOnEntriesCompetition, getOnEntriesMembership, retryEntriesMemberships, sendEntriesAccountDeletion, retryEntriesAccountDeletions } from './entriesBridge';
@@ -124,33 +124,31 @@ export const linkCompetitions = https().onCall(Links.getOnLink(appConfig.db));
 
 // "Sign in with ScotDance.app" for its tools on other projects (Challenge; toolPass.ts, ADR 0015).
 export const toolPass = https({ secrets: [toolPassPrivateKey] }).onCall(getOnToolPass(passSigningKey, appConfig.db));
-// LEGACY(tool-pass-secret): every toolPassSecret below is for the old shared-secret messages, until tools have switched.
-export const entriesCompetition = https({ secrets: [toolPassSecret] }).onCall(getOnEntriesCompetition(() => toolPassSecret.value(), appConfig.db));
+export const entriesCompetition = https().onCall(getOnEntriesCompetition(appConfig.db));
 const entriesMembershipUrl = () => isEmulator()
   ? process.env.ENTRIES_MEMBERSHIP_URL || null
   : 'https://us-central1-scotdance-entries.cloudfunctions.net/syncScotDanceMembership';
-export const entriesOrganisationMembership = database({ secrets: [toolPassSecret], retry: true })
+export const entriesOrganisationMembership = database({ retry: true })
   .ref(`/${env}/organisations:permissions/{organisationId}/users/{uid}`)
-  .onWrite(getOnEntriesMembership(() => toolPassSecret.value(), appConfig.db, entriesMembershipUrl));
-export const retryEntriesMembership = onSchedule({ schedule: 'every 5 minutes', secrets: [toolPassSecret] }, async () => {
+  .onWrite(getOnEntriesMembership(appConfig.db, entriesMembershipUrl));
+export const retryEntriesMembership = onSchedule({ schedule: 'every 5 minutes' }, async () => {
   const url = entriesMembershipUrl();
-  if (url) await retryEntriesMemberships(appConfig.db, toolPassSecret.value(), url);
+  if (url) await retryEntriesMemberships(appConfig.db, url);
 });
 const entriesAccountDeleteUrl = () => isEmulator()
   ? process.env.ENTRIES_ACCOUNT_DELETE_URL || null
   : 'https://us-central1-scotdance-entries.cloudfunctions.net/deleteScotDanceAccount';
 // The small auth-hooks codebase records first-generation Auth deletions.
 // Delivery stays on the main Node 24 runtime and is durable after the user is gone.
-export const deliverEntriesAccountDeletion = database({ secrets: [toolPassSecret], retry: true })
+export const deliverEntriesAccountDeletion = database({ retry: true })
   .ref(`/${env}/entries:accountDeletions/{uid}`).onCreate(async (_snapshot, ctx) => {
     const url = entriesAccountDeleteUrl();
-    if (url) await sendEntriesAccountDeletion(appConfig.db, toolPassSecret.value(), url, ctx.params.uid);
+    if (url) await sendEntriesAccountDeletion(appConfig.db, url, ctx.params.uid);
   });
-export const retryEntriesAccountDeletion = onSchedule({ schedule: 'every 5 minutes', secrets: [toolPassSecret] }, async () => {
+export const retryEntriesAccountDeletion = onSchedule({ schedule: 'every 5 minutes' }, async () => {
   const url = entriesAccountDeleteUrl();
-  if (url) await retryEntriesAccountDeletions(appConfig.db, toolPassSecret.value(), url);
+  if (url) await retryEntriesAccountDeletions(appConfig.db, url);
 });
-// Binder and Challenge are new receivers: they never took a pass, so these hold no secret and need a service proof.
 const toolAccountDeleteUrl = (tool: 'binder' | 'challenge') => isEmulator()
   ? process.env[`${tool.toUpperCase()}_ACCOUNT_DELETE_URL`] || null
   : DELETION_URLS[tool];
@@ -169,8 +167,7 @@ export const deliverChallengeAccountDeletion = deliverAccountDeletion('challenge
 export const retryChallengeAccountDeletion = retryAccountDeletion('challenge');
 // Unlinking one signs them out of it (ADR 0017). In the emulator only a tool
 // named in TOOL_UNLINK_URL_<TOOL> (its own emulator) is called.
-export const unlinkTool = https({ secrets: [toolPassSecret] }).onCall(getOnUnlinkTool(
-  () => toolPassSecret.value(),
+export const unlinkTool = https().onCall(getOnUnlinkTool(
   appConfig.db,
   (tool) => (isEmulator() ? (process.env[`TOOL_UNLINK_URL_${tool.toUpperCase()}`] || null) : UNLINK_URLS[tool]),
 ));

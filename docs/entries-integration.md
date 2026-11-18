@@ -1,6 +1,6 @@
 # Entries integration
 
-ADR 0019 gives ScotDance ownership of people, organisation admins and public competition details. Entries owns registration and payments. Entries calls this bridge with its Google service identity (`service` in the request body, checked by `verifyService`; `SERVICES.entries` may do every action, `SERVICES.entriesDevelopment` only `inspect` and `snapshot`), and ScotDance calls Entries (membership, account deletion, unlink) the same way. Sign-in passes are signed with ScotDance's private key (`entries-dev` for Entries development, same claims). Until every project has switched, the old shared `TOOL_PASS_SECRET` messages (`pass`) are still sent and accepted, marked `LEGACY(tool-pass-secret)`. The bridge never accepts an Entries Firebase token as a ScotDance login.
+ADR 0019 gives ScotDance ownership of people, organisation admins and public competition details. Entries owns registration and payments. Entries calls this bridge with its Google service identity (`service` in the request body, checked by `verifyService`; `SERVICES.entries` may do every action, `SERVICES.entriesDevelopment` only `inspect` and `snapshot`), and ScotDance calls Entries (membership, account deletion, unlink) the same way. Sign-in passes are signed with ScotDance's private key (`entries-dev` for Entries development, same claims). The bridge never accepts an Entries Firebase token as a ScotDance login.
 
 ## Structured program occurrences (local implementation, not deployed)
 
@@ -36,24 +36,24 @@ Entries opens `/competitions/add?returnTo=entries`. Only this literal return int
 
 Organisation Manage links to `/organise?organisation=<id>&refresh=1`. New organisations requested in a submission still require review. Existing trusted-organiser creation remains unchanged.
 
-## Signed server requests
+## Server requests
 
-`entriesCompetition({ pass })` accepts a JWT with:
+`entriesCompetition` is a callable whose body carries `service`, Entries' Google service-account identity token (audience: this function's production URL), plus:
 
-- Header: `alg: HS256`, `typ: JWT`.
-- Issuer: `https://entries.scotdance.app`; audience: `scotdance:entries`.
-- `sub`: the acting ScotDance uid; `iat`, `exp` at most 120 seconds apart; a nonempty `jti`.
-- `action`, `competitionId`, `organisationId`, and all action fields inside the signed payload.
+- `uid`: the acting ScotDance uid (or `entries-service`).
+- `action`, `competitionId`, `organisationId`, and the action's own fields.
+
+A missing, invalid or other-audience `service` is `unauthenticated`; there is no other way in.
 
 Actions:
 
 | Action | Additional fields | Response |
 | --- | --- | --- |
 | `inspect` | None | Public competition/organisation snapshots and `registrationTargetId`; requires current admin rights to both. |
-| `claim` | None; human `sub` | Public competition/organisation snapshots plus `registrationTargetId`, `bindingId`, `revision` (initially zero). Checks current competition, organisation and primary permissions. Repeating the same claim preserves its binding. |
+| `claim` | None; human `uid` | Public competition/organisation snapshots plus `registrationTargetId`, `bindingId`, `revision` (initially zero). Checks current competition, organisation and primary permissions. Repeating the same claim preserves its binding. |
 | `snapshot` | None | Only public competition/organisation snapshots, for scheduled refresh. No participant or account information is returned. |
-| `registration` | `registrationURL`, nullable `registrationStart`/`registrationEnd` in milliseconds, increasing integer `revision`; ongoing service requests use `authority: service`, `sub: entries-service`, and `bindingId` | `registrationTargetId`, applied `revision`, `applied`. |
-| `unlink` | Human `sub`, matching `bindingId` | Rechecks live permission, clears registration and matching ownership copies, returns `released: true`. Repeated release is harmless; another owner/binding is refused. |
+| `registration` | `registrationURL`, nullable `registrationStart`/`registrationEnd` in milliseconds, increasing integer `revision`; ongoing service requests use `authority: service`, `uid: entries-service`, and `bindingId` | `registrationTargetId`, applied `revision`, `applied`. |
+| `unlink` | Human `uid`, matching `bindingId` | Rechecks live permission, clears registration and matching ownership copies, returns `released: true`. Repeated release is harmless; another owner/binding is refused. |
 | `dances` | `dances: [{ name, steps? }]`, at most 200 | `sent`: count of distinct names/steps inserted. |
 
 Registration resolves shared fields to the current primary and requires permission to that primary too. Its `entriesRegistration` marker records the source competition, organisation, target and revision. Another Entries source is rejected. A repeated/older revision cannot overwrite newer settings. Browser and assistant writes cannot edit or delete the managed fields or ownership marker. Linked registration copies include the marker; stopping sharing releases inherited ownership while retaining the displayed dates.
@@ -71,18 +71,15 @@ Dance publication uses a transaction on the destination list. It never overwrite
 
 ## Membership changes
 
-`entriesOrganisationMembership` watches organisation admin grants/removals and calls Entries' `syncScotDanceMembership({ pass })` with:
+`entriesOrganisationMembership` watches organisation admin grants/removals and calls Entries' `syncScotDanceMembership` with `service` (our service identity) and:
 
-- Issuer `https://scotdance.app`, audience `entries:membership`, `sub` uid.
-- `organisationId`, current `allowed` boolean, monotonic per-person/per-organisation `checkedAt` milliseconds.
-- The same HS256 secret, two-minute lifetime and unique `jti`.
+- `uid`, `organisationId`, current `allowed` boolean, monotonic per-person/per-organisation `checkedAt` milliseconds.
 
 Every attempt rereads current authority. The receiver must retain the latest `checkedAt`, ignore older deliveries and prevent an older sign-in pass from restoring removed access. Native event retries are supplemented by `retryEntriesMembership` every five minutes. Failed deliveries stay in the server-only `entries:membershipFailures` tree until acknowledged; version stamps stay in `entries:membershipVersions`.
 
 ## Account deletion
 
-Ordinary tool unlink only revokes sessions. Account deletion has a distinct signed audience, `entries:delete`,
-with `sub` and `deletedAt`, sent to Entries' `deleteScotDanceAccount`. The `auth-hooks` codebase records actual
+Ordinary tool unlink only revokes sessions. Account deletion is its own call: `{ uid, deletedAt, service }`, sent to Entries' `deleteScotDanceAccount`. The `auth-hooks` codebase records actual
 Firebase Auth deletion events in `entries:accountDeletions/{uid}`. `deliverEntriesAccountDeletion` sends newly
 queued requests; `retryEntriesAccountDeletion` reads at most 100 indexed pending requests every five minutes,
 with a 45-second work budget. Completed requests
@@ -91,8 +88,7 @@ retain a small server-only acknowledgement so repeated Auth events cannot start 
 Binder and Challenge get the same durable delivery from the same pipeline (`functions/src/accountDeletion.ts`):
 the hook also queues `binder:accountDeletions/{uid}` and `challenge:accountDeletions/{uid}` (each indexed on
 `state`), delivered by `deliverBinderAccountDeletion` / `retryBinderAccountDeletion` and the Challenge
-equivalents to each tool's `deleteScotDanceAccount` with `{ uid, deletedAt, service }`. They never take the old
-pass: without a service proof the delivery fails and is retried. On the emulator set
+equivalents to each tool's `deleteScotDanceAccount` with `{ uid, deletedAt, service }`. Entries is sent exactly the same. Without a service proof the delivery fails and is retried. On the emulator set
 `BINDER_ACCOUNT_DELETE_URL` / `CHALLENGE_ACCOUNT_DELETE_URL`; with none set, nothing is sent. Deploy each tool's
 receiver before the matching trigger.
 
@@ -138,7 +134,7 @@ node web/scripts/entries-contract.cjs
 ```
 
 It expects a sibling `entries` checkout (override with `ENTRIES_TEST_REPOSITORY`), its built functions, and
-its ignored `functions/.secret.local` containing the same `TOOL_PASS_SECRET` as ScotDance's emulator (LEGACY(tool-pass-secret); service identity and passes use the fixed emulator key and need no secret).
+its ignored `functions/.secret.local`; no secret is needed (service identity and passes use the fixed emulator key).
 ScotDance uses project `firebase-scotdance`, functions port 5001 and database port 9009. Entries uses project
 `demo-entries` (override with `ENTRIES_TEST_PROJECT`), functions port 5201 and Firestore port 8380. Start the
 ScotDance emulator with `ENTRIES_MEMBERSHIP_URL=http://127.0.0.1:5201/demo-entries/us-central1/syncScotDanceMembership`.

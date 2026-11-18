@@ -1,4 +1,4 @@
-import { createHmac, randomUUID, sign, type KeyObject } from 'node:crypto';
+import { randomUUID, sign, type KeyObject } from 'node:crypto';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { keyId } from './passKeys';
 import { SERVICES, serviceToken } from './service';
@@ -19,7 +19,7 @@ import { isEmulator } from './utility/env';
 // so people see the tools they use in Account, and can unlink one: an unlink
 // call to the tool's own `unlinkScotDance`, which signs them out there
 // everywhere (ADR 0017). That call is server to server: it carries our service
-// identity (service.ts), plus an old unlink pass while tools still accept it.
+// identity (service.ts).
 
 export const AUDIENCES = ['challenge', 'binder', 'entries'] as const;
 export type Audience = (typeof AUDIENCES)[number];
@@ -39,7 +39,7 @@ export const UNLINK_URLS: Record<Audience, string> = {
 const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
 
 export interface PassWho {
-  uid: string; email?: string | null; emailVerified?: boolean; name?: string | null; audience: PassAudience | `${Audience}:unlink`;
+  uid: string; email?: string | null; emailVerified?: boolean; name?: string | null; audience: PassAudience;
   organisations?: PassOrganisation[];
   competitions?: PassCompetition[];
 }
@@ -67,22 +67,9 @@ export function signPass(key: KeyObject, who: PassWho, now = Date.now()): string
   return `${header}.${payload}.${sign(null, Buffer.from(`${header}.${payload}`), key).toString('base64url')}`;
 }
 
-/** LEGACY(tool-pass-secret): the old shared-secret pass (HS256), still sent to tools that haven't switched. */
-export function signLegacyPass(secret: string, who: PassWho, now = Date.now()): string {
-  const iat = Math.floor(now / 1000);
-  const header = encode({ alg: 'HS256', typ: 'JWT' });
-  const payload = encode(passClaims(who, iat));
-  return `${header}.${payload}.${createHmac('sha256', secret).update(`${header}.${payload}`).digest('base64url')}`;
-}
-
-/** Our proof to a receiver (its production URL), or none if Google won't give one: the old pass then carries the call. */
-export async function serviceProof(audience: string): Promise<string | undefined> {
-  try {
-    return await serviceToken(audience, SERVICES.hub, isEmulator());
-  } catch (error) {
-    console.error(`No service proof for ${audience}`, error); // LEGACY(tool-pass-secret): fall back to the pass alone
-    return undefined;
-  }
+/** Our proof to a receiver (its production URL). Throws if Google won't give one: a call without it is never sent. */
+export function serviceProof(audience: string): Promise<string> {
+  return serviceToken(audience, SERVICES.hub, isEmulator());
 }
 
 /** An organisation they're an admin of, as Entries' pass names it. */
@@ -199,7 +186,7 @@ const post: Post = (url, body) =>
  * emulator, unless one is running for it). The service proof is always for
  * the tool's production URL, so `proof` takes that, not `urls`.
  */
-export function getOnUnlinkTool(secret: () => string, db: Db, urls: (tool: Audience) => string | null, send: Post = post, proof = serviceProof) {
+export function getOnUnlinkTool(db: Db, urls: (tool: Audience) => string | null, send: Post = post, proof = serviceProof) {
   return async (data: { tool?: unknown; uid?: unknown } | undefined, ctx: Context) => {
     const auth = ctx.auth;
     if (!auth?.uid || auth.token.firebase?.sign_in_provider === 'anonymous') {
@@ -218,9 +205,9 @@ export function getOnUnlinkTool(secret: () => string, db: Db, urls: (tool: Audie
     for (const tool of tools) {
       const url = urls(tool);
       if (url) {
-        const service = await proof(UNLINK_URLS[tool]);
-        const pass = signLegacyPass(secret(), { uid, audience: `${tool}:unlink` }); // LEGACY(tool-pass-secret)
-        const res = await send(url, { data: { uid, ...(service ? { service } : {}), pass } }).catch(() => ({ ok: false, status: 0 }));
+        const res = await proof(UNLINK_URLS[tool])
+          .then((service) => send(url, { data: { uid, service } }))
+          .catch(() => ({ ok: false, status: 0 }));
         if (!res.ok) {
           console.error(`unlinkTool: ${tool} answered ${res.status} for ${uid}`);
           failed.push(tool);

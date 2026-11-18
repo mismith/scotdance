@@ -5,14 +5,11 @@ import { isEmulator } from './env';
 
 const runtimeConfigSecret = defineSecret('RUNTIME_CONFIG');
 const geocodingApiKeySecret = defineSecret('GOOGLE_GEOCODING_API_KEY');
-// LEGACY(tool-pass-secret): the shared secret that used to sign passes and server messages; kept until every tool has switched.
-const toolPassSecretDef = defineSecret('TOOL_PASS_SECRET');
 // The Ed25519 private key (PKCS8 PEM) that signs the passes ScotDance.app's own tools exchange for a sign-in of their own (toolPass.ts).
 const toolPassPrivateKeyDef = defineSecret('TOOL_PASS_PRIVATE_KEY');
 
 export { runtimeConfigSecret as runtimeConfig };
 export { geocodingApiKeySecret as geocodingApiKey };
-export { toolPassSecretDef as toolPassSecret };
 export { toolPassPrivateKeyDef as toolPassPrivateKey };
 
 let passKey: KeyObject | undefined;

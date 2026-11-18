@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest'
 import { PASS_SECONDS, UNLINK_URLS, getOnToolPass, getOnUnlinkTool, signPass } from '../../../../functions/src/toolPass'
 import { emulatorKey, keyId } from '../../../../functions/src/passKeys'
 
-const SECRET = 'test-secret'
 const KEY = emulatorKey().privateKey
 const KEYS = () => KEY
 const proof = async () => 'stub-service-proof'
@@ -156,17 +155,15 @@ describe('unlinkTool', () => {
     memoryDb({ 'users:tools/u1/binder/linkedAt': 1, 'users:tools/u1/challenge/linkedAt': 2, 'users:permissions/boss/admin': true })
   const urls = (tool: string) => `https://${tool}.test/unlinkScotDance`
 
-  it('sends the tool an unlink pass, then forgets the link', async () => {
+  it('sends the tool our service proof, then forgets the link', async () => {
     const db = linked()
-    const sent: { url: string; body: { data: { pass: string; service?: string; uid: string } } }[] = []
+    const sent: { url: string; body: { data: { service: string; uid: string } } }[] = []
     const send = async (url: string, body: unknown) => (sent.push({ url, body: body as never }), { ok: true, status: 200 })
-    expect(await getOnUnlinkTool(() => SECRET, db, urls, send, proof)({ tool: 'binder' }, { auth: auth() })).toEqual({ unlinked: ['binder'] })
+    expect(await getOnUnlinkTool(db, urls, send, proof)({ tool: 'binder' }, { auth: auth() })).toEqual({ unlinked: ['binder'] })
     expect(sent).toHaveLength(1)
     expect(sent[0]!.body.data).toMatchObject({ uid: 'u1', service: 'stub-service-proof' })
     expect(sent[0]!.url).toBe('https://binder.test/unlinkScotDance')
-    // LEGACY(tool-pass-secret): the old shared-secret unlink pass still rides along
-    expect(decode(sent[0]!.body.data.pass.split('.')[0]!)).toEqual({ alg: 'HS256', typ: 'JWT' })
-    expect(decode(sent[0]!.body.data.pass.split('.')[1]!)).toMatchObject({ aud: 'binder:unlink', sub: 'u1' })
+    expect(sent[0]!.body.data).not.toHaveProperty('pass')
     expect(db.data['users:tools/u1/binder/linkedAt']).toBeUndefined()
     expect(db.data['users:tools/u1/challenge/linkedAt']).toBe(2)
   })
@@ -174,49 +171,50 @@ describe('unlinkTool', () => {
   it('takes a null account or tool as none (callables send undefined as null)', async () => {
     const db = linked()
     const send = async () => ({ ok: true, status: 200 })
-    expect(await getOnUnlinkTool(() => SECRET, db, urls, send, proof)({ tool: 'binder', uid: null }, { auth: auth() })).toEqual({ unlinked: ['binder'] })
-    expect(await getOnUnlinkTool(() => SECRET, db, urls, send, proof)({ tool: null }, { auth: auth() })).toEqual({ unlinked: ['challenge'] })
+    expect(await getOnUnlinkTool(db, urls, send, proof)({ tool: 'binder', uid: null }, { auth: auth() })).toEqual({ unlinked: ['binder'] })
+    expect(await getOnUnlinkTool(db, urls, send, proof)({ tool: null }, { auth: auth() })).toEqual({ unlinked: ['challenge'] })
   })
 
   it('unlinks every tool when none is named', async () => {
     const db = linked()
     const send = async () => ({ ok: true, status: 200 })
-    expect(await getOnUnlinkTool(() => SECRET, db, urls, send, proof)({}, { auth: auth() })).toEqual({ unlinked: ['binder', 'challenge'] })
+    expect(await getOnUnlinkTool(db, urls, send, proof)({}, { auth: auth() })).toEqual({ unlinked: ['binder', 'challenge'] })
     expect(Object.keys(db.data).filter((k) => k.startsWith('users:tools/'))).toEqual([])
   })
 
   it('keeps the link when the tool doesn’t answer', async () => {
     const db = linked()
     const send = async () => ({ ok: false, status: 503 })
-    await expect(getOnUnlinkTool(() => SECRET, db, urls, send, proof)({ tool: 'binder' }, { auth: auth() })).rejects.toThrow(/didn’t answer/)
+    await expect(getOnUnlinkTool(db, urls, send, proof)({ tool: 'binder' }, { auth: auth() })).rejects.toThrow(/didn’t answer/)
     expect(db.data['users:tools/u1/binder/linkedAt']).toBe(1)
   })
 
   it('lets a system admin unlink someone else, and no one else', async () => {
     const send = async () => ({ ok: true, status: 200 })
-    await expect(getOnUnlinkTool(() => SECRET, linked(), urls, send, proof)({ tool: 'binder', uid: 'u1' }, { auth: auth('u2') })).rejects.toThrow(/system admins/)
-    expect(await getOnUnlinkTool(() => SECRET, linked(), urls, send, proof)({ tool: 'binder', uid: 'u1' }, { auth: auth('boss') })).toEqual({ unlinked: ['binder'] })
+    await expect(getOnUnlinkTool(linked(), urls, send, proof)({ tool: 'binder', uid: 'u1' }, { auth: auth('u2') })).rejects.toThrow(/system admins/)
+    expect(await getOnUnlinkTool(linked(), urls, send, proof)({ tool: 'binder', uid: 'u1' }, { auth: auth('boss') })).toEqual({ unlinked: ['binder'] })
   })
 
-  it('still sends the old pass alone when no service proof can be made', async () => {
+  it('counts a tool as failed, and keeps the link, when no service proof can be made', async () => {
     const db = linked()
-    let body: { data: Record<string, unknown> } | undefined
-    const send = async (_url: string, b: unknown) => ((body = b as never), { ok: true, status: 200 })
-    await getOnUnlinkTool(() => SECRET, db, urls, send, async () => undefined)({ tool: 'binder' }, { auth: auth() })
-    expect(body!.data).not.toHaveProperty('service')
-    expect(body!.data.pass).toEqual(expect.any(String))
+    let sent = 0
+    const send = async () => (sent++, { ok: true, status: 200 })
+    const noProof = async (): Promise<string> => { throw new Error('no identity') }
+    await expect(getOnUnlinkTool(db, urls, send, noProof)({ tool: 'binder' }, { auth: auth() })).rejects.toThrow(/didn’t answer/)
+    expect(sent).toBe(0)
+    expect(db.data['users:tools/u1/binder/linkedAt']).toBe(1)
   })
 
   it('asks for a proof for the tool’s production URL, whatever URL it calls', async () => {
     const asked: string[] = []
     const send = async () => ({ ok: true, status: 200 })
-    await getOnUnlinkTool(() => SECRET, linked(), () => 'http://127.0.0.1:5001/x', send, async (audience) => (asked.push(audience), 'p'))({ tool: 'binder' }, { auth: auth() })
+    await getOnUnlinkTool(linked(), () => 'http://127.0.0.1:5001/x', send, async (audience) => (asked.push(audience), 'p'))({ tool: 'binder' }, { auth: auth() })
     expect(asked).toEqual([UNLINK_URLS.binder])
   })
 
   it('turns away the signed out and unknown tools', async () => {
     const send = async () => ({ ok: true, status: 200 })
-    await expect(getOnUnlinkTool(() => SECRET, linked(), urls, send, proof)({ tool: 'binder' }, { auth: null })).rejects.toThrow(/Sign in/)
-    await expect(getOnUnlinkTool(() => SECRET, linked(), urls, send, proof)({ tool: 'splits' }, { auth: auth() })).rejects.toThrow(/Unknown tool/)
+    await expect(getOnUnlinkTool(linked(), urls, send, proof)({ tool: 'binder' }, { auth: null })).rejects.toThrow(/Sign in/)
+    await expect(getOnUnlinkTool(linked(), urls, send, proof)({ tool: 'splits' }, { auth: auth() })).rejects.toThrow(/Unknown tool/)
   })
 })

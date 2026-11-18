@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ENTRIES_AUDIENCE, ENTRIES_ISSUER, ENTRIES_URLS, getOnEntriesCompetition, signEntriesMessage } from './entriesBridge';
+import { ENTRIES_ISSUER, ENTRIES_URLS, getOnEntriesCompetition } from './entriesBridge';
 import { SERVICES, serviceToken } from './service';
+
+// Service proofs on the emulator are signed with the fixed emulator key, so the receiver must run as on the emulator.
+process.env.FUNCTIONS_EMULATOR = 'true';
 
 function world(cold = false, staleEmpty = false) {
   const event: Record<string, any> = { name: 'Games', date: '2027-06-12', registrationURL: `${ENTRIES_ISSUER}/enter/org/comp`, registrationStart: 100, registrationEnd: 200,
@@ -20,14 +23,13 @@ function world(cold = false, staleEmpty = false) {
       return { committed: next !== undefined, snapshot: { exists: () => !!records[path], val: () => records[path] } };
     },
   }) };
-  const handle = getOnEntriesCompetition(() => 'test-secret', db);
-  const call = (extra = {}) => handle({ pass: signEntriesMessage('test-secret', {
-    iss: ENTRIES_ISSUER, aud: ENTRIES_AUDIENCE, sub: 'admin', action: 'release',
+  const handle = getOnEntriesCompetition(db);
+  const call = async ({ sub = 'admin', ...extra }: Record<string, unknown> = {}) => handle({ uid: sub, action: 'release',
     organisationId: 'org', competitionId: 'comp', bindingId: 'binding', targetId: 'comp', ...extra,
-  }) });
+    service: await serviceToken(ENTRIES_URLS.bridge, SERVICES.entries, true) });
   const callAs = async (self: string, extra = {}) => handle({ uid: 'admin', action: 'release', organisationId: 'org', competitionId: 'comp',
     bindingId: 'binding', targetId: 'comp', ...extra, service: await serviceToken(ENTRIES_URLS.bridge, self, true) });
-  return { records, call, callAs };
+  return { records, call, callAs, handle };
 }
 
 test('disconnect clears only Entries registration and preserves the original event; retries are safe', async () => {
@@ -67,7 +69,7 @@ test('publication accepts the event page and the older entry form, and no other 
   for (const url of ['/organise/org/comp', '/info/org/other', '/info/other/comp', '/info/org/comp/extra', '/info/org', '/info/org/comp?x=1', '/info/org/comp#x', '/INFO/org/comp']) {
     await assert.rejects(publish(w, 4, `${ENTRIES_ISSUER}${url}`), /must link to ScotDance Entries/, url);
   }
-  for (const url of ['https://evil.test/info/org/comp', 'http://entries.scotdance.app/info/org/comp', 'https://user@entries.scotdance.app/info/org/comp', 'http://localhost:5290/info/org/comp']) {
+  for (const url of ['https://evil.test/info/org/comp', 'http://entries.scotdance.app/info/org/comp', 'https://user@entries.scotdance.app/info/org/comp', 'https://localhost:5290/info/org/comp']) {
     await assert.rejects(publish(w, 4, url), /must link to ScotDance Entries/, url);
   }
   assert.equal(w.records['competitions/comp'].entriesRegistration.revision, 3);
@@ -122,15 +124,14 @@ test('Entries snapshots include the actual organisation short name and its remov
   assert.equal(cleared.organisation.shortName, null);
 });
 
-test('a service-identity call does what the signed pass did, and the development account only reads', async () => {
-  process.env.FUNCTIONS_EMULATOR = 'true';
-  try {
-    const w = world();
-    assert.equal(((await w.callAs(SERVICES.entriesDevelopment, { action: 'snapshot' })) as any).competition.id, 'comp');
-    await assert.rejects(w.callAs(SERVICES.entriesDevelopment), /may only read/);
-    assert.ok(w.records['competitions/comp'].entriesRegistration);
-    await assert.rejects(w.callAs('other@example.com'), /invalid or expired/);
-    await w.callAs(SERVICES.entries);
-    assert.equal(w.records['competitions/comp'].entriesRegistration, undefined);
-  } finally { delete process.env.FUNCTIONS_EMULATOR; }
+test('the development account only reads, and an unknown account is refused', async () => {
+  const w = world();
+  assert.equal(((await w.callAs(SERVICES.entriesDevelopment, { action: 'snapshot' })) as any).competition.id, 'comp');
+  await assert.rejects(w.callAs(SERVICES.entriesDevelopment), /may only read/);
+  assert.ok(w.records['competitions/comp'].entriesRegistration);
+  await assert.rejects(w.callAs('other@example.com'), /invalid or expired/);
+  await assert.rejects(w.handle({ uid: 'admin', action: 'release', organisationId: 'org', competitionId: 'comp', bindingId: 'binding' }), /invalid or expired/);
+  await assert.rejects(w.handle({ uid: 'admin', action: 'release', service: 'garbage' }), /invalid or expired/);
+  await w.callAs(SERVICES.entries);
+  assert.equal(w.records['competitions/comp'].entriesRegistration, undefined);
 });

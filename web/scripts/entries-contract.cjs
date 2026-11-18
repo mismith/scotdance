@@ -1,10 +1,7 @@
-const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 // This test uses only local emulators and never changes the Entries sample stub.
 const entries = path.resolve(process.env.ENTRIES_TEST_REPOSITORY || path.resolve(__dirname, '../../../entries'), 'functions');
-const env = fs.readFileSync(entries + '/.secret.local', 'utf8');
-const secret = env.split('\n').find(x => x.startsWith('TOOL_PASS_SECRET=')).slice('TOOL_PASS_SECRET='.length).trim().replace(/^['"]|['"]$/g, '');
 process.env.SCOTDANCE_ENTRIES_URL = 'http://127.0.0.1:5001/firebase-scotdance/us-central1/entriesCompetition';
 process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8380';
 process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9399';
@@ -22,7 +19,7 @@ const auth = entriesRequire('firebase-admin/auth').getAuth(entriesApp);
 const sourceDb = entriesRequire('firebase-admin/database').getDatabase(initializeApp({ projectId: 'firebase-scotdance', databaseURL: 'http://127.0.0.1:9009/?ns=scotdance' }, 'contract-source')).ref('development');
 const deletionHook = require('../../auth-hooks').entriesAccountDeleted;
 const { sendEntriesAccountDeletion } = require('../../functions/dist/functions/src/entriesBridge');
-const source = scotDanceSource(() => secret, true);
+const source = scotDanceSource(true);
 const entriesService = createEntriesService({ db: firestore, source, emulator: true, payments: () => { throw new Error('Contract test must not call Stripe'); } });
 const id = 'contract-' + require('node:crypto').randomUUID();
 const uid = id + '-user', org = id + '-org', comp = id + '-sat', main = id + '-sun', link = id + '-link';
@@ -118,7 +115,7 @@ async function membership(allowed) {
   // Exercise the actual Auth hook handler and Node24 delivery helper. The emulators can be
   // running before the newly added auth-hooks codebase is registered, so invoke the event handler directly.
   await deletionHook.run({ uid });
-  await sendEntriesAccountDeletion(sourceDb, secret, `http://127.0.0.1:5201/${project}/us-central1/deleteScotDanceAccount`, uid);
+  await sendEntriesAccountDeletion(sourceDb, `http://127.0.0.1:5201/${project}/us-central1/deleteScotDanceAccount`, uid);
   assert.equal((await db('GET', `entries:accountDeletions/${uid}`)).state, 'complete');
   assert.equal((await firestore.doc(`users/${uid}`).get()).exists, false);
   assert.equal((await firestore.doc(`users/${uid}/dancers/ava`).get()).exists, false);
@@ -128,7 +125,7 @@ async function membership(allowed) {
   assert.equal(retained.participants[0].dancer.firstName, 'Ava');
   assert.equal(retained.total, 1200);
   await assert.rejects(() => auth.getUser(uid));
-  console.log('PASS real Auth deletion handler -> durable queue -> signed Entries receiver; private profile removed and paid roster kept');
+  console.log('PASS real Auth deletion handler -> durable queue -> Entries receiver; private profile removed and paid roster kept');
  } finally {
   await db('DELETE', `organisations:permissions/${org}/users/${uid}`);
   await membership(false).catch(() => console.warn('Membership cleanup was not acknowledged by the local receiver.'));

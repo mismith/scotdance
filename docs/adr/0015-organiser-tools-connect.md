@@ -104,8 +104,6 @@ Splits' Send button is the reference (`ExportSettingsDialog.vue` and
   in `functions/src/passKeys.ts` (make a pair with `functions/scripts/new-pass-key.mjs`).
   Server-to-server calls (unlink, membership, deletion, the Entries bridge) carry the
   caller's Google service identity as `service` (`service.ts`), not a signed message.
-  Transition: the shared `TOOL_PASS_SECRET` (HS256 passes in the `pass` field) is still
-  sent and accepted; every such line is marked `LEGACY(tool-pass-secret)`, so removing
-  it later is a grep. Adding a tool: an `AUDIENCES` entry
+  There is no shared pass secret. Adding a tool: an `AUDIENCES` entry
   (functions) and a `TOOLS` entry (protocol.ts) with its site, plus what
   ADR 0017 needs to unlink it.

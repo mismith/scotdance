@@ -34,9 +34,8 @@ in System admin › Users.
 
 ### 3. Unlink signs them out there, everywhere, within the hour
 
-Unlink calls `unlinkTool({ tool })`. It signs an unlink pass (the same
-HS256 pass and secret, with `aud` set to `{tool}:unlink`, which no tool
-accepts as a sign-in) and posts it to that tool's own `unlinkScotDance`
+Unlink calls `unlinkTool({ tool })`. It posts `{ uid, service }`
+(our Google service identity, see ADR 0015) to that tool's own `unlinkScotDance`
 callable. The tool checks it and revokes the person's refresh tokens in its
 project, so every device is signed out when its ID token next refreshes (an
 hour at most). Then the link is deleted here. If the tool doesn't answer, the
