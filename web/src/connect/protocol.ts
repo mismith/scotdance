@@ -115,13 +115,17 @@ export const TOOLS = {
   },
 } as const
 export type Audience = keyof typeof TOOLS
+/** What a pass is for: Entries development gets its own audience, but is still the `entries` tool in Account. */
+export type PassAudience = Audience | 'entries-dev'
+export const toolOf = (audience: PassAudience): Audience => (audience === 'entries-dev' ? 'entries' : audience)
 
-export function audienceFor(value: unknown, origin: string, { dev = false, localTools = {} }: OriginOptions = {}): Audience | null {
+export function audienceFor(value: unknown, origin: string, { dev = false, localTools = {} }: OriginOptions = {}): PassAudience | null {
   if (typeof value !== 'string' || !Object.hasOwn(TOOLS, value)) return null
   const audience = value as Audience
   if (!isAllowedOrigin(origin, { dev, localTools })) return null
   const { hostname, protocol } = new URL(origin)
-  if (protocol === 'https:' && TOOLS[audience].serves(hostname)) return audience
+  // Production Entries takes `entries`; its development site and previews take `entries-dev`
+  if (protocol === 'https:' && TOOLS[audience].serves(hostname)) return audience === 'entries' && hostname !== 'entries.scotdance.app' ? 'entries-dev' : audience
   return dev && protocol === 'http:' && localTools[audience] === origin ? audience : null
 }
 

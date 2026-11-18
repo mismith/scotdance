@@ -1,24 +1,31 @@
-import { createHmac, randomUUID } from 'node:crypto';
+import { createHmac, randomUUID, sign, type KeyObject } from 'node:crypto';
 import { HttpsError } from 'firebase-functions/v2/https';
+import { keyId } from './passKeys';
+import { SERVICES, serviceToken } from './service';
+import { isEmulator } from './utility/env';
 
 // "Sign in with ScotDance.app" for ScotDance.app's own tools on other
 // Firebase projects (Challenge first; ADR 0015). The connect page, signed in
 // here, asks for a pass for one tool; the tool's own function checks it with
-// the same secret and signs the person in there. Short-lived and for that tool
+// the public key (passKeys.ts) and signs the person in there. Short-lived and for that tool
 // alone: never this project's own sign-in, so a tool can't act as you here.
 //
-// A compact JWT, HS256: { iss, aud, sub (uid), email, name, iat, exp, jti }.
+// A compact JWT, EdDSA (our private key, header kid): { iss, aud, sub (uid), email, name, iat, exp, jti }.
 // Entries' also says which organisations they're an admin of
 // (`organisations: [{ id, name, shortName }]`), so the organisation they take entries
 // and payments for there is the one here, under the same id.
 //
 // Each pass is noted in `users:tools/{uid}/{tool}` (first and last sign-in),
 // so people see the tools they use in Account, and can unlink one: an unlink
-// pass (aud `{tool}:unlink`, which no tool takes as a sign-in) to the tool's
-// own `unlinkScotDance`, which signs them out there everywhere (ADR 0017).
+// call to the tool's own `unlinkScotDance`, which signs them out there
+// everywhere (ADR 0017). That call is server to server: it carries our service
+// identity (service.ts), plus an old unlink pass while tools still accept it.
 
 export const AUDIENCES = ['challenge', 'binder', 'entries'] as const;
 export type Audience = (typeof AUDIENCES)[number];
+/** What toolPass will sign for. `entries-dev` is Entries development: its link is still `entries`. */
+export type PassAudience = Audience | 'entries-dev';
+export const isEntries = (audience: PassAudience) => audience === 'entries' || audience === 'entries-dev';
 export const ISSUER = 'https://scotdance.app';
 export const PASS_SECONDS = 120;
 
@@ -31,18 +38,14 @@ export const UNLINK_URLS: Record<Audience, string> = {
 
 const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
 
-export function signPass(
-  secret: string,
-  who: {
-    uid: string; email?: string | null; emailVerified?: boolean; name?: string | null; audience: Audience | `${Audience}:unlink`;
-    organisations?: PassOrganisation[];
-    competitions?: PassCompetition[];
-  },
-  now = Date.now(),
-): string {
-  const iat = Math.floor(now / 1000);
-  const header = encode({ alg: 'HS256', typ: 'JWT' });
-  const payload = encode({
+export interface PassWho {
+  uid: string; email?: string | null; emailVerified?: boolean; name?: string | null; audience: PassAudience | `${Audience}:unlink`;
+  organisations?: PassOrganisation[];
+  competitions?: PassCompetition[];
+}
+
+function passClaims(who: PassWho, iat: number) {
+  return {
     iss: ISSUER,
     aud: who.audience,
     sub: who.uid,
@@ -54,9 +57,32 @@ export function signPass(
     iat,
     exp: iat + PASS_SECONDS,
     jti: randomUUID(),
-  });
-  const signature = createHmac('sha256', secret).update(`${header}.${payload}`).digest('base64url');
-  return `${header}.${payload}.${signature}`;
+  };
+}
+
+export function signPass(key: KeyObject, who: PassWho, now = Date.now()): string {
+  const iat = Math.floor(now / 1000);
+  const header = encode({ alg: 'EdDSA', typ: 'JWT', kid: keyId(key) });
+  const payload = encode(passClaims(who, iat));
+  return `${header}.${payload}.${sign(null, Buffer.from(`${header}.${payload}`), key).toString('base64url')}`;
+}
+
+/** LEGACY(tool-pass-secret): the old shared-secret pass (HS256), still sent to tools that haven't switched. */
+export function signLegacyPass(secret: string, who: PassWho, now = Date.now()): string {
+  const iat = Math.floor(now / 1000);
+  const header = encode({ alg: 'HS256', typ: 'JWT' });
+  const payload = encode(passClaims(who, iat));
+  return `${header}.${payload}.${createHmac('sha256', secret).update(`${header}.${payload}`).digest('base64url')}`;
+}
+
+/** Our proof to a receiver (its production URL), or none if Google won't give one: the old pass then carries the call. */
+export async function serviceProof(audience: string): Promise<string | undefined> {
+  try {
+    return await serviceToken(audience, SERVICES.hub, isEmulator());
+  } catch (error) {
+    console.error(`No service proof for ${audience}`, error); // LEGACY(tool-pass-secret): fall back to the pass alone
+    return undefined;
+  }
 }
 
 /** An organisation they're an admin of, as Entries' pass names it. */
@@ -89,6 +115,10 @@ async function upcomingManaged(db: Db, uid: string, now: number): Promise<PassCo
 
 export function isAudience(value: unknown): value is Audience {
   return typeof value === 'string' && (AUDIENCES as readonly string[]).includes(value);
+}
+
+export function isPassAudience(value: unknown): value is PassAudience {
+  return value === 'entries-dev' || isAudience(value);
 }
 
 interface Context {
@@ -129,27 +159,27 @@ async function adminOf(db: Db, uid: string): Promise<PassOrganisation[]> {
  * toolPass({ audience }): a pass for that tool, for whoever is signed in.
  * Their name as the app shows it ("Continue as …"): their record's, then their sign-in's.
  */
-export function getOnToolPass(secret: () => string, db: Db) {
+export function getOnToolPass(key: () => KeyObject, db: Db) {
   return async (data: { audience?: unknown } | undefined, ctx: Context) => {
     const auth = ctx.auth;
     if (!auth?.uid || auth.token.firebase?.sign_in_provider === 'anonymous') {
       throw new HttpsError('unauthenticated', 'Sign in to ScotDance.app first.');
     }
-    if (!isAudience(data?.audience)) throw new HttpsError('invalid-argument', 'Unknown tool.');
+    if (!isPassAudience(data?.audience)) throw new HttpsError('invalid-argument', 'Unknown tool.');
     const recorded = (await db.child(`users/${auth.uid}/displayName`).get()).val();
     const name = (typeof recorded === 'string' && recorded.trim()) || auth.token.name || null;
-    const link = db.child(`users:tools/${auth.uid}/${data.audience}`);
+    const link = db.child(`users:tools/${auth.uid}/${data.audience === 'entries-dev' ? 'entries' : data.audience}`);
     const linkedAt = ((await link.get()).val() as Partial<ToolLink> | null)?.linkedAt;
     const now = Date.now();
     await link.update({ linkedAt: linkedAt ?? now, signedInAt: now });
     return {
-      pass: signPass(secret(), {
+      pass: signPass(key(), {
         uid: auth.uid,
         email: auth.token.email ?? null,
         emailVerified: auth.token.email_verified === true,
         name,
         audience: data.audience,
-        ...(data.audience === 'entries' ? { organisations: await adminOf(db, auth.uid), competitions: await upcomingManaged(db, auth.uid, now) } : {}),
+        ...(isEntries(data.audience) ? { organisations: await adminOf(db, auth.uid), competitions: await upcomingManaged(db, auth.uid, now) } : {}),
       }),
     };
   };
@@ -166,9 +196,10 @@ const post: Post = (url, body) =>
  * tool they've linked (deleting an account). A tool that can't be reached
  * keeps its link, so the list never says unlinked when they aren't.
  * `urls` names a tool's unlinkScotDance, or null to skip the call (the
- * emulator, unless one is running for it).
+ * emulator, unless one is running for it). The service proof is always for
+ * the tool's production URL, so `proof` takes that, not `urls`.
  */
-export function getOnUnlinkTool(secret: () => string, db: Db, urls: (tool: Audience) => string | null, send: Post = post) {
+export function getOnUnlinkTool(secret: () => string, db: Db, urls: (tool: Audience) => string | null, send: Post = post, proof = serviceProof) {
   return async (data: { tool?: unknown; uid?: unknown } | undefined, ctx: Context) => {
     const auth = ctx.auth;
     if (!auth?.uid || auth.token.firebase?.sign_in_provider === 'anonymous') {
@@ -187,8 +218,9 @@ export function getOnUnlinkTool(secret: () => string, db: Db, urls: (tool: Audie
     for (const tool of tools) {
       const url = urls(tool);
       if (url) {
-        const pass = signPass(secret(), { uid, audience: `${tool}:unlink` });
-        const res = await send(url, { data: { pass } }).catch(() => ({ ok: false, status: 0 }));
+        const service = await proof(UNLINK_URLS[tool]);
+        const pass = signLegacyPass(secret(), { uid, audience: `${tool}:unlink` }); // LEGACY(tool-pass-secret)
+        const res = await send(url, { data: { uid, ...(service ? { service } : {}), pass } }).catch(() => ({ ok: false, status: 0 }));
         if (!res.ok) {
           console.error(`unlinkTool: ${tool} answered ${res.status} for ${uid}`);
           failed.push(tool);

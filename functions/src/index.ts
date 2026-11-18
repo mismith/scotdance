@@ -25,7 +25,7 @@ import { getOnFindCapitals } from './capitals';
 import { getOnChange } from './changed';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
-import { runtimeConfig, geocodingApiKey, toolPassSecret } from './utility/config';
+import { runtimeConfig, geocodingApiKey, toolPassSecret, toolPassPrivateKey, passSigningKey } from './utility/config';
 import { UNLINK_URLS, getOnToolPass, getOnUnlinkTool } from './toolPass';
 import { getOnEntriesCompetition, getOnEntriesMembership, retryEntriesMemberships, sendEntriesAccountDeletion, retryEntriesAccountDeletions } from './entriesBridge';
 import { database, https, request } from './utility/triggers';
@@ -122,7 +122,8 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
 export const linkCompetitions = https().onCall(Links.getOnLink(appConfig.db));
 
 // "Sign in with ScotDance.app" for its tools on other projects (Challenge; toolPass.ts, ADR 0015).
-export const toolPass = https({ secrets: [toolPassSecret] }).onCall(getOnToolPass(() => toolPassSecret.value(), appConfig.db));
+export const toolPass = https({ secrets: [toolPassPrivateKey] }).onCall(getOnToolPass(passSigningKey, appConfig.db));
+// LEGACY(tool-pass-secret): every toolPassSecret below is for the old shared-secret messages, until tools have switched.
 export const entriesCompetition = https({ secrets: [toolPassSecret] }).onCall(getOnEntriesCompetition(() => toolPassSecret.value(), appConfig.db));
 const entriesMembershipUrl = () => isEmulator()
   ? process.env.ENTRIES_MEMBERSHIP_URL || null

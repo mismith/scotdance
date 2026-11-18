@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ENTRIES_AUDIENCE, ENTRIES_ISSUER, getOnEntriesCompetition, signEntriesMessage } from './entriesBridge';
+import { ENTRIES_AUDIENCE, ENTRIES_ISSUER, ENTRIES_URLS, getOnEntriesCompetition, signEntriesMessage } from './entriesBridge';
+import { SERVICES, serviceToken } from './service';
 
 function world(cold = false, staleEmpty = false) {
   const event: Record<string, any> = { name: 'Games', date: '2027-06-12', registrationURL: `${ENTRIES_ISSUER}/enter/org/comp`, registrationStart: 100, registrationEnd: 200,
@@ -24,7 +25,9 @@ function world(cold = false, staleEmpty = false) {
     iss: ENTRIES_ISSUER, aud: ENTRIES_AUDIENCE, sub: 'admin', action: 'release',
     organisationId: 'org', competitionId: 'comp', bindingId: 'binding', targetId: 'comp', ...extra,
   }) });
-  return { records, call };
+  const callAs = async (self: string, extra = {}) => handle({ uid: 'admin', action: 'release', organisationId: 'org', competitionId: 'comp',
+    bindingId: 'binding', targetId: 'comp', ...extra, service: await serviceToken(ENTRIES_URLS.bridge, self, true) });
+  return { records, call, callAs };
 }
 
 test('disconnect clears only Entries registration and preserves the original event; retries are safe', async () => {
@@ -117,4 +120,17 @@ test('Entries snapshots include the actual organisation short name and its remov
   delete w.records['organisations/org'].shortName;
   const cleared = await w.call({ action: 'snapshot' }); assert.ok('organisation' in cleared);
   assert.equal(cleared.organisation.shortName, null);
+});
+
+test('a service-identity call does what the signed pass did, and the development account only reads', async () => {
+  process.env.FUNCTIONS_EMULATOR = 'true';
+  try {
+    const w = world();
+    assert.equal(((await w.callAs(SERVICES.entriesDevelopment, { action: 'snapshot' })) as any).competition.id, 'comp');
+    await assert.rejects(w.callAs(SERVICES.entriesDevelopment), /may only read/);
+    assert.ok(w.records['competitions/comp'].entriesRegistration);
+    await assert.rejects(w.callAs('other@example.com'), /invalid or expired/);
+    await w.callAs(SERVICES.entries);
+    assert.equal(w.records['competitions/comp'].entriesRegistration, undefined);
+  } finally { delete process.env.FUNCTIONS_EMULATOR; }
 });

@@ -3,8 +3,9 @@ import { createRequire } from 'node:module';
 import { test } from 'node:test';
 const require = createRequire(import.meta.url);
 const { getOnToolPass } = require('../dist/functions/src/toolPass.js');
+const { emulatorKey } = require('../dist/functions/src/passKeys.js');
 const db = { child: () => ({ get: async () => ({ val: () => null }), update: async () => {} }) };
-const handler = getOnToolPass(() => 'test-only-secret', db);
+const handler = getOnToolPass(() => emulatorKey().privateKey, db);
 const decode = (pass) => JSON.parse(Buffer.from(pass.split('.')[1], 'base64url'));
 
 test('email verification comes only from the authenticated Firebase claim', async () => {
@@ -36,7 +37,7 @@ test('Entries receives the actual organisation short name, including explicit ab
     'organisations/unnamed': { name: 'An Organisation Without a Short Name' },
   };
   const source = { child: path => ({ get: async () => ({ val: () => records[path] ?? null }), update: async () => {} }) };
-  const result = await getOnToolPass(() => 'test-only-secret', source)({ audience: 'entries' }, {
+  const result = await getOnToolPass(() => emulatorKey().privateKey, source)({ audience: 'entries' }, {
     auth: { uid: 'alex', token: { email: 'alex@example.com' } },
   });
   assert.deepEqual(decode(result.pass).organisations, [

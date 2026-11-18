@@ -1,15 +1,23 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { createRequire } from 'node:module'
+import { beforeAll, afterAll } from 'vitest'
 import { FakeRtdb, snap } from './fakeRtdb'
 import {
   getOnEntriesCompetition, getOnEntriesMembership, readEntriesMessage, sendEntriesMembership, signEntriesMessage,
   sendEntriesAccountDeletion, retryEntriesAccountDeletions,
 } from '../../../../functions/src/entriesBridge'
+import { ENTRIES_URLS } from '../../../../functions/src/entriesBridge'
+import { SERVICES, serviceToken } from '../../../../functions/src/service'
 import { getOnLink, getOnCompetitionUpdated } from '../../../../functions/src/links'
 
 const { queueAccountDeletion } = createRequire(import.meta.url)('../../../../auth-hooks/deletion.js')
 const SECRET = 'entries-bridge-test-secret'
+const proof = async () => 'stub-service-proof'
+// Service proofs on the emulator are signed with the fixed emulator key, so the receiver must run as on the emulator.
+let before: string | undefined
+beforeAll(() => { before = process.env.FUNCTIONS_EMULATOR; process.env.FUNCTIONS_EMULATOR = 'true' })
+afterAll(() => { if (before === undefined) delete process.env.FUNCTIONS_EMULATOR; else process.env.FUNCTIONS_EMULATOR = before })
 const claims = (extra: Record<string, unknown> = {}) => ({
   iss: 'https://entries.scotdance.app', aud: 'scotdance:entries', sub: 'organiser',
   competitionId: 'sat', organisationId: 'association', action: 'inspect', ...extra,
@@ -238,9 +246,9 @@ describe('Entries account deletion delivery', () => {
     tree.write(Object.fromEntries(Array.from({ length: 105 }, (_, i) => [`entries:accountDeletions/p${i}`, { deletedAt: 1, state: 'pending' }])))
     tree.write({ 'entries:accountDeletions/complete': { deletedAt: 1, state: 'complete' } })
     let sent = 0
-    await retryEntriesAccountDeletions(db, SECRET, 'http://entries.test/delete', async () => { sent++; return { ok: true, status: 200 } })
+    await retryEntriesAccountDeletions(db, SECRET, 'http://entries.test/delete', async () => { sent++; return { ok: true, status: 200 } }, proof)
     expect(sent).toBe(100)
-    await retryEntriesAccountDeletions(db, SECRET, 'http://entries.test/delete', async () => { sent++; return { ok: true, status: 200 } })
+    await retryEntriesAccountDeletions(db, SECRET, 'http://entries.test/delete', async () => { sent++; return { ok: true, status: 200 } }, proof)
     expect(sent).toBe(105)
   })
   it('persists deletion across delivery failure and retries its distinct signed purpose idempotently', async () => {
@@ -248,19 +256,20 @@ describe('Entries account deletion delivery', () => {
     const calls: Record<string, unknown>[] = []
     let fail = true
     const send = async (_url: string, body: unknown) => {
-      const pass = JSON.parse(Buffer.from((body as { data: { pass: string } }).data.pass.split('.')[1], 'base64url').toString())
-      calls.push(pass)
+      const { data } = body as { data: { pass: string; service?: string; uid: string; deletedAt: number } }
+      expect(data).toMatchObject({ service: 'stub-service-proof', uid: 'parent', deletedAt: expect.any(Number) })
+      calls.push(JSON.parse(Buffer.from(data.pass.split('.')[1], 'base64url').toString()))
       return { ok: !fail, status: fail ? 503 : 200 }
     }
     const deleted = async ({ uid }: { uid: string }) => {
       await queueAccountDeletion(db, uid)
-      await sendEntriesAccountDeletion(db, SECRET, 'http://entries.test/delete', uid, send)
+      await sendEntriesAccountDeletion(db, SECRET, 'http://entries.test/delete', uid, send, proof)
     }
     await expect(deleted({ uid: 'parent' })).rejects.toThrow(/503/)
     const queued = tree.read('entries:accountDeletions/parent') as { deletedAt: number; state: string }
     expect(queued.state).toBe('pending')
     fail = false
-    await retryEntriesAccountDeletions(db, SECRET, 'http://entries.test/delete', send)
+    await retryEntriesAccountDeletions(db, SECRET, 'http://entries.test/delete', send, proof)
     expect(tree.read('entries:accountDeletions/parent')).toMatchObject({ state: 'complete', deletedAt: queued.deletedAt })
     expect(calls[1]).toMatchObject({ aud: 'entries:delete', sub: 'parent', deletedAt: queued.deletedAt })
     await deleted({ uid: 'parent' })
@@ -309,20 +318,73 @@ describe('Entries membership delivery', () => {
   it('sends current authority rather than an old removal event and retries failed delivery', async () => {
     const { db, tree } = setup()
     const posted: string[] = []
+    const bodies: Record<string, unknown>[] = []
     const send = async (_url: string, body: unknown) => {
+      bodies.push((body as { data: Record<string, unknown> }).data)
       posted.push((body as { data: { pass: string } }).data.pass)
       return { ok: true, status: 200 }
     }
-    await getOnEntriesMembership(() => SECRET, db, () => 'https://entries.test/sync', send)(
+    await getOnEntriesMembership(() => SECRET, db, () => 'https://entries.test/sync', send, proof)(
       { before: snap(true), after: snap(null) }, { params: { organisationId: 'association', uid: 'organiser' } },
     )
+    expect(bodies[0]).toMatchObject({ service: 'stub-service-proof', uid: 'organiser', organisationId: 'association', allowed: true, checkedAt: expect.any(Number) })
     const payload = JSON.parse(Buffer.from(posted[0].split('.')[1], 'base64url').toString())
     expect(payload).toMatchObject({ iss: 'https://scotdance.app', aud: 'entries:membership', sub: 'organiser', organisationId: 'association', allowed: true, checkedAt: expect.any(Number) })
-    await expect(sendEntriesMembership(db, SECRET, 'https://entries.test/sync', 'association', 'organiser', async () => ({ ok: false, status: 503 }))).rejects.toThrow(/503/)
+    await expect(sendEntriesMembership(db, SECRET, 'https://entries.test/sync', 'association', 'organiser', async () => ({ ok: false, status: 503 }), proof)).rejects.toThrow(/503/)
     expect(tree.read('entries:membershipFailures/association/organiser')).toMatchObject({ failedAt: expect.any(Number) })
     tree.write({ 'organisations:permissions/association/users/organiser': null })
-    await sendEntriesMembership(db, SECRET, 'https://entries.test/sync', 'association', 'organiser', send)
+    await sendEntriesMembership(db, SECRET, 'https://entries.test/sync', 'association', 'organiser', send, proof)
     expect(tree.read('entries:membershipFailures/association/organiser')).toBeNull()
     expect(JSON.parse(Buffer.from(posted[1].split('.')[1], 'base64url').toString()).allowed).toBe(false)
+  })
+})
+
+describe('Entries service identity', () => {
+  const body = (extra: Record<string, unknown> = {}) => ({ uid: 'organiser', action: 'inspect', competitionId: 'sat', organisationId: 'association', ...extra })
+  const as = async (self: string, extra: Record<string, unknown> = {}, audience: string = ENTRIES_URLS.bridge) =>
+    ({ ...body(extra), service: await serviceToken(audience, self, true) })
+
+  it('serves SERVICES.entries every action, reading the account and values from the body', async () => {
+    const { handler, tree } = setup()
+    expect(await handler(await as(SERVICES.entries))).toMatchObject({ registrationTargetId: 'sat' })
+    expect(await handler(await as(SERVICES.entries, registration()))).toMatchObject({ applied: true })
+    expect(tree.read('competitions/sat/registrationURL')).toBe('https://entries.scotdance.app/enter/association/sat')
+    // the account is still checked against live permissions
+    await expect(handler(await as(SERVICES.entries, { uid: 'stranger' }))).rejects.toThrow(/administer both/)
+  })
+
+  it('limits SERVICES.entriesDevelopment to inspect and snapshot', async () => {
+    const { handler } = setup()
+    expect(await handler(await as(SERVICES.entriesDevelopment))).toMatchObject({ registrationTargetId: 'sat' })
+    expect(await handler(await as(SERVICES.entriesDevelopment, { action: 'snapshot' }))).toMatchObject({ competition: { id: 'sat' } })
+    for (const extra of [registration(), { action: 'claim' }, { action: 'release', bindingId: 'b' }, { action: 'dances', dances: [] }]) {
+      await expect(handler(await as(SERVICES.entriesDevelopment, extra))).rejects.toMatchObject({ code: 'permission-denied' })
+    }
+  })
+
+  it('turns away an unknown account and a token for another audience', async () => {
+    const { handler } = setup()
+    await expect(handler(await as('someone@example.com'))).rejects.toMatchObject({ code: 'unauthenticated' })
+    await expect(handler(await as(SERVICES.entries, {}, ENTRIES_URLS.membership))).rejects.toMatchObject({ code: 'unauthenticated' })
+  })
+
+  it('never falls back to the pass when service is present but bad', async () => {
+    const { handler } = setup()
+    const pass = signEntriesMessage(SECRET, claims())
+    await expect(handler({ ...body(), service: 'garbage', pass })).rejects.toMatchObject({ code: 'unauthenticated' })
+    await expect(handler({ service: 'garbage', pass })).rejects.toMatchObject({ code: 'unauthenticated' })
+  })
+
+  it('validates the account and action as strictly as the pass subject', async () => {
+    const { handler } = setup()
+    for (const extra of [{ uid: 'a/b' }, { uid: '' }, { uid: 7 }, { action: undefined }, { action: 3 }]) {
+      await expect(handler(await as(SERVICES.entries, extra))).rejects.toMatchObject({ code: 'invalid-argument' })
+    }
+    await expect(handler(await as(SERVICES.entries, { competitionId: 'a.b' }))).rejects.toMatchObject({ code: 'invalid-argument' })
+  })
+
+  it('LEGACY(tool-pass-secret): still reads the old signed pass when service is absent', async () => {
+    const { call } = setup()
+    expect(await call()).toMatchObject({ registrationTargetId: 'sat' })
   })
 })

@@ -3,17 +3,28 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import { linkOf } from './links';
 import { isEmulator } from './utility/env';
 import { entriesDances } from './entriesDances';
+import { SERVICES, verifyService } from './service';
+import { serviceProof } from './toolPass';
 
-// ADR 0019: a narrow server-to-server bridge. Every mutable value is inside
-// the signed pass; neither a browser's Firebase token nor a sign-in pass can
-// publish registration details or dances.
+// ADR 0019: a narrow server-to-server bridge. The caller proves itself with its
+// Google service identity (service.ts, the `service` field); neither a browser's
+// Firebase token nor a sign-in pass can publish registration details or dances.
+// LEGACY(tool-pass-secret): while tools switch over, a message signed with the
+// shared secret (`pass`) is still read when `service` is absent.
 export const ENTRIES_ISSUER = 'https://entries.scotdance.app';
 export const ENTRIES_AUDIENCE = 'scotdance:entries';
+/** Service-identity audiences are production URLs, also when the call goes to an emulator. */
+export const ENTRIES_URLS = {
+  bridge: 'https://us-central1-firebase-scotdance.cloudfunctions.net/entriesCompetition',
+  membership: 'https://us-central1-scotdance-entries.cloudfunctions.net/syncScotDanceMembership',
+  deletion: 'https://us-central1-scotdance-entries.cloudfunctions.net/deleteScotDanceAccount',
+} as const;
 const key = (v: unknown): v is string => typeof v === 'string' && /^[^.#$/[\]]{1,128}$/.test(v)
   && ![...v].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127);
 const read = async (db: any, path: string) => (await db.child(path).get()).val();
 const encode = (v: unknown) => Buffer.from(JSON.stringify(v)).toString('base64url');
 
+/** LEGACY(tool-pass-secret) */
 export function signEntriesMessage(secret: string, payload: Record<string, unknown>, now = Date.now()) {
   const iat = Math.floor(now / 1000);
   const header = encode({ alg: 'HS256', typ: 'JWT' });
@@ -21,6 +32,7 @@ export function signEntriesMessage(secret: string, payload: Record<string, unkno
   return `${header}.${body}.${createHmac('sha256', secret).update(`${header}.${body}`).digest('base64url')}`;
 }
 
+/** LEGACY(tool-pass-secret) */
 export function readEntriesMessage(pass: unknown, secret: string, now = Date.now()): Record<string, any> {
   const denied = () => new HttpsError('unauthenticated', 'This Entries request is invalid or expired.');
   if (typeof pass !== 'string' || pass.length > 100_000) throw denied();
@@ -41,6 +53,24 @@ export function readEntriesMessage(pass: unknown, secret: string, now = Date.now
     || !Number.isInteger(p.iat) || !Number.isInteger(p.exp) || p.iat > seconds + 5
     || p.exp <= seconds || p.exp <= p.iat || p.exp - p.iat > 120) throw denied();
   return p;
+}
+
+/** Entries development (and anything else on that project's default account) may only read. */
+const DEVELOPMENT_ACTIONS = ['inspect', 'snapshot'];
+
+/** A call from Entries' server: believed because of who sent it. Same strictness as the old pass's subject. */
+async function readServiceMessage(data: Record<string, any>): Promise<Record<string, any>> {
+  let caller: string;
+  try {
+    caller = await verifyService(data.service, ENTRIES_URLS.bridge, [SERVICES.entries, SERVICES.entriesDevelopment], isEmulator());
+  } catch { throw new HttpsError('unauthenticated', 'This Entries request is invalid or expired.'); }
+  if (!key(data.uid) || typeof data.action !== 'string') throw new HttpsError('invalid-argument', 'An account and an action are required.');
+  if (caller === SERVICES.entriesDevelopment && !DEVELOPMENT_ACTIONS.includes(data.action)) {
+    throw new HttpsError('permission-denied', 'This Entries connection may only read.');
+  }
+  const body = { ...data, sub: data.uid };
+  for (const field of ['service', 'pass', 'uid']) delete body[field];
+  return body;
 }
 
 async function snapshot(db: any, competitionId: string, organisationId: string) {
@@ -95,8 +125,10 @@ function dates(p: Record<string, any>) {
 }
 
 export function getOnEntriesCompetition(secret: () => string, db: any) {
-  return async (data: { pass?: unknown } | undefined) => {
-    const p = readEntriesMessage(data?.pass, secret());
+  return async (data: Record<string, any> | undefined) => {
+    const p = typeof data?.service === 'string'
+      ? await readServiceMessage(data)
+      : readEntriesMessage(data?.pass, secret()); // LEGACY(tool-pass-secret)
     if (!key(p.competitionId) || !key(p.organisationId)) throw new HttpsError('invalid-argument', 'A competition and organisation are required.');
     if (p.action === 'release') {
       // Removal never deletes the source event. Only release the exact binding we own.
@@ -223,17 +255,18 @@ type Send = (url: string, body: unknown) => Promise<{ ok: boolean; status: numbe
 const post: Send = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(10_000) });
 
 /** Read current authority on every attempt. A delayed removal must not undo a later re-invitation. */
-export async function sendEntriesMembership(db: any, secret: string, url: string, organisationId: string, uid: string, send: Send = post) {
+export async function sendEntriesMembership(db: any, secret: string, url: string, organisationId: string, uid: string, send: Send = post, proof = serviceProof) {
   // Concurrent triggers can run in the same millisecond. Allocate a monotonic
   // stamp so their receiver can order deliveries without a grant/revoke tie.
   const stamp = await db.child(`entries:membershipVersions/${organisationId}/${uid}`).transaction((previous: unknown) =>
     Math.max(Date.now(), typeof previous === 'number' ? previous + 1 : 0));
   const checkedAt = stamp.snapshot.val() as number;
   const allowed = await read(db, `organisations:permissions/${organisationId}/users/${uid}`) === true;
-  const pass = signEntriesMessage(secret, { iss: 'https://scotdance.app', aud: 'entries:membership', sub: uid, organisationId, allowed, checkedAt });
+  const service = await proof(ENTRIES_URLS.membership);
+  const pass = signEntriesMessage(secret, { iss: 'https://scotdance.app', aud: 'entries:membership', sub: uid, organisationId, allowed, checkedAt }); // LEGACY(tool-pass-secret)
   const failure = db.child(`entries:membershipFailures/${organisationId}/${uid}`);
   try {
-    const result = await send(url, { data: { pass } });
+    const result = await send(url, { data: { uid, organisationId, allowed, checkedAt, ...(service ? { service } : {}), pass } });
     if (!result.ok) throw new Error(`Entries membership update answered ${result.status}`);
     await failure.remove();
   } catch (error) {
@@ -242,12 +275,12 @@ export async function sendEntriesMembership(db: any, secret: string, url: string
   }
 }
 
-export function getOnEntriesMembership(secret: () => string, db: any, url: () => string | null, send: Send = post) {
+export function getOnEntriesMembership(secret: () => string, db: any, url: () => string | null, send: Send = post, proof = serviceProof) {
   return async (change: any, ctx: any) => {
     if ((change.before.val() === true) === (change.after.val() === true)) return;
     const destination = url();
     if (!destination) return;
-    await sendEntriesMembership(db, secret(), destination, ctx.params.organisationId, ctx.params.uid, send);
+    await sendEntriesMembership(db, secret(), destination, ctx.params.organisationId, ctx.params.uid, send, proof);
   };
 }
 
@@ -260,21 +293,22 @@ export async function retryEntriesMemberships(db: any, secret: string, url: stri
 }
 
 /** Account deletion is distinct from unlinking a tool: persist the request before delivery. */
-export async function sendEntriesAccountDeletion(db: any, secret: string, url: string, uid: string, send: Send = post) {
+export async function sendEntriesAccountDeletion(db: any, secret: string, url: string, uid: string, send: Send = post, proof = serviceProof) {
   const pending = db.child(`entries:accountDeletions/${uid}`);
   const request = await read(db, `entries:accountDeletions/${uid}`);
   if (!request || request.state === 'complete') return;
-  const pass = signEntriesMessage(secret, { iss: 'https://scotdance.app', aud: 'entries:delete', sub: uid, deletedAt: request.deletedAt });
-  const result = await send(url, { data: { pass } });
+  const service = await proof(ENTRIES_URLS.deletion);
+  const pass = signEntriesMessage(secret, { iss: 'https://scotdance.app', aud: 'entries:delete', sub: uid, deletedAt: request.deletedAt }); // LEGACY(tool-pass-secret)
+  const result = await send(url, { data: { uid, deletedAt: request.deletedAt, ...(service ? { service } : {}), pass } });
   if (!result.ok) throw new Error(`Entries account deletion answered ${result.status}`);
   await pending.update({ state: 'complete', completedAt: Date.now() });
 }
 
-export async function retryEntriesAccountDeletions(db: any, secret: string, url: string, send: Send = post) {
+export async function retryEntriesAccountDeletions(db: any, secret: string, url: string, send: Send = post, proof = serviceProof) {
   const requests = (await db.child('entries:accountDeletions').orderByChild('state').equalTo('pending').limitToFirst(100).get()).val() ?? {};
   const deadline = Date.now() + 45_000;
   for (const uid of Object.keys(requests)) {
     if (Date.now() >= deadline) break;
-    await sendEntriesAccountDeletion(db, secret, url, uid, send).catch((error) => console.error('Entries account deletion retry failed', uid, error));
+    await sendEntriesAccountDeletion(db, secret, url, uid, send, proof).catch((error) => console.error('Entries account deletion retry failed', uid, error));
   }
 }

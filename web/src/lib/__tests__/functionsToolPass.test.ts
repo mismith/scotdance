@@ -1,16 +1,20 @@
-import { createHmac } from 'node:crypto'
+import { verify } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { PASS_SECONDS, getOnToolPass, getOnUnlinkTool, signPass } from '../../../../functions/src/toolPass'
+import { PASS_SECONDS, UNLINK_URLS, getOnToolPass, getOnUnlinkTool, signPass } from '../../../../functions/src/toolPass'
+import { emulatorKey, keyId } from '../../../../functions/src/passKeys'
 
 const SECRET = 'test-secret'
+const KEY = emulatorKey().privateKey
+const KEYS = () => KEY
+const proof = async () => 'stub-service-proof'
 const decode = (part: string) => JSON.parse(Buffer.from(part, 'base64url').toString())
 
 describe('signPass', () => {
-  it('says who you are, for one tool, briefly, signed', () => {
+  it('says who you are, for one tool, briefly, signed with the private key', () => {
     const now = Date.UTC(2026, 9, 29, 12)
-    const pass = signPass(SECRET, { uid: 'u1', email: 'a@b.c', name: 'Ann', audience: 'challenge' }, now)
+    const pass = signPass(KEY, { uid: 'u1', email: 'a@b.c', name: 'Ann', audience: 'challenge' }, now)
     const [header, payload, signature] = pass.split('.')
-    expect(decode(header!)).toEqual({ alg: 'HS256', typ: 'JWT' })
+    expect(decode(header!)).toEqual({ alg: 'EdDSA', typ: 'JWT', kid: keyId(KEY) })
     expect(decode(payload!)).toMatchObject({
       iss: 'https://scotdance.app',
       aud: 'challenge',
@@ -20,7 +24,7 @@ describe('signPass', () => {
       iat: now / 1000,
       exp: now / 1000 + PASS_SECONDS,
     })
-    expect(signature).toBe(createHmac('sha256', SECRET).update(`${header}.${payload}`).digest('base64url'))
+    expect(verify(null, Buffer.from(`${header}.${payload}`), emulatorKey().publicKey, Buffer.from(signature!, 'base64url'))).toBe(true)
   })
 })
 
@@ -33,7 +37,7 @@ describe('toolPass', () => {
       remove: async () => {},
     }),
   })
-  const call = getOnToolPass(() => SECRET, db())
+  const call = getOnToolPass(KEYS, db())
   const auth = (provider = 'password', name?: string) => ({
     uid: 'u1',
     token: { email: 'a@b.c', name, firebase: { sign_in_provider: provider } },
@@ -47,9 +51,9 @@ describe('toolPass', () => {
   })
 
   it('names you as the app does: your record, then your sign-in, else no name', async () => {
-    expect(await nameIn(getOnToolPass(() => SECRET, db('Ann Ross')), auth('password', 'Old'))).toBe('Ann Ross')
-    expect(await nameIn(getOnToolPass(() => SECRET, db('  ')), auth('password', 'Ann'))).toBe('Ann')
-    expect(await nameIn(getOnToolPass(() => SECRET, db()))).toBeNull()
+    expect(await nameIn(getOnToolPass(KEYS, db('Ann Ross')), auth('password', 'Old'))).toBe('Ann Ross')
+    expect(await nameIn(getOnToolPass(KEYS, db('  ')), auth('password', 'Ann'))).toBe('Ann')
+    expect(await nameIn(getOnToolPass(KEYS, db()))).toBeNull()
   })
 
   it('turns away the signed out, the anonymous and unknown tools', async () => {
@@ -88,8 +92,8 @@ describe('toolPass notes the link', () => {
 
   it('keeps when they first signed in, and updates the last', async () => {
     const db = memoryDb({ 'users:tools/u1/binder/linkedAt': 100, 'users:tools/u1/binder/signedInAt': 100 })
-    await getOnToolPass(() => SECRET, db)({ audience: 'binder' }, { auth })
-    await getOnToolPass(() => SECRET, db)({ audience: 'challenge' }, { auth })
+    await getOnToolPass(KEYS, db)({ audience: 'binder' }, { auth })
+    await getOnToolPass(KEYS, db)({ audience: 'challenge' }, { auth })
     expect(db.data['users:tools/u1/binder/linkedAt']).toBe(100)
     expect(db.data['users:tools/u1/binder/signedInAt']).toBeGreaterThan(100)
     expect(db.data['users:tools/u1/challenge/linkedAt']).toBe(db.data['users:tools/u1/challenge/signedInAt'])
@@ -108,15 +112,23 @@ describe('toolPass for Entries', () => {
     'organisations/other/name': 'Someone Else’s',
   })
   const payload = async (audience: string) =>
-    decode((await getOnToolPass(() => SECRET, memoryDb(data()))({ audience }, { auth })).pass.split('.')[1]!)
+    decode((await getOnToolPass(KEYS, memoryDb(data()))({ audience }, { auth })).pass.split('.')[1]!)
 
   it('names the organisations they’re an admin of, and only those', async () => {
     expect((await payload('entries')).organisations).toEqual([{ id: 'bchda', name: 'BC Highland Dancing Association', shortName: null }])
   })
 
   it('says an admin of none has none', async () => {
-    const pass = await getOnToolPass(() => SECRET, memoryDb({}))({ audience: 'entries' }, { auth })
+    const pass = await getOnToolPass(KEYS, memoryDb({}))({ audience: 'entries' }, { auth })
     expect(decode(pass.pass.split('.')[1]!).organisations).toEqual([])
+  })
+
+  it('serves Entries development as entries-dev: same claims, recorded as the entries link', async () => {
+    const tree = memoryDb(data())
+    const { pass } = await getOnToolPass(KEYS, tree)({ audience: 'entries-dev' }, { auth })
+    expect(decode(pass.split('.')[1]!)).toMatchObject({ aud: 'entries-dev', organisations: [{ id: 'bchda' }], competitions: [] })
+    expect(tree.data['users:tools/u1/entries/linkedAt']).toEqual(expect.any(Number))
+    expect(Object.keys(tree.data).some((k) => k.includes('entries-dev'))).toBe(false)
   })
 
   it('tells no other tool', async () => {
@@ -133,7 +145,7 @@ describe('toolPass for Entries', () => {
       'competitions/past': { name: 'Old Games', date: '2000-01-01' },
       'competitions/stranger': { name: 'Other Games', date: '2099-07-06' },
     })
-    const { pass } = await getOnToolPass(() => SECRET, tree)({ audience: 'entries' }, { auth })
+    const { pass } = await getOnToolPass(KEYS, tree)({ audience: 'entries' }, { auth })
     expect(decode(pass.split('.')[1]!).competitions).toEqual([{ id: 'future', name: 'Future Highland Games', date: '2099-07-05' }])
   })
 })
@@ -146,11 +158,14 @@ describe('unlinkTool', () => {
 
   it('sends the tool an unlink pass, then forgets the link', async () => {
     const db = linked()
-    const sent: { url: string; body: { data: { pass: string } } }[] = []
+    const sent: { url: string; body: { data: { pass: string; service?: string; uid: string } } }[] = []
     const send = async (url: string, body: unknown) => (sent.push({ url, body: body as never }), { ok: true, status: 200 })
-    expect(await getOnUnlinkTool(() => SECRET, db, urls, send)({ tool: 'binder' }, { auth: auth() })).toEqual({ unlinked: ['binder'] })
+    expect(await getOnUnlinkTool(() => SECRET, db, urls, send, proof)({ tool: 'binder' }, { auth: auth() })).toEqual({ unlinked: ['binder'] })
     expect(sent).toHaveLength(1)
+    expect(sent[0]!.body.data).toMatchObject({ uid: 'u1', service: 'stub-service-proof' })
     expect(sent[0]!.url).toBe('https://binder.test/unlinkScotDance')
+    // LEGACY(tool-pass-secret): the old shared-secret unlink pass still rides along
+    expect(decode(sent[0]!.body.data.pass.split('.')[0]!)).toEqual({ alg: 'HS256', typ: 'JWT' })
     expect(decode(sent[0]!.body.data.pass.split('.')[1]!)).toMatchObject({ aud: 'binder:unlink', sub: 'u1' })
     expect(db.data['users:tools/u1/binder/linkedAt']).toBeUndefined()
     expect(db.data['users:tools/u1/challenge/linkedAt']).toBe(2)
@@ -159,33 +174,49 @@ describe('unlinkTool', () => {
   it('takes a null account or tool as none (callables send undefined as null)', async () => {
     const db = linked()
     const send = async () => ({ ok: true, status: 200 })
-    expect(await getOnUnlinkTool(() => SECRET, db, urls, send)({ tool: 'binder', uid: null }, { auth: auth() })).toEqual({ unlinked: ['binder'] })
-    expect(await getOnUnlinkTool(() => SECRET, db, urls, send)({ tool: null }, { auth: auth() })).toEqual({ unlinked: ['challenge'] })
+    expect(await getOnUnlinkTool(() => SECRET, db, urls, send, proof)({ tool: 'binder', uid: null }, { auth: auth() })).toEqual({ unlinked: ['binder'] })
+    expect(await getOnUnlinkTool(() => SECRET, db, urls, send, proof)({ tool: null }, { auth: auth() })).toEqual({ unlinked: ['challenge'] })
   })
 
   it('unlinks every tool when none is named', async () => {
     const db = linked()
     const send = async () => ({ ok: true, status: 200 })
-    expect(await getOnUnlinkTool(() => SECRET, db, urls, send)({}, { auth: auth() })).toEqual({ unlinked: ['binder', 'challenge'] })
+    expect(await getOnUnlinkTool(() => SECRET, db, urls, send, proof)({}, { auth: auth() })).toEqual({ unlinked: ['binder', 'challenge'] })
     expect(Object.keys(db.data).filter((k) => k.startsWith('users:tools/'))).toEqual([])
   })
 
   it('keeps the link when the tool doesn’t answer', async () => {
     const db = linked()
     const send = async () => ({ ok: false, status: 503 })
-    await expect(getOnUnlinkTool(() => SECRET, db, urls, send)({ tool: 'binder' }, { auth: auth() })).rejects.toThrow(/didn’t answer/)
+    await expect(getOnUnlinkTool(() => SECRET, db, urls, send, proof)({ tool: 'binder' }, { auth: auth() })).rejects.toThrow(/didn’t answer/)
     expect(db.data['users:tools/u1/binder/linkedAt']).toBe(1)
   })
 
   it('lets a system admin unlink someone else, and no one else', async () => {
     const send = async () => ({ ok: true, status: 200 })
-    await expect(getOnUnlinkTool(() => SECRET, linked(), urls, send)({ tool: 'binder', uid: 'u1' }, { auth: auth('u2') })).rejects.toThrow(/system admins/)
-    expect(await getOnUnlinkTool(() => SECRET, linked(), urls, send)({ tool: 'binder', uid: 'u1' }, { auth: auth('boss') })).toEqual({ unlinked: ['binder'] })
+    await expect(getOnUnlinkTool(() => SECRET, linked(), urls, send, proof)({ tool: 'binder', uid: 'u1' }, { auth: auth('u2') })).rejects.toThrow(/system admins/)
+    expect(await getOnUnlinkTool(() => SECRET, linked(), urls, send, proof)({ tool: 'binder', uid: 'u1' }, { auth: auth('boss') })).toEqual({ unlinked: ['binder'] })
+  })
+
+  it('still sends the old pass alone when no service proof can be made', async () => {
+    const db = linked()
+    let body: { data: Record<string, unknown> } | undefined
+    const send = async (_url: string, b: unknown) => ((body = b as never), { ok: true, status: 200 })
+    await getOnUnlinkTool(() => SECRET, db, urls, send, async () => undefined)({ tool: 'binder' }, { auth: auth() })
+    expect(body!.data).not.toHaveProperty('service')
+    expect(body!.data.pass).toEqual(expect.any(String))
+  })
+
+  it('asks for a proof for the tool’s production URL, whatever URL it calls', async () => {
+    const asked: string[] = []
+    const send = async () => ({ ok: true, status: 200 })
+    await getOnUnlinkTool(() => SECRET, linked(), () => 'http://127.0.0.1:5001/x', send, async (audience) => (asked.push(audience), 'p'))({ tool: 'binder' }, { auth: auth() })
+    expect(asked).toEqual([UNLINK_URLS.binder])
   })
 
   it('turns away the signed out and unknown tools', async () => {
     const send = async () => ({ ok: true, status: 200 })
-    await expect(getOnUnlinkTool(() => SECRET, linked(), urls, send)({ tool: 'binder' }, { auth: null })).rejects.toThrow(/Sign in/)
-    await expect(getOnUnlinkTool(() => SECRET, linked(), urls, send)({ tool: 'splits' }, { auth: auth() })).rejects.toThrow(/Unknown tool/)
+    await expect(getOnUnlinkTool(() => SECRET, linked(), urls, send, proof)({ tool: 'binder' }, { auth: null })).rejects.toThrow(/Sign in/)
+    await expect(getOnUnlinkTool(() => SECRET, linked(), urls, send, proof)({ tool: 'splits' }, { auth: auth() })).rejects.toThrow(/Unknown tool/)
   })
 })

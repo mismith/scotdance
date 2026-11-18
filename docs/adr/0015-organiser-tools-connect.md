@@ -70,7 +70,7 @@ as you there, so a frame that does the work (decision 3) isn't enough: it
 needs to know who you are. `ScotDance.signIn({ audience: 'challenge' })`
 opens the same sheet: sign in, or "Continue as …" for whoever already is
 (a tap, so no tool learns who you are unasked). The page then calls
-`toolPass`, which returns a pass: a JWT (HS256, `TOOL_PASS_SECRET`) with
+`toolPass`, which returns a pass: a JWT (EdDSA, signed with the Ed25519 private key `TOOL_PASS_PRIVATE_KEY`, header `kid`) with
 `aud` the tool, `sub` your uid, your email and name, good for 120 s. The
 page hands it only to that tool's own site (`TOOLS` in protocol.ts:
 Challenge's pass goes to challenge.scotdance.app alone). The tool's
@@ -100,7 +100,12 @@ Splits' Send button is the reference (`ExportSettingsDialog.vue` and
 - The embed lives where organisers sign in: `scotdance.app` once v4 is
   there (until then `next.scotdance.app`, and tools point at that).
 - Safari's own password AutoFill inside the iframe is untested on devices.
-- `TOOL_PASS_SECRET` lives in both projects (`firebase functions:secrets:set`);
-  changing it means setting both. Adding a tool: an `AUDIENCES` entry
+- Only this project holds the private key; tools check passes with the public keys
+  in `functions/src/passKeys.ts` (make a pair with `functions/scripts/new-pass-key.mjs`).
+  Server-to-server calls (unlink, membership, deletion, the Entries bridge) carry the
+  caller's Google service identity as `service` (`service.ts`), not a signed message.
+  Transition: the shared `TOOL_PASS_SECRET` (HS256 passes in the `pass` field) is still
+  sent and accepted; every such line is marked `LEGACY(tool-pass-secret)`, so removing
+  it later is a grep. Adding a tool: an `AUDIENCES` entry
   (functions) and a `TOOLS` entry (protocol.ts) with its site, plus what
   ADR 0017 needs to unlink it.

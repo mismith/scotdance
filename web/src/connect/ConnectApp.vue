@@ -18,7 +18,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import LogoMark from '@/components/LogoMark.vue'
 import LoginForm, { type LoginStep } from '@/components/LoginForm.vue'
 import Button from '@/components/ui/Button.vue'
-import { CHANNEL, TOOLS, audienceFor, isAllowedOrigin, isFromTool, readItem, type Audience, type ToTool, type ToolItem } from './protocol'
+import { CHANNEL, TOOLS, audienceFor, isAllowedOrigin, isFromTool, readItem, toolOf, type PassAudience, type ToTool, type ToolItem } from './protocol'
 
 // Two jobs, one sheet over the tool, the app's own: the tool draws none of it
 // (protocol.ts, ADR 0015).
@@ -44,11 +44,11 @@ const localTools = {
 const toolOrigin = ref<string | null>(null)
 const item = ref<ToolItem | null>(null)
 const mode = ref<'send' | 'signIn' | null>(null)
-const audience = ref<Audience | null>(null)
-const toolName = computed(() => (audience.value ? TOOLS[audience.value].name : null))
+const audience = ref<PassAudience | null>(null)
+const toolName = computed(() => (audience.value ? TOOLS[toolOf(audience.value)].name : null))
 // The sheet says everything the pass carries: a name and email for every tool, and more for a tool that gets more
 const toolGets = computed(() => {
-  const tool = audience.value ? TOOLS[audience.value] : null
+  const tool = audience.value ? TOOLS[toolOf(audience.value)] : null
   return tool && 'alsoGets' in tool ? `your name, email address and ${tool.alsoGets}` : 'your name and email address'
 })
 const unreadable = ref(false)
@@ -265,7 +265,7 @@ async function continueToTool() {
   passing.value = true
   passError.value = null
   try {
-    const toolPass = httpsCallable<{ audience: Audience }, { pass: string }>(functions, 'toolPass')
+    const toolPass = httpsCallable<{ audience: PassAudience }, { pass: string }>(functions, 'toolPass')
     // Only the account portal receives the central identity token. Other tools keep scoped passes.
     const data = audience.value === 'connect'
       ? { pass: await auth.user.getIdToken(true) }

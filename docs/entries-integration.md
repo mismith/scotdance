@@ -1,6 +1,6 @@
 # Entries integration
 
-ADR 0019 gives ScotDance ownership of people, organisation admins and public competition details. Entries owns registration and payments. This bridge uses their existing shared `TOOL_PASS_SECRET`; it never accepts an Entries Firebase token as a ScotDance login.
+ADR 0019 gives ScotDance ownership of people, organisation admins and public competition details. Entries owns registration and payments. Entries calls this bridge with its Google service identity (`service` in the request body, checked by `verifyService`; `SERVICES.entries` may do every action, `SERVICES.entriesDevelopment` only `inspect` and `snapshot`), and ScotDance calls Entries (membership, account deletion, unlink) the same way. Sign-in passes are signed with ScotDance's private key (`entries-dev` for Entries development, same claims). Until every project has switched, the old shared `TOOL_PASS_SECRET` messages (`pass`) are still sent and accepted, marked `LEGACY(tool-pass-secret)`. The bridge never accepts an Entries Firebase token as a ScotDance login.
 
 ## Structured program occurrences (local implementation, not deployed)
 
@@ -130,7 +130,7 @@ node web/scripts/entries-contract.cjs
 ```
 
 It expects a sibling `entries` checkout (override with `ENTRIES_TEST_REPOSITORY`), its built functions, and
-its ignored `functions/.secret.local` containing the same `TOOL_PASS_SECRET` as ScotDance's emulator.
+its ignored `functions/.secret.local` containing the same `TOOL_PASS_SECRET` as ScotDance's emulator (LEGACY(tool-pass-secret); service identity and passes use the fixed emulator key and need no secret).
 ScotDance uses project `firebase-scotdance`, functions port 5001 and database port 9009. Entries uses project
 `demo-entries` (override with `ENTRIES_TEST_PROJECT`), functions port 5201 and Firestore port 8380. Start the
 ScotDance emulator with `ENTRIES_MEMBERSHIP_URL=http://127.0.0.1:5201/demo-entries/us-central1/syncScotDanceMembership`.

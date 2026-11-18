@@ -1,3 +1,4 @@
+import { emulatorKey } from '../../../../functions/src/passKeys'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -38,7 +39,7 @@ describe('callables and assistants', () => {
 
   it('never mints a tool pass for an assistant', async () => {
     const db = { child: () => ({ get: async () => ({ val: () => null }), update: async () => {}, remove: async () => {} }) }
-    const toolPass = https().onCall(getOnToolPass(() => 'secret', db)) as unknown as Callable
+    const toolPass = https().onCall(getOnToolPass(() => emulatorKey().privateKey, db)) as unknown as Callable
     expect(((await toolPass.run({ data: { audience: 'challenge' }, auth: person, rawRequest: {} })) as { pass: string }).pass).toBeTruthy()
     await expect(Promise.resolve().then(() => toolPass.run({ data: { audience: 'challenge' }, auth: assistant, rawRequest: {} }))).rejects.toThrow(/AI assistants can’t do this/)
   })
