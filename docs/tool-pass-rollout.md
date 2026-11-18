@@ -34,7 +34,9 @@ Challenge will not deploy without it.
 ## 4. Deploy the tools (any order)
 
 - Entries: production and development.
-- Binder, then give its new `deleteScotDanceAccount` the same public-invoker setting as its other callables.
+- Binder: functions **and Firestore indexes** (account deletion adds five; the emulators would not show a
+  missing one). Then run the `--no-invoker-iam-check` command its AGENTS.md gives for
+  `deletescotdanceaccount`; until then the hub's deletion calls are refused and simply retry.
 - Challenge. Its callables need no invoker step.
 
 Nothing changes for people yet: the hub is still sending old passes, and the tools still take them.
