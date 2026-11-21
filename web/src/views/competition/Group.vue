@@ -194,10 +194,20 @@ function openSponsor(e: MouseEvent) {
   sponsorSheet.show(e)
 }
 
+// Opened at a dance (#dance-…): go there once, as soon as it's on the page.
+// Never again for the same link: live results adding a dance would
+// otherwise pull you back mid-scroll.
+let focused = ''
 function focusHash() {
   const match = route.hash.match(/^#dance-(.+)$/)
-  if (!match) return
-  nextTick(() => document.getElementById(`dance-${match[1]}`)?.scrollIntoView({ block: 'start' }))
+  const want = match ? `${groupId.value}${route.hash}` : ''
+  if (!match || focused === want) return
+  nextTick(() => {
+    const el = document.getElementById(`dance-${match[1]}`)
+    if (!el) return
+    focused = want
+    el.scrollIntoView({ block: 'start' })
+  })
 }
 watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { immediate: true })
 </script>
