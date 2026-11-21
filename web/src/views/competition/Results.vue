@@ -261,7 +261,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
                     :key="m.key"
                     :color="m.color"
                     :name="m.name"
-                    :details="[m.medals.length ? null : 'No placings yet']"
+                    :details="[m.medals.length ? null : r.posted && r.posted >= r.total ? 'Not placed' : 'No placings yet']"
                     class="mt-1"
                   >
                     <span v-if="m.medals.length" class="flex items-center gap-1">

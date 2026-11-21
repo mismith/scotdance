@@ -18,8 +18,7 @@ const fill = (c: string | null) => solidOf(c) ?? 'var(--primary)'
         v-for="(c, i) in props.colors.slice(0, max)"
         :key="i"
         class="size-4"
-        :fill="fill(c)"
-        :stroke="colors.length > 1 ? 'var(--background)' : fill(c)"
+        :style="{ fill: fill(c), stroke: colors.length > 1 ? 'var(--background)' : fill(c) }"
         :stroke-width="colors.length > 1 ? 1.25 : 1"
         stroke-linejoin="round"
       />

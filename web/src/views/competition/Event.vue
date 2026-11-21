@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { shortName } from '@/lib/entries'
-import { solidOf } from '@/lib/tartan'
 import { useMorph } from '@/lib/morph'
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import { computed, onMounted, ref } from 'vue'
@@ -164,7 +163,7 @@ const sections = computed(() =>
         // Your dancers on it, for the dots on the peek when it's further along.
         const ids = new Set<string>()
         const dots = p.groups.flatMap((g) => g.mine).filter((m) => !ids.has(m.dancer.id) && ids.add(m.dancer.id))
-        return { ...p, dots: dots.map((m) => ({ id: m.dancer.id, color: solidOf(m.color) ?? 'var(--primary)' })) }
+        return { ...p, dots: dots.map((m) => ({ id: m.dancer.id, color: m.color })) }
       }),
     }
   }),

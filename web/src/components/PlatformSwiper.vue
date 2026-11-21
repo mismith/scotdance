@@ -51,7 +51,7 @@ function go(i: number) {
 export interface SwipePlatform {
   id: string
   name: string
-  dots: { id: string; color: string }[]
+  dots: { id: string; color: string | null }[]
 }
 </script>
 
