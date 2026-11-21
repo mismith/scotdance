@@ -149,7 +149,7 @@ test('an invited helper accepts and can change the organisation’s page, until 
     await guest.goto(`/organisations/${mine}/invites/${inviteId}`)
     await expect(guest.getByText(`Help manage My Series ${mine}`)).toBeVisible()
     await guest.getByRole('button', { name: 'Accept' }).click()
-    await expect(guest.getByText(`You can manage My Series ${mine}`)).toBeVisible()
+    await expect(guest).toHaveURL(new RegExp(`/organisations/${mine}/manage`))
     await expect.poll(() => dbGet(`users:permissions/${guestAccount.uid}/organisations/${mine}`)).toBe(true)
     expect((await as(guestAccount, 'PATCH', `organisations/${mine}`, { location: 'Calgary, AB' })).ok).toBe(true)
 

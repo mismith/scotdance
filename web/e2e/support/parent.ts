@@ -123,8 +123,8 @@ export async function openAccount(page: Page) {
 /** Exercise the extracted form against emulators without navigating to live Connect. */
 export async function openAccountForm(page: Page) {
   await openAccount(page)
-  await expect(page.getByRole('link', { name: 'Edit your ScotDance account →' })).toHaveAttribute(
-    'href', 'https://connect.scotdance.app/?section=account',
+  await expect(page.getByRole('link', { name: 'Manage your account →' })).toHaveAttribute(
+    'href', 'https://connect.scotdance.app/account',
   )
   await expect(page.getByRole('button', { name: 'Delete account', exact: true })).toHaveCount(0)
   await page.goto('/account-test.html')

@@ -188,7 +188,7 @@ test('Account shows what an AI assistant changed: newest first, undone marked, n
   const connection = Object.keys((await dbGet<Record<string, unknown>>(`users:connections/${organiserId}`)) ?? {})[0]
   await page.goto('/profile')
   const section = assistantsSection(page)
-  const open = () => section.getByRole('button', { name: 'What E2E Assistant changed' }).click()
+  const open = () => section.getByRole('button', { name: 'Audit log for E2E Assistant' }).click()
 
   // Nothing yet
   await open()

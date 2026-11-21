@@ -66,15 +66,14 @@ test('an invited helper accepts from the emailed link, then loses access when re
     await expect(guest.getByText(`You’re invited to help manage ${comp.name}`)).toBeVisible()
     await guest.getByRole('button', { name: 'Sign in to accept' }).click()
     await signInOnSheet(guest, guestEmail)
+    // Accepting goes straight to the competition's Manage page.
     await guest.getByRole('button', { name: 'Accept' }).click()
-    await expect(guest.getByText(`You can manage ${comp.name}`)).toBeVisible()
+    await expect(guest).toHaveURL(new RegExp(`/competitions/${comp.id}/manage`))
+    await expect(guest.getByRole('heading', { name: comp.name })).toBeVisible()
     expect(await dbGet(`users:permissions/${guestId}/competitions/${comp.id}`)).toBe(true)
 
     // The organiser sees them arrive.
     await expect(page.getByRole('listitem').filter({ hasText: guestEmail }).getByText(/^Accepted/)).toBeVisible()
-
-    await guest.getByRole('link', { name: 'Start managing' }).click()
-    await expect(guest.getByRole('heading', { name: comp.name })).toBeVisible()
 
     await page.getByRole('listitem').filter({ hasText: guestEmail }).getByRole('button', { name: 'Remove' }).click()
     await page.locator('dialog[open]').getByRole('button', { name: 'Remove' }).click()
@@ -110,7 +109,7 @@ test('a cancelled invite says so, and sending it again lets them in', async ({ p
     // The server resets the invite as it re-sends it; the email takes longer than that.
     await guest.waitForTimeout(3000)
     await guest.getByRole('button', { name: 'Accept' }).click()
-    await expect(guest.getByText(`You can manage ${comp.name}`)).toBeVisible()
+    await expect(guest).toHaveURL(new RegExp(`/competitions/${comp.id}/manage`))
   } finally {
     await guest.context().close()
     await Promise.all([removeCompetition(comp.id), dbRemove(`users:permissions/${orgId}`), dbRemove(`users:permissions/${guestId}`)])
