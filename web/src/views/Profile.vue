@@ -8,6 +8,7 @@ import { confirm, toast } from '@/lib/admin/feedback'
 import { friendlyError } from '@/lib/admin/write'
 import { assistantAddress, connectionDate, connectionsFrom, disconnect, type Connection } from '@/lib/assistants'
 import { useAuthStore } from '@/stores/auth'
+import { isNative } from '@/lib/native'
 import { useMeStore } from '@/stores/me'
 import MeAvatar from '@/components/MeAvatar.vue'
 import Dialog from '@/components/Dialog.vue'
@@ -16,6 +17,22 @@ import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
 
 const auth = useAuthStore()
+
+// In the app, Connect opens in Safari, which doesn't share the app's sign-in:
+// a fresh token goes with it (after the #, never sent to a server), so it
+// arrives signed in. Connect takes it out of the address bar straight away,
+// and its server refuses one over two minutes old or used before. On the web,
+// Connect already shares this site's sign-in.
+const CONNECT_ACCOUNT = 'https://connect.scotdance.app/account'
+async function openConnect(e: MouseEvent) {
+  if (!isNative || !auth.user) return
+  e.preventDefault()
+  try {
+    location.href = `${CONNECT_ACCOUNT}#token=${encodeURIComponent(await auth.user.getIdToken(true))}`
+  } catch {
+    location.href = CONNECT_ACCOUNT
+  }
+}
 const me = useMeStore()
 const router = useRouter()
 
@@ -99,7 +116,7 @@ async function handleSignOut() {
 
       <section class="space-y-2">
         <p class="text-base">Your ScotDance.app account works across multiple tools. ScotDance Connect lets you update your details in one place and control which tools can use them.</p>
-        <a href="https://connect.scotdance.app/account" class="text-primary text-callout font-semibold">Manage your account →</a>
+        <a :href="CONNECT_ACCOUNT" class="text-primary text-callout font-semibold" @click="openConnect">Manage your account →</a>
       </section>
 
       <section v-if="me.canManageAny || assistants.length" class="space-y-2">

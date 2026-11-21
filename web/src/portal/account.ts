@@ -114,8 +114,25 @@ export const useConnectAccount = defineStore('connect-account', () => {
       identityUntil = Date.now() + 50 * 60 * 1000
     })
   }
+  // Opened from the ScotDance.app app (Profile › Manage your account): a fresh
+  // sign-in token rides in the link's #token, so Safari arrives signed in. It
+  // never reaches a server in the URL; take it out of the address bar at once.
+  // The API still refuses one that's over two minutes old or used before.
+  function tokenFromLink() {
+    const token = new URLSearchParams(location.hash.slice(1)).get('token')
+    if (token) history.replaceState(history.state, '', location.pathname + location.search)
+    return token
+  }
   async function initialize(openAccount: boolean) {
     try {
+      const linked = tokenFromLink()
+      if (linked) {
+        try {
+          await refresh(linked)
+          rememberSignOut(false)
+          return
+        } catch { /* Too old or used: sign in as usual. */ }
+      }
       if (explicitlySignedOut()) { clear(); return }
       await load()
     }
