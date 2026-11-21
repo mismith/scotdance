@@ -1,5 +1,5 @@
 What's new
-- Fewer, tidier results notifications: one per dance, and one that updates when results come in quickly
+- Look in several provinces or states at once
 - Fixes and improvements
 
 Share your ideas from the More menu.
