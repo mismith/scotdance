@@ -127,7 +127,7 @@ async function openAtToday() {
 </script>
 
 <template>
-  <div class="space-y-3">
+  <div class="section-breaks space-y-3">
     <header :ref="setHeader" class="space-y-1 pt-0.5">
       <h1 class="text-hero">Schedule</h1>
     </header>

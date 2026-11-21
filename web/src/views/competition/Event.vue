@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { shortName } from '@/lib/entries'
+import { solidOf } from '@/lib/tartan'
 import { useMorph } from '@/lib/morph'
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import { computed, onMounted, ref } from 'vue'
@@ -11,6 +12,7 @@ import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import DrawDialog from '@/components/DrawDialog.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import PlatformSwiper from '@/components/PlatformSwiper.vue'
 import StaffAvatar from '@/components/StaffAvatar.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
 import { dances as eventDances, dayLabel, days, getScheduleDanceName, platformLabel, slugline } from '@/lib/schedule'
@@ -158,7 +160,12 @@ const sections = computed(() =>
       sd,
       name: dance?.fullName || custom || null,
       realName: custom && dance?.name && custom !== dance.name && custom !== dance.fullName ? custom : null,
-      platforms: sd.danceId ? platformsFor(sd) : [],
+      platforms: (sd.danceId ? platformsFor(sd) : []).map((p) => {
+        // Your dancers on it, for the dots on the peek when it's further along.
+        const ids = new Set<string>()
+        const dots = p.groups.flatMap((g) => g.mine).filter((m) => !ids.has(m.dancer.id) && ids.add(m.dancer.id))
+        return { ...p, dots: dots.map((m) => ({ id: m.dancer.id, color: solidOf(m.color) ?? 'var(--primary)' })) }
+      }),
     }
   }),
 )
@@ -197,7 +204,7 @@ const judging = computed(() => {
 </script>
 
 <template>
-  <article class="space-y-4">
+  <article class="section-breaks space-y-4">
     <!-- The page's shape, if it's slow to come (skeletons wait 150ms). -->
     <div v-if="schedule === null" class="space-y-4" aria-busy="true">
       <span class="sr-only">Loading…</span>
@@ -223,10 +230,11 @@ const judging = computed(() => {
 
       <p v-if="!sections.length" class="text-muted-foreground text-base">Nothing is scheduled in this part yet.</p>
 
-      <!-- Each dance: its name as a heading, then each platform over its age groups. -->
-      <section v-for="(s, i) in sections" :key="s.sd.id" class="space-y-2 pt-2">
-        <div class="space-y-0.5">
-          <h2 class="text-section">{{ s.name ?? `Dance ${i + 1}` }}</h2>
+      <!-- Each dance: its name as a heading, then its platforms side by side
+           (they dance at the same time), each over its age groups in order. -->
+      <section v-for="(s, i) in sections" :key="s.sd.id" class="pt-2">
+        <div class="space-y-0.5 pb-2">
+          <h2 class="text-section" :data-section="s.name ?? `Dance ${i + 1}`">{{ s.name ?? `Dance ${i + 1}` }}</h2>
           <p v-if="s.realName" class="text-muted-foreground text-sm">{{ s.realName }}</p>
           <div
             v-if="s.sd.description"
@@ -234,16 +242,12 @@ const judging = computed(() => {
             v-html="sanitizeRichText(s.sd.description)"
           />
         </div>
-
-        <p v-if="s.sd.danceId && !s.platforms.length" class="text-muted-foreground text-base">
-          Platforms haven’t been assigned yet.
-        </p>
-
-        <div v-for="p in s.platforms" :key="p.id" class="pt-1">
+        <PlatformSwiper :platforms="s.platforms">
+          <template #default="{ platform: p }">
           <!-- The platform and its judges in one line over its age groups
                ("Platform 1 · Mary Munro"); each judge opens their sheet. -->
-          <div class="flex items-start gap-x-1.5 pb-1">
-            <h3 class="text-callout flex h-8 shrink-0 items-center font-semibold">{{ p.name }}</h3>
+          <div class="flex items-start gap-x-1.5 px-4 pb-1">
+            <h3 class="text-muted-foreground text-callout flex h-8 shrink-0 items-center font-semibold">{{ p.name }}</h3>
             <template v-if="p.judges.length">
               <span class="text-muted-foreground text-callout flex h-8 items-center" aria-hidden="true">·</span>
               <!-- (More than fit wrap under the first judge.) -->
@@ -261,7 +265,7 @@ const judging = computed(() => {
               </span>
             </template>
           </div>
-          <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
+          <ul class="rows-engraved [--inset:1rem] [--inset-end:1rem]">
             <li v-for="g in p.groups" :key="g.id" class="relative">
               <!-- The whole row opens the order (its tint spans it); a posted
                    age group's Results link sits on top, at the right. A trophy
@@ -305,7 +309,11 @@ const judging = computed(() => {
               </RouterLink>
             </li>
           </ul>
-        </div>
+          </template>
+        </PlatformSwiper>
+        <p v-if="s.sd.danceId && !s.platforms.length" class="text-muted-foreground pt-2 text-base">
+          Platforms haven’t been assigned yet.
+        </p>
       </section>
     </template>
 

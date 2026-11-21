@@ -1,16 +1,14 @@
 <script setup lang="ts">
-import { solidOf } from '@/lib/tartan'
+import DancerStars from '@/components/DancerStars.vue'
 
-// One of your dancers inside a list row: a dot in their colour, their first
-// name, then quieter details. The dot is the app's one signal for "yours";
-// stars are only ever the Favourite button. (A tartan's dot is its first
-// colour: cloth doesn't read at 10px.)
+// One of your dancers inside a list row: a star in their colour (the app's
+// one mark for "yours", DancerStars), their first name, then quieter details.
 defineProps<{ color: string | null; name: string; details?: Array<string | null | undefined> }>()
 </script>
 
 <template>
   <span class="flex min-w-0 items-center gap-2 text-sm leading-snug">
-    <span class="size-2.5 shrink-0 rounded-full" :style="{ background: solidOf(color) ?? 'var(--primary)' }" aria-hidden="true" />
+    <DancerStars :colors="[color]" />
     <span class="shrink-0 font-semibold">{{ name }}</span>
     <span v-if="details?.some(Boolean)" class="text-muted-foreground truncate">{{ details.filter(Boolean).join(' · ') }}</span>
     <slot />

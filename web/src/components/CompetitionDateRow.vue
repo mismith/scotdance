@@ -5,18 +5,18 @@ import { Bell, ChevronRight } from '@lucide/vue'
 import { useFollowing } from '@/composables/useFollowing'
 import { useHiddenAs } from '@/composables/useHiddenAs'
 import CompetitionName from '@/components/CompetitionName.vue'
+import DancerStars from '@/components/DancerStars.vue'
 import DateTile from '@/components/DateTile.vue'
 import LinkRail from '@/components/LinkRail.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import { useMeStore } from '@/stores/me'
 import { isSameDay } from '@/lib/format'
-import { solidOf } from '@/lib/tartan'
 import type { RailPosition } from '@/lib/linked'
 import type { Competition } from '@/types/competition'
 
 // A competition as a row: a calendar date block (what people scan for, pink
 // while it's on), the name, the town, then a short note ("Day 2 of 2"), and
-// your dancers as coloured dots (or "Alerts on", with none). Its admins also see the shield and, until
+// your dancers as coloured stars (or "Alerts on", with none). Its admins also see the shield and, until
 // it's published, how it's hidden. The name leads with its organisation's
 // short name (CompetitionName); on that organisation's own page (`within`),
 // without it. Lists put these in a frameless `rows-engraved` list with
@@ -103,14 +103,7 @@ const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.c
             :class="['text-sm font-medium', noteTone === 'live' ? 'text-live' : noteTone === 'venue' ? 'text-next-foreground' : 'text-muted-foreground']"
           >{{ note }}</span>
           <span v-if="dancers.length" class="flex min-w-0 items-center gap-1.5 text-sm font-medium">
-            <span class="flex shrink-0 gap-0.5" aria-hidden="true">
-              <span
-                v-for="x in dancers.slice(0, 4)"
-                :key="x.id"
-                class="size-2.5 rounded-full"
-                :style="{ background: solidOf(following.colorFor(x.id)) ?? 'var(--primary)' }"
-              />
-            </span>
+            <DancerStars :colors="dancers.map((x) => following.colorFor(x.id))" :max="4" />
             <span class="truncate">{{ dancers.map((x) => x.name).join(', ') }}</span>
           </span>
           <span v-else-if="alerts" class="text-muted-foreground inline-flex items-center gap-1 text-sm">

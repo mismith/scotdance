@@ -981,6 +981,18 @@ html:not([data-native])::before {
   }
 }
 
+/* Chapters of a long page (a day's dances, a schedule's days): an engraved
+   line with room either side, so where one ends is clear at a glance. */
+@utility section-breaks {
+  & > section + section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    background-image: linear-gradient(var(--engrave-cut) 0 1px, var(--engrave-lit) 1px 2px);
+    background-size: 100% 2px;
+    background-repeat: no-repeat;
+  }
+}
+
 /* frameless: manage */
 /* One engraved line on a row's own edge (top, or bg-bottom), where the rows
    can't be siblings in rows-engraved: a list set in columns, a grid's rows. */
