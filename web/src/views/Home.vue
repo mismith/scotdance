@@ -4,10 +4,11 @@ import LogoMark from '@/components/LogoMark.vue'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useIntervalFn } from '@vueuse/core'
-import { ChevronRight, Search, Sparkles, X } from '@lucide/vue'
+import { ChevronRight, Clock, Search, Sparkles, Trophy, Users, X } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
+import CompetitionHeading from '@/components/CompetitionHeading.vue'
 import DancerDayCard from '@/components/DancerDayCard.vue'
 import DancerCompactRow from '@/components/DancerCompactRow.vue'
 import { useLiveAlertState } from '@/composables/useLiveAlerts'
@@ -133,8 +134,7 @@ function todayKicker(g: CompetitionGroup) {
 }
 function groupKicker(g: CompetitionGroup) {
   const f = g.cards[0].focus!
-  const when = g.competition.date ? formatShortDate(g.competition.date) : null
-  return [f.phase === 'before' ? 'Next' : 'Last', when, g.competition.location].filter(Boolean).join(' · ')
+  return [f.phase === 'before' ? 'Next' : 'Last', g.competition.location].filter(Boolean).join(' · ')
 }
 
 // One line under the greeting that answers "what now?", always in the same
@@ -267,6 +267,14 @@ const showWhatsNew = computed(
 )
 
 const { freshKey: liveFresh } = useLiveAlertState()
+
+// Under today's competition: straight to the tabs people go there for.
+const COMPETITION_TABS = [
+  { name: 'competition.schedule', label: 'Schedule', icon: Clock },
+  { name: 'competition.results', label: 'Results', icon: Trophy },
+  { name: 'competition.dancers', label: 'Dancers', icon: Users },
+] as const
+
 </script>
 
 <template>
@@ -330,12 +338,8 @@ const { freshKey: liveFresh } = useLiveAlertState()
           :style="settleDelay(i)"
         >
           <h2 :id="`today-${g.competitionId}`">
-            <RouterLink
-              :to="{ name: 'competition.info', params: { competitionId: g.competitionId } }"
-              class="press-row -mx-4 flex items-center gap-2 py-1 pr-3 pl-4"
-            >
-              <span class="min-w-0 flex-1">
-                <span class="text-title block">{{ g.competition.name }}</span>
+            <CompetitionHeading :competition-id="g.competitionId" :name="g.competition.name" :date="g.competition.date" today>
+              <template #kicker>
                 <span :class="['text-callout flex items-center gap-1.5 font-semibold', connected ? 'text-live' : 'text-muted-foreground']">
                   <span
                     :class="[
@@ -347,10 +351,21 @@ const { freshKey: liveFresh } = useLiveAlertState()
                   />
                   <span class="truncate">{{ todayKicker(g) }}</span>
                 </span>
-              </span>
-              <ChevronRight class="text-muted-foreground size-5 shrink-0" />
-            </RouterLink>
+              </template>
+            </CompetitionHeading>
           </h2>
+          <!-- Its tabs a tap away (not two through Competitions), which also
+               marks this as the competition, over your dancers. -->
+          <nav :aria-label="g.competition.name" class="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
+            <RouterLink
+              v-for="t in COMPETITION_TABS"
+              :key="t.name"
+              :to="{ name: t.name, params: { competitionId: g.competitionId } }"
+              class="press button-fill text-primary text-callout flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 font-semibold"
+            >
+              <component :is="t.icon" class="size-4.5" aria-hidden="true" />{{ t.label }}
+            </RouterLink>
+          </nav>
           <ul v-if="compact" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
             <DancerCompactRow v-for="card in g.cards" :key="card.id" :card="card" :color="cardColor(card)" />
           </ul>
@@ -401,7 +416,10 @@ const { freshKey: liveFresh } = useLiveAlertState()
         </section>
 
         <!-- Your dancers (the rest), or the ones looked at lately -->
-        <section v-if="people.length && (others.length || showingRecent || !todays.length)" class="space-y-2.5">
+        <section
+          v-if="people.length && (others.length || showingRecent || !todays.length)"
+          :class="['space-y-2.5', todays.length && 'engraved-line mt-3 pt-6']"
+        >
           <h2 class="text-section flex min-h-6 items-center justify-between">
             {{ showingRecent ? 'Recently viewed' : 'Your dancers' }}
             <RouterLink
@@ -439,16 +457,11 @@ const { freshKey: liveFresh } = useLiveAlertState()
 
           <template v-else-if="compact">
             <div v-for="(g, i) in otherGroups" :key="g.competitionId" :class="['space-y-1.5', settle]" :style="settleDelay(i)">
-              <RouterLink
-                :to="{ name: 'competition.info', params: { competitionId: g.competitionId } }"
-                class="press-row -mx-4 flex items-center gap-2 py-1 pr-3 pl-4"
-              >
-                <span class="min-w-0 flex-1">
-                  <span class="text-muted-foreground block truncate text-footnote">{{ groupKicker(g) }}</span>
-                  <span class="block truncate text-base font-semibold">{{ g.competition.name }}</span>
-                </span>
-                <ChevronRight class="text-muted-foreground size-5 shrink-0" />
-              </RouterLink>
+              <CompetitionHeading :competition-id="g.competitionId" :name="g.competition.name" :date="g.competition.date">
+                <template #kicker>
+                  <span class="text-muted-foreground text-callout block truncate">{{ groupKicker(g) }}</span>
+                </template>
+              </CompetitionHeading>
               <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
                 <DancerCompactRow v-for="card in g.cards" :key="card.id" :card="card" :color="cardColor(card)" />
               </ul>

@@ -152,7 +152,7 @@ async function openAtToday() {
       "
     />
 
-    <section v-for="d in empty ? [] : dayList" :id="`day-${d.day.id}`" :key="d.day.id" class="scroll-mt-(--chrome-top) space-y-3">
+    <section v-for="d in empty ? [] : dayList" :id="`day-${d.day.id}`" :key="d.day.id" class="section-breaks scroll-mt-(--chrome-top) space-y-3">
       <h2 v-if="dayList.length > 1" :data-section="d.relative ?? d.label" class="text-section flex items-baseline gap-2 pt-2">
         {{ d.relative ?? d.label }}
         <span v-if="d.relative" class="text-muted-foreground text-base font-medium">{{ d.label }}</span>
@@ -171,12 +171,12 @@ async function openAtToday() {
       >
         <h3
           :data-section="[dayList.length > 1 ? d.relative ?? d.label : null, b.block.name || 'Session', b.time].filter(Boolean).join(' · ')"
-          class="text-muted-foreground text-callout flex flex-wrap items-baseline justify-between gap-x-2 py-2 font-semibold"
+          :class="['flex flex-wrap items-baseline justify-between gap-x-2 pb-2', dayList.length > 1 ? 'text-heading pt-1' : 'text-section']"
         >
           <span class="truncate">{{ b.block.name || 'Session' }}</span>
           <!-- Usually a time ("9:30 am"), but organisers write sentences here
                too: a long one wraps onto its own line, never widens the page. -->
-          <span v-if="b.time" class="min-w-0 font-medium tabular-nums">{{ b.time }}</span>
+          <span v-if="b.time" class="text-muted-foreground text-callout min-w-0 font-medium tabular-nums">{{ b.time }}</span>
         </h3>
         <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
           <li v-for="e in b.events" :key="e.event.id">

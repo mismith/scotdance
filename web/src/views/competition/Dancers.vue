@@ -221,7 +221,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       leave-active-class="transition-opacity duration-(--dur-instant) ease-exit"
       leave-to-class="opacity-0"
     >
-      <div :key="`${mineOnly}:${sortBy}`" class="space-y-3">
+      <div :key="`${mineOnly}:${sortBy}`" class="section-breaks space-y-3">
         <EmptyState
           v-if="!sections.length && mineOnly"
           size="inline"
@@ -234,7 +234,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         </p>
 
         <section v-for="s in sections" :key="s.key">
-          <h2 :data-section="s.label" class="text-muted-foreground text-callout font-semibold">
+          <h2 :data-section="s.label" class="text-section">
             <button
               v-if="canCollapse"
               type="button"
@@ -252,11 +252,11 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
                   ]"
                 />
               </span>
-              <span class="shrink-0 font-medium tabular-nums">{{ s.rows.length }}</span>
+              <span class="text-muted-foreground text-callout shrink-0 font-medium tabular-nums">{{ s.rows.length }}</span>
             </button>
             <span v-else class="flex items-baseline justify-between gap-2 py-2">
               <span class="truncate">{{ s.label }}</span>
-              <span class="shrink-0 font-medium tabular-nums">{{ s.rows.length }}</span>
+              <span class="text-muted-foreground text-callout shrink-0 font-medium tabular-nums">{{ s.rows.length }}</span>
             </span>
           </h2>
           <!-- A group folds away and opens smoothly, as About's answers do,

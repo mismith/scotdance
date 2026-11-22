@@ -232,9 +232,9 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
       leave-active-class="transition-opacity duration-(--dur-instant) ease-exit"
       leave-to-class="opacity-0"
     >
-      <div :key="String(mineOnly)" class="space-y-3">
+      <div :key="String(mineOnly)" class="section-breaks space-y-3">
         <section v-for="s in blocks" :key="s.key" :data-section="s.heading ?? ''">
-          <h2 v-if="s.heading" class="text-muted-foreground text-callout py-2 font-semibold">
+          <h2 v-if="s.heading" class="text-section pb-2">
             {{ s.heading }}
           </h2>
           <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
@@ -286,7 +286,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
         </section>
 
         <section v-if="trophyEventRows.length" data-section="Trophy events">
-          <h2 class="text-muted-foreground text-callout py-2 font-semibold">Trophy events</h2>
+          <h2 class="text-section pb-2">Trophy events</h2>
           <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
             <li v-for="r in trophyEventRows" :key="r.trophyEvent.id">
               <RouterLink
