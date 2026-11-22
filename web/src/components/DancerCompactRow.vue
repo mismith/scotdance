@@ -36,15 +36,17 @@ const competitionDancer = computed(() => own.value.find((d) => d.dances.length) 
 const stage = computed(() => (f.value?.phase === 'today' && days.value.length ? dayStage(days.value) : null))
 // Their placings in the order they danced them (not just the best: that
 // would flatter), the overall and trophy events after. Their own; a team's
-// only when they dance in nothing else. They overlap like dealt cards, each
-// newer one on top of the one before (colour and shape still say the place),
-// three at most, then "+N".
+// only when they dance in nothing else. Oldest to newest, left to right: the
+// latest three, each newer one stacked on top of the one before (colour and
+// shape still say the place), so an overall or trophy awarded last is the
+// one you see whole; "+N" after, for the earlier ones.
 const placings = computed(() =>
   (own.value.length ? own.value : days.value)
     .flatMap((d) => [...d.dances, ...(d.overall ? [d.overall] : []), ...d.trophyEvents])
     .filter((x) => x.state === 'placed' && x.place != null),
 )
 const SHOWN = 3
+const shown = computed(() => placings.value.slice(-SHOWN))
 
 // Over, results in, and no placing: said, so it doesn't read as results to come.
 const unplaced = computed(
@@ -107,7 +109,7 @@ const to = computed(() =>
       <span v-else-if="placings.length && f?.phase !== 'before'" class="flex shrink-0 items-center gap-1">
         <span class="flex -space-x-7">
           <Medal
-            v-for="(p, i) in placings.slice(0, SHOWN)"
+            v-for="(p, i) in shown"
             :key="i"
             :style="{ zIndex: i }"
             class="[filter:drop-shadow(-1.5px_0_0_var(--background))]"
