@@ -260,7 +260,7 @@ test('signing out clears your dancers; the next account sees only its own', asyn
   await expect(page.getByRole('button', { name: `Favourite ${person.name}`, pressed: false })).toBeVisible()
 })
 
-test('following lots: Home shows the few that matter, and See all lists everyone', async ({ page }) => {
+test('following lots: everyone dancing today is on Home, and See all lists everyone', async ({ page }) => {
   // The third entry of seven age groups, which no other test here follows.
   const ps: Person[] = []
   for (let g = 0; g < 7; g++) ps.push(await follow(g, 2))
@@ -271,7 +271,8 @@ test('following lots: Home shows the few that matter, and See all lists everyone
   const seeAll = page.getByRole('link', { name: 'See all 7' })
   await expect(seeAll).toBeVisible()
   const onHome = async () => (await Promise.all(ps.map((p) => page.getByText(p.name, { exact: true }).count()))).filter(Boolean).length
-  await expect.poll(onHome).toBe(6)
+  // All seven are at today's competition: on the day, none are left off.
+  await expect.poll(onHome).toBe(7)
 
   await seeAll.click()
   await expect(page).toHaveURL(/\/dancers$/)

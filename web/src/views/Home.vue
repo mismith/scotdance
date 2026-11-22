@@ -111,10 +111,18 @@ function byCompetition(list: DancerCard[]): CompetitionGroup[] {
   }
   return [...map.values()]
 }
-const todays = computed(() => byCompetition(shownCards.value.filter(isToday)))
+// Today: every one of yours at the competition, not just the top few.
+const todays = computed(() => byCompetition(ranked.value.filter(isToday)))
+// The rest share what's left of the six, each competition's extras a tap away.
+const othersAll = computed(() => ranked.value.filter((c) => !isToday(c)))
 const others = computed(() => shownCards.value.filter((c) => !isToday(c)))
 // A teacher's class, grouped by where they're dancing next (or last).
-const otherGroups = computed(() => byCompetition(others.value))
+const otherGroups = computed(() =>
+  byCompetition(others.value).map((g) => ({ ...g, all: othersAll.value.filter((c) => c.focus?.competitionId === g.competitionId) })),
+)
+const expanded = ref<string[]>([])
+const toggleMore = (id: string) =>
+  (expanded.value = expanded.value.includes(id) ? expanded.value.filter((x) => x !== id) : [...expanded.value, id])
 const unplaced = computed(() => others.value.filter((c) => !c.focus))
 
 // Finished dancers fold to a line of ribbons, so the ones still dancing
@@ -463,8 +471,23 @@ const COMPETITION_TABS = [
                 </template>
               </CompetitionHeading>
               <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
-                <DancerCompactRow v-for="card in g.cards" :key="card.id" :card="card" :color="cardColor(card)" />
+                <DancerCompactRow
+                  v-for="card in expanded.includes(g.competitionId) ? g.all : g.cards"
+                  :key="card.id"
+                  :card="card"
+                  :color="cardColor(card)"
+                />
               </ul>
+              <!-- The rest of yours at this competition, in place, and back. -->
+              <button
+                v-if="g.all.length > g.cards.length"
+                type="button"
+                class="text-primary press -mx-2 flex h-11 items-center rounded-full px-2 text-callout font-semibold"
+                :aria-expanded="expanded.includes(g.competitionId)"
+                @click="toggleMore(g.competitionId)"
+              >
+                {{ expanded.includes(g.competitionId) ? 'Show fewer' : `Show ${g.all.length - g.cards.length} more` }}
+              </button>
             </div>
             <ul v-if="unplaced.length" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
               <DancerCompactRow v-for="card in unplaced" :key="card.id" :card="card" :color="cardColor(card)" />
