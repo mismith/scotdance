@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
 import { CalendarOff, ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
@@ -16,8 +16,9 @@ import { now } from '@/lib/now'
 
 // A month at a time, Monday first (Highland competitions are weekend
 // events; a week shouldn't split one). Days with competitions are tinted;
-// the chosen day is a solid disc that moves from cell to cell. Months slide,
-// and can be swiped. Beside it on wide screens (below on phones), what's on
+// the chosen day is a solid disc that moves from cell to cell. The months
+// either side wait just off screen, so a swipe drags them along under your
+// thumb, and the arrows slide them the same way. Beside it on wide screens (below on phones), what's on
 // the chosen day, or the whole month.
 const props = withDefaults(
   defineProps<{
@@ -56,8 +57,6 @@ const start = fromParam(route.query.date)
 
 const cursor = ref(start?.cursor ?? new Date(today.getFullYear(), today.getMonth(), 1))
 const selected = ref<Date | null>(start ? start.selected : new Date(today))
-// Which way the month moved, for the slide.
-const direction = ref<1 | -1>(1)
 
 const dateParam = computed(() => {
   if (!selected.value) return monthParam(cursor.value)
@@ -80,38 +79,37 @@ const monthEvents = computed(() =>
   }),
 )
 
-const eventsByDay = computed(() => {
-  const m = new Map<number, CompetitionListItem[]>()
-  for (const c of monthEvents.value) {
-    const d = parseDate(c.date!).getDate()
-    m.set(d, [...(m.get(d) ?? []), c])
+function cellsFor(month: Date) {
+  const byDay = new Map<number, number>()
+  for (const c of props.competitions) {
+    if (!c.date) continue
+    const d = parseDate(c.date)
+    if (d.getFullYear() === month.getFullYear() && d.getMonth() === month.getMonth()) byDay.set(d.getDate(), (byDay.get(d.getDate()) ?? 0) + 1)
   }
-  return m
-})
-
-const calendarCells = computed(() => {
-  const first = new Date(cursor.value.getFullYear(), cursor.value.getMonth(), 1)
+  const first = new Date(month.getFullYear(), month.getMonth(), 1)
   const startDow = (first.getDay() + 6) % 7
-  const last = new Date(cursor.value.getFullYear(), cursor.value.getMonth() + 1, 0)
+  const last = new Date(month.getFullYear(), month.getMonth() + 1, 0)
   const rows = Math.ceil((startDow + last.getDate()) / 7)
   const start = new Date(first)
   start.setDate(1 - startDow)
   return Array.from({ length: rows * 7 }, (_, i) => {
     const d = new Date(start)
     d.setDate(start.getDate() + i)
-    const inMonth = d.getMonth() === cursor.value.getMonth()
-    const dayEvents = inMonth ? (eventsByDay.value.get(d.getDate()) ?? []) : []
-    return {
-      date: d,
-      inMonth,
-      isToday: d.getTime() === today.getTime(),
-      eventCount: dayEvents.length,
-    }
+    const inMonth = d.getMonth() === month.getMonth()
+    return { date: d, inMonth, isToday: d.getTime() === today.getTime(), eventCount: inMonth ? (byDay.get(d.getDate()) ?? 0) : 0 }
   })
-})
+}
+const monthFrom = (delta: number) => new Date(cursor.value.getFullYear(), cursor.value.getMonth() + delta, 1)
+const calendarCells = computed(() => cellsFor(cursor.value))
+// The month before, this one and the one after, side by side.
+const months = computed(() =>
+  [-1, 0, 1].map((delta) => {
+    const m = monthFrom(delta)
+    return { key: `${m.getFullYear()}-${m.getMonth()}`, current: delta === 0, cells: delta === 0 ? calendarCells.value : cellsFor(m) }
+  }),
+)
 
 const monthLabel = computed(() => formatMonthYear(cursor.value))
-const monthKey = computed(() => `${cursor.value.getFullYear()}-${cursor.value.getMonth()}`)
 
 const onDay = (day: Date) => {
   const start = startOfDay(day).getTime()
@@ -168,22 +166,22 @@ const nearby = computed(() =>
 
 function goToDay(day: Date) {
   selectionHaptic()
-  direction.value = day < cursor.value ? -1 : 1
   cursor.value = new Date(day.getFullYear(), day.getMonth(), 1)
   selected.value = startOfDay(day)
 }
 
+function moveMonth(delta: 1 | -1) {
+  cursor.value = monthFrom(delta)
+}
 function shiftMonth(delta: 1 | -1) {
-  direction.value = delta
-  const next = new Date(cursor.value)
-  next.setMonth(next.getMonth() + delta)
-  cursor.value = next
-  selected.value = null
+  slideTo(delta, () => {
+    moveMonth(delta)
+    selected.value = null
+  })
 }
 
 function goToToday() {
   const there = new Date(today.getFullYear(), today.getMonth(), 1)
-  direction.value = there < cursor.value ? -1 : 1
   cursor.value = there
   selected.value = new Date(today)
 }
@@ -197,9 +195,11 @@ const isSelected = (d: Date) => !!selected.value && sameDay(d, selected.value)
 function selectDay(cell: { date: Date; inMonth: boolean }) {
   selectionHaptic()
   if (!cell.inMonth) {
-    direction.value = cell.date < cursor.value ? -1 : 1
-    cursor.value = new Date(cell.date.getFullYear(), cell.date.getMonth(), 1)
-    selected.value = startOfDay(cell.date)
+    const day = startOfDay(cell.date)
+    slideTo(cell.date < cursor.value ? -1 : 1, () => {
+      cursor.value = new Date(day.getFullYear(), day.getMonth(), 1)
+      selected.value = day
+    })
     return
   }
   selected.value = isSelected(cell.date) ? null : startOfDay(cell.date)
@@ -216,17 +216,93 @@ const dowLabels = Array.from({ length: 7 }, (_, i) =>
   new Date(2024, 0, 1 + i).toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2),
 )
 
-// A sideways swipe moves a month; vertical scrolling is left alone.
-let swipe: { x: number; y: number } | null = null
+// The strip of three months follows a sideways drag (vertical scrolling is
+// left to the page); let go past a quarter of the way, or with a flick, and
+// it settles on that month, otherwise back. A drag is never also a tap.
+const viewport = useTemplateRef<HTMLElement>('viewport')
+const offset = ref(0)
+const settling = ref(false)
+let afterSettle: (() => void) | null = null
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches
+
+function slideTo(delta: -1 | 0 | 1, then?: () => void) {
+  const width = viewport.value?.clientWidth ?? 0
+  if (reduceMotion() || !width) {
+    offset.value = 0
+    then?.()
+    return
+  }
+  const target = -delta * width
+  // Already there (a tap, not a drag): nothing to animate, so no transitionend.
+  if (offset.value === target) {
+    offset.value = 0
+    then?.()
+    return
+  }
+  afterSettle = then ?? null
+  settling.value = true
+  offset.value = target
+}
+function onSettled(e: TransitionEvent) {
+  if (e.target !== e.currentTarget) return
+  settling.value = false
+  offset.value = 0
+  const then = afterSettle
+  afterSettle = null
+  then?.()
+}
+
+let drag: { x: number; y: number; id: number; axis: 'x' | 'y' | null; lastX: number; lastT: number; vx: number } | null = null
+let dragged = false
 function onPointerDown(e: PointerEvent) {
-  if (e.pointerType !== 'mouse') swipe = { x: e.clientX, y: e.clientY }
+  if (e.pointerType === 'mouse' || settling.value) return
+  drag = { x: e.clientX, y: e.clientY, id: e.pointerId, axis: null, lastX: e.clientX, lastT: e.timeStamp, vx: 0 }
+  dragged = false
+}
+function onPointerMove(e: PointerEvent) {
+  if (!drag || e.pointerId !== drag.id) return
+  const dx = e.clientX - drag.x
+  const dy = e.clientY - drag.y
+  if (!drag.axis) {
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return
+    drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+    if (drag.axis === 'x') (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  }
+  if (drag.axis !== 'x') return
+  dragged = true
+  const dt = e.timeStamp - drag.lastT
+  if (dt > 0) drag.vx = (e.clientX - drag.lastX) / dt
+  drag.lastX = e.clientX
+  drag.lastT = e.timeStamp
+  offset.value = dx
 }
 function onPointerUp(e: PointerEvent) {
-  if (!swipe) return
-  const dx = e.clientX - swipe.x
-  const dy = e.clientY - swipe.y
-  swipe = null
-  if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.5) shiftMonth(dx < 0 ? 1 : -1)
+  if (!drag || e.pointerId !== drag.id) return
+  const { axis, vx } = drag
+  drag = null
+  if (axis !== 'x') return
+  const width = viewport.value?.clientWidth ?? 1
+  const dx = offset.value
+  const flick = Math.abs(vx) > 0.4 && Math.sign(vx) === Math.sign(dx)
+  if (Math.abs(dx) > width / 4 || (flick && Math.abs(dx) > 16)) {
+    const delta = dx < 0 ? 1 : -1
+    selectionHaptic()
+    slideTo(delta, () => {
+      moveMonth(delta)
+      selected.value = null
+    })
+  } else slideTo(0)
+}
+function onPointerCancel() {
+  if (drag?.axis === 'x') slideTo(0)
+  drag = null
+}
+// The tap that ends a drag isn't a tap on a day.
+function swallowDragClick(e: MouseEvent) {
+  if (!dragged) return
+  dragged = false
+  e.stopPropagation()
+  e.preventDefault()
 }
 </script>
 
@@ -260,53 +336,68 @@ function onPointerUp(e: PointerEvent) {
         <div v-for="(label, i) in dowLabels" :key="i" class="py-1 text-center">{{ label }}</div>
       </div>
 
-      <div class="grid touch-pan-y overflow-hidden" @pointerdown="onPointerDown" @pointerup="onPointerUp" @pointercancel="swipe = null">
-        <Transition
-          :enter-from-class="direction > 0 ? 'translate-x-6 opacity-0' : '-translate-x-6 opacity-0'"
-          :leave-to-class="direction > 0 ? '-translate-x-6 opacity-0' : 'translate-x-6 opacity-0'"
-          enter-active-class="transition-[translate,opacity] duration-(--dur-base) ease-standard motion-reduce:transition-opacity"
-          leave-active-class="transition-[translate,opacity] duration-(--dur-quick) ease-exit motion-reduce:transition-opacity"
+      <div
+        ref="viewport"
+        class="-mx-3 touch-pan-y overflow-hidden"
+        @pointerdown="onPointerDown"
+        @pointermove="onPointerMove"
+        @pointerup="onPointerUp"
+        @pointercancel="onPointerCancel"
+        @click.capture="swallowDragClick"
+      >
+        <div
+          :class="['flex w-[300%] items-start', settling && 'transition-transform duration-(--dur-base) ease-snappy']"
+          :style="{ transform: `translateX(calc(-100% / 3 + ${offset}px))` }"
+          @transitionend="onSettled"
         >
-          <div :key="monthKey" class="relative grid grid-cols-7 gap-1 [grid-area:1/1]">
-            <span
-              v-if="marker"
-              class="bg-primary-fill pointer-events-none absolute top-0 left-0 aspect-square w-[calc((100%-1.5rem)/7)] rounded-full transition-[translate] duration-(--dur-slow) ease-snappy motion-reduce:transition-none"
-              :style="{ translate: `calc(${marker.col} * (100% + 0.25rem)) calc(${marker.row} * (100% + 0.25rem))` }"
-              aria-hidden="true"
-            />
-            <button
-              v-for="(cell, i) in calendarCells"
-              :key="i"
-              type="button"
-              :aria-label="`${formatLongDate(cell.date.getTime())}${cell.eventCount ? `, ${cell.eventCount} competition${cell.eventCount === 1 ? '' : 's'}` : ''}`"
-              :aria-pressed="isSelected(cell.date)"
-              :class="[
-                'press focus-inset relative aspect-square rounded-full text-base tabular-nums transition-colors',
-                // Other months' days: quieter by colour, still readable (not faded).
-                !cell.inMonth && 'text-muted-foreground font-normal',
-                isSelected(cell.date)
-                  ? 'text-primary-foreground font-semibold'
-                  : cell.eventCount
-                    ? 'bg-blue-paper font-semibold hover:bg-[color-mix(in_oklab,var(--primary)_18%,var(--card))]'
-                    : cell.inMonth && 'hover:bg-[var(--tint-hover)]',
-                cell.isToday && !isSelected(cell.date) && 'ring-live text-live ring-2 ring-inset',
-              ]"
-              @click="selectDay(cell)"
-            >
-              <span class="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-[-58%]">{{ cell.date.getDate() }}</span>
-              <span v-if="cell.eventCount" class="absolute bottom-[18%] left-1/2 flex -translate-x-1/2 gap-0.5" aria-hidden="true">
-                <span
-                  v-for="n in Math.min(cell.eventCount, 3)"
-                  :key="n"
-                  :class="[
-                    'size-1 rounded-full',
-                    isSelected(cell.date) ? 'bg-primary-foreground' : 'bg-primary',
-                  ]"
-                />
-              </span>
-            </button>
+          <div
+            v-for="m in months"
+            :key="m.key"
+            class="w-1/3 px-3"
+            :aria-hidden="m.current ? undefined : 'true'"
+            :inert="!m.current"
+          >
+            <div class="relative grid grid-cols-7 gap-1">
+              <span
+                v-if="m.current && marker"
+                class="bg-primary-fill pointer-events-none absolute top-0 left-0 aspect-square w-[calc((100%-1.5rem)/7)] rounded-full transition-[translate] duration-(--dur-slow) ease-snappy motion-reduce:transition-none"
+                :style="{ translate: `calc(${marker.col} * (100% + 0.25rem)) calc(${marker.row} * (100% + 0.25rem))` }"
+                aria-hidden="true"
+              />
+              <button
+                v-for="(cell, i) in m.cells"
+                :key="i"
+                type="button"
+                :aria-label="`${formatLongDate(cell.date.getTime())}${cell.eventCount ? `, ${cell.eventCount} competition${cell.eventCount === 1 ? '' : 's'}` : ''}`"
+                :aria-pressed="(m.current && isSelected(cell.date))"
+                :class="[
+                  'press focus-inset relative aspect-square rounded-full text-base tabular-nums transition-colors',
+                  // Other months' days: quieter by colour, still readable (not faded).
+                  !cell.inMonth && 'text-muted-foreground font-normal',
+                  (m.current && isSelected(cell.date))
+                    ? 'text-primary-foreground font-semibold'
+                    : cell.eventCount
+                      ? 'bg-blue-paper font-semibold hover:bg-[color-mix(in_oklab,var(--primary)_18%,var(--card))]'
+                      : cell.inMonth && 'hover:bg-[var(--tint-hover)]',
+                  cell.isToday && !(m.current && isSelected(cell.date)) && 'ring-live text-live ring-2 ring-inset',
+                ]"
+                @click="selectDay(cell)"
+              >
+                <span class="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-[-58%]">{{ cell.date.getDate() }}</span>
+                <span v-if="cell.eventCount" class="absolute bottom-[18%] left-1/2 flex -translate-x-1/2 gap-0.5" aria-hidden="true">
+                  <span
+                    v-for="n in Math.min(cell.eventCount, 3)"
+                    :key="n"
+                    :class="[
+                      'size-1 rounded-full',
+                      (m.current && isSelected(cell.date)) ? 'bg-primary-foreground' : 'bg-primary',
+                    ]"
+                  />
+                </span>
+              </button>
+            </div>
           </div>
-        </Transition>
+        </div>
       </div>
     </div>
 
