@@ -6,7 +6,7 @@ import Avatar from '@/components/Avatar.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
-import { bestPlacing, dayStage } from '@/lib/dancerDay'
+import { dayStage } from '@/lib/dancerDay'
 import { formatShortDate } from '@/lib/format'
 import type { DancerCard } from '@/composables/useDancerCards'
 import { OVERALL_ID } from '@/types/competition'
@@ -34,17 +34,23 @@ const day = computed(() => days.value.find((d) => d.dances.length) ?? days.value
 const own = computed(() => days.value.filter((d) => !d.dancer.team))
 const competitionDancer = computed(() => own.value.find((d) => d.dances.length) ?? own.value[0] ?? null)
 const stage = computed(() => (f.value?.phase === 'today' && days.value.length ? dayStage(days.value) : null))
-const best = computed(() => {
-  // Their own best; a team's only when they dance in nothing else.
-  const all = (own.value.length ? own.value : days.value).map(bestPlacing).filter((b): b is NonNullable<typeof b> => !!b)
-  return all.sort((a, b) => (a.place ?? 99) - (b.place ?? 99))[0] ?? null
-})
+// Their placings in the order they danced them (not just the best: that
+// would flatter), the overall and trophy events after. Their own; a team's
+// only when they dance in nothing else. They overlap like dealt cards, each
+// newer one on top of the one before (colour and shape still say the place),
+// three at most, then "+N".
+const placings = computed(() =>
+  (own.value.length ? own.value : days.value)
+    .flatMap((d) => [...d.dances, ...(d.overall ? [d.overall] : []), ...d.trophyEvents])
+    .filter((x) => x.state === 'placed' && x.place != null),
+)
+const SHOWN = 3
 
 // Over, results in, and no placing: said, so it doesn't read as results to come.
 const unplaced = computed(
   () =>
     f.value?.phase === 'after' &&
-    !best.value &&
+    !placings.value.length &&
     days.value.some((d) => d.dances.some((s) => s.state === 'unplaced' || s.state === 'no-placings')),
 )
 
@@ -98,14 +104,22 @@ const to = computed(() =>
         <Hourglass class="size-3" aria-hidden="true" />
         Results to come
       </span>
-      <Medal
-        v-else-if="best && f?.phase !== 'before'"
-        :place="best.place"
-        :tied="best.tied"
-        :dance="best.dance.fullName || best.dance.name"
-        :trophy="best.dance.id === OVERALL_ID"
-        size="sm"
-      />
+      <span v-else-if="placings.length && f?.phase !== 'before'" class="flex shrink-0 items-center gap-1">
+        <span class="flex -space-x-7">
+          <Medal
+            v-for="(p, i) in placings.slice(0, SHOWN)"
+            :key="i"
+            :style="{ zIndex: i }"
+            class="[filter:drop-shadow(-1.5px_0_0_var(--background))]"
+            :place="p.place!"
+            :tied="p.tied"
+            :dance="p.dance.fullName || p.dance.name"
+            :trophy="p.dance.id === OVERALL_ID"
+            size="sm"
+          />
+        </span>
+        <span v-if="placings.length > SHOWN" class="text-muted-foreground text-sm font-medium tabular-nums">+{{ placings.length - SHOWN }}</span>
+      </span>
       <span v-else-if="unplaced" class="text-muted-foreground shrink-0 text-sm font-medium">Not placed</span>
       <ChevronRight v-if="!follow" class="text-muted-foreground size-5 shrink-0" />
     </RouterLink>
