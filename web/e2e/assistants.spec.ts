@@ -80,12 +80,15 @@ function authorizeUrl(baseURL: string, state = 'st-1') {
 
 const assistantsSection = (page: Page) => page.locator('section').filter({ has: page.getByRole('heading', { name: 'AI assistants' }) })
 
+// The approval page asks the server about the request first: on CI's busy emulator that can take well over 5s.
+const LOOKUP = 20_000
+
 test('allowing an AI assistant sends it back with a code, and Account lists it until Disconnect', async ({ page, baseURL }) => {
   await signIn(page, organiserEmail)
   await page.goto(authorizeUrl(baseURL!))
   await expect(page).toHaveURL(/\/connect-ai\?request=/)
   // Its address is shown (ScotDance.app doesn't know it by name), with the warning
-  await expect(page.getByText('Let 127.0.0.1 manage your competitions?')).toBeVisible()
+  await expect(page.getByText('Let 127.0.0.1 manage your competitions?')).toBeVisible({ timeout: LOOKUP })
   await expect(page.getByText('It calls itself “E2E Assistant”')).toBeVisible()
   await page.getByRole('button', { name: 'Allow' }).click()
 
@@ -127,7 +130,7 @@ test('signed out: sign in on the page, then allow', async ({ page, baseURL }) =>
   await password.fill('password')
   await password.press('Enter')
   await sheet.waitFor({ state: 'detached' })
-  await expect(page.getByText('Let 127.0.0.1 manage your competitions?')).toBeVisible()
+  await expect(page.getByText('Let 127.0.0.1 manage your competitions?')).toBeVisible({ timeout: LOOKUP })
   await page.getByRole('button', { name: 'Allow' }).click()
   await page.waitForURL(`${origin}/callback**`)
   expect(landed).toHaveLength(1)
