@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { ChevronRight } from '@lucide/vue'
+import { ChevronRight, History } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
@@ -128,6 +128,17 @@ const fresh = computed(() => {
           }}
         </p>
         <FollowButton v-if="dancer.dancerId" :dancer="dancer" size="block" class="mt-4 w-auto! min-w-48" />
+        <!-- Under Favourite and Alerts: their page across every competition ("Profile" read as
+             another copy of this one). -->
+        <RouterLink
+          v-if="dancer.dancerId"
+          :to="{ name: 'dancer.info', params: { dancerId: dancer.dancerId } }"
+          :aria-label="`All competitions for ${firstName}`"
+          class="bg-blue-paper text-primary press mt-2 inline-flex h-12 items-center justify-center gap-1.5 rounded-full px-5 text-base font-semibold"
+        >
+          <History class="size-5" :stroke-width="2.25" aria-hidden="true" />
+          All competitions
+        </RouterLink>
       </header>
 
       <!-- A team's dancers: follow any of them to follow the team. -->
@@ -168,15 +179,6 @@ const fresh = computed(() => {
         <DancerDayCard :days="entries" :competition-id="competitionId" :color="color" :fresh="fresh" size="lg" bare />
       </section>
 
-      <div v-if="dancer.dancerId" class="-mx-4">
-        <RouterLink
-          :to="{ name: 'dancer.info', params: { dancerId: dancer.dancerId } }"
-          class="press-row focus-inset flex min-h-14 items-center gap-3 pr-3 pl-4"
-        >
-          <span class="flex-1 text-base font-semibold">All competitions for {{ firstName }}</span>
-          <ChevronRight class="text-muted-foreground size-5" />
-        </RouterLink>
-      </div>
     </template>
   </article>
 </template>

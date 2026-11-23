@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompetitionName from '@/components/CompetitionName.vue'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ChevronRight } from '@lucide/vue'
@@ -105,7 +106,7 @@ function medals(cid: string) {
         >
           <DateTile :date="r.competition.date" :managed="me.organises(r.competitionId)" />
           <span class="@container min-w-0 flex-1">
-            <span class="line-clamp-2 text-base leading-snug font-semibold">{{ r.competition.name }}</span>
+            <span class="line-clamp-2 text-base leading-snug font-semibold"><CompetitionName :competition="r.competition" /></span>
             <span v-if="r.withOthers" class="text-muted-foreground block text-sm">{{ r.withOthers }}</span>
             <span v-if="medals(r.competitionId).groups.length" class="text-muted-foreground block text-sm">
               {{ medals(r.competitionId).groups.join(' · ') }}
