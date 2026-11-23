@@ -16,6 +16,7 @@
     "deploy:connect": "npm --prefix web run build:connect && firebase deploy --config firebase.connect.json --project scotdance-connect --only hosting"
   },
   "dependencies": {
+    "@capacitor-firebase/analytics": "^8.6.0",
     "@capacitor-firebase/messaging": "^8.6.0",
     "@capacitor/android": "^8.6.0",
     "@capacitor/app": "^8.1.2",
