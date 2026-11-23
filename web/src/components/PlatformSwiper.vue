@@ -30,13 +30,33 @@ const leftOf = (cols: HTMLElement[], i: number) => cols[i].offsetLeft - cols[0].
 const overflows = ref(false)
 const atStart = ref(true)
 const atEnd = ref(false)
+// The platforms at least half on screen.
+const shown = ref({ first: 0, last: Infinity })
 function measure() {
   const el = track.value
   if (!el) return
   overflows.value = el.scrollWidth > el.clientWidth + 1
   atStart.value = el.scrollLeft <= 1
   atEnd.value = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1
+  const cols = columns()
+  const on = cols
+    .map((c, i) => ({ i, mid: leftOf(cols, i) + c.offsetWidth / 2 }))
+    .filter(({ mid }) => mid >= el.scrollLeft && mid <= el.scrollLeft + el.clientWidth)
+    .map(({ i }) => i)
+  shown.value = on.length ? { first: on[0], last: on[on.length - 1] } : { first: 0, last: Infinity }
 }
+
+// With arrows: your dancers on platforms off screen to the right, for the
+// same star pill as on touch screens (the arrows stay plain).
+const offRight = computed(() => {
+  const start = shown.value.last + 1
+  const rest = props.platforms.slice(start)
+  const i = rest.findIndex((p) => p.dots.length)
+  if (i < 0) return null
+  const seen = new Set<string>()
+  const dots = rest.flatMap((p) => p.dots).filter((d) => !seen.has(d.id) && seen.add(d.id))
+  return { index: start + i, name: rest[i].name, dots }
+})
 const wideQuery = matchMedia('(min-width: 48rem)')
 const mouseQuery = matchMedia('(hover: hover) and (pointer: fine)')
 const wide = ref(wideQuery.matches)
@@ -91,6 +111,8 @@ function go(i: number) {
   if (cols[i]) track.value?.scrollTo({ left: leftOf(cols, i), behavior: reduceMotion() ? 'instant' : 'smooth' })
 }
 
+const marker = computed(() => (arrows.value ? offRight.value : after.value))
+
 // Where the edges fade: the next platform where it peeks in, and with arrows
 // scrolled along, the one before too.
 const mask = computed(() => {
@@ -126,8 +148,7 @@ export interface SwipePlatform {
 
 <template>
   <div>
-    <!-- The dance's name, with the arrows level with it: one platform at a
-         time (stars on them read as a puzzle, so touch screens only). -->
+    <!-- The dance's name, with the arrows level with it: one platform at a time. -->
     <div class="flex items-end gap-3">
       <div class="min-w-0 flex-1"><slot name="head" /></div>
       <div v-if="arrows" class="flex shrink-0 gap-1 pb-2">
@@ -172,16 +193,20 @@ export interface SwipePlatform {
         <!-- Room for the last platform to line up at the start too (phones). -->
         <div v-if="many()" class="w-12 shrink-0 md:hidden" aria-hidden="true" />
       </div>
-      <!-- Touch: one of yours further along, a pill on the faded peek, level
-           with the platform names, that takes you there. -->
+      <!-- One of yours further along: a pill on the faded peek, level with
+           the platform names, that takes you there (below the arrows when
+           there are arrows). -->
       <button
-        v-if="after && !arrows"
+        v-if="marker"
         type="button"
-        :aria-label="`${after.name}: ${after.dots.length > 1 ? 'your dancers' : 'one of your dancers'}`"
-        class="press frosted-paper menu-edge absolute top-1 -right-2 flex h-8 items-center gap-0.5 rounded-full px-2 after:absolute after:-inset-1.5"
-        @click="go(after.index)"
+        :aria-label="`${marker.name}: ${marker.dots.length > 1 ? 'your dancers' : 'one of your dancers'}`"
+        :class="[
+          'press frosted-paper menu-edge absolute top-1 flex h-8 items-center gap-0.5 rounded-full px-2 after:absolute after:-inset-1.5',
+          arrows ? 'right-0' : '-right-2',
+        ]"
+        @click="go(marker.index)"
       >
-        <DancerStars :colors="after.dots.map((d) => d.color)" />
+        <DancerStars :colors="marker.dots.map((d) => d.color)" />
         <ChevronRight class="text-muted-foreground size-4" stroke-width="2.5" />
       </button>
     </div>
