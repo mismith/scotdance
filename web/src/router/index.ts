@@ -495,8 +495,12 @@ router.beforeEach((to, from) => {
 
 // Remember what the page being left was called, so Back can say where it goes.
 // Not while only its query changes (typing a search): that's the same page.
+// From a dancer's page at a competition to their own page, Back names the
+// competition ("‹ Winter Wonderland"), not them again.
 router.beforeEach((to, from) => {
-  if (from.name && to.path !== from.path) recordBackLabel(from.fullPath, document.title)
+  if (!from.name || to.path === from.path) return
+  const sameDancer = from.name === 'competition.dancer' && to.name === 'dancer.info'
+  recordBackLabel(from.fullPath, document.title, { skipFirst: sameDancer })
 })
 
 router.beforeEach((to, from) => {

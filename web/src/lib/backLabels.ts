@@ -19,8 +19,9 @@ function read(): Record<string, string> {
 
 const labels = ref<Record<string, string>>(read())
 
-export function recordBackLabel(fullPath: string, title: string) {
-  const label = title.split(SEP)[0]?.trim()
+/** `skipFirst`: name it by the title's second part (the page's subject is where you're going too). */
+export function recordBackLabel(fullPath: string, title: string, { skipFirst = false } = {}) {
+  const label = title.split(SEP)[skipFirst ? 1 : 0]?.trim()
   if (!label || label === 'ScotDance.app') return
   const next = { ...labels.value, [fullPath]: label }
   const keys = Object.keys(next)
