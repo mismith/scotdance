@@ -51,7 +51,9 @@ test('deleting your account removes your favourites, alerts, colours and record'
   await expect(s.getByRole('alert')).toHaveText('That password isn’t right. Check it and try again.')
   await s.locator('input[autocomplete=current-password]').fill('password')
   await s.getByRole('button', { name: 'Delete my account' }).click()
-  await expect(page.getByRole('textbox', { name: 'Full name', exact: true })).toHaveCount(0)
+  // It signs out other tools and assistants first (two server calls), which
+  // wait their turn behind other tests' work in the functions emulator.
+  await expect(page.getByRole('textbox', { name: 'Full name', exact: true })).toHaveCount(0, { timeout: 30_000 })
   await page.goto('/')
   await expect(page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
 
