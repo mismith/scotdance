@@ -225,9 +225,20 @@ const settling = ref(false)
 let afterSettle: (() => void) | null = null
 const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches
 
+function finishSlide() {
+  settling.value = false
+  offset.value = 0
+  const then = afterSettle
+  afterSettle = null
+  then?.()
+}
 function slideTo(delta: -1 | 0 | 1, then?: () => void) {
   const width = viewport.value?.clientWidth ?? 0
-  if (reduceMotion() || !width) {
+  // Tapped again mid-slide: land that one, then move straight on, so every
+  // tap counts.
+  const busy = settling.value
+  if (busy) finishSlide()
+  if (busy || reduceMotion() || !width) {
     offset.value = 0
     then?.()
     return
@@ -244,12 +255,8 @@ function slideTo(delta: -1 | 0 | 1, then?: () => void) {
   offset.value = target
 }
 function onSettled(e: TransitionEvent) {
-  if (e.target !== e.currentTarget) return
-  settling.value = false
-  offset.value = 0
-  const then = afterSettle
-  afterSettle = null
-  then?.()
+  if (e.target !== e.currentTarget || !settling.value) return
+  finishSlide()
 }
 
 let drag: { x: number; y: number; id: number; axis: 'x' | 'y' | null; lastX: number; lastT: number; vx: number } | null = null

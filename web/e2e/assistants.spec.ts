@@ -80,7 +80,8 @@ function authorizeUrl(baseURL: string, state = 'st-1') {
 
 const assistantsSection = (page: Page) => page.locator('section').filter({ has: page.getByRole('heading', { name: 'AI assistants' }) })
 
-// The approval page asks the server about the request first: on CI's busy emulator that can take well over 5s.
+// The approval page asks the server about the request first, and Disconnect waits on it too: on CI's busy
+// emulator either can take well over 5s.
 const LOOKUP = 20_000
 
 test('allowing an AI assistant sends it back with a code, and Account lists it until Disconnect', async ({ page, baseURL }) => {
@@ -105,7 +106,7 @@ test('allowing an AI assistant sends it back with a code, and Account lists it u
 
   await section.getByRole('button', { name: 'Disconnect' }).click()
   await page.getByRole('button', { name: 'Disconnect E2E Assistant' }).click()
-  await expect(section.getByText('E2E Assistant', { exact: true })).toHaveCount(0)
+  await expect(section.getByText('E2E Assistant', { exact: true })).toHaveCount(0, { timeout: LOOKUP })
   expect(await dbGet(`users:connections/${organiserId}`)).toBeNull()
 })
 
@@ -139,7 +140,7 @@ test('signed out: sign in on the page, then allow', async ({ page, baseURL }) =>
   await page.goto('/profile')
   await assistantsSection(page).getByRole('button', { name: 'Disconnect' }).click()
   await page.getByRole('button', { name: 'Disconnect E2E Assistant' }).click()
-  await expect(assistantsSection(page).getByText('E2E Assistant', { exact: true })).toHaveCount(0)
+  await expect(assistantsSection(page).getByText('E2E Assistant', { exact: true })).toHaveCount(0, { timeout: LOOKUP })
 })
 
 test('a request that is unknown or has run out says so', async ({ page }) => {
@@ -227,5 +228,5 @@ test('Account shows what an AI assistant changed: newest first, undone marked, n
   await dbRemove(`users:changes/${organiserId}`)
   await section.getByRole('button', { name: 'Disconnect' }).click()
   await page.getByRole('button', { name: 'Disconnect E2E Assistant' }).click()
-  await expect(section.getByText('E2E Assistant', { exact: true })).toHaveCount(0)
+  await expect(section.getByText('E2E Assistant', { exact: true })).toHaveCount(0, { timeout: LOOKUP })
 })
