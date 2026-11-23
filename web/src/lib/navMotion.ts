@@ -77,7 +77,8 @@ export function fromTap(to: string, from: string): Motion | null {
   const tap = tapped
   tapped = null
   if (!tap || performance.now() - tap.at > 2000) return null
-  if (tap.motion !== 'link') return tap.motion
+  // The lit tab tapped from one of its pages (an event, under Schedule): up to it.
+  if (tap.motion !== 'link') return tap.motion.way === 'swap' && byPath(to, from).way === 'back' ? { way: 'back', axis: 'x' } : tap.motion
   // A link in the page.
   return byPath(to, from).way === 'back' ? { way: 'back', axis: 'x' } : { way: 'forward', axis: 'x' }
 }

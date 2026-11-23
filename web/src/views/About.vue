@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { whenLanded } from '@/lib/pageTransition'
 import LogoMark from '@/components/LogoMark.vue'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
@@ -94,7 +95,8 @@ const toggle = (id: string) => {
   else next.add(id)
   open.value = next
 }
-function applyHash(hash: string) {
+async function applyHash(hash: string) {
+  await whenLanded()
   if (hash === '#faqs') {
     nextTick(() => document.getElementById('faqs')?.scrollIntoView({ block: 'start' }))
     return

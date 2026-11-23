@@ -1,4 +1,4 @@
-import { nextTick } from 'vue'
+import { nextTick, ref } from 'vue'
 import type { Motion } from '@/lib/navMotion'
 import { dropBars, holdBars } from '@/lib/pageMotion'
 
@@ -104,6 +104,20 @@ export function endSwapOf(frame: Element) {
  * are moving, the arriving one is drawn at that scroll and the window only
  * catches up once they land; resolves then (at once with nothing moving).
  */
+/**
+ * Which visit the current history entry is: new each time you go somewhere
+ * (a tap), the same again when Back or Forward returns to it. A page kept
+ * alive can tell opening the same link again from coming back to it.
+ */
+export const visit = ref(0)
+
+/** Settles once any pages moving now have landed: for a page scrolling itself to a spot (a #hash). */
+export async function whenLanded(): Promise<void> {
+  // A page asks as it's set up, a tick before its slide starts (PageStack).
+  await nextTick()
+  await (active?.finished ?? Promise.resolve())
+}
+
 export function scrollAfterSwap(top: number | null): Promise<void> {
   provideTop?.(top)
   provideTop = null

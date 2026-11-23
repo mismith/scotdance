@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T extends SwipePlatform">
-import { computed, ref, useTemplateRef } from 'vue'
+import { computed, onActivated, onDeactivated, ref, useTemplateRef } from 'vue'
 import { ChevronRight } from '@lucide/vue'
 import DancerStars from '@/components/DancerStars.vue'
 
@@ -31,19 +31,34 @@ function onScroll() {
 }
 
 // Your dancers on the platforms further along, and the nearest of those.
+// Only when none of yours are on screen (the platform showing, or the one
+// peeking in, whose colours already show at its edge) but some are further
+// along, out of sight.
 const after = computed(() => {
-  const ahead = props.platforms.slice(active.value + 1)
-  const i = ahead.findIndex((p) => p.dots.length)
+  const inView = props.platforms.slice(active.value, active.value + 2)
+  if (inView.some((p) => p.dots.length)) return null
+  const beyond = props.platforms.slice(active.value + 2)
+  const i = beyond.findIndex((p) => p.dots.length)
   if (i < 0) return null
   const seen = new Set<string>()
-  const dots = ahead.flatMap((p) => p.dots).filter((d) => !seen.has(d.id) && seen.add(d.id))
-  return { index: active.value + 1 + i, name: ahead[i].name, dots }
+  const dots = beyond.flatMap((p) => p.dots).filter((d) => !seen.has(d.id) && seen.add(d.id))
+  return { index: active.value + 2 + i, name: beyond[i].name, dots }
 })
 
 function go(i: number) {
   const cols = columns()
   if (cols[i]) track.value?.scrollTo({ left: leftOf(cols, i), behavior: reduceMotion() ? 'instant' : 'smooth' })
 }
+
+// A page kept while you look at another (PageStack) is taken off screen,
+// which resets any sideways scroll: come back to the platform you were on.
+let kept = 0
+onDeactivated(() => (kept = active.value))
+onActivated(() => {
+  const cols = columns()
+  if (track.value && cols[kept]) track.value.scrollLeft = leftOf(cols, kept)
+  active.value = kept
+})
 
 </script>
 
