@@ -42,6 +42,8 @@ export default defineConfig({
           // firebase-js-sdk doesn't declare `sideEffects: false`, blocking elision of
           // bare imports like VueFire's `import 'firebase/app-check'`. The modular SDK
           // is designed to be effect-free at import time (services activate via getX()).
+          // Except Installations: Analytics' bare import of it is how it registers.
+          if (/[\\/]node_modules[\\/]@firebase[\\/]installations[\\/]/.test(id)) return true
           if (/[\\/]node_modules[\\/](firebase|@firebase)[\\/]/.test(id)) return false
           return true
         },
@@ -50,6 +52,8 @@ export default defineConfig({
         manualChunks(id) {
           // Storage is only for Manage uploads: leave it to load with Manage.
           if (/node_modules\/(@firebase|firebase)\/storage/.test(id)) return undefined
+          // Analytics starts once the app is up: leave it out of the start-up chunk too.
+          if (/node_modules\/(@firebase|firebase)\/(analytics|installations)/.test(id)) return undefined
           if (
             id.includes('node_modules/firebase/') ||
             id.includes('node_modules/@firebase/')

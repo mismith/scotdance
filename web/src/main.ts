@@ -5,7 +5,7 @@ import { VueFire, VueFireAuthOptionsFromAuth, VueFireDatabaseOptionsAPI } from '
 
 import App from './App.vue'
 import { router } from './router'
-import { auth, firebaseApp } from './firebase'
+import { auth, firebaseApp, useEmulators } from './firebase'
 import { vTapFeedback } from './directives/tapFeedback'
 import { vProximity } from './directives/proximity'
 import { setupNative } from './lib/native'
@@ -68,3 +68,7 @@ setupNative(router)
 // A tapped notification opens what it's about; ones about the page you're on come off the phone.
 handleNotificationTaps((link) => void router.push(link))
 clearAlertsOnView(router)
+// Page views to Analytics from real builds only, loaded after the app so it never slows start-up.
+if (import.meta.env.PROD && !useEmulators) {
+  void import('./lib/analytics').then((m) => m.startAnalytics(router)).catch(() => {})
+}
