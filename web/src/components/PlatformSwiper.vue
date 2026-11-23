@@ -10,8 +10,9 @@ import DancerStars from '@/components/DancerStars.vue'
 // you to the nearest.
 //
 // On wider screens they share the width, and only scroll when there are more
-// than fit; then arrows beside the dance's name (`head`) do it, since a mouse
-// wheel can't go sideways.
+// than fit. Arrows beside the dance's name (`head`) scroll them on wide
+// screens and wherever there's a mouse (a narrow window too), since a mouse
+// wheel can't go sideways; touch screens swipe.
 const props = defineProps<{ platforms: T[] }>()
 defineSlots<{ default(props: { platform: T; index: number }): unknown; head?(): unknown }>()
 // Which platform is in view, so a question about one asks about the one you're looking at.
@@ -37,15 +38,23 @@ function measure() {
   atEnd.value = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1
 }
 const wideQuery = matchMedia('(min-width: 48rem)')
+const mouseQuery = matchMedia('(hover: hover) and (pointer: fine)')
 const wide = ref(wideQuery.matches)
-const onWide = () => (wide.value = wideQuery.matches)
+const mouse = ref(mouseQuery.matches)
+const onWide = () => {
+  wide.value = wideQuery.matches
+  mouse.value = mouseQuery.matches
+}
+const arrows = computed(() => overflows.value && (wide.value || mouse.value))
 let resize: ResizeObserver | null = null
 onMounted(() => {
   wideQuery.addEventListener('change', onWide)
+  mouseQuery.addEventListener('change', onWide)
   if (track.value) (resize = new ResizeObserver(measure)).observe(track.value)
 })
 onBeforeUnmount(() => {
   wideQuery.removeEventListener('change', onWide)
+  mouseQuery.removeEventListener('change', onWide)
   resize?.disconnect()
 })
 
@@ -82,12 +91,12 @@ function go(i: number) {
   if (cols[i]) track.value?.scrollTo({ left: leftOf(cols, i), behavior: reduceMotion() ? 'instant' : 'smooth' })
 }
 
-// Where the edges fade: the next platform where it peeks in, and on a wide
-// screen scrolled along, the one before too.
+// Where the edges fade: the next platform where it peeks in, and with arrows
+// scrolled along, the one before too.
 const mask = computed(() => {
   if (!many() || !overflows.value) return null
-  const start = wide.value && !atStart.value
-  const end = !atEnd.value || !wide.value
+  const start = arrows.value && !atStart.value
+  const end = !atEnd.value || !arrows.value
   if (start && end) return '[mask-image:linear-gradient(to_right,rgb(0_0_0/0.12),black_3.5rem,black_calc(100%-3.5rem),rgb(0_0_0/0.12))]'
   if (start) return '[mask-image:linear-gradient(to_right,rgb(0_0_0/0.12),black_3.5rem)]'
   if (end) return '[mask-image:linear-gradient(to_right,black_calc(100%-3.5rem),rgb(0_0_0/0.12))]'
@@ -117,11 +126,11 @@ export interface SwipePlatform {
 
 <template>
   <div>
-    <!-- The dance's name, with the arrows level with it when there are more
-         platforms than fit (stars on Next when yours are further along). -->
+    <!-- The dance's name, with the arrows level with it: one platform at a
+         time (stars on them read as a puzzle, so touch screens only). -->
     <div class="flex items-end gap-3">
       <div class="min-w-0 flex-1"><slot name="head" /></div>
-      <div v-if="wide && overflows" class="flex shrink-0 gap-1 pb-2">
+      <div v-if="arrows" class="flex shrink-0 gap-1 pb-2">
         <button
           type="button"
           aria-label="Previous platform"
@@ -133,12 +142,11 @@ export interface SwipePlatform {
         </button>
         <button
           type="button"
-          :aria-label="after ? `Next platform: ${after.dots.length > 1 ? 'your dancers' : 'one of your dancers'} on ${after.name}` : 'Next platform'"
+          aria-label="Next platform"
           :disabled="atEnd"
-          class="press frosted-paper menu-edge flex h-8 min-w-8 items-center justify-center gap-0.5 rounded-full px-2 disabled:opacity-40"
-          @click="go(after ? after.index : active + 1)"
+          class="press frosted-paper menu-edge flex size-8 items-center justify-center rounded-full disabled:opacity-40"
+          @click="go(active + 1)"
         >
-          <DancerStars v-if="after" :colors="after.dots.map((d) => d.color)" />
           <ChevronRight class="text-muted-foreground size-4" stroke-width="2.5" />
         </button>
       </div>
@@ -164,10 +172,10 @@ export interface SwipePlatform {
         <!-- Room for the last platform to line up at the start too (phones). -->
         <div v-if="many()" class="w-12 shrink-0 md:hidden" aria-hidden="true" />
       </div>
-      <!-- Phones: one of yours further along, a pill on the faded peek, level
+      <!-- Touch: one of yours further along, a pill on the faded peek, level
            with the platform names, that takes you there. -->
       <button
-        v-if="after && !wide"
+        v-if="after && !arrows"
         type="button"
         :aria-label="`${after.name}: ${after.dots.length > 1 ? 'your dancers' : 'one of your dancers'}`"
         class="press frosted-paper menu-edge absolute top-1 -right-2 flex h-8 items-center gap-0.5 rounded-full px-2 after:absolute after:-inset-1.5"
