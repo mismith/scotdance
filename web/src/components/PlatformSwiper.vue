@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="T extends SwipePlatform">
-import { computed, onActivated, onDeactivated, ref, useTemplateRef } from 'vue'
-import { ChevronRight } from '@lucide/vue'
+import { computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, useTemplateRef } from 'vue'
+import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import DancerStars from '@/components/DancerStars.vue'
 
 // A dance's platforms side by side, since they dance at the same time: each
@@ -8,8 +8,12 @@ import DancerStars from '@/components/DancerStars.vue'
 // of your dancers is on a platform further along, a star in their colour
 // sits on the peek (several overlap), and takes
 // you to the nearest.
+//
+// On wider screens they share the width, and only scroll when there are more
+// than fit; then arrows beside the dance's name (`head`) do it, since a mouse
+// wheel can't go sideways.
 const props = defineProps<{ platforms: T[] }>()
-defineSlots<{ default(props: { platform: T; index: number }): unknown }>()
+defineSlots<{ default(props: { platform: T; index: number }): unknown; head?(): unknown }>()
 // Which platform is in view, so a question about one asks about the one you're looking at.
 const emit = defineEmits<{ active: [platformId: string] }>()
 
@@ -21,7 +25,32 @@ const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matche
 const columns = () => [...(track.value?.querySelectorAll<HTMLElement>(':scope > [data-column]') ?? [])]
 const leftOf = (cols: HTMLElement[], i: number) => cols[i].offsetLeft - cols[0].offsetLeft
 
+// Whether they don't all fit, and where the scroll is.
+const overflows = ref(false)
+const atStart = ref(true)
+const atEnd = ref(false)
+function measure() {
+  const el = track.value
+  if (!el) return
+  overflows.value = el.scrollWidth > el.clientWidth + 1
+  atStart.value = el.scrollLeft <= 1
+  atEnd.value = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1
+}
+const wideQuery = matchMedia('(min-width: 48rem)')
+const wide = ref(wideQuery.matches)
+const onWide = () => (wide.value = wideQuery.matches)
+let resize: ResizeObserver | null = null
+onMounted(() => {
+  wideQuery.addEventListener('change', onWide)
+  if (track.value) (resize = new ResizeObserver(measure)).observe(track.value)
+})
+onBeforeUnmount(() => {
+  wideQuery.removeEventListener('change', onWide)
+  resize?.disconnect()
+})
+
 function onScroll() {
+  measure()
   const el = track.value
   const cols = columns()
   if (!el || !cols.length) return
@@ -53,6 +82,18 @@ function go(i: number) {
   if (cols[i]) track.value?.scrollTo({ left: leftOf(cols, i), behavior: reduceMotion() ? 'instant' : 'smooth' })
 }
 
+// Where the edges fade: the next platform where it peeks in, and on a wide
+// screen scrolled along, the one before too.
+const mask = computed(() => {
+  if (!many() || !overflows.value) return null
+  const start = wide.value && !atStart.value
+  const end = !atEnd.value || !wide.value
+  if (start && end) return '[mask-image:linear-gradient(to_right,rgb(0_0_0/0.12),black_3.5rem,black_calc(100%-3.5rem),rgb(0_0_0/0.12))]'
+  if (start) return '[mask-image:linear-gradient(to_right,rgb(0_0_0/0.12),black_3.5rem)]'
+  if (end) return '[mask-image:linear-gradient(to_right,black_calc(100%-3.5rem),rgb(0_0_0/0.12))]'
+  return null
+})
+
 // A page kept while you look at another (PageStack) is taken off screen,
 // which resets any sideways scroll: come back to the platform you were on.
 let kept = 0
@@ -61,6 +102,7 @@ onActivated(() => {
   const cols = columns()
   if (track.value && cols[kept]) track.value.scrollLeft = leftOf(cols, kept)
   active.value = kept
+  measure()
 })
 
 </script>
@@ -74,42 +116,66 @@ export interface SwipePlatform {
 </script>
 
 <template>
-  <div class="relative">
-    <div
-      ref="track"
-      :class="[
-        '-mx-4 flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-        // The next platform fades out where it peeks in.
-        many() && '[mask-image:linear-gradient(to_right,black_calc(100%-3.5rem),rgb(0_0_0/0.12))]',
-      ]"
-      @scroll.passive="onScroll"
-    >
-      <div
-        v-for="(p, i) in platforms"
-        :key="p.id"
-        data-column
-        :class="[
-          'shrink-0 snap-start pt-1',
-          many() ? 'w-[calc(100%-3rem)]' : 'w-full',
-          i > 0 && 'border-foreground/10 border-l',
-        ]"
-      >
-        <slot :platform="p" :index="i" />
+  <div>
+    <!-- The dance's name, with the arrows level with it when there are more
+         platforms than fit (stars on Next when yours are further along). -->
+    <div class="flex items-end gap-3">
+      <div class="min-w-0 flex-1"><slot name="head" /></div>
+      <div v-if="wide && overflows" class="flex shrink-0 gap-1 pb-2">
+        <button
+          type="button"
+          aria-label="Previous platform"
+          :disabled="atStart"
+          class="press frosted-paper menu-edge flex size-8 items-center justify-center rounded-full disabled:opacity-40"
+          @click="go(active - 1)"
+        >
+          <ChevronLeft class="text-muted-foreground size-4" stroke-width="2.5" />
+        </button>
+        <button
+          type="button"
+          :aria-label="after ? `Next platform: ${after.dots.length > 1 ? 'your dancers' : 'one of your dancers'} on ${after.name}` : 'Next platform'"
+          :disabled="atEnd"
+          class="press frosted-paper menu-edge flex h-8 min-w-8 items-center justify-center gap-0.5 rounded-full px-2 disabled:opacity-40"
+          @click="go(after ? after.index : active + 1)"
+        >
+          <DancerStars v-if="after" :colors="after.dots.map((d) => d.color)" />
+          <ChevronRight class="text-muted-foreground size-4" stroke-width="2.5" />
+        </button>
       </div>
-      <!-- Room for the last platform to line up at the start too. -->
-      <div v-if="many()" class="w-12 shrink-0" aria-hidden="true" />
     </div>
-    <!-- One of yours further along: a pill on the faded peek, level with the
-         platform names, that takes you there. -->
-    <button
-      v-if="after"
-      type="button"
-      :aria-label="`${after.name}: ${after.dots.length > 1 ? 'your dancers' : 'one of your dancers'}`"
-      class="press frosted-paper menu-edge absolute top-1 -right-2 flex h-8 items-center gap-0.5 rounded-full px-2 after:absolute after:-inset-1.5"
-      @click="go(after.index)"
-    >
-      <DancerStars :colors="after.dots.map((d) => d.color)" />
-      <ChevronRight class="text-muted-foreground size-4" stroke-width="2.5" />
-    </button>
+    <div class="relative">
+      <div
+        ref="track"
+        :class="['-mx-4 flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden', mask]"
+        @scroll.passive="onScroll"
+      >
+        <div
+          v-for="(p, i) in platforms"
+          :key="p.id"
+          data-column
+          :class="[
+            'shrink-0 snap-start pt-1',
+            many() ? 'w-[calc(100%-3rem)] md:w-auto md:min-w-72 md:flex-1' : 'w-full',
+            i > 0 && 'border-foreground/10 border-l',
+          ]"
+        >
+          <slot :platform="p" :index="i" />
+        </div>
+        <!-- Room for the last platform to line up at the start too (phones). -->
+        <div v-if="many()" class="w-12 shrink-0 md:hidden" aria-hidden="true" />
+      </div>
+      <!-- Phones: one of yours further along, a pill on the faded peek, level
+           with the platform names, that takes you there. -->
+      <button
+        v-if="after && !wide"
+        type="button"
+        :aria-label="`${after.name}: ${after.dots.length > 1 ? 'your dancers' : 'one of your dancers'}`"
+        class="press frosted-paper menu-edge absolute top-1 -right-2 flex h-8 items-center gap-0.5 rounded-full px-2 after:absolute after:-inset-1.5"
+        @click="go(after.index)"
+      >
+        <DancerStars :colors="after.dots.map((d) => d.color)" />
+        <ChevronRight class="text-muted-foreground size-4" stroke-width="2.5" />
+      </button>
+    </div>
   </div>
 </template>

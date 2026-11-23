@@ -319,16 +319,18 @@ const judging = computed(() => {
       <!-- Each dance: its name as a heading, then its platforms side by side
            (they dance at the same time), each over its age groups in order. -->
       <section v-for="(s, i) in sections" :key="s.sd.id" class="pt-2">
-        <div class="space-y-0.5 pb-2">
-          <h2 class="text-section" :data-section="s.name ?? `Dance ${i + 1}`">{{ s.name ?? `Dance ${i + 1}` }}</h2>
-          <p v-if="s.realName" class="text-muted-foreground text-sm">{{ s.realName }}</p>
-          <div
-            v-if="s.sd.description"
-            class="text-muted-foreground text-callout [&_a]:text-primary [&_a]:underline"
-            v-html="sanitizeRichText(s.sd.description)"
-          />
-        </div>
         <PlatformSwiper :platforms="s.platforms" @active="activePlatform[s.sd.id] = $event">
+          <template #head>
+            <div class="space-y-0.5 pb-2">
+              <h2 class="text-section" :data-section="s.name ?? `Dance ${i + 1}`">{{ s.name ?? `Dance ${i + 1}` }}</h2>
+              <p v-if="s.realName" class="text-muted-foreground text-sm">{{ s.realName }}</p>
+              <div
+                v-if="s.sd.description"
+                class="text-muted-foreground text-callout [&_a]:text-primary [&_a]:underline"
+                v-html="sanitizeRichText(s.sd.description)"
+              />
+            </div>
+          </template>
           <template #default="{ platform: p }">
           <!-- The platform and its judges in one line over its age groups
                ("Platform 1 · Mary Munro"); each judge opens their sheet. -->
