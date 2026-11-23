@@ -31,6 +31,8 @@ platform :android do
       json_key_data: keychain("scotdance-play"),
       track: "beta",
       aab: lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
+      # Only the bundle: a debug APK left from a phone install would otherwise ride along and stop it.
+      skip_upload_apk: true,
       metadata_path: "./fastlane/metadata/android",
       skip_upload_metadata: true,
       skip_upload_images: true,
