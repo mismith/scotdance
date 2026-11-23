@@ -35,10 +35,10 @@ The apps' page is `capacitor://localhost` on iOS, where WebKit keeps no cookies.
 ## GA settings (done 2026-11-22)
 
 - Enhanced measurement **off** on the web stream. It sent extra `page_view`s on history changes using the real address bar, query string included (seen: `?q=<typed name>`), plus `scroll` events. That covers v3 too.
-- Custom dimensions (event scope): `competition_id` "Competition ID", `app_version` "v4 version", `app_platform` "v4 platform". Not backfilled: they collect from 2026-11-22.
+- Custom dimensions (event scope): `competition_id` "Competition ID", `app_version` "v4 version", `app_platform` "v4 platform", `page_path` "Path param" (v3's route, e.g. `/competitions/X/results`, and v4 web's). Not backfilled: they collect from 2026-11-22.
 
 ## Answering "active users per hour on competition X's day"
 
 GA Explore › Free form: rows `Date + hour (YYYYMMDDHH)`, columns `v4 platform`, metric `Active users`, filter `Competition ID` exactly X and the day. Rows with `v4 version` `(not set)` are v3.
 
-v3 differences: hash URLs (`#/competitions/…`), so its path is in its own `page_path` param (not registered as a dimension) and after the `#` in `page_location`, not in GA's Page path; and it sends `document.title` as `page_title`, which puts dancer names on dancer pages.
+v3 differences: hash URLs (`#/competitions/…`), so its path is in its own `page_path` param ("Path param": for v3 competition X, filter it begins with `/competitions/X/`) and after the `#` in `page_location`, not in GA's Page path; and it sends `document.title` as `page_title`, which puts dancer names on dancer pages.
