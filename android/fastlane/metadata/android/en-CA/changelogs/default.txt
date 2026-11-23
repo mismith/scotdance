@@ -1,5 +1,6 @@
 What's new
-- Look in several provinces or states at once
+- Simpler Home, schedules and results, easier to take in at a glance
+- See what's on now, shared by people at the competition
 - Fixes and improvements
 
 Share your ideas from the More menu.

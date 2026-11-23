@@ -34,8 +34,8 @@ android {
         applicationId "info.mismith.scotdance"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 4000009
-        versionName "4.0.9"
+        versionCode 4000010
+        versionName "4.0.10"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
