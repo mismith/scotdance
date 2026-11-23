@@ -327,7 +327,7 @@ test('"No results", and the next dance carries on', async ({ page, browser }) =>
   const viewer = await (await browser.newContext()).newPage()
   await viewer.goto(`/competitions/${comp.id}/results/${group.id}`)
   await expect(
-    viewer.locator(`#dance-${reel.id}`).getByText('No results for this dance.'),
+    viewer.locator(`#dance-${reel.id}`).getByText('No placings awarded for this dance.'),
   ).toBeVisible()
 })
 

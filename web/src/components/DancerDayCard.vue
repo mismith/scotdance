@@ -236,7 +236,7 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
           <span v-if="points" class="bg-blue-paper text-primary ml-1.5 inline-flex h-8 items-center rounded-full px-3 text-sm font-semibold">
             {{ points === 1 ? 'Championship point' : `${points} championship points` }}
           </span>
-          <span v-if="unplaced" class="text-muted-foreground text-sm font-medium">Not placed</span>
+          <span v-if="unplaced" class="text-muted-foreground text-sm font-medium">Didn’t place</span>
           <span
             v-if="waiting"
             class="bg-muted text-muted-foreground border-strong ml-1.5 inline-flex h-8 items-center gap-1.5 rounded-full border border-dashed px-3 text-sm font-semibold"

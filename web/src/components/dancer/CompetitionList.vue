@@ -116,7 +116,7 @@ function medals(cid: string) {
               v-if="medals(r.competitionId).unplaced || medals(r.competitionId).placings.length || medals(r.competitionId).overall || medals(r.competitionId).trophyEvents.length || medals(r.competitionId).teams.length"
               class="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1.5"
             >
-              <span v-if="medals(r.competitionId).unplaced" class="text-muted-foreground text-sm font-medium">Not placed</span>
+              <span v-if="medals(r.competitionId).unplaced" class="text-muted-foreground text-sm font-medium">Didn’t place</span>
               <Medal
                 v-for="m in medals(r.competitionId).placings"
                 :key="m.danceId"

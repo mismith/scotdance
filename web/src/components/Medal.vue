@@ -36,7 +36,7 @@ const tier = computed(() => TIERS[props.place === 1 || props.place === 2 || prop
 
 const label = computed(() => {
   const what = props.place == null
-    ? props.pointed ? 'Championship point' : 'Not placed'
+    ? props.pointed ? 'Championship point' : 'Didn’t place'
     : `${props.place}${getOrdinalSuffix(props.place)} place${props.tied ? ', tied' : ''}`
   return props.dance ? `${props.dance}: ${what}` : what
 })

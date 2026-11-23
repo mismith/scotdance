@@ -29,12 +29,12 @@ const platform = computed(() => platformLabel(props.status.slot?.platformName) |
     <Award class="size-3.5" stroke-width="2.4" aria-hidden="true" />
     Championship point
   </span>
-  <span v-else-if="status.state === 'unplaced'" class="text-muted-foreground text-sm">Not placed</span>
+  <span v-else-if="status.state === 'unplaced'" class="text-muted-foreground text-sm">Didn’t place</span>
   <span
     v-else-if="status.state === 'no-placings'"
     class="text-muted-foreground text-sm font-medium"
   >
-    No placings
+    No placings awarded
   </span>
   <span
     v-else-if="status.state === 'waiting'"
