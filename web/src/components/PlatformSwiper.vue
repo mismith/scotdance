@@ -10,6 +10,8 @@ import DancerStars from '@/components/DancerStars.vue'
 // you to the nearest.
 const props = defineProps<{ platforms: T[] }>()
 defineSlots<{ default(props: { platform: T; index: number }): unknown }>()
+// Which platform is in view, so a question about one asks about the one you're looking at.
+const emit = defineEmits<{ active: [platformId: string] }>()
 
 const track = useTemplateRef<HTMLElement>('track')
 const active = ref(0)
@@ -27,6 +29,7 @@ function onScroll() {
   cols.forEach((_, i) => {
     if (Math.abs(leftOf(cols, i) - el.scrollLeft) < Math.abs(leftOf(cols, best) - el.scrollLeft)) best = i
   })
+  if (best !== active.value) emit('active', props.platforms[best]?.id)
   active.value = best
 }
 

@@ -319,6 +319,25 @@
           ".validate": "data.exists() || (newData.child('competition/name').isString() && !newData.child('competition/name').val().matches(/^ *$/) && newData.child('competition/date').isString() && newData.child('competition/date').val().matches(/^\\d{4}-\\d{2}-\\d{2}$/) && newData.child('competition/location').isString() && !newData.child('competition/location').val().matches(/^ *$/))" // a NEW one has a NAME, a DATE (YYYY-MM-DD) and a TOWN or CITY; edits to one already sent (System admin) aren't held to it
         }
       },
+      // On now (ADR 0020): the pink line per platform, worked out from people's answers by a function. Anyone reads it.
+      "competitions:onNow": {
+        "$competitionId": { ".read": true }
+      },
+      // One answer per account per platform (a new one replaces the last). Write-only for the account itself; nobody else reads them, and system admins read the log (the rule above)
+      "competitions:onNow:votes": {
+        "$competitionId": {
+          "$platformId": {
+            "$uid": {
+              ".write": "auth !== null && auth.token.via !== 'mcp' && auth.uid === $uid && newData.exists() && root.child($environment).child('competitions:data').child($competitionId).child('platforms').child($platformId).exists() && (!data.exists() || newData.child('vote').val() === 'undo' || now - data.child('at').val() >= 5000)", // is the ACCOUNT itself (not an ASSISTANT), on a real PLATFORM, at most every 5 SECONDS (taking it back any time)
+              ".validate": "newData.hasChildren(['turn', 'vote', 'at'])",
+              "turn": { ".validate": "newData.isString() && newData.val().length <= 200 && newData.val().matches(/^[-\\w]+(\\/[-\\w]+){4}$/)" }, // day/block/event/dance/group
+              "vote": { ".validate": "newData.val() === 'yes' || newData.val() === 'no' || newData.val() === 'undo'" },
+              "at": { ".validate": "newData.val() === now" },
+              "$other": { ".validate": false }
+            }
+          }
+        }
+      },
       "competitions:permissions": {
         "$competitionId": {
           ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION to same COMPETITION

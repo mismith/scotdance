@@ -17,6 +17,7 @@ import * as Links from './links';
 import * as KnownCompetitions from './knownCompetitions';
 import * as Sheets from './sheets';
 import { checkProfileViews } from './profileViews';
+import * as OnNow from './onNow';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
 import { getOnFindStrayDancers } from './strayDancers';
@@ -433,6 +434,14 @@ export const sendMorningSummary = adminHttps.onCall(async (data, ctx) => {
 // 06:00 and 06:59 where it's held (time zone from its coordinates).
 export const morningSummaries = onSchedule({ schedule: '30 * * * *', timeZone: 'UTC', timeoutSeconds: 300 }, async () => {
   await Notifications.sendMorningSummaries(appConfig.db, app, isEmulator());
+});
+
+// On now (onNow.ts, ADR 0020): each answer about what's dancing on a platform
+// is logged and the platform's pink line worked out again; daily, old answers go.
+export const onNowVoted = appConfig.database.ref(`/${env}/competitions:onNow:votes/{competitionId}/{platformId}/{uid}`)
+  .onWrite(OnNow.getOnVote(appConfig.db));
+export const sweepOnNow = onSchedule({ schedule: '41 9 * * *', timeZone: 'UTC' }, async () => {
+  await OnNow.sweepOnNow(appConfig.db);
 });
 
 // Profile view counts (profileViews.ts): hourly, any account that opened more

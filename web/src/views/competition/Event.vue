@@ -3,10 +3,17 @@ import { useMorph } from '@/lib/morph'
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import { shortName } from '@/lib/entries'
 import { groupColor } from '@/lib/groupColor'
-import { computed, onMounted, ref } from 'vue'
+import OnNowAsk, { type OnNowQuestion } from '@/components/OnNowAsk.vue'
+import OnNowLine from '@/components/OnNowLine.vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Check, ChevronRight, Clock } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
+import { useCompetitionProgress } from '@/composables/useCompetitionProgress'
+import { useOnNow } from '@/composables/useOnNow'
+import { usePageShowing } from '@/composables/usePageShowing'
+import { useAuthStore } from '@/stores/auth'
+import { askIndex, lineIndex, markAsked, platformTurns, turnKey, wasAsked, type Turn } from '@/lib/onNow'
 import { oncePerPerson, useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
@@ -80,6 +87,8 @@ const dayName = computed(() => {
 interface GroupRow {
   /** An age group or a trophy event's id: one turn. */
   id: string
+  /** This turn as On now names it (lib/onNow). */
+  turn: string
   label: string
   group: EnrichedGroup | null
   /** Set for a trophy event's turn (then `group` is null). */
@@ -126,6 +135,7 @@ function platformsFor(sd: ScheduleDance): PlatformRow[] {
           const all = g ? findGroupDancers(g.id, dancers.value) : trophyEventEntrants(trophyEvent!, dancers.value, results.value)
           return {
             id,
+            turn: turnKey(String(route.params.dayId), String(route.params.blockId), String(route.params.eventId), sd.id, id),
             label: g?.fullName ?? trophyEvent!.fullName,
             group: g ?? null,
             trophyEvent: trophyEvent ?? null,
@@ -169,6 +179,82 @@ const sections = computed(() =>
     }
   }),
 )
+
+// On now (ADR 0020): on the competition's day, a pink line on the age group
+// people say is dancing on each platform, and once per group a question about
+// the next one, for the platform you're looking at. Signed in to answer.
+const auth = useAuthStore()
+const progress = useCompetitionProgress()
+const showing = usePageShowing()
+const isToday = computed(() => progress.value.dayOffset.get(String(route.params.dayId)) === 0)
+const onNow = useOnNow(competitionId, isToday)
+const groupIds = computed(() => new Set(groups.value.map((g) => g.id)))
+const postedTurn = (t: Turn) => !!t.danceId && posted(t.id, turnResultId(t.id, t.danceId, trophyEventIds.value))
+
+// Each platform's running order for the whole day, and where its line is.
+const onNowPlatforms = computed(() => {
+  if (!isToday.value || !day.value) return []
+  const dayWithId = { ...day.value, id: String(route.params.dayId) }
+  const known = (id: string) => groupIds.value.has(id) || trophyEventIds.value.has(id)
+  return platforms.value.map((p) => {
+    const turns = platformTurns(dayWithId, p.id, known)
+    const line = onNow.lineFor(p.id)
+    const at = lineIndex(line, turns, postedTurn, onNow.now.value)
+    return { platform: p, turns, line: at != null ? { turn: turns[at].key, at: line!.at } : null, ask: askIndex(at, turns, postedTurn) }
+  })
+})
+const lineOn = (platformId: string, turn: string) => {
+  const l = onNowPlatforms.value.find((x) => x.platform.id === platformId)?.line
+  return l?.turn === turn ? l : null
+}
+
+// One question per visit to the page: once its card has folded away, no more.
+const askDone = ref(false)
+// The question answered on this visit, for Undo.
+const asked = ref<{ platformId: string; turn: string } | null>(null)
+const resetAsk = () => {
+  askDone.value = false
+  asked.value = null
+}
+watch(showing, (on) => on && resetAsk())
+watch(() => route.params.eventId, resetAsk)
+
+// The platform in view in each dance (its first until you swipe).
+const activePlatform = reactive<Record<string, string>>({})
+const question = computed<(OnNowQuestion & { platformId: string; turn: string }) | null>(() => {
+  if (!auth.isSignedIn || !showing.value || askDone.value || asked.value) return null
+  const eventId = String(route.params.eventId)
+  const candidates = onNowPlatforms.value
+    .map((x) => ({ ...x, target: x.ask != null ? x.turns[x.ask] : null }))
+    .filter((x) => x.target && x.target.eventId === eventId && !wasAsked(competitionId.value, x.platform.id, x.target.key))
+  const inView = (x: (typeof candidates)[number]) => {
+    const s = sections.value.find((s) => s.sd.id === x.target!.scheduleDanceId)
+    return (activePlatform[s?.sd.id ?? ''] ?? s?.platforms[0]?.id) === x.platform.id
+  }
+  const pick = candidates.find(inView) ?? candidates[0]
+  if (!pick?.target) return null
+  const t = pick.target
+  const section = sections.value.find((s) => s.sd.id === t.scheduleDanceId)
+  const row = section?.platforms.find((p) => p.id === pick.platform.id)?.groups.find((g) => g.id === t.id)
+  return {
+    id: `${pick.platform.id}|${t.key}`,
+    platformId: pick.platform.id,
+    turn: t.key,
+    label: row?.label ?? 'this age group',
+    detail: [section?.name, platformLabel(pick.platform.name) || 'Platform'].filter(Boolean).join(' · '),
+  }
+})
+// Asked once: shown is asked, whatever the answer.
+watch(question, (q) => q && markAsked(competitionId.value, q.platformId, q.turn))
+function answerQuestion(vote: 'yes' | 'no') {
+  const q = question.value ?? asked.value
+  if (!q) return
+  asked.value = { platformId: q.platformId, turn: q.turn }
+  onNow.answer(q.platformId, q.turn, vote)
+}
+function undoQuestion() {
+  if (asked.value) onNow.answer(asked.value.platformId, asked.value.turn, 'undo')
+}
 
 const drawGroup = ref<EnrichedGroup | null>(null)
 const drawDance = ref<ScheduleDance | null>(null)
@@ -242,7 +328,7 @@ const judging = computed(() => {
             v-html="sanitizeRichText(s.sd.description)"
           />
         </div>
-        <PlatformSwiper :platforms="s.platforms">
+        <PlatformSwiper :platforms="s.platforms" @active="activePlatform[s.sd.id] = $event">
           <template #default="{ platform: p }">
           <!-- The platform and its judges in one line over its age groups
                ("Platform 1 · Mary Munro"); each judge opens their sheet. -->
@@ -267,6 +353,14 @@ const judging = computed(() => {
           </div>
           <ul class="rows-engraved [--inset:1rem] [--inset-end:1rem]">
             <li v-for="g in p.groups" :key="g.id" class="relative">
+              <OnNowLine
+                v-if="lineOn(p.id, g.turn)"
+                :label="g.label"
+                :at="lineOn(p.id, g.turn)!.at"
+                :now="onNow.now.value"
+                :can-answer="auth.isSignedIn"
+                @answer="onNow.answer(p.id, g.turn, $event)"
+              />
               <!-- The whole row opens the order (its tint spans it); a posted
                    age group's Results link sits on top, at the right. A trophy
                    event's row opens its page, which has its dancers and placings. -->
@@ -313,6 +407,7 @@ const judging = computed(() => {
       </section>
     </template>
 
+    <OnNowAsk v-if="showing" :question="question" @answer="answerQuestion" @undo="undoQuestion" @done="askDone = true" />
     <DrawDialog
       :group="drawGroup"
       :dance="drawDance"
