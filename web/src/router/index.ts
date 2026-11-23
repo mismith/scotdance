@@ -10,7 +10,7 @@ import {
 } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 import { CalendarDays, Gavel, House, Info, Landmark, Music, School, Settings, Users } from '@lucide/vue'
-import { scrollAfterSwap, setNextMotion } from '@/lib/pageTransition'
+import { scrollAfterSwap, setNextMotion, visit } from '@/lib/pageTransition'
 import { byPath, fromTap, inverse, type Motion } from '@/lib/navMotion'
 import { trackCompetitionEntry } from '@/lib/competitionExit'
 import { useAuthStore } from '@/stores/auth'
@@ -294,6 +294,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/competition/Info.vue'),
       },
       {
+        path: 'info/yours',
+        name: 'competition.yours',
+        component: () => import('@/views/competition/Yours.vue'),
+      },
+      {
         path: 'dancers',
         name: 'competition.dancers',
         component: () => import('@/views/competition/Dancers.vue'),
@@ -557,6 +562,8 @@ nav?.addEventListener('navigate', (event) => {
 // replace hasn't touched it yet. Replacing an entry, as a competition's tabs
 // do, keeps how it was first reached.)
 const arrivals = new Map<number, Motion>()
+const visits = new Map<number, number>()
+let visitCount = 0
 let lastPosition = Number(history.state?.position ?? 0)
 let pending: Motion | null = null
 // How the pages move for the change being made (null: they just change).
@@ -564,6 +571,8 @@ let slide: Motion | null = null
 router.afterEach((_to, _from, failure) => {
   const position = Number(history.state?.position ?? lastPosition)
   if (!failure && pending && position > lastPosition) arrivals.set(position, pending)
+  if (!failure && position > lastPosition) visits.set(position, ++visitCount)
+  if (!failure) visit.value = visits.get(position) ?? visit.value
   lastPosition = position
   pending = null
   setNextMotion(failure ? null : slide)
@@ -599,8 +608,8 @@ router.beforeResolve((to, from) => {
   // A page that changes in place doesn't move; nor, on wide screens (as on a
   // Mac), do the sidebar's peers.
   if (motion.way === 'swap') return
-  // A link to a spot on a page scrolls there itself once its data is in.
-  if (to.hash) return
+  // A link to a spot on a page slides in like any other; the page scrolls
+  // there itself once it's landed (lib/pageTransition whenLanded).
   if ((motion.way === 'next' || motion.way === 'prev') && matchMedia('(min-width: 64rem)').matches) return
   slide = motion
 })

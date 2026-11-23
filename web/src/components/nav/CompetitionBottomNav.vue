@@ -28,7 +28,7 @@ const competitionId = computed(() => String(route.params.competitionId ?? ''))
 const { competition, scheduleHidden, resultsHidden } = useCompetition()
 
 const TABS = [
-  { label: 'Overview', icon: LayoutGrid, to: 'competition.info', matches: ['competition.info'] },
+  { label: 'Overview', icon: LayoutGrid, to: 'competition.info', matches: ['competition.info', 'competition.yours'] },
   {
     label: 'Dancers',
     icon: Users,

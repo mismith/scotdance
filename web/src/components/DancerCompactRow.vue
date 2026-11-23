@@ -3,10 +3,13 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ChevronRight, Hourglass } from '@lucide/vue'
 import Avatar from '@/components/Avatar.vue'
+import DancerStars from '@/components/DancerStars.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import { dayStage } from '@/lib/dancerDay'
+import { getOrdinalSuffix } from '@/lib/results'
+import { platformLabel } from '@/lib/schedule'
 import { formatShortDate } from '@/lib/format'
 import type { DancerCard } from '@/composables/useDancerCards'
 import { OVERALL_ID } from '@/types/competition'
@@ -22,9 +25,11 @@ const props = withDefaults(
     color: string | null
     /** A Favourite star at the end (dancers you've only looked at). */
     follow?: boolean
+    /** Their star in place of the number (a competition's Your dancers page: you know them by name and colour). */
+    star?: boolean
     showCompetition?: boolean
   }>(),
-  { follow: false, showCompetition: false },
+  { follow: false, showCompetition: false, star: false },
 )
 
 const f = computed(() => props.card.focus)
@@ -47,6 +52,9 @@ const placings = computed(() =>
 )
 const SHOWN = 3
 const shown = computed(() => placings.value.slice(-SHOWN))
+// Older ones step down in size behind the latest, so a cup in front of
+// ribbons stays a clean shape instead of numbers poking out under it.
+const ribbonScale = (i: number) => 1 - (shown.value.length - 1 - i) * 0.12
 
 // Over, results in, and no placing: said, so it doesn't read as results to come.
 const unplaced = computed(
@@ -56,8 +64,22 @@ const unplaced = computed(
     days.value.some((d) => d.dances.some((s) => s.state === 'unplaced' || s.state === 'no-placings')),
 )
 
+// Where and when their next dance is, in the schedule's own words
+// ("Platform A · from 9:45 am · 3rd to dance"), when it has them.
+const nextFacts = computed(() => {
+  for (const d of days.value)
+    for (const s of [...d.dances, ...d.trophyEvents.filter((t) => t.danced)]) {
+      if (s.state !== 'upcoming') continue
+      const time = s.slot?.eventTime ?? s.slot?.blockTime
+      const bits = [platformLabel(s.slot?.platformName), time ? `from ${time}` : s.slot?.blockName, s.drawPos ? `${s.drawPos}${getOrdinalSuffix(s.drawPos)} to dance` : null].filter(Boolean)
+      if (bits.length) return bits.join(' · ')
+    }
+  return null
+})
+
 const line = computed(() => {
   const focus = f.value
+  if (props.star && focus && stage.value !== 'done') return [day.value?.group?.fullName, nextFacts.value].filter(Boolean).join(' · ') || focus.competition.name
   if (!focus) return 'Not entered in any listed competitions'
   const where = props.showCompetition ? focus.competition.name : null
   if (stage.value === 'done') return 'Every result is in'
@@ -80,9 +102,10 @@ const to = computed(() =>
     <span v-if="color" class="dancer-sash" aria-hidden="true" />
     <RouterLink
       :to="to"
-      :class="['press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pl-4', follow ? 'pr-1' : 'pr-3']"
+      :class="['press-row focus-inset flex min-w-0 flex-1 items-center gap-3 py-2 pl-4', star ? 'min-h-14' : 'min-h-16', follow ? 'pr-1' : 'pr-3']"
     >
-      <span class="flex w-11 shrink-0 justify-center">
+      <DancerStars v-if="star" :colors="[color]" />
+      <span v-else class="flex w-11 shrink-0 justify-center">
         <NumberCard
           v-if="f?.phase !== 'after' && competitionDancer?.dancer.number != null"
           :number="competitionDancer.dancer.number"
@@ -111,7 +134,7 @@ const to = computed(() =>
           <Medal
             v-for="(p, i) in shown"
             :key="i"
-            :style="{ zIndex: i }"
+            :style="{ zIndex: i, scale: ribbonScale(i), transformOrigin: 'right center' }"
             class="[filter:drop-shadow(-1.5px_0_0_var(--background))]"
             :place="p.place!"
             :tied="p.tied"
@@ -122,7 +145,7 @@ const to = computed(() =>
         </span>
         <span v-if="placings.length > SHOWN" class="text-muted-foreground text-sm font-medium tabular-nums">+{{ placings.length - SHOWN }}</span>
       </span>
-      <span v-else-if="unplaced" class="text-muted-foreground shrink-0 text-sm font-medium">Not placed</span>
+      <span v-else-if="unplaced" class="text-muted-foreground shrink-0 text-sm font-medium">Didn’t place</span>
       <ChevronRight v-if="!follow" class="text-muted-foreground size-5 shrink-0" />
     </RouterLink>
     <FollowButton v-if="follow" :dancer="{ dancerId: card.id, fullName: card.name }" class="mr-1" />

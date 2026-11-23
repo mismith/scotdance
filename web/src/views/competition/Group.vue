@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { visit, whenLanded } from '@/lib/pageTransition'
 import { entryLine, isTeam } from '@/lib/entries'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Award, ChevronDown, ChevronRight, CircleSlash, Clock, Hourglass, Trophy } from '@lucide/vue'
 import { rowsMove } from '@/lib/settle'
 import EmptyState from '@/components/EmptyState.vue'
-import MyDancerLine from '@/components/MyDancerLine.vue'
 import ResultsMark from '@/components/ResultsMark.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { useCompetition } from '@/composables/useCompetition'
@@ -195,21 +195,23 @@ function openSponsor(e: MouseEvent) {
 }
 
 // Opened at a dance (#dance-…): go there once, as soon as it's on the page.
-// Never again for the same link: live results adding a dance would
-// otherwise pull you back mid-scroll.
+// Not again while you stay (live results adding a dance would pull you back
+// mid-scroll) or when you come Back here, but again each time you open the
+// link (the page is kept between visits, so it goes by lib/pageTransition's visit).
 let focused = ''
 function focusHash() {
   const match = route.hash.match(/^#dance-(.+)$/)
-  const want = match ? `${groupId.value}${route.hash}` : ''
+  const want = match ? `${visit.value}:${groupId.value}${route.hash}` : ''
   if (!match || focused === want) return
-  nextTick(() => {
+  // Once it has slid in: scrolled while it's still moving, it would land at the top.
+  whenLanded().then(() => nextTick(() => {
     const el = document.getElementById(`dance-${match[1]}`)
-    if (!el) return
+    if (!el || focused === want) return
     focused = want
     el.scrollIntoView({ block: 'start' })
-  })
+  }))
 }
-watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { immediate: true })
+watch(() => [visit.value, groupId.value, route.hash, sections.value.length], focusHash, { immediate: true })
 </script>
 
 <template>
@@ -232,9 +234,6 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
         <p class="text-muted-foreground text-callout">
           {{ [where, entriesCount].filter(Boolean).join(' · ') }}
         </p>
-        <div v-if="followedHere.length" class="space-y-1 pt-1">
-          <MyDancerLine v-for="d in followedHere" :key="d.id" :color="colorOf(d)" :name="d.fullName" :details="[`#${d.number}`]" />
-        </div>
         <div v-if="group.notChampionship" class="glass mt-3 flex gap-3 rounded-[1.375rem] p-4" role="note">
           <CircleSlash class="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
           <p class="text-callout"><span class="font-semibold">Not run as a championship.</span> Too few dancers turned up for a championship, so it ran as a regular competition.</p>
@@ -328,7 +327,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
 
         <div class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
           <div v-if="!s.placings.hasResults" class="text-muted-foreground flex items-start gap-3 px-4 py-4 text-base">
-            <template v-if="s.placings.explicitlyEmpty">{{ s.dance.id === OVERALL_ID ? 'No overall for this age group.' : 'No results for this dance.' }}</template>
+            <template v-if="s.placings.explicitlyEmpty">{{ s.dance.id === OVERALL_ID ? 'No overall for this age group.' : 'No placings awarded for this dance.' }}</template>
             <template v-else-if="s.dance.id === OVERALL_ID">
               <Clock class="mt-0.5 size-5 shrink-0" />
               <span>Posted after all the dances are in.</span>

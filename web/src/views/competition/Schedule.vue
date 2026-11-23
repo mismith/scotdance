@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { shortName } from '@/lib/entries'
-import MyDancerLine from '@/components/MyDancerLine.vue'
+import { whenLanded } from '@/lib/pageTransition'
+import DancersPill from '@/components/DancersPill.vue'
 import ResultsMark from '@/components/ResultsMark.vue'
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
@@ -104,6 +104,7 @@ onMounted(async () => {
   ready.value = true
   // Opened from a session on the Overview: straight to it.
   if (route.hash.startsWith('#block-')) {
+    await whenLanded()
     await nextTick()
     document.getElementById(route.hash.slice(1))?.scrollIntoView({ block: 'start', behavior: 'instant' })
   } else openAtToday()
@@ -153,9 +154,10 @@ async function openAtToday() {
     />
 
     <section v-for="d in empty ? [] : dayList" :id="`day-${d.day.id}`" :key="d.day.id" class="section-breaks scroll-mt-(--chrome-top) space-y-3">
-      <h2 v-if="dayList.length > 1" :data-section="d.relative ?? d.label" class="text-section flex items-baseline gap-2 pt-2">
-        {{ d.relative ?? d.label }}
-        <span v-if="d.relative" class="text-muted-foreground text-base font-medium">{{ d.label }}</span>
+      <h2 v-if="dayList.length > 1" :data-section="d.label" class="text-section flex items-baseline gap-2 pt-2">
+        <!-- The organiser's own name for the day first; "Today" is ours, after it. -->
+        {{ d.label }}
+        <span v-if="d.relative" class="text-muted-foreground text-base font-medium">{{ d.relative }}</span>
       </h2>
       <div
         v-if="d.day.description"
@@ -170,7 +172,7 @@ async function openAtToday() {
         class="scroll-mt-[calc(var(--chrome-top)+0.25rem)]"
       >
         <h3
-          :data-section="[dayList.length > 1 ? d.relative ?? d.label : null, b.block.name || 'Session', b.time].filter(Boolean).join(' · ')"
+          :data-section="[dayList.length > 1 ? d.label : null, b.block.name || 'Session', b.time].filter(Boolean).join(' · ')"
           :class="['flex flex-wrap items-baseline justify-between gap-x-2 pb-2', dayList.length > 1 ? 'text-heading pt-1' : 'text-section']"
         >
           <span class="truncate">{{ b.block.name || 'Session' }}</span>
@@ -188,35 +190,30 @@ async function openAtToday() {
                 v-html="sanitizeRichText(e.event.description)"
               />
             </div>
-            <RouterLink
-              v-else
-              :to="{
-                name: 'competition.event',
-                params: { competitionId, dayId: d.day.id, blockId: b.block.id, eventId: e.event.id },
-              }"
-              class="press-row focus-inset relative isolate flex min-h-14 items-center gap-3 py-2.5 pr-3 pl-4"
-              :style="e.mine.length ? { '--dc': e.mine[0].color ?? 'var(--primary)' } : undefined"
-            >
-              <span v-if="e.mine.length" class="dancer-sash" aria-hidden="true" />
-              <span class="min-w-0 flex-1">
-                <span :class="['block text-base leading-snug break-words', e.state === 'done' ? 'text-muted-foreground font-medium' : 'font-semibold']">
-                  {{ e.event.name || 'Event' }}
+            <template v-else>
+              <RouterLink
+                :to="{ name: 'competition.event', params: { competitionId, dayId: d.day.id, blockId: b.block.id, eventId: e.event.id } }"
+                class="press-row focus-inset flex min-h-14 items-center gap-3 py-2.5 pr-3 pl-4"
+              >
+                <span class="min-w-0 flex-1">
+                  <span :class="['block text-base leading-snug break-words', e.state === 'done' ? 'text-muted-foreground font-medium' : 'font-semibold']">
+                    {{ e.event.name || 'Event' }}
+                  </span>
+                  <span v-if="e.event.description" class="text-muted-foreground block truncate text-sm">
+                    {{ slugline(e.event.description) }}
+                  </span>
+                  <!-- Yours somewhere in it: a pill, part of the row (it opens the event too). -->
+                  <DancersPill
+                    v-if="e.mine.length"
+                    class="mt-1.5"
+                    :colors="e.mine.map((m) => m.color)"
+                    :names="e.mine.map((m) => m.dancer.fullName)"
+                  />
                 </span>
-                <span v-if="e.event.description" class="text-muted-foreground block truncate text-sm">
-                  {{ slugline(e.event.description) }}
-                </span>
-                <MyDancerLine
-                  v-for="m in e.mine"
-                  :key="m.dancer.id"
-                  :color="m.color"
-                  :name="shortName(m.dancer)"
-                  :details="[`#${m.dancer.number}`, m.platform]"
-                  class="mt-1"
-                />
-              </span>
-              <ResultsMark :posted="e.count.posted" :total="e.count.total" />
-              <ChevronRight class="text-muted-foreground size-5 shrink-0" />
-            </RouterLink>
+                <ResultsMark :posted="e.count.posted" :total="e.count.total" />
+                <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+              </RouterLink>
+            </template>
           </li>
           <li v-if="!b.events.length" class="text-muted-foreground px-4 py-3 text-base">Nothing listed yet.</li>
         </ul>

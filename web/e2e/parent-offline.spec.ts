@@ -42,24 +42,28 @@ test('opens with the last saved data, says so, and recovers live results', async
   await page.goto('/')
   await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, email)
-  const card = page.locator('article').filter({ hasText: person.name })
-  await expect(card.getByText(/^Platform A · from /)).toBeVisible()
+  // Home: your dancer as a pill; their day is on Your dancers.
+  const pill = page.getByRole('main').locator('a[href*="/info/yours"]')
+  await expect(pill).toHaveText(person.firstName)
+  const row = page.locator('main li').filter({ hasText: person.name })
+  await pill.click()
+  await expect(row.getByText(/ · Platform A · from /)).toBeVisible()
   // Visit the competition too, so its pages are saved.
   await page.goto(`/competitions/${comp.id}/info`)
-  await expect(page.getByRole('heading', { name: 'Your dancers here' })).toBeVisible()
+  await expect(pill).toBeVisible()
   await page.goto('/')
-  await expect(card).toBeVisible()
+  await expect(pill).toBeVisible()
 
   // Signal gone; reopen the app.
   net.on = false
   await page.reload()
-  await expect(card.getByText(/^Platform A · from /)).toBeVisible({ timeout: 15_000 })
+  await expect(pill).toHaveText(person.firstName, { timeout: 15_000 })
   const notice = page.getByRole('status').filter({ hasText: 'Offline' })
   await expect(notice).toContainText(/Offline · last updated \d/)
   await page.goto(`/competitions/${comp.id}/info`)
   await expect(page.getByRole('heading', { name: comp.name, level: 1 })).toBeVisible({ timeout: 15_000 })
-  await expect(page.getByRole('heading', { name: 'Your dancers here' })).toBeVisible()
-  await page.goto('/')
+  await pill.click()
+  await expect(row.getByText(/ · Platform A · from /)).toBeVisible()
 
   // Meanwhile the Fling is posted: 1st.
   const entryId = person.entries[0]
@@ -67,6 +71,6 @@ test('opens with the last saved data, says so, and recovers live results', async
 
   // Signal back: the notice goes, and the placing arrives without a reload.
   net.on = true
-  await expect(card.getByRole('img', { name: '1st place' })).toBeVisible({ timeout: 60_000 })
+  await expect(row.getByRole('img', { name: /1st place/ })).toBeVisible({ timeout: 60_000 })
   await expect(notice).toHaveCount(0)
 })

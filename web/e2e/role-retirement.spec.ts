@@ -26,23 +26,3 @@ test('legacy answers stay untouched and Manage follows permissions on desktop an
   expect(await dbGet(`users/${id}/roles`)).toEqual(roles)
   expect(await dbGet(`users/${id}/rolesAnsweredAt`)).toBe(answeredAt)
 })
-
-test('compact Home rows follow dancer count, ignoring saved teacher answers', async ({ page }) => {
-  const email = `${uid('retired-teacher')}@example.test`
-  const id = await ensureUser(email)
-  await dbSet(`users/${id}`, { email, roles: { teacher: true }, rolesAnsweredAt: 1700000000000 })
-  const dancers = Object.fromEntries(Array.from({ length: 7 }, (_, i) => [uid(`person-${i}`), `Example Dancer ${i}`]))
-  for (const [key, name] of Object.entries(dancers)) await dbSet(`dancers/${key}`, { name })
-  const six = Object.fromEntries(Object.entries(dancers).slice(0, 6))
-  await dbSet(`users:favorites/${id}/dancers`, six)
-  await signIn(page, email)
-  await page.goto('/')
-  const first = page.getByRole('main').getByRole('link').filter({ hasText: 'Example Dancer 0' })
-  await expect(first).toBeVisible()
-  const compactFirst = page.locator('main li').filter({ has: page.getByRole('link').filter({ hasText: 'Example Dancer 0' }) })
-  await expect(compactFirst).toHaveCount(0)
-  await dbSet(`users:favorites/${id}/dancers`, dancers)
-  await expect(compactFirst).toHaveCount(1)
-  await dbSet(`users:favorites/${id}/dancers`, six)
-  await expect(compactFirst).toHaveCount(0)
-})

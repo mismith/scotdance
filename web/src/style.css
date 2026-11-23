@@ -357,6 +357,9 @@ html:not([data-native])::before {
     -webkit-text-size-adjust: 100%;
     /* Every control has its own press state (press-* below). */
     -webkit-tap-highlight-color: transparent;
+    /* No double-tap zoom (a quick second tap on a bar or button zoomed the
+       whole app); pinch-to-zoom still works, for anyone who needs it. */
+    touch-action: manipulation;
   }
   button:not(:disabled),
   [role='button']:not([aria-disabled='true']),
@@ -547,7 +550,8 @@ html:not([data-native])::before {
   z-index: -1;
   width: var(--sash-width, min(11rem, 60%));
   background: var(--dc, var(--primary));
-  mask-image: linear-gradient(90deg, black 0 0.5rem, rgb(0 0 0 / var(--row-fade)) 0.5rem, transparent);
+  /* --stripe: a row hung from a rail (Home) narrows it to the rail's width. */
+  mask-image: linear-gradient(90deg, black 0 var(--stripe, 0.5rem), rgb(0 0 0 / var(--row-fade)) var(--stripe, 0.5rem), transparent);
   pointer-events: none;
 }
 

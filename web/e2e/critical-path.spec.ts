@@ -42,6 +42,8 @@ test('a placing entered in Manage reaches a parent with them as a favourite, liv
   if (!hasSidebar(parent)) await parent.getByRole('button', { name: /^Leave this competition/ }).click()
   await appTab(parent, 'Home').click()
   await expect(parent).toHaveURL(/\/$/)
+  // Home has them as a pill on the competition; their day is on Your dancers.
+  await parent.getByRole('main').locator('a[href*="/info/yours"]').first().click()
   await expect(parent.getByText(`${dancer.firstName} ${dancer.lastName}`).first()).toBeVisible()
 
   const organiser = await (await browser.newContext()).newPage()

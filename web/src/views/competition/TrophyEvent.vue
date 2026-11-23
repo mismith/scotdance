@@ -5,13 +5,12 @@ import { Award, Clock, Trophy } from '@lucide/vue'
 import { rowsMove } from '@/lib/settle'
 import EmptyState from '@/components/EmptyState.vue'
 import Medal from '@/components/Medal.vue'
-import MyDancerLine from '@/components/MyDancerLine.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
-import { oncePerPerson, useFollowing } from '@/composables/useFollowing'
+import { useFollowing } from '@/composables/useFollowing'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { TROPHY_EVENT_RESULT, calledBackIds, isDanced, trophyEventEntrants } from '@/lib/trophyEvents'
@@ -89,7 +88,6 @@ const whereWhen = computed(() => {
 
 // Before it's danced: who was called back for it, once its callbacks are in.
 const dancingList = computed(() => (trophyEvent.value && calledBackIds(trophyEvent.value, results.value) ? eligible.value : null))
-const followedHere = computed(() => oncePerPerson(eligible.value.filter((d) => following.isFollowing(d))))
 const colorOf = (d: EnrichedDancer | null) => (d && following.isFollowing(d) ? following.colorFor(d.dancerId) : null)
 const rowStyle = (d: EnrichedDancer | null) => (colorOf(d) ? following.paint(d!.dancerId) : undefined)
 
@@ -142,15 +140,6 @@ function openSponsor(e: MouseEvent) {
         <h1 :class="heroTitle(trophyEvent.fullName)">{{ trophyEvent.fullName }}</h1>
         <p v-if="whereWhen" class="text-callout font-medium">{{ whereWhen }}</p>
         <p v-if="trophyEvent.openTo" class="text-muted-foreground text-callout">Open to {{ trophyEvent.openTo }}</p>
-        <div v-if="followedHere.length" class="space-y-1 pt-1">
-          <MyDancerLine
-            v-for="d in followedHere"
-            :key="d.id"
-            :color="colorOf(d)"
-            :name="d.fullName"
-            :details="[`#${d.number}`, d.group && groupLabel(d.group)]"
-          />
-        </div>
       </header>
 
       <EmptyState
@@ -165,7 +154,7 @@ function openSponsor(e: MouseEvent) {
         <div class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
           <div v-if="!placings.hasResults" class="text-muted-foreground flex items-start gap-3 px-4 py-4 text-base">
             <!-- Worded as an age group's Overall is. -->
-            <template v-if="placings.explicitlyEmpty">No results for this trophy event.</template>
+            <template v-if="placings.explicitlyEmpty">No placings awarded for this trophy event.</template>
             <template v-else-if="phase === 'after'">No result was posted for this trophy event.</template>
             <template v-else>
               <Clock class="mt-0.5 size-5 shrink-0" />

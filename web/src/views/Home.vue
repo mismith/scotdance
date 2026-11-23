@@ -4,14 +4,13 @@ import LogoMark from '@/components/LogoMark.vue'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useIntervalFn } from '@vueuse/core'
-import { ChevronRight, Clock, Search, Sparkles, Trophy, Users, X } from '@lucide/vue'
+import { ChevronRight, Search, Sparkles, X } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
-import Button from '@/components/ui/Button.vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import CompetitionHeading from '@/components/CompetitionHeading.vue'
-import DancerDayCard from '@/components/DancerDayCard.vue'
+import Wordmark from '@/components/Wordmark.vue'
+import DancersPill from '@/components/DancersPill.vue'
 import DancerCompactRow from '@/components/DancerCompactRow.vue'
-import { useLiveAlertState } from '@/composables/useLiveAlerts'
 import Skeleton from '@/components/Skeleton.vue'
 import { useDancerCards, type DancerCard } from '@/composables/useDancerCards'
 import { useFollowing } from '@/composables/useFollowing'
@@ -25,12 +24,9 @@ import { useCompetitionSpans } from '@/composables/useCompetitionSpans'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useMeStore } from '@/stores/me'
-import { compareDays, dayStage, firstDance } from '@/lib/dancerDay'
-import { formatLongDate, formatRelative, formatShortDate, parseDate } from '@/lib/format'
-import { now } from '@/lib/now'
-import { getOrdinalSuffix } from '@/lib/results'
+import { compareDays, type Phase } from '@/lib/dancerDay'
+import { parseDate } from '@/lib/format'
 import { settle, settleDelay } from '@/lib/settle'
-import { platformLabel } from '@/lib/schedule'
 import type { Competition } from '@/types/competition'
 import { useCompetitionLinks } from '@/composables/useCompetitionLinks'
 import { orderLinked, railRows } from '@/lib/linked'
@@ -46,13 +42,6 @@ const { recent, clear: clearRecent } = useRecentDancers()
 const titleEl = ref<HTMLElement | null>(null)
 const scrolledPast = useScrolledPast(titleEl)
 
-const greeting = computed(() => {
-  const h = now().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 18) return 'Good afternoon'
-  return 'Good evening'
-})
-const todayLabel = computed(() => formatLongDate(now().getTime()).replace(/,? \d{4}$/, ''))
 
 // Followed people; if none, the dancers they've looked at lately, so Home
 // is never empty for someone who hasn't signed in yet.
@@ -70,17 +59,10 @@ const people = computed(() =>
 )
 const { cards, loading, resultsAt } = useDancerCards(people)
 
-// A class of favourites, not two kids: one line each.
-const compact = computed(
-  () => !showingRecent.value && followedPeople.value.length > 6,
-)
-
-// Home shows the few that matter now: everyone dancing today, most pressing
-// first (dancing next, still to dance, waiting for results, done), then the
-// soonest next, then the most recently danced. Everyone's on the Dancers page.
-const HOME_LIMIT = 6
+// Each competition your dancers are at, most pressing first: today's (whoever
+// dances next leads), then the soonest next, then the most recently danced.
 const dateMs = (c: Competition) => (c.date ? parseDate(c.date).getTime() : 0)
-const isToday = (c: DancerCard) => c.focus?.phase === 'today'
+const firstName = (c: DancerCard) => c.name.split(' ')[0]
 function relevance(a: DancerCard, b: DancerCard) {
   const rank = (c: DancerCard) => (!c.focus ? 3 : c.focus.phase === 'today' ? 0 : c.focus.phase === 'before' ? 1 : 2)
   const r = rank(a) - rank(b)
@@ -90,40 +72,35 @@ function relevance(a: DancerCard, b: DancerCard) {
   return a.focus.phase === 'after' ? -d : d
 }
 const ranked = computed(() => (showingRecent.value ? [] : [...cards.value].sort(relevance)))
-const shownCards = computed(() => ranked.value.slice(0, HOME_LIMIT))
-const moreFollowed = computed(() => !showingRecent.value && people.value.length > HOME_LIMIT)
 
-// Today, one section per competition with its dancers underneath, the
-// competition with the most pressing dancer first.
 interface CompetitionGroup {
   competitionId: string
   competition: Competition
   cards: DancerCard[]
+  today: boolean
+  phase: Phase
 }
-function byCompetition(list: DancerCard[]): CompetitionGroup[] {
+// Every one of yours entered at each competition, as its own page counts
+// them (not only those it's the most pressing one for).
+const groups = computed<CompetitionGroup[]>(() => {
   const map = new Map<string, CompetitionGroup>()
-  for (const c of list) {
-    const f = c.focus
-    if (!f) continue
-    const g = map.get(f.competitionId) ?? { competitionId: f.competitionId, competition: f.competition, cards: [] }
-    g.cards.push(c)
-    map.set(f.competitionId, g)
-  }
-  return [...map.values()]
-}
-// Today: every one of yours at the competition, not just the top few.
-const todays = computed(() => byCompetition(ranked.value.filter(isToday)))
-// The rest share what's left of the six, each competition's extras a tap away.
-const othersAll = computed(() => ranked.value.filter((c) => !isToday(c)))
-const others = computed(() => shownCards.value.filter((c) => !isToday(c)))
-// A teacher's class, grouped by where they're dancing next (or last).
-const otherGroups = computed(() =>
-  byCompetition(others.value).map((g) => ({ ...g, all: othersAll.value.filter((c) => c.focus?.competitionId === g.competitionId) })),
-)
-const expanded = ref<string[]>([])
-const toggleMore = (id: string) =>
-  (expanded.value = expanded.value.includes(id) ? expanded.value.filter((x) => x !== id) : [...expanded.value, id])
-const unplaced = computed(() => others.value.filter((c) => !c.focus))
+  for (const c of ranked.value)
+    for (const x of c.competitions) {
+      const g = map.get(x.competitionId) ?? { competitionId: x.competitionId, competition: x.competition, cards: [], today: x.phase === 'today', phase: x.phase }
+      g.cards.push(c)
+      map.set(x.competitionId, g)
+    }
+  const order = { today: 0, before: 1, after: 2 }
+  const all = [...map.values()].sort(
+    (a, b) =>
+      order[a.phase] - order[b.phase] ||
+      (a.phase === 'after' ? dateMs(b.competition) - dateMs(a.competition) : dateMs(a.competition) - dateMs(b.competition)),
+  )
+  // Today's and what's coming, and only the two most recent past ones.
+  let past = 0
+  return all.filter((g) => g.phase !== 'after' || past++ < 2)
+})
+const todays = computed(() => groups.value.filter((g) => g.today))
 
 // Finished dancers fold to a line of ribbons, so the ones still dancing
 // lead (and a past competition is just its placings).
@@ -137,58 +114,19 @@ const pulsing = computed(() => {
   return g?.competitionId ?? null
 })
 function todayKicker(g: CompetitionGroup) {
-  const f = g.cards[0].focus
+  const f = g.cards.find((c) => c.focus?.competitionId === g.competitionId)?.focus
   return ['Today', f?.dayOf && `Day ${f.dayOf.n} of ${f.dayOf.of}`, g.competition.location].filter(Boolean).join(' · ')
 }
+// "Next" for the soonest only, "Upcoming" for later ones, "Past" once over.
 function groupKicker(g: CompetitionGroup) {
-  const f = g.cards[0].focus!
-  return [f.phase === 'before' ? 'Next' : 'Last', g.competition.location].filter(Boolean).join(' · ')
+  const when = g.phase === 'before' ? (groups.value.find((x) => x.phase === 'before') === g ? 'Next' : 'Upcoming') : 'Past'
+  return [when, g.competition.location].filter(Boolean).join(' · ')
 }
 
-// One line under the greeting that answers "what now?", always in the same
-// place: the night before, where they start; on the day, once results come
-// in, whose are still to come. (Just "dancing today" would only repeat the
-// cards below.)
-const firstName = (c: DancerCard) => c.name.split(' ')[0]
-function names(list: DancerCard[]) {
-  const n = list.map(firstName)
-  if (n.length > 3) return `${n.slice(0, 2).join(', ')} and ${n.length - 2} more`
-  return n.length > 1 ? `${n.slice(0, -1).join(', ')} and ${n.at(-1)}` : (n[0] ?? '')
-}
-const looksLikeTime = (s: string | null | undefined) => !!s && /\d(:\d\d)?\s*(am|pm)|\d:\d\d/i.test(s)
-const context = computed(() => {
-  if (showingRecent.value) return null
-  const today = ranked.value.filter((c) => isToday(c) && c.focus!.days.length)
-  if (today.length) {
-    const lead = today[0]
-    if (dayStage(lead.focus!.days) === 'upcoming') return null
-    const waiting = today.filter((c) => dayStage(c.focus!.days) === 'waiting')
-    return waiting.length ? `Results to come for ${names(waiting)}.` : `Results are in for ${names(today)}.`
-  }
-  const tomorrow = ranked.value.filter((c) => c.focus?.phase === 'before' && c.focus.daysAway === 1)
-  if (tomorrow.length) {
-    const comp = tomorrow[0].focus!.competition
-    const starts = tomorrow
-      .filter((c) => c.focus!.competitionId === tomorrow[0].focus!.competitionId)
-      .map((c) => ({ c, s: firstDance(c.focus!.days) }))
-      .filter((x) => x.s)
-      .sort((a, b) => a.s!.slot!.seq - b.s!.slot!.seq)
-    const first = starts[0]
-    const plat = first ? platformLabel(first.s!.slot!.platformName) : ''
-    const on = plat ? ` on ${plat}` : ''
-    let line = ''
-    if (first && looksLikeTime(first.s!.slot!.blockTime)) line = ` ${firstName(first.c)} starts at ${first.s!.slot!.blockTime}${on}.`
-    else if (first?.s!.drawPos) line = ` ${firstName(first.c)} is ${first.s!.drawPos}${getOrdinalSuffix(first.s!.drawPos)} to dance${on}.`
-    return `Tomorrow: ${comp.name ?? 'a competition'}.${line}`
-  }
-  const next = ranked.value.find((c) => c.focus?.phase === 'before')
-  if (next?.focus?.competition.date) return `Next up: ${next.focus.competition.name}, ${formatRelative(next.focus.competition.date)}.`
-  return null
-})
 
 // Coming up: competitions your favourite dancers are entered in, soonest
 // first (ADR 0008: a competition is never pinned here by its alerts). One you
-// manage is already under Your competitions (where it opens Manage), so it
+// manage is already under Competitions you manage (where it opens Manage), so it
 // isn't listed twice.
 const { competitions: recentCompetitions, loading: competitionsLoading } = useCompetitions(ref(false))
 const { linkOf, othersLine } = useCompetitionLinks()
@@ -208,8 +146,10 @@ const comingUp = computed(() => {
     }
   }
   const managed = new Set(yours.value.map((c) => c.id))
+  // Not one already above with your dancers: each competition in one place.
+  const listed = new Set(groups.value.map((g) => g.competitionId))
   const entries = [...map.values()]
-    .filter((e) => !managed.has(e.id))
+    .filter((e) => !managed.has(e.id) && !listed.has(e.id))
     .map((e) => ({ ...e, date: e.competition.date, name: e.competition.name }))
   // Linked ones together, on their rail; one without the rest names them.
   const at = (e: { date?: number | string }) => parseDate(e.date ?? 0).getTime()
@@ -228,9 +168,10 @@ const dayNote = (c: Competition & { id: string }) => {
 }
 
 // If nothing personal is coming up, show what's next anywhere (but not
-// again what's under Your competitions, or today's, already shown with your dancers).
+// again what's under Competitions you manage, or today's, already shown with your dancers).
 const nextAnywhere = computed(() => {
-  const shown = new Set([...yours.value.map((c) => c.id), ...todays.value.map((t) => t.competitionId)])
+  // Not one already above (yours, or one your dancers are at).
+  const shown = new Set([...yours.value.map((c) => c.id), ...groups.value.map((g) => g.competitionId)])
   const next = recentCompetitions.value.filter((c) => phaseOf(c) !== 'after' && !shown.has(c.id))
   const at = (c: { date?: number | string }) => parseDate(c.date ?? 0).getTime()
   return railRows(orderLinked(next, linkOf, { at }), 3).map(({ item, rail, alone }) => ({
@@ -257,14 +198,6 @@ const yours = computed(() =>
 const cardColor = (card: DancerCard) => (showingRecent.value ? null : following.colorFor(card.id))
 // A dancer without a day card: where they're entered, if anywhere listed
 // (that competition's details may not have loaded).
-function cardLine(card: DancerCard) {
-  const f = card.focus
-  if (!f) return 'Not entered in any listed competitions'
-  if (f.phase === 'today') return `Today: ${f.competition.name}`
-  if (f.phase === 'after') return `Last: ${f.competition.name}`
-  return `Next: ${f.competition.name}${f.competition.date ? ` · ${formatShortDate(f.competition.date)}` : ''}`
-}
-
 // What's new, for people who used the old app: only when their old
 // favourites were carried over, never on competition day, and only for
 // their first few visits.
@@ -274,33 +207,27 @@ const showWhatsNew = computed(
   () => whatsNew.unseen && oldFavourites.copied && oldFavourites.launches <= 3 && !todays.value.length,
 )
 
-const { freshKey: liveFresh } = useLiveAlertState()
-
-// Under today's competition: straight to the tabs people go there for.
-const COMPETITION_TABS = [
-  { name: 'competition.schedule', label: 'Schedule', icon: Clock },
-  { name: 'competition.results', label: 'Results', icon: Trophy },
-  { name: 'competition.dancers', label: 'Dancers', icon: Users },
-] as const
 
 </script>
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
-    <AppBar title="Home" :show-title="scrolledPast" :back="false" />
+    <!-- The app's name in the bar, not a greeting taking a third of the screen:
+         your competitions start right under it. -->
+    <AppBar title="Home" :scrolled="scrolledPast" :back="false">
+      <template #leading>
+        <span class="text-heading flex items-center gap-2 pl-1 lg:hidden"><LogoMark class="text-primary size-7" /><Wordmark /></span>
+      </template>
+    </AppBar>
 
     <main
-      class="mx-auto grid w-full max-w-3xl gap-y-5 px-4 pt-[calc(var(--chrome-top)+0.25rem)]"
+      class="mx-auto grid w-full max-w-3xl gap-y-10 px-4 pt-[calc(var(--chrome-top)+0.25rem)]"
     >
-      <!-- The greeting leads; the date and "what now?" follow it rather than
-           sitting above it as a label. -->
-      <header ref="titleEl" class="pt-1.5">
-        <h1 class="text-hero">{{ greeting }}</h1>
-        <p class="text-muted-foreground text-callout mt-1.5 font-medium">{{ todayLabel }}</p>
-        <p v-if="context" :class="['mt-1.5 text-base font-medium', settle]">{{ context }}</p>
-      </header>
+      <!-- The top edge of the page: the bar frosts once it's scrolled under. -->
+      <h1 class="sr-only">Home</h1>
+      <div ref="titleEl" aria-hidden="true" />
 
-      <div class="min-w-0 space-y-5">
+      <div class="min-w-0 space-y-10">
         <!-- Dismissed, it folds away rather than jumping the page up. -->
         <Transition
           leave-active-class="transition-[grid-template-rows,opacity] duration-(--dur-base) ease-standard motion-reduce:transition-opacity"
@@ -337,62 +264,48 @@ const COMPETITION_TABS = [
           </div>
         </Transition>
 
-        <!-- Today: each competition, with its dancers underneath -->
-        <section
-          v-for="(g, i) in todays"
-          :key="g.competitionId"
-          :aria-labelledby="`today-${g.competitionId}`"
-          :class="['space-y-2.5', settle]"
-          :style="settleDelay(i)"
-        >
-          <h2 :id="`today-${g.competitionId}`">
-            <CompetitionHeading :competition-id="g.competitionId" :name="g.competition.name" :date="g.competition.date" today>
-              <template #kicker>
-                <span :class="['text-callout flex items-center gap-1.5 font-semibold', connected ? 'text-live' : 'text-muted-foreground']">
-                  <span
-                    :class="[
-                      'size-2 shrink-0 rounded-full',
-                      connected ? 'bg-live' : 'bg-muted-foreground',
-                      connected && pulsing === g.competitionId && 'motion-safe:animate-[live-pulse_2s_infinite]',
-                    ]"
-                    aria-hidden="true"
-                  />
-                  <span class="truncate">{{ todayKicker(g) }}</span>
-                </span>
-              </template>
-            </CompetitionHeading>
-          </h2>
-          <!-- Its tabs a tap away (not two through Competitions), which also
-               marks this as the competition, over your dancers. -->
-          <nav :aria-label="g.competition.name" class="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
-            <RouterLink
-              v-for="t in COMPETITION_TABS"
-              :key="t.name"
-              :to="{ name: t.name, params: { competitionId: g.competitionId } }"
-              class="press button-fill text-primary text-callout flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 font-semibold"
-            >
-              <component :is="t.icon" class="size-4.5" aria-hidden="true" />{{ t.label }}
-            </RouterLink>
-          </nav>
-          <ul v-if="compact" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
-            <DancerCompactRow v-for="card in g.cards" :key="card.id" :card="card" :color="cardColor(card)" />
-          </ul>
-          <!-- Frameless blocks, edge to edge, an engraved line between. -->
-          <div v-else class="rows-engraved -mx-4">
-            <template v-for="card in g.cards" :key="card.id">
-              <DancerDayCard
-                v-if="card.focus?.days.length"
-                :days="card.focus.days"
-                :show-number="card.focus.phase !== 'after'"
-                :fresh="liveFresh"
-                :competition-id="card.focus.competitionId"
-                :color="cardColor(card)"
-                :name="card.name"
+        <!-- Your competitions: each one your dancers are at, today's first, then
+             the next, then the last. Your dancers there are one line apiece, so
+             Home keeps its shape however many you follow; they're a tap away. -->
+        <template v-if="!showingRecent">
+          <Skeleton v-for="i in loading && !groups.length ? 2 : 0" :key="`sk${i}`" class="h-32 w-full rounded-2xl!" />
+          <section
+            v-for="(g, i) in groups"
+            :key="g.competitionId"
+            :aria-labelledby="`${g.today ? 'today' : 'comp'}-${g.competitionId}`"
+            :class="['relative space-y-2.5', settle]"
+            :style="settleDelay(i)"
+          >
+            <h2 :id="`${g.today ? 'today' : 'comp'}-${g.competitionId}`">
+              <CompetitionHeading :competition-id="g.competitionId" :name="g.competition.name" :date="g.competition.date" :today="g.today">
+                <template #kicker>
+                  <template v-if="g.today">
+                    <span :class="['text-callout flex items-center gap-1.5 font-semibold', connected ? 'text-live' : 'text-muted-foreground']">
+                      <span
+                        :class="[
+                          'size-2 shrink-0 rounded-full',
+                          connected ? 'bg-live' : 'bg-muted-foreground',
+                          connected && pulsing === g.competitionId && 'motion-safe:animate-[live-pulse_2s_infinite]',
+                        ]"
+                        aria-hidden="true"
+                      />
+                      <span class="truncate">{{ todayKicker(g) }}</span>
+                    </span>
+                  </template>
+                  <span v-else class="text-muted-foreground text-callout block truncate">{{ groupKicker(g) }}</span>
+                </template>
+              </CompetitionHeading>
+            </h2>
+            <!-- Your dancers there, as a pill in line with the name. -->
+            <div class="pl-14">
+              <DancersPill
+                :to="{ name: 'competition.yours', params: { competitionId: g.competitionId } }"
+                :colors="g.cards.map(cardColor)"
+                :names="g.cards.map((c) => c.name)"
               />
-              <Skeleton v-else-if="card.loading" class="mx-4 my-3 h-36 rounded-2xl!" />
-            </template>
-          </div>
-        </section>
+            </div>
+          </section>
+        </template>
 
         <!-- No favourites yet: the pitch, then something to look at -->
         <section
@@ -423,25 +336,11 @@ const COMPETITION_TABS = [
           </div>
         </section>
 
-        <!-- Your dancers (the rest), or the ones looked at lately -->
-        <section
-          v-if="people.length && (others.length || showingRecent || !todays.length)"
-          :class="['space-y-2.5', todays.length && 'engraved-line mt-3 pt-6']"
-        >
-          <h2 class="text-section flex min-h-6 items-center justify-between">
-            {{ showingRecent ? 'Recently viewed' : 'Your dancers' }}
-            <RouterLink
-              v-if="moreFollowed"
-              :to="{ name: 'dancers' }"
-              class="text-primary press -my-2.5 -mr-2 flex h-11 items-center rounded-full px-2 text-callout font-semibold"
-            >
-              See all {{ people.length }}
-            </RouterLink>
-            <span v-else-if="!showingRecent" class="text-muted-foreground text-sm font-normal">
-              {{ people.length }} {{ people.length === 1 ? 'favourite' : 'favourites' }}
-            </span>
+        <!-- No favourites yet: the dancers looked at lately -->
+        <section v-if="showingRecent && people.length" class="space-y-2.5">
+          <h2 class="text-section flex min-h-6 items-baseline justify-between">
+            Recently viewed
             <button
-              v-else
               type="button"
               aria-label="Clear recently viewed"
               class="text-primary press -my-2.5 -mr-2 flex h-11 items-center rounded-full px-2 text-callout font-semibold"
@@ -450,91 +349,18 @@ const COMPETITION_TABS = [
               Clear
             </button>
           </h2>
-
-          <template v-if="loading && !cards.length">
-            <Skeleton
-              v-for="i in Math.min(people.length, 2)"
-              :key="i"
-              :class="[showingRecent || compact ? 'h-16' : 'h-52', 'w-full rounded-2xl!']"
-            />
-          </template>
-
-          <ul v-if="showingRecent && cards.length" :class="['rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]', settle]">
+          <Skeleton v-for="i in loading && !cards.length ? Math.min(people.length, 2) : 0" :key="i" class="h-16 w-full rounded-2xl!" />
+          <ul v-if="cards.length" :class="['rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]', settle]">
             <DancerCompactRow v-for="card in cards" :key="card.id" :card="card" :color="null" follow show-competition />
           </ul>
-
-          <template v-else-if="compact">
-            <div v-for="(g, i) in otherGroups" :key="g.competitionId" :class="['space-y-1.5', settle]" :style="settleDelay(i)">
-              <CompetitionHeading :competition-id="g.competitionId" :name="g.competition.name" :date="g.competition.date">
-                <template #kicker>
-                  <span class="text-muted-foreground text-callout block truncate">{{ groupKicker(g) }}</span>
-                </template>
-              </CompetitionHeading>
-              <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
-                <DancerCompactRow
-                  v-for="card in expanded.includes(g.competitionId) ? g.all : g.cards"
-                  :key="card.id"
-                  :card="card"
-                  :color="cardColor(card)"
-                />
-              </ul>
-              <!-- The rest of yours at this competition, in place, and back. -->
-              <button
-                v-if="g.all.length > g.cards.length"
-                type="button"
-                class="text-primary press -mx-2 flex h-11 items-center rounded-full px-2 text-callout font-semibold"
-                :aria-expanded="expanded.includes(g.competitionId)"
-                @click="toggleMore(g.competitionId)"
-              >
-                {{ expanded.includes(g.competitionId) ? 'Show fewer' : `Show ${g.all.length - g.cards.length} more` }}
-              </button>
-            </div>
-            <ul v-if="unplaced.length" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
-              <DancerCompactRow v-for="card in unplaced" :key="card.id" :card="card" :color="cardColor(card)" />
-            </ul>
-          </template>
-
-          <div v-if="!compact && !showingRecent && others.length" class="rows-engraved -mx-4">
-            <template v-for="(card, i) in others" :key="card.id">
-              <DancerDayCard
-                v-if="card.focus && card.focus.days.length"
-                :class="settle"
-                :style="settleDelay(i)"
-                :days="card.focus.days"
-                :show-number="card.focus.phase !== 'after'"
-                :fresh="liveFresh"
-                :competition-id="card.focus.competitionId"
-                :color="cardColor(card)"
-                :name="card.name"
-                :competition-name="`${card.focus.phase === 'before' ? 'Next' : 'Last'}: ${card.focus.competition.name}`"
-              />
-              <Skeleton v-else-if="card.loading" class="mx-4 my-3 h-36 rounded-2xl!" />
-              <RouterLink
-                v-else
-                :to="{ name: 'dancer.info', params: { dancerId: card.id } }"
-                class="press-row focus-inset relative isolate flex min-h-16 items-center gap-3 py-2 pr-3 pl-4"
-                :style="following.paint(card.id)"
-              >
-                <span v-if="cardColor(card)" class="dancer-sash" aria-hidden="true" />
-                <span class="min-w-0 flex-1">
-                  <span class="block truncate text-[1.0625rem] font-semibold">{{ card.name }}</span>
-                  <span class="text-muted-foreground block truncate text-sm">{{ cardLine(card) }}</span>
-                </span>
-                <ChevronRight class="text-muted-foreground size-5" />
-              </RouterLink>
-            </template>
-          </div>
         </section>
-        <div v-else-if="moreFollowed" class="flex justify-center">
-          <Button variant="plain" :to="{ name: 'dancers' }">See all {{ people.length }} dancers</Button>
-        </div>
       </div>
 
-      <aside class="min-w-0 space-y-5">
+      <aside class="min-w-0 space-y-10">
         <!-- For organisers -->
         <section v-if="yours.length" class="space-y-2.5">
-          <h2 class="text-section flex min-h-6 items-center justify-between">
-            Your competitions
+          <h2 class="text-section flex min-h-6 items-baseline justify-between">
+            Competitions you manage
             <RouterLink
               :to="{ name: 'manage.competitions' }"
               class="text-primary press -my-2.5 -mr-2 flex h-11 items-center rounded-full px-2 text-callout font-semibold"
@@ -556,7 +382,7 @@ const COMPETITION_TABS = [
 
         <!-- Coming up -->
         <section v-if="comingUp.length || nextAnywhere.length || competitionsLoading" class="space-y-2.5">
-          <h2 class="text-section flex min-h-6 items-center justify-between">
+          <h2 class="text-section flex min-h-6 items-baseline justify-between">
             {{ comingUp.length ? 'Coming up' : 'Next competitions' }}
             <RouterLink
               :to="{ name: 'competitions' }"

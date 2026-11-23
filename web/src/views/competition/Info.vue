@@ -10,12 +10,11 @@ import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import { useCompetitionLive } from '@/composables/useCompetitionLive'
 import { useCompetitionProgress } from '@/composables/useCompetitionProgress'
 import { useCompetitionSearch } from '@/composables/useCompetitionSearch'
-import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
 import DateTile from '@/components/DateTile.vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import Dialog from '@/components/Dialog.vue'
 import MapPreview from '@/components/MapPreview.vue'
-import DancerDayCard from '@/components/DancerDayCard.vue'
+import DancersPill from '@/components/DancersPill.vue'
 import FavoriteButton from '@/components/FavoriteButton.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import LiveDot from '@/components/LiveDot.vue'
@@ -27,8 +26,6 @@ import OrganisationMark from '@/components/OrganisationMark.vue'
 import { useOrganisations } from '@/composables/useOrganisations'
 import Button from '@/components/ui/Button.vue'
 import { staffEntityRef, staffMemberName, type StaffMember } from '@/types/competition'
-import type { DancerDay } from '@/lib/dancerDay'
-import { TROPHY_EVENT_RESULT } from '@/lib/trophyEvents'
 import { resultsCount } from '@/lib/resultsCount'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useMeStore } from '@/stores/me'
@@ -76,14 +73,8 @@ const {
   hasSchedule,
 } = useCompetition()
 const { phase, followedHere } = useCompetitionDays()
-// A studio follows dozens: the first few, so the rest of the Overview is in
-// reach, and the others on asking.
-const FOLLOWED_SHOWN = 3
-const allFollowed = ref(false)
-const shownFollowed = computed(() => (allFollowed.value ? followedHere.value : followedHere.value.slice(0, FOLLOWED_SHOWN)))
 const favorites = useFavoritesStore()
 const me = useMeStore()
-const isFresh = useFreshPlacings()
 const progress = useCompetitionProgress()
 const { pulse, lastResult } = useCompetitionLive()
 
@@ -236,17 +227,6 @@ const find = ref('')
 const matches = useCompetitionSearch(dancers, find)
 const shownMatches = computed(() => (find.value.trim() ? matches.value.slice(0, 5) : []))
 
-// A placing that just came in flips on its card.
-function freshIn(days: DancerDay[]): string | null {
-  for (const d of days)
-    for (const s of [...d.dances, ...(d.overall ? [d.overall] : [])])
-      if (s.state === 'placed' && isFresh(d.group?.id, s.dance.id, d.dancer.id)) return `${d.dancer.id}:${s.dance.id}`
-  for (const d of days)
-    for (const s of d.trophyEvents)
-      if (s.state === 'placed' && isFresh(s.dance.id, TROPHY_EVENT_RESULT, d.dancer.id)) return `${d.dancer.id}:${s.dance.id}`
-  return null
-}
-
 // The organisations it's run by or part of, each with a page of its own.
 const organisationsList = useOrganisations()
 const organisations = computed(() =>
@@ -341,6 +321,23 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       </div>
     </header>
 
+    <!-- What's here, in figures: big numbers on the page, an engraved line
+         between them. -->
+    <div
+      v-if="figures.length > 1"
+      class="-mx-4 grid auto-cols-fr grid-flow-col [&>*+*]:bg-[linear-gradient(90deg,var(--engrave-cut)_0_1px,var(--engrave-lit)_1px_2px)] [&>*+*]:bg-[length:2px_2.75rem] [&>*+*]:bg-left [&>*+*]:bg-no-repeat"
+    >
+      <RouterLink
+        v-for="f in figures"
+        :key="f.label"
+        :to="f.to"
+        class="press-row focus-inset flex flex-col items-center py-2.5"
+      >
+        <span class="text-[1.625rem] leading-none font-[800] tracking-[-0.02em] tabular-nums">{{ f.value }}</span>
+        <span class="text-muted-foreground mt-1 text-[0.8125rem] font-semibold">{{ f.label }}</span>
+      </RouterLink>
+    </div>
+
     <Transition
       mode="out-in"
       enter-active-class="transition-[opacity,translate] duration-(--dur-base) ease-standard"
@@ -348,26 +345,13 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       leave-active-class="transition-opacity duration-(--dur-instant) ease-exit"
       leave-to-class="opacity-0"
     >
-      <!-- Your dancers here -->
-      <section v-if="followedHere.length" key="yours" class="space-y-3">
-        <h2 class="text-section">
-          Your dancers here
-          <span v-if="followedHere.length > 1" class="text-muted-foreground text-sm font-medium tabular-nums">{{ followedHere.length }}</span>
-        </h2>
-        <div class="rows-engraved -mx-4">
-          <DancerDayCard
-            v-for="f in shownFollowed"
-            :key="f.personId"
-            :days="f.days"
-            :fresh="freshIn(f.days)"
-            :competition-id="competitionId"
-            :color="f.color"
-            :name="f.name"
-          />
-        </div>
-        <Button v-if="followedHere.length > FOLLOWED_SHOWN" block @click="allFollowed = !allFollowed">
-          {{ allFollowed ? 'Show fewer' : `Show all ${followedHere.length} dancers` }}
-        </Button>
+      <!-- Your dancers here: one line, however many; they're a tap away. -->
+      <section v-if="followedHere.length" key="yours">
+        <DancersPill
+          :to="{ name: 'competition.yours', params: { competitionId } }"
+          :colors="followedHere.map((f) => f.color)"
+          :names="followedHere.map((f) => f.name)"
+        />
       </section>
 
       <!-- Not following anyone here: find them -->
@@ -436,22 +420,6 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       </p>
     </Transition>
 
-    <!-- What's here, in figures: big numbers on the page, an engraved line
-         between them. -->
-    <div
-      v-if="figures.length > 1"
-      class="-mx-4 grid auto-cols-fr grid-flow-col [&>*+*]:bg-[linear-gradient(90deg,var(--engrave-cut)_0_1px,var(--engrave-lit)_1px_2px)] [&>*+*]:bg-[length:2px_2.75rem] [&>*+*]:bg-left [&>*+*]:bg-no-repeat"
-    >
-      <RouterLink
-        v-for="f in figures"
-        :key="f.label"
-        :to="f.to"
-        class="press-row focus-inset flex flex-col items-center py-2.5"
-      >
-        <span class="text-[1.625rem] leading-none font-[800] tracking-[-0.02em] tabular-nums">{{ f.value }}</span>
-        <span class="text-muted-foreground mt-1 text-[0.8125rem] font-semibold">{{ f.label }}</span>
-      </RouterLink>
-    </div>
 
     <!-- The competitions it's linked with: the ones either side, and all of them -->
     <section v-if="switcher?.linked.value" class="space-y-3">

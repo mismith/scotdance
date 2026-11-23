@@ -44,7 +44,14 @@ async function signInFromHome(page: Page, email: string) {
   await signInFromSheet(page, email)
 }
 
-const card = (page: Page, p: Person) => page.locator('article').filter({ hasText: p.name })
+/** Home and a competition's Overview: your dancers there, as a pill that opens Your dancers. */
+const pill = (page: Page) => page.getByRole('main').locator('a[href*="/info/yours"]')
+async function openYours(page: Page) {
+  await pill(page).first().click()
+  await expect(page.getByRole('heading', { name: 'Your dancers' })).toBeVisible()
+}
+/** Their row on Your dancers. */
+const row = (page: Page, p: Person) => page.locator('main li').filter({ hasText: p.name })
 
 /** On their page, their avatar opens a small menu: their colour and pattern, and Customise. */
 async function lookMenu(page: Page, p: Person) {
@@ -75,18 +82,18 @@ test('favourite a dancer, see their day on Home, and watch a placing arrive', as
   await expect.poll(() => dbGet(`users:favorites/${parentId}/dancers/${person.id}`)).toBe(person.name)
 
   await page.goto('/')
-  // Competition day: the competition, with the dancer's day under it.
+  // Competition day: the competition, with your dancer there as a pill.
   await expect(page.getByRole('heading', { name: new RegExp(`${comp.name}.*Today`) })).toBeVisible()
   // No guess at what's on now: plenty of competitions post nothing until the end.
   await expect(page.getByText(/dances next/)).toHaveCount(0)
-  const day = card(page, person)
-  await expect(day.getByLabel('Number 107')).toBeVisible()
-  await expect(day.getByText('Beginner Under 7', { exact: true })).toBeVisible()
-  // The next dance, in one line of the schedule's facts: the platform, when
-  // its session starts and 3rd in the draw. The dances themselves are on
-  // their page.
-  const facts = day.getByText(/^Platform A · from /)
-  await expect(facts).toHaveText('Platform A · from 9:45 am · 3rd to dance')
+  await expect(pill(page)).toHaveText(person.firstName)
+  // Their day is on Your dancers: the age group, then the next dance in one
+  // line of the schedule's facts (the platform, when its session starts and
+  // 3rd in the draw). The dances themselves are on their page.
+  await openYours(page)
+  const day = row(page, person)
+  const facts = day.getByText(/^Beginner Under 7 · /)
+  await expect(facts).toHaveText('Beginner Under 7 · Platform A · from 9:45 am · 3rd to dance')
   await expect(day.getByText(/Highland Fling/)).toHaveCount(0)
 
   // The organiser posts the Fling: 2nd. Home pins it on as a ribbon without
@@ -95,11 +102,11 @@ test('favourite a dancer, see their day on Home, and watch a placing arrive', as
   await dbSet(`competitions:data/${comp.id}/results/${g}/${comp.dances[0].id}`, [entry(2, 1).id, entry(2).id])
   await expect(day.getByRole('img', { name: /^Highland Fling.*: 2nd place$/ })).toBeVisible()
   // The line moves on to the Sword, with its own place in the draw.
-  await expect(facts).toHaveText('Platform A · from 9:45 am · 2nd to dance')
+  await expect(facts).toHaveText('Beginner Under 7 · Platform A · from 9:45 am · 2nd to dance')
 
   // A late change to the draw shows up too.
   await dbSet(`competitions:data/${comp.id}/draws/${g}/${comp.dances[1].id}`, ['107', '108'])
-  await expect(facts).toHaveText('Platform A · from 9:45 am · 1st to dance')
+  await expect(facts).toHaveText('Beginner Under 7 · Platform A · from 9:45 am · 1st to dance')
 
   // Take them off from their page: Home goes back to the pitch, with them under
   // Recently viewed rather than Your dancers.
@@ -108,7 +115,7 @@ test('favourite a dancer, see their day on Home, and watch a placing arrive', as
   await expect(page.getByRole('button', { name: `Favourite ${person.name}`, pressed: false })).toBeVisible()
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'See your dancer’s day at a glance' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Your dancers' })).toHaveCount(0)
+  await expect(pill(page)).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Recently viewed' })).toBeVisible()
   await expect(page.getByRole('heading', { name: new RegExp(`${comp.name}.*Today`) })).toHaveCount(0)
 })
@@ -122,14 +129,17 @@ test('on competition day, whoever has dances to come comes first, and a finished
   await dbSet(`users:favorites/${parent.uid}/dancers`, { [done.id]: done.name, [next.id]: next.name })
 
   await signInFromHome(page, parent.email)
-  const days = page.locator('main article')
+  await expect(pill(page)).toContainText(done.firstName)
+  await expect(pill(page)).toContainText(next.firstName)
+  await openYours(page)
+  const days = page.locator('main li')
   await expect(days.first()).toContainText(next.name)
   await expect(days.nth(1)).toContainText(done.name)
-  // Finished: the number and its ribbons, no dances still to come.
-  await expect(card(page, done).getByRole('img', { name: /place/ }).first()).toBeVisible()
-  await expect(card(page, done).getByRole('link')).toHaveCount(1)
-  await expect(card(page, next).getByText(/^Platform [AB] · from /)).toBeVisible()
-  await expect(card(page, done).getByText(/^Platform /)).toHaveCount(0)
+  // Finished: its ribbons, no dances still to come.
+  await expect(row(page, done).getByRole('img', { name: /place/ }).first()).toBeVisible()
+  await expect(row(page, done).getByRole('link')).toHaveCount(1)
+  await expect(row(page, next).getByText(/ · Platform [AB] · from /)).toBeVisible()
+  await expect(row(page, done).getByText(/Platform /)).toHaveCount(0)
 })
 
 test('a chosen colour sticks, and stays with that account', async ({ page }) => {
@@ -246,21 +256,21 @@ test('signing out clears your dancers; the next account sees only its own', asyn
   await dbSet(`users:favorites/${a.uid}/dancers/${person.id}`, person.name)
 
   await signInFromHome(page, a.email)
-  await expect(card(page, person)).toBeVisible()
+  await expect(pill(page)).toHaveText(person.firstName)
 
   await signOut(page)
   await expect(page.getByRole('heading', { name: 'See your dancer’s day at a glance' })).toBeVisible()
-  await expect(card(page, person)).toHaveCount(0)
+  await expect(pill(page)).toHaveCount(0)
 
   await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, b.email)
   await expect(page.getByRole('heading', { name: 'See your dancer’s day at a glance' })).toBeVisible()
-  await expect(card(page, person)).toHaveCount(0)
+  await expect(pill(page)).toHaveCount(0)
   await page.goto(`/competitions/${comp.id}/dancers/${entry(5).id}`)
   await expect(page.getByRole('button', { name: `Favourite ${person.name}`, pressed: false })).toBeVisible()
 })
 
-test('following lots: everyone dancing today is on Home, and See all lists everyone', async ({ page }) => {
+test('following lots: one pill on Home, and everyone dancing today in Your dancers', async ({ page }) => {
   // The third entry of seven age groups, which no other test here follows.
   const ps: Person[] = []
   for (let g = 0; g < 7; g++) ps.push(await follow(g, 2))
@@ -268,15 +278,12 @@ test('following lots: everyone dancing today is on Home, and See all lists every
   await dbSet(`users:favorites/${parent.uid}/dancers`, Object.fromEntries(ps.map((p) => [p.id, p.name])))
 
   await signInFromHome(page, parent.email)
-  const seeAll = page.getByRole('link', { name: 'See all 7' })
-  await expect(seeAll).toBeVisible()
-  const onHome = async () => (await Promise.all(ps.map((p) => page.getByText(p.name, { exact: true }).count()))).filter(Boolean).length
+  // Too many to name: a count.
+  await expect(pill(page)).toHaveText('Your 7 dancers')
+  await openYours(page)
   // All seven are at today's competition: on the day, none are left off.
-  await expect.poll(onHome).toBe(7)
-
-  await seeAll.click()
-  await expect(page).toHaveURL(/\/dancers$/)
-  for (const p of ps) await expect(page.getByText(p.name, { exact: true }).first()).toBeVisible()
+  for (const p of ps) await expect(row(page, p)).toBeVisible()
+  await expect(page.locator('main li')).toHaveCount(7)
 })
 
 test('old favourites from the previous app: named ones follow the person, nothing is deleted', async ({ page }) => {
@@ -292,9 +299,11 @@ test('old favourites from the previous app: named ones follow the person, nothin
   await dbSet(`users:favorites/${parentId}`, { dancers: old, competitions: { [comp.id]: true } })
 
   await signInFromHome(page, email)
-  // One card, for the person: no "Dancer" ghosts for the old keys.
-  await expect(card(page, person)).toBeVisible()
-  await expect(page.locator('main article')).toHaveCount(1)
+  // Just the person: no "Dancer" ghosts for the old keys.
+  await expect(pill(page)).toHaveText(person.firstName)
+  await openYours(page)
+  await expect(row(page, person)).toBeVisible()
+  await expect(page.locator('main li')).toHaveCount(1)
   await expect(page.getByText('Not entered in any listed competitions')).toHaveCount(0)
 
   await expect
@@ -338,7 +347,7 @@ test('what’s new is news only to people whose old favourites came over', async
   await expect(where).toBeVisible()
   await expect(banner).toHaveCount(0)
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'Your dancers' })).toBeVisible()
+  await expect(pill(page)).toBeVisible()
   await expect(banner).toHaveCount(0)
 
   // Its ×, without opening it, still says where it is.
@@ -353,7 +362,7 @@ test('what’s new is news only to people whose old favourites came over', async
   await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, fresh.email)
   await page.goto('/?now=2031-02-01')
-  await expect(page.getByRole('heading', { name: 'Your dancers' })).toBeVisible()
+  await expect(pill(page)).toBeVisible()
   await expect(banner).toHaveCount(0)
   await page.goto('/?now=')
 })
@@ -368,8 +377,9 @@ test('with no schedule, the card says nothing about dances to come', async ({ pa
   try {
     await dbSet(path, null)
     await signInFromHome(page, email)
-    const day = card(page, person)
-    await expect(day.getByLabel(/^Number /)).toBeVisible()
+    await openYours(page)
+    const day = row(page, person)
+    await expect(day.getByText('Beginner 9 & 10 Years', { exact: true })).toBeVisible()
     await expect(day.getByText(/ · from |to dance|Platform/)).toHaveCount(0)
     await expect(day.getByText(/Highland Fling|Sword Dance/)).toHaveCount(0)
   } finally {
@@ -387,8 +397,9 @@ test('the competition’s pages show your dancer’s day', async ({ page }) => {
   await signInFromHome(page, email)
 
   await page.goto(`/competitions/${comp.id}/info`)
-  await expect(page.getByRole('heading', { name: 'Your dancers here' })).toBeVisible()
-  await expect(page.locator('article').filter({ hasText: person.name }).getByLabel('Number 110')).toBeVisible()
+  await expect(pill(page)).toHaveText(person.firstName)
+  await openYours(page)
+  await expect(row(page, person)).toContainText('2nd to dance')
 
   await page.goto(`/competitions/${comp.id}/dancers/${entry(3).id}`)
   await expect(page.getByRole('heading', { name: person.name })).toBeVisible()

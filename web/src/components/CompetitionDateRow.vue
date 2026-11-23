@@ -5,7 +5,7 @@ import { Bell, ChevronRight } from '@lucide/vue'
 import { useFollowing } from '@/composables/useFollowing'
 import { useHiddenAs } from '@/composables/useHiddenAs'
 import CompetitionName from '@/components/CompetitionName.vue'
-import DancerStars from '@/components/DancerStars.vue'
+import DancersPill from '@/components/DancersPill.vue'
 import DateTile from '@/components/DateTile.vue'
 import LinkRail from '@/components/LinkRail.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
@@ -96,20 +96,23 @@ const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.c
           {{ competition.location }}
         </span>
         <span v-if="managed" class="sr-only">You can manage this.</span>
-        <span v-if="note || hidden || alerts || dancers.length" class="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+        <span v-if="note || hidden || (alerts && !dancers.length)" class="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
           <VisibilityChip :visibility="hidden" />
           <span
             v-if="note"
             :class="['text-sm font-medium', noteTone === 'live' ? 'text-live' : noteTone === 'venue' ? 'text-next-foreground' : 'text-muted-foreground']"
           >{{ note }}</span>
-          <span v-if="dancers.length" class="flex min-w-0 items-center gap-1.5 text-sm font-medium">
-            <DancerStars :colors="dancers.map((x) => following.colorFor(x.id))" :max="4" />
-            <span class="truncate">{{ dancers.map((x) => x.name).join(', ') }}</span>
-          </span>
-          <span v-else-if="alerts" class="text-muted-foreground inline-flex items-center gap-1 text-sm">
+          <span v-if="alerts && !dancers.length" class="text-muted-foreground inline-flex items-center gap-1 text-sm">
             <Bell class="text-primary size-3.5 fill-current" aria-hidden="true" /> Alerts on
           </span>
         </span>
+        <!-- Yours somewhere in it: a pill, part of the row. -->
+        <DancersPill
+          v-if="dancers.length"
+          class="mt-1.5"
+          :colors="dancers.map((x) => following.colorFor(x.id))"
+          :names="dancers.map((x) => x.name)"
+        />
       </span>
       <ChevronRight class="text-muted-foreground size-5 shrink-0" />
     </RouterLink>

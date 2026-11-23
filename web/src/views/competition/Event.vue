@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { shortName } from '@/lib/entries'
 import { useMorph } from '@/lib/morph'
 import MyDancerLine from '@/components/MyDancerLine.vue'
+import { shortName } from '@/lib/entries'
+import { groupColor } from '@/lib/groupColor'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Check, ChevronRight, Clock } from '@lucide/vue'
@@ -15,7 +16,7 @@ import PlatformSwiper from '@/components/PlatformSwiper.vue'
 import StaffAvatar from '@/components/StaffAvatar.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
 import { dances as eventDances, dayLabel, days, getScheduleDanceName, platformLabel, slugline } from '@/lib/schedule'
-import { findGroupDancers, getOrdinalSuffix, isPosted } from '@/lib/results'
+import { findGroupDancers, isPosted } from '@/lib/results'
 import { sanitizeRichText } from '@/lib/sanitize'
 import { heroTitle } from '@/lib/heroTitle'
 import { clockMinutes } from '@/lib/scheduleProgress'
@@ -273,22 +274,18 @@ const judging = computed(() => {
                 :is="g.trophyEvent ? RouterLink : 'button'"
                 v-bind="g.trophyEvent ? { to: { name: 'competition.trophyEvent', params: { competitionId, trophyEventId: g.id } } } : { type: 'button' }"
                 :class="['press-row focus-inset relative isolate flex min-h-14 w-full items-center gap-3 py-2 pl-4 text-left', g.posted && !g.trophyEvent ? 'pr-24' : 'pr-4']"
-                :style="g.mine.length ? { '--dc': g.mine[0].color ?? 'var(--primary)' } : undefined"
+                :style="g.mine.length ? { '--dc': groupColor(g.mine.map((m) => m.color)) } : undefined"
                 @click="g.group && openDraw($event, g.group, s.sd)"
               >
+                <!-- An age group of yours is the row itself: its edge and wash in their colours. -->
                 <span v-if="g.mine.length" class="dancer-sash" aria-hidden="true" />
                 <span class="min-w-0 flex-1">
                   <span class="block text-base font-semibold">{{ g.label }}</span>
                   <span v-if="g.count != null" class="text-muted-foreground block text-sm">{{ g.count }} dancers</span>
                   <span v-else class="text-muted-foreground block text-sm">Dancers to be picked</span>
-                  <MyDancerLine
-                    v-for="m in g.mine"
-                    :key="m.dancer.id"
-                    :color="m.color"
-                    :name="shortName(m.dancer)"
-                    :details="[`#${m.dancer.number}`, m.pos ? `${m.pos}${getOrdinalSuffix(m.pos)} to dance` : null]"
-                    class="mt-1"
-                  />
+                  <!-- The row is where they are, so each is named (a summary
+                       like "Your 3 dancers" is for pills, on things above). -->
+                  <MyDancerLine v-for="m in g.mine" :key="m.dancer.id" :color="m.color" :name="shortName(m.dancer)" class="mt-1" />
                 </span>
                 <span v-if="g.waiting" class="text-muted-foreground text-footnote shrink-0 font-medium">Results to come</span>
                 <span v-else-if="g.trophyEvent && g.posted" class="text-done-foreground text-footnote flex shrink-0 items-center gap-1 font-semibold">

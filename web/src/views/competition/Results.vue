@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { groupColor } from '@/lib/groupColor'
 import { connected } from '@/lib/offline'
 import { shortName } from '@/lib/entries'
 import MyDancerLine from '@/components/MyDancerLine.vue'
@@ -242,7 +243,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
               <RouterLink
                 :to="{ name: 'competition.group', params: { competitionId, groupId: r.group.id } }"
                 class="press-row focus-inset relative isolate flex min-h-14 items-center gap-3 py-2 pr-3 pl-4"
-                :style="r.mine.length ? { '--dc': r.mine[0].color ?? 'var(--primary)' } : undefined"
+                :style="r.mine.length ? { '--dc': groupColor(r.mine.map((m) => m.color)) } : undefined"
               >
                 <span v-if="r.mine.length" class="dancer-sash" aria-hidden="true" />
                 <span class="min-w-0 flex-1">
@@ -261,7 +262,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
                     :key="m.key"
                     :color="m.color"
                     :name="m.name"
-                    :details="[m.medals.length ? null : r.posted && r.posted >= r.total ? 'Not placed' : 'No placings yet']"
+                    :details="[m.medals.length ? null : r.posted && r.posted >= r.total ? 'Didn’t place' : 'No placings yet']"
                     class="mt-1"
                   >
                     <span v-if="m.medals.length" class="flex items-center gap-1">
@@ -292,7 +293,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
               <RouterLink
                 :to="{ name: 'competition.trophyEvent', params: { competitionId, trophyEventId: r.trophyEvent.id } }"
                 class="press-row focus-inset relative isolate flex min-h-14 items-center gap-3 py-2 pr-3 pl-4"
-                :style="r.mine.length ? { '--dc': r.mine[0].color ?? 'var(--primary)' } : undefined"
+                :style="r.mine.length ? { '--dc': groupColor(r.mine.map((m) => m.color)) } : undefined"
               >
                 <span v-if="r.mine.length" class="dancer-sash" aria-hidden="true" />
                 <span class="min-w-0 flex-1">
@@ -307,7 +308,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
                     :key="m.key"
                     :color="m.color"
                     :name="m.name"
-                    :details="[m.medals.length ? null : r.posted ? 'Not placed' : r.pending]"
+                    :details="[m.medals.length ? null : r.posted ? 'Didn’t place' : r.pending]"
                     class="mt-1"
                   >
                     <span v-if="m.medals.length" class="flex items-center gap-1">

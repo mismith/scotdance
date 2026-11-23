@@ -51,6 +51,8 @@ export interface DancerCard {
   focus: FocusCompetition | null
   /** Upcoming competitions they're entered in, soonest first (excluding focus). */
   upcoming: Array<{ competitionId: string; competition: Competition }>
+  /** Every competition they're entered in that can be opened, with where it is in time. */
+  competitions: Array<{ competitionId: string; competition: Competition; phase: Phase }>
   loading: boolean
 }
 
@@ -132,6 +134,7 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
     focusComp: Competition | null
     phase: Phase
     upcoming: Array<{ competitionId: string; competition: Competition }>
+    competitions: Array<{ competitionId: string; competition: Competition; phase: Phase }>
     /** Their teams' entries, by competition (their profile names them). */
     teams: Record<string, string[]>
   }
@@ -194,6 +197,7 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
             focusComp: focus?.competition ?? null,
             phase: focus ? phaseOf.get(focus.competitionId)! : 'before',
             upcoming: ahead.filter((c) => c.competitionId !== focus?.competitionId),
+            competitions: comps.map((c) => ({ ...c, phase: phaseOf.get(c.competitionId)! })),
             teams,
           }
         }),
@@ -302,6 +306,7 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
         name: p.name,
         focus,
         upcoming: p.upcoming,
+        competitions: p.competitions,
         loading: !!p.focusId && mine === undefined,
       }
     }),
