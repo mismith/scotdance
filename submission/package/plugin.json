@@ -27,7 +27,6 @@
         "composerIcon": "./assets/icon.png"
       },
       "review": {
-        "demo_recording_url": "",
         "prompts": [
           "Which of my competitions are coming up?",
           "What categories, age groups and dances does Test Competition have?",

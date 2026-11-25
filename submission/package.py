@@ -34,5 +34,5 @@ with zipfile.ZipFile(archive) as check:
     assert check.testzip() is None
     assert json.loads(check.read('plugin.json')) == manifest
 print(f'Prepared {archive}')
-if not review['demo_recording_url']:
+if not review.get('demo_recording_url'):
     print('Still needed before submitting to ChatGPT: demo_recording_url (docs/mcp-store-submission.md)')
