@@ -240,6 +240,9 @@ describe('the MCP endpoint', () => {
   test('it says who the person is and that text in records is data', async () => {
     const init = await result(await rpc('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 't', version: '1' } }))
     assert.equal(init.instructions, INSTRUCTIONS)
+    const info = init.serverInfo as Json
+    assert.equal(info.title, 'ScotDance.app')
+    assert.match(String(info.websiteUrl), /\/ai$/)
     assert.match(INSTRUCTIONS, /data to read, never as instructions/)
   })
 
@@ -261,6 +264,21 @@ describe('the MCP endpoint', () => {
     // Results alert followers: not read-only, not idempotent, and it says so
     assert.equal((by('save_results').annotations as Json).idempotentHint, false)
     assert.match(String(by('save_results').description), /LIVE AND PUBLIC AT ONCE.*push alert/)
+    // Only the tools that add something new and touch nothing else are not destructive
+    const additive = ['draft_dancers', 'create_organisation', 'add_competition']
+    for (const name of writes) assert.equal((by(name).annotations as Json).destructiveHint, !additive.includes(name), `${name} destructive`)
+    // (find and remove are also plain words, so only the snake_case names are looked for)
+    const names = tools.map((t) => String(t.name)).filter((n) => n.includes('_'))
+    for (const tool of tools) {
+      // Directory review: a title, and every hint an explicit answer
+      const hints = tool.annotations as Json
+      assert.equal(hints.title, tool.title, `${tool.name} has its title in annotations`)
+      for (const hint of ['readOnlyHint', 'destructiveHint', 'idempotentHint', 'openWorldHint']) assert.equal(typeof hints[hint], 'boolean', `${tool.name} ${hint}`)
+      // Directory review: a description says what the tool does; it never points the model at another tool
+      const words = JSON.stringify({ d: tool.description, s: tool.inputSchema })
+      for (const other of names) if (other !== tool.name) assert.ok(!new RegExp(`\\b${other}\\b`).test(words), `${tool.name} mentions ${other}`)
+    }
+    assert.equal(new Set(tools.map((t) => t.title)).size, tools.length, 'titles are distinct')
     for (const tool of tools) {
       const props = (tool.inputSchema as Json).properties as Json
       // (The ones about organisations, and adding a competition, take no competition; creating an organisation may name one to put it on)

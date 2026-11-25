@@ -19,6 +19,7 @@ export const protectedResourceMetadata = () => ({
   scopes_supported: SCOPES,
   bearer_methods_supported: ['header'],
   resource_name: 'ScotDance.app',
+  resource_documentation: `${issuer()}/ai`,
 });
 
 /** RFC 8414, plus Client ID Metadata Document support. No registration endpoint: clients aren't registered. */
@@ -34,6 +35,8 @@ export const authorizationServerMetadata = () => ({
   revocation_endpoint_auth_methods_supported: ['none'],
   scopes_supported: SCOPES,
   client_id_metadata_document_supported: true,
+  // RFC 9207: every authorization response (code or error) carries iss, so ChatGPT can use its fixed redirect
+  authorization_response_iss_parameter_supported: true,
 });
 
 /**

@@ -257,15 +257,15 @@ export const submitTools = [
     name: 'add_competition',
     title: 'Add a competition',
     description:
-      'Add a new competition by submitting it, exactly as the app’s Add a competition form does. A tidy one is approved at once (it appears in '
-      + 'get_competitions and the person manages it); otherwise it waits for a person to look, usually overnight, and the person is emailed either way. '
-      + 'NOT UNDOABLE and not editable until approved: confirm every detail with the organiser first, and show them the line they must accept: '
-      + `“${AS_IS}”, then pass acceptsAsIs: true. Needs country (two-letter code like CA, US, AU, NZ, ZA, or GB-SCT, GB-ENG, GB-WLS, GB-NIR), date (YYYY-MM-DD), `
+      'Add a new competition by submitting it, exactly as the app’s Add a competition form does. A tidy one is approved at once (it appears '
+      + 'among their competitions and the person manages it); otherwise it waits for a person to look, usually overnight, and the person is emailed either way. '
+      + 'NOT UNDOABLE and not editable until approved. acceptsAsIs: true records that the organiser accepted '
+      + `“${AS_IS}”. Needs country (two-letter code like CA, US, AU, NZ, ZA, or GB-SCT, GB-ENG, GB-WLS, GB-NIR), date (YYYY-MM-DD), `
       + 'name (as it should be shown: capitals and spelling are saved as given, and a name in capitals or lowercase, or a date that has passed, is held for review), '
       + 'and town (like “Calgary, AB”). Optional: venue, space (the hall within it), address, registrationNumber (saved in the association’s format, which the reply states), '
-      + 'organisations (existing ones, by id or name, from get_organisations or the app), yourName (otherwise their account name), and a message only the reviewer sees. '
-      + 'It checks what is already on ScotDance.app that day: if it looks like the same competition it is refused with that one’s id; if the organiser says it is a different one, pass '
-      + 'notTheOneAlreadyHere: true. A competition a governing body already lists fills any venue, address or organisations you leave out. The map pin comes from the '
+      + 'organisations (existing ones, by id or name), yourName (otherwise their account name), and a message only the reviewer sees. '
+      + 'It checks what is already on ScotDance.app that day: if it looks like the same competition it is refused with that one’s id; notTheOneAlreadyHere: true '
+      + 'says it is a different one. A competition a governing body already lists fills any venue, address or organisations you leave out. The map pin comes from the '
       + 'app’s venue search, which this cannot do: it is on the map only when the venue is one ScotDance.app already knows, and the reply says which. '
       + 'The reply says whether it was added straight away (with the competition id) or is waiting for review.',
     input: {
@@ -281,8 +281,8 @@ export const submitTools = [
       yourName: z.string().optional().describe('The organiser’s name for the submission (default: their account’s name)'),
       message: z.string().optional().describe('Anything to ask or mention: only the reviewer sees it'),
       acceptsAsIs: z.literal(true).describe(`The organiser accepted: “${AS_IS}”`),
-      notTheOneAlreadyHere: z.boolean().optional().describe('Only when the organiser says it is not the competition already on ScotDance.app that day'),
-      sameWeekendAs: z.string().optional().describe('The submission id from an add_competition just sent, for the next day of the same event: the two are linked once both are approved'),
+      notTheOneAlreadyHere: z.boolean().optional().describe('It is not the competition already on ScotDance.app that day'),
+      sameWeekendAs: z.string().optional().describe('The submission id of a competition just added, for the next day of the same event: the two are linked once both are approved'),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     run: (input, session) => addCompetition(session, input as AddCompetitionInput),

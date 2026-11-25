@@ -64,7 +64,8 @@ export const authorize: RequestHandler = async (req, res) => {
 
   // Phase 2: the rest of the request. Errors go back to the assistant, but only one we know: anyone can
   // publish a client document, so for any other the redirect would be an open redirect to an address they chose.
-  const state = param(req, 'state', 1024);
+  // ChatGPT's platform relay sends states of about 900 characters: room to spare, and a longer one is refused, never cut
+  const state = param(req, 'state', 4096);
   const known = isKnownClient(clientId);
   const fail = (error: string, description: string) => (known
     ? failBack(res, redirectUri, typeof state === 'string' ? state : undefined, error, description)

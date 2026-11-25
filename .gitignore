@@ -49,3 +49,5 @@ play-service-account.json
 /ios/App/fastlane/creative/**/*.mp4
 
 /web/dist-connect/
+
+submission/*.zip

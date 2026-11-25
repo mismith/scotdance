@@ -28,11 +28,15 @@ export function explain(error: unknown): string {
 
 export { ToolError };
 
-/** Reads change nothing; writes change data but never delete or hand out access */
-export const READ: ToolAnnotations = { readOnlyHint: true, openWorldHint: false };
-export const WRITE: ToolAnnotations = { readOnlyHint: false, destructiveHint: false, openWorldHint: false };
+/**
+ * Every hint is explicit, as both AI directories ask. Reads change nothing. A write that can change or replace what is
+ * there is destructive (Claude's review: "tools that modify or delete data"), even though the change log can undo it;
+ * only tools that add something new and touch nothing else are not.
+ */
+export const READ: ToolAnnotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
+export const WRITE: ToolAnnotations = { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false };
 /** For a tool that removes things */
-export const REMOVE: ToolAnnotations = { readOnlyHint: false, destructiveHint: true, openWorldHint: false };
+export const REMOVE: ToolAnnotations = WRITE;
 
 export interface Tool<S extends z.ZodRawShape> {
   name: string;

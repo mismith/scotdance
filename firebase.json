@@ -130,6 +130,10 @@
           "function": { "functionId": "mcp", "region": "us-central1" }
         },
         {
+          "source": "/.well-known/openai-apps-challenge",
+          "destination": "/openai-apps-challenge.txt"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }

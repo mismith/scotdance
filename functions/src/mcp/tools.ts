@@ -12,7 +12,7 @@ import { writeTools } from './writeTools';
 
 export { explain, READ, WRITE, REMOVE, defineTool, register, ToolError, type Tool } from './toolkit';
 
-const competitionId = z.string().min(1).describe('The competition’s id (from get_competitions)');
+const competitionId = z.string().min(1).describe('The competition’s id, as listed with their competitions');
 
 const tools = [
   defineTool({
@@ -89,7 +89,7 @@ const tools = [
     description:
       'Results: for each age group its callbacks, each dance’s placings and its overall, and trophy events’ placings, '
       + 'with dancers as number and name. Shows ties, reversed order, and “no results” or ? marks. Without ageGroup or '
-      + 'trophyEvent it lists as many age groups as fit and summarises the rest. Pass draws to include dancing order. Each dance and overall also says how many pages of judges’ sheet it has and gives the link where the organiser adds one in the app (you cannot upload it yourself: give them the link).',
+      + 'trophyEvent it lists as many age groups as fit and summarises the rest. Pass draws to include dancing order. Each dance and overall also says how many pages of judges’ sheet it has and gives the link where the organiser adds one in the app (sheets are uploaded only in the app).',
     input: {
       competition: competitionId,
       ageGroup: z.string().optional().describe('An age group’s id or name, to read only it'),

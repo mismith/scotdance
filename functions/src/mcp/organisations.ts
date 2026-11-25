@@ -209,7 +209,7 @@ export async function planOrganisation(session: Session, organisation: { id: str
   return out;
 }
 
-const organisation = z.string().min(1).describe('The organisation’s id or name (from get_organisations)');
+const organisation = z.string().min(1).describe('The organisation’s id or name, as listed with their organisations');
 const clearable = (what: string) => z.string().nullable().optional().describe(`${what}. Pass null or "" to clear it. Leave out to keep it.`);
 
 /** What the callable keeps of each (it cuts longer text short); a tool refuses instead, so nothing is changed silently */
@@ -238,7 +238,7 @@ export const organisationTools = [
       + 'and add or take off competitions (by id; `addCompetitions` puts the organisation on a competition, which then shows it, and any competition can be '
       + 'added, as the app allows; `removeCompetitions` takes it off). Only what you pass changes. Text is saved exactly as given. Links and the '
       + 'logo cannot be uploaded here. A competition that takes its organisations from a primary one is changed on the primary. Changes are live '
-      + 'at once and logged: undo_change with the organisation puts them back. Inviting or removing admins is not possible here.',
+      + 'at once and logged, and can be undone. Inviting or removing admins is not possible here.',
     input: {
       organisation,
       name: z.string().optional().describe('The organisation’s name'),
@@ -282,8 +282,7 @@ export const organisationTools = [
     description:
       'Start a new organisation (an association, games society or series) with the person as its admin, as Add an organisation does. Needs a name; '
       + 'optional short name (up to 24 characters; two organisations may share one), where it is based, website, and a competition they manage to put it on. '
-      + 'Refused if an organisation with the same full name exists. It CANNOT BE UNDONE or removed from here, so confirm the exact name with the '
-      + 'organiser first. Only someone who already manages a competition or an organisation can start one.',
+      + 'Refused if an organisation with the same full name exists. It CANNOT BE UNDONE or removed from here. Only someone who already manages a competition or an organisation can start one.',
     input: {
       name: z.string().min(1).describe('The full name'),
       shortName: z.string().optional().describe('What people call it, up to 24 characters'),

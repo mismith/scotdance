@@ -1,9 +1,21 @@
 <script setup lang="ts">
 import AppBar from '@/components/nav/AppBar.vue'
 import { useCrisp } from '@/composables/useCrisp'
-import { RouterLink } from 'vue-router'
+import { whenLanded } from '@/lib/pageTransition'
+import { nextTick, onMounted, watch } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 
 const crisp = useCrisp()
+const route = useRoute()
+
+// /terms and the AI help page link to a section (#terms, #ai); the router leaves hash scrolls to each page
+async function toSection(hash: string) {
+  if (!hash) return
+  await whenLanded()
+  nextTick(() => document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' }))
+}
+onMounted(() => toSection(route.hash))
+watch(() => route.hash, toSection)
 </script>
 
 <template>
@@ -115,6 +127,23 @@ const crisp = useCrisp()
           volunteer, Murray Rowan.
         </p>
 
+        <h3 id="ai" class="text-heading text-foreground scroll-mt-[calc(var(--chrome-top)+1rem)] pt-2">Connected AI assistants</h3>
+        <p>
+          Organisers can connect their own AI assistant, such as Claude or ChatGPT, to manage their
+          competitions and organisations (<RouterLink
+            :to="{ name: 'ai' }"
+            class="hover:text-foreground underline underline-offset-4"
+            >how it works</RouterLink
+          >). The assistant receives what it reads from the competitions and organisations that
+          organiser is an admin of, including dancers’ names, entries and results, and nothing
+          from anyone else’s account. <em>ScotDance.app</em> keeps the assistant’s name, when it
+          was connected and last used, access codes stored only in a form that cannot be read
+          back, and each change it made, which is kept for 30 days so it can be undone. Access
+          ends after an hour unless renewed, after 60 days without use, or at once with
+          Disconnect in Account. What the assistant does with what it reads is governed by that
+          assistant’s own privacy policy.
+        </p>
+
         <hr class="border-border/60 my-6" />
 
         <p>
@@ -151,6 +180,25 @@ const crisp = useCrisp()
           >
             on GitHub</a
           >.
+        </p>
+      </section>
+
+      <section id="terms" class="scroll-mt-[calc(var(--chrome-top)+1rem)] space-y-4">
+        <h2 class="text-title text-foreground">Terms</h2>
+        <p>
+          <em>ScotDance.app</em> is free, run by one volunteer, and comes as is, with no
+          guarantees, and may be unavailable at times. Results shown here are for convenience:
+          if they differ, the official results are the ones the organisers announce.
+        </p>
+        <p>
+          Use it lawfully and keep your account secure. Only manage competitions and
+          organisations you are responsible for, enter accurate information, and don’t misuse the
+          service or try to reach anyone else’s private information. This applies equally to an
+          AI assistant you connect: what it changes is changed on your behalf.
+        </p>
+        <p>
+          Accounts that break these terms may be closed. These terms don’t limit your rights under
+          applicable consumer law.
         </p>
       </section>
     </main>

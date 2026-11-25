@@ -97,6 +97,7 @@ describe('metadata', () => {
         scopes_supported: ['manage'],
         bearer_methods_supported: ['header'],
         resource_name: 'ScotDance.app',
+        resource_documentation: `${ORIGIN}/ai`,
       })
     }
     assert.deepEqual(protectedResourceMetadata().authorization_servers, [ORIGIN])
@@ -117,6 +118,7 @@ describe('metadata', () => {
       revocation_endpoint_auth_methods_supported: ['none'],
       scopes_supported: ['manage'],
       client_id_metadata_document_supported: true,
+      authorization_response_iss_parameter_supported: true,
     })
     assert.equal('registration_endpoint' in authorizationServerMetadata(), false)
     assert.equal((await fetch(`${h.base}/oauth/register`, { method: 'POST' })).status, 404)
@@ -143,6 +145,12 @@ describe('authorize', () => {
     assert.equal(back.searchParams.get('iss'), ORIGIN)
     assert.equal(count('oauth:requests/'), 0)
   }
+
+  test('a long state, as ChatGPT’s platform relay sends, is kept whole', async () => {
+    const state = 's'.repeat(900)
+    const id = new URL((await authorize(asked({ state }).params)).headers.get('location')!).searchParams.get('request')!
+    assert.equal(h.store.docs.get(`oauth:requests/${id}`)!.state, state)
+  })
 
   test('happy path files the request and sends the browser to /connect-ai', async () => {
     const { keys, params } = asked({ resource: RESOURCE })
@@ -195,7 +203,7 @@ describe('authorize', () => {
       await expectPage(await authorize({ ...params, code_challenge_method: 'plain' }))
       await expectPage(await authorize(params, { response_type: 'token' }))
       await expectPage(await authorize({ ...params, resource: 'https://evil.example/mcp' }))
-      await expectPage(await authorize({ ...params, state: 'x'.repeat(2000) }))
+      await expectPage(await authorize({ ...params, state: 'x'.repeat(5000) }))
       // A good request from it still goes on to the approval page, where it is shown for what it is
       assert.match((await authorize(params)).headers.get('location')!, /\/connect-ai\?request=/)
     } finally {

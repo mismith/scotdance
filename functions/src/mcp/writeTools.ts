@@ -28,8 +28,8 @@ import { planDraws, DRAW_ACTIONS, drawOf } from './writeDraws';
 import { planResults } from './writeResults';
 import { planSchedule } from './writeSchedule';
 
-const competition = z.string().min(1).describe('The competition’s id (from get_competitions)');
-const organisationRef = z.string().min(1).describe('The organisation’s id or name (from get_organisations), for changes to an organisation');
+const competition = z.string().min(1).describe('The competition’s id, as listed with their competitions');
+const organisationRef = z.string().min(1).describe('The organisation’s id or name, as listed with their organisations, for changes to an organisation');
 
 /** Whose log: a competition they manage, or an organisation they are an admin of (exactly one) */
 async function scopeFor(session: Session, competitionId?: string, organisationId?: string): Promise<Scope> {
@@ -135,9 +135,9 @@ const tools = [
     title: 'List, publish or hide parts of a competition',
     description:
       'Listed: the competition shows in search. Published: its dancers’ names, schedule and results become public AND followers '
-      + 'are alerted, so confirm with the organiser first. Unlisting also unpublishes; publishing also lists. Hiding the Schedule or '
-      + 'Results tab DELETES what has been entered in it (undo_change can bring it back); that needs deleteContent: true, after the '
-      + 'organiser agrees. Not read-only and not safe to repeat blindly: publishing again alerts nobody twice, but unpublishing hides it from the public.',
+      + 'are alerted. Unlisting also unpublishes; publishing also lists. Hiding the Schedule or '
+      + 'Results tab DELETES what has been entered in it (an undo can bring it back), so it needs deleteContent: true. '
+      + 'Publishing again alerts nobody twice; unpublishing hides it from the public.',
     input: {
       competition,
       listed: z.boolean().optional(),
@@ -146,7 +146,7 @@ const tools = [
       results: z.enum(['show', 'hide']).optional().describe('Show or hide the Results tab'),
       deleteContent: z.boolean().optional().describe('Required to hide a tab that has content: the organiser has agreed it is deleted'),
     },
-    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    annotations: { ...WRITE, openWorldHint: true },
     run: ({ competition: c, ...input }, session) =>
       change(session, c, 'set_visibility', ['schedule', 'results'], (work) => {
         const said = planVisibility(work, input);
@@ -159,7 +159,7 @@ const tools = [
     title: 'Save categories, age groups, dances and trophy events',
     description:
       'Add or change categories, age groups, dances and trophy events together (no id = add; an id = change only the fields given). '
-      + 'Age groups name their category (id or name, added earlier in the same call is fine), trophy, sponsor (a Sponsor from save_staff) and '
+      + 'Age groups name their category (id or name, added earlier in the same call is fine), trophy, sponsor (a staff member with the role Sponsor) and '
       + 'notChampionship (only for championship age groups). A dance lists the age groups that dance it (“all”, or a list; it replaces '
       + 'who dances it). A trophy event lists the age groups that can win it. “order” puts the ids named first, in that order. '
       + 'Names and steps are saved exactly as given: “Highland Fling” with steps “4”. The same dance at different steps (“Highland Fling” 4 and 6) is normal and fine; only the same name AND steps together is refused as a duplicate.',
@@ -195,7 +195,7 @@ const tools = [
           ageGroups: agePick.describe('“all”, or the age groups whose dancers can win it'),
         }))
         .optional(),
-      allowSameName: z.boolean().optional().describe('Only when the organiser says two trophy events really share a name. Without it a trophy event with the name of an existing one (added, or by renaming) is refused, which stops a retried call adding it twice.'),
+      allowSameName: z.boolean().optional().describe('For two trophy events that really share a name. Without it a trophy event with the name of an existing one (added, or by renaming) is refused, which stops a retried call adding it twice.'),
       order: z
         .object({
           categories: z.array(z.string()).optional(),
@@ -216,7 +216,7 @@ const tools = [
       `Add or correct up to ${MAX_RECORDS} entries (dancers, or duets, trios and groups) in one call. No id = add: it needs number and ageGroup, `
       + 'and firstName (or members for a duet, trio or group). With an id, only the fields given change; members replaces the whole team. '
       + 'Numbers are digits with an optional letter (101, 101A) and unique within an age group. Names, towns and studios are saved exactly '
-      + 'as given: follow the list’s own spelling and capitals. For a whole list from a spreadsheet, use draft_dancers instead.',
+      + 'as given, in the list’s own spelling and capitals. Changes the competition at once.',
     input: {
       competition,
       dancers: z
@@ -259,7 +259,7 @@ const tools = [
         }))
         .max(MAX_RECORDS)
         .optional(),
-      allowSameName: z.boolean().optional().describe('Only when the organiser says two people with the same role and name really are two people. Without it a second one (added, or by renaming) is refused, which stops a retried call adding them twice.'),
+      allowSameName: z.boolean().optional().describe('For two people with the same role and name who really are two people. Without it a second one (added, or by renaming) is refused, which stops a retried call adding them twice.'),
       platforms: z
         .array(z.object({ id: id('A platform'), name: z.string().optional(), description: clearable('Where it is') }))
         .max(MAX_RECORDS)
@@ -274,7 +274,7 @@ const tools = [
     title: 'Remove categories, age groups, dances, trophy events, entries, staff or platforms',
     description:
       'Remove things by id, and what hangs off them: an age group takes its results, draws and place in the schedule; a dance takes its '
-      + 'results and schedule slots; and so on (the result lists these as warnings). Confirm with the organiser first. undo_change can bring it back. '
+      + 'results and schedule slots; and so on (the result lists these as warnings). An undo can bring it back. '
       + 'Judges’ sheets (scans) are deleted for good, so a removal that would delete them is refused: it has to be done in the app.',
     input: {
       competition,
@@ -298,18 +298,17 @@ const tools = [
       + 'danced) or placings (row “overall”). Give numbers in placing order, 1st first, as the results sheet reads: '
       + '["101","214",["105","99"],"150"] means 101 first, 214 second, 105 and 99 tied for third, 150 fifth. Callbacks are a flat list of who was called back. '
       + 'A championship announced from the bottom: pass reversedFrom (6 = “from 6th up to 1st”) and list numbers in the order announced, lowest place first. '
-      + 'get_results gives each row’s “numbers” (and “reversedFrom”) in exactly this shape. noResults: true marks a dance “no results” '
+      + 'Results are read back in exactly this shape. noResults: true marks a dance “no results” '
       + '(for callbacks: “no callback round”). points sets who got a championship point in a dance or overall (not for Primary). '
       + 'Numbers are the entries’ numbers in that age group (for a trophy event, in the age groups it is open to); an entry id also works. '
-      + '“?” (a stand-in for a missed number) is only accepted with allowStandIns: true, which is for when the organiser asked for it. '
+      + '“?” (a stand-in for a missed number) is only accepted with allowStandIns: true. '
       + 'It refuses, in a sentence, a number that is not an entry there, a dancer placed twice, a dance that age group does not dance, '
       + 'and (as the app does) anyone not called back once callbacks are entered. SAVING A ROW REPLACES IT: its whole list, reversedFrom '
       + 'and noResults mark; an empty numbers list clears it; leave numbers out to change only reversedFrom or points. '
       + 'LIVE AND PUBLIC AT ONCE: on a published competition, results are visible to everyone the moment they are saved, and on the day '
       + '(competition date ±1 day) followers of the dancers placed are sent a push alert about a minute later, if the row has not changed again. '
-      + 'Callbacks and points never send alerts. Read the placings back to the organiser and get a yes before saving, unless they gave the exact '
-      + 'placings. If one is wrong, fix it straight away (a corrected save inside the minute means the wrong alert is never sent); undo_change also works. '
-      + 'Not read-only and not idempotent. The reply shows what was saved, with names, as get_results would.',
+      + 'Callbacks and points never send alerts. A corrected save inside that minute means the wrong alert is never sent; an undo also corrects it. '
+      + 'The reply shows what was saved, with names.',
     input: {
       competition,
       rows: z
@@ -321,12 +320,12 @@ const tools = [
           reversedFrom: z.number().int().nullable().optional().describe('Places announced from this one up to 1st (2 to 20). null turns it off.'),
           noResults: z.boolean().optional().describe('Mark none placed (for callbacks, no callback round); false clears the mark'),
           points: z.array(given).optional().describe('Numbers given a championship point in this dance or overall'),
-          allowStandIns: z.boolean().optional().describe('Accept “?” in numbers and points. Only when the organiser asked for it.'),
+          allowStandIns: z.boolean().optional().describe('Accept “?” in numbers and points'),
         }))
         .min(1)
         .max(60),
     },
-    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    annotations: { ...WRITE, openWorldHint: true },
     run: ({ competition: c, rows }, session) =>
       changeAndShow(
         session, c, 'save_results', RESULT_PARTS,
@@ -364,7 +363,7 @@ const tools = [
         .min(1)
         .max(60),
     },
-    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    annotations: WRITE,
     run: ({ competition: c, draws }, session) =>
       changeAndShow(
         session, c, 'save_draws', DRAW_PARTS,
@@ -376,13 +375,13 @@ const tools = [
     name: 'save_schedule',
     title: 'Build or change the schedule',
     description:
-      'Put whole days on the schedule. Send days in the shape get_schedule returns (read it, edit it, send it back): a day has sessions; a session has events; '
+      'Put whole days on the schedule. Days are in the same shape the schedule is read in: a day has sessions; a session has events; '
       + 'an event has dances (rows); a dance row has platforms, each with ageGroups (in running order) and judges. A day you send is saved EXACTLY as described: '
       + 'sessions, events, rows and cells you leave out are removed (ids you keep are kept; omit sessions to leave a day’s sessions alone; days you do not send are untouched). '
       + 'A day is found by id, else by the same date, else by the same name, else added (the next day after the last, if you give neither name nor date). '
       + 'Rows: a dance (danceId or its name) or, for Registration, March Past, Lunch and so on, just a name; only a dance has platforms. Times go in a session’s or event’s description (“9:00 am”). '
-      + 'Platforms are named by id or name. ageGroups are ids or names, as in get_dances: an age group only goes with a dance it dances; a trophy event only with its own dance; '
-      + '{ "gap": true } (or "gap") leaves a space between age groups. Judges must be Judges from get_staff. New ids are made for anything without one. '
+      + 'Platforms are named by id or name. ageGroups are ids or names: an age group only goes with a dance it dances; a trophy event only with its own dance; '
+      + '{ "gap": true } (or "gap") leaves a space between age groups. Judges must be staff with the role Judge. New ids are made for anything without one. '
       + 'One call can hold a full day (the size limit is about 500 KB of change; split by day if a call is refused as too big). Public once the competition is published. The reply says what was removed.',
     input: {
       competition,
@@ -405,8 +404,8 @@ const tools = [
                   dances: z
                     .array(z.object({
                       id: z.string().optional(),
-                      danceId: z.string().optional().describe('A dance’s id or name (from get_dances)'),
-                      dance: z.string().optional().describe('Same as danceId; get_schedule shows the dance’s name here'),
+                      danceId: z.string().optional().describe('A dance’s id or name'),
+                      dance: z.string().optional().describe('Same as danceId; the schedule is read with the dance’s name here'),
                       name: z.string().optional().describe('A line that is not a dance, like “Registration”'),
                       description: z.string().optional(),
                       platforms: z
@@ -427,12 +426,12 @@ const tools = [
         .min(1)
         .max(14),
     },
-    annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    annotations: { ...WRITE, idempotentHint: true },
     run: ({ competition: c, days }, session) =>
       changeAndShow(
         session, c, 'save_schedule', SCHEDULE_PARTS,
         (work, date) => planSchedule(work, days, date),
-        (_work, targets) => ({ days: targets.map((t) => ({ id: t.day, name: t.label })), note: 'get_schedule reads it back.' }),
+        (_work, targets) => ({ days: targets.map((t) => ({ id: t.day, name: t.label })), note: 'Read the schedule to see it in full.' }),
       ),
   }),
   defineTool({
@@ -481,7 +480,7 @@ const tools = [
     name: 'undo_change',
     title: 'Undo a change',
     description:
-      'Put back what one change changed (ids from get_changes or from a write tool’s result; pass competition, or organisation for update_organisation’s). '
+      'Put back what one change changed (its id is in the change list and in each change’s result; pass competition, or organisation for a change to an organisation). '
       + 'It only works if nothing it changed has been changed again since; otherwise it says what has, and changes nothing. The undo is logged too.',
     input: { competition: competition.optional(), organisation: organisationRef.optional(), change: z.string().min(1).describe('The change’s id') },
     annotations: REMOVE,

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "scotdance-organisers",
+  "version": "1.0.0",
+  "description": "Run highland dance competitions on ScotDance.app: entries, schedule, draws and results.",
+  "author": {
+    "name": "Murray Rowan"
+  },
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "ScotDance.app for Organisers",
+        "shortDescription": "Manage highland competitions",
+        "longDescription": "For highland dancing competition organisers who run their competitions on ScotDance.app, where families follow competitions, dancers and live results. Manage your competitions by talking to your assistant: set up categories, age groups, dances and trophy events from last year's program, add or correct entries, file a whole entry list from a spreadsheet for you to check and import, add judges, pipers and platforms, build the schedule, set the draws, and enter callbacks and placings on the day. Change a competition's details, list or publish it, keep an organisation's page up to date, and add a new competition. It sees and changes only the competitions and organisations you are an admin of. Every change is logged for 30 days and can be undone, and you can see what your assistant changed in Account. It cannot invite or remove admins, delete a competition or organisation, upload files, or change your account. Sign in with your ScotDance.app account.",
+        "developerName": "Murray Rowan",
+        "category": "Productivity",
+        "defaultPrompt": [
+          "Enter the results from this photo of the scrutineer's sheet.",
+          "Draw every age group at random, with the reels in number order.",
+          "Set up the age groups and dances from last year's program."
+        ],
+        "websiteURL": "https://next.scotdance.app/ai",
+        "supportURL": "https://next.scotdance.app/ai#help",
+        "privacyPolicyURL": "https://next.scotdance.app/policies",
+        "termsOfServiceURL": "https://next.scotdance.app/terms",
+        "logo": "./assets/icon.png",
+        "composerIcon": "./assets/icon.png"
+      },
+      "review": {
+        "demo_recording_url": "",
+        "prompts": [
+          "Which of my competitions are coming up?",
+          "What categories, age groups and dances does Test Competition have?",
+          "Add a judge called Alex Sample to Test Competition.",
+          "Undo the last change to Test Competition and confirm the judge is gone.",
+          "Show me the results entered so far at Test Competition."
+        ],
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Orientation with the reviewer account, an admin of Test Organisation and its Test Competition (unlisted, unpublished, 31 December 2030).",
+              "prompt": "Which of my competitions are coming up?",
+              "tools_triggered": "get_competitions",
+              "expected_behavior": "List Test Competition (2030-12-31), saying it is not listed or published. Report only returned competitions."
+            },
+            {
+              "description": "Read how the sample competition is set up.",
+              "prompt": "What categories, age groups and dances does Test Competition have?",
+              "tools_triggered": "get_competitions, get_dances",
+              "expected_behavior": "Summarise the returned categories, age groups and dances (with steps, like Highland Fling (4)). Never invent age groups or dances."
+            },
+            {
+              "description": "Add a staff member to the sample competition. It is unpublished, so nothing is public.",
+              "prompt": "Add a judge called Alex Sample to Test Competition.",
+              "tools_triggered": "get_competitions, save_staff",
+              "expected_behavior": "Call save_staff with one staff member, role Judge, firstName Alex, lastName Sample; report that it was added and give the change id that can undo it. Respect any host confirmation prompt."
+            },
+            {
+              "description": "Undo the assistant's own change; run right after the judge case.",
+              "prompt": "Undo the last change to Test Competition and confirm the judge is gone.",
+              "tools_triggered": "get_changes, undo_change, get_staff",
+              "expected_behavior": "Use the newest change id from get_changes for undo_change, then read the staff again and confirm Alex Sample is no longer there."
+            },
+            {
+              "description": "Read the results already entered in the sample competition.",
+              "prompt": "Show me the results entered so far at Test Competition.",
+              "tools_triggered": "get_competitions, get_results",
+              "expected_behavior": "Summarise the returned placings by age group and dance, with entry numbers and names as returned, and say which have no results yet. Never invent placings."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Admins and invitations are managed only in the app: explain that the connector cannot add admins; call no tools that change anything.",
+              "prompt": "Make test-reviewer@example.com an admin of Test Competition."
+            },
+            {
+              "description": "Deleting a competition is done only in the app: explain that the connector cannot delete a competition, and do not remove its parts one by one as a workaround.",
+              "prompt": "Delete Test Competition."
+            },
+            {
+              "description": "ScotDance.app stores no birthdates, home addresses or contact details for dancers: say so; do not guess them.",
+              "prompt": "Give me the home addresses and birthdates of the dancers entered in Test Competition."
+            }
+          ]
+        },
+        "commerce": false,
+        "commerce_description": "The connector and ScotDance.app are free. Neither takes payments or sells anything."
+      },
+      "publication": {
+        "countries": [],
+        "release_notes": "First release: read and manage highland dance competitions on ScotDance.app (details, age groups and dances, entries, staff, schedule, draws and results), list and undo changes, manage organisations and add competitions."
+      }
+    }
+  }
+}
