@@ -20,7 +20,7 @@ const tools = [
     title: 'Get my competitions',
     description:
       'The competitions this person manages: id, name, date, venue, and whether each is listed (shown in search) '
-      + 'and published (results and entries visible to everyone). Start here to find a competition’s id.',
+      + 'and published (results and entries visible to everyone). Every other competition request takes one of these ids.',
     input: {},
     annotations: READ,
     run: (_args, session) => listCompetitions(session),
