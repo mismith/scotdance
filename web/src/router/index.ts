@@ -374,7 +374,16 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Privacy and terms' },
   },
   // The old app had /policies/privacy and /policies/terms.
-  { path: '/policies/:policyId', redirect: { name: 'policies', params: {} } },
+  { path: '/policies/:policyId', redirect: (to) => ({ name: 'policies', params: {}, hash: to.params.policyId === 'terms' ? '#terms' : '' }) },
+  { path: '/privacy', redirect: { name: 'policies' } },
+  { path: '/terms', redirect: { name: 'policies', hash: '#terms' } },
+  // The public help article for AI assistants: the documentation link the AI app directories list (ADR 0018)
+  {
+    path: '/ai',
+    name: 'ai',
+    component: () => import('@/views/Ai.vue'),
+    meta: { title: 'AI assistants' },
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',

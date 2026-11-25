@@ -14,6 +14,15 @@ import { formatMonthDay, formatShortDate, isSameDay } from '@/lib/format'
 const ORIGIN = 'https://next.scotdance.app'
 export const assistantAddress = () => `${useEmulators ? location.origin : ORIGIN}/mcp`
 
+/**
+ * Where people add "ScotDance.app for Organisers" in each AI app. The directories for now: swap in each listing's own
+ * page once it is approved (docs/mcp-store-submission.md).
+ */
+export const assistantListings = {
+  claude: 'https://claude.ai/directory',
+  chatgpt: 'https://chatgpt.com/plugins',
+} as const
+
 /** An assistant that is connected */
 export interface Connection {
   id: string
