@@ -117,12 +117,15 @@ Steps for the reviewer:
 
 ## 6. Submission status
 
-- ChatGPT: plugin `scotdance-organisers` 1.0.0 is a draft in the mur.bot OpenAI organization (25 November 2026).
-  Domain verified; scan connection authorized as the test account; 24 tools and the server instructions scanned, no
-  blocking findings (server instructions, `save_dancers` and `draft_dancers` flagged "needs further review"). Review
-  information complete: reviewer login (password entered by Murray), test cases from the ZIP, demo video
-  (`submission/scotdance-organisers-chatgpt-demo-2026-11-25.mp4` in the app's Storage, link in `plugin.json`).
-  Non-blocking: "Make sure your privacy policy website is accessible" (the policies page is rendered by JavaScript).
-  Not submitted.
+- ChatGPT: **submitted 25 November 2026**, plugin `scotdance-organisers` 1.0.0 "In review" in the mur.bot OpenAI
+  organization. Domain verified; scan connection authorized as the test account; 24 tools scanned, no blocking findings
+  (server instructions, `save_dancers` and `draft_dancers` flagged "needs further review"; "privacy policy website
+  accessible" non-blocking, the policies page is rendered by JavaScript). All six attestations ticked, including "does
+  not target children under 13 or share their personal information with OpenAI" (Murray's call: tools return dancers'
+  names). Demo: `submission/scotdance-organisers-chatgpt-demo-2026-11-25.mp4` in the app's Storage.
+- Claude: **submitted 25 November 2026**, "ScotDance.app for Organisers", slug `scotdance-app`, categories Productivity
+  and Nonprofit, CIMD OAuth, read and write, all 7 policies acknowledged, "self-tested every tool" left unticked. The
+  captured tool list predates 83820dea's `get_competitions` wording ("Start here…"); the live server has the new text.
+- After submitting, `get_competitions`' description changed (no "Start here"); ChatGPT rescans hosted servers daily and
+  may hold the changed tool for review.
 - Murray's ChatGPT has a custom MCP app "ScotDance.app for Organisers" connected as the test account (for the demo).
-- Claude: not submitted.
