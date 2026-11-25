@@ -521,8 +521,9 @@ export function resultsView(parts: Parts, opts: { ageGroup?: string; trophyEvent
       rows += size;
       full.push(out);
     } else {
-      const states = [out.callbacks, ...(out.dances as Json[]), out.overall].filter(Boolean).map((x) => (x as Json).state);
-      brief.push({ id: g.id, name: g.label, entered: states.filter((s) => String(s).startsWith('entered')).length, of: states.length });
+      // What is still to enter, by name (callbacks apart: not every age group has a callback round)
+      const toEnter = [...(out.dances as Json[]), ...(out.overall ? [{ ...out.overall, name: 'Overall' }] : [])];
+      brief.push({ id: g.id, name: g.label, callbacks: (out.callbacks as Json).state, notEntered: toEnter.filter((r) => r.state === 'not entered').map((r) => r.name) });
     }
   }
   return compact({
@@ -530,7 +531,9 @@ export function resultsView(parts: Parts, opts: { ageGroup?: string; trophyEvent
     ageGroups: full,
     trophyEvents: m.trophyEvents.map(forTrophy),
     moreAgeGroups: brief.length ? brief : undefined,
-    note: brief.length ? `${brief.length} more age groups are not shown in full. Pass ageGroup (id or name) to see one.` : undefined,
+    note: brief.length
+      ? `${brief.length} more age groups are not shown in full: each says whether callbacks are entered and which dances (or the overall) are not entered yet (none listed: all entered). Pass ageGroup (id or name) to see one.`
+      : undefined,
   });
 }
 
