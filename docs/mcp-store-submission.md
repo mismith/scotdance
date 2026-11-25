@@ -48,8 +48,9 @@ never break; moving the listing to scotdance.app later is a new review, only if 
 1. Deploy: push `next` (web: `/ai`, policies, rewrite) and `firebase deploy --only functions:mcp` (annotations,
    descriptions, OAuth metadata, state length). Check live: `/ai`, `/terms`, `/.well-known/oauth-authorization-server`
    shows `authorization_response_iss_parameter_supported`, and `tools/list` shows the new hints.
-2. [x] Reviewer account: `test@scotdance.app` manages Test Competition on ScotDance.app (confirmed by Murray,
-   25 November 2026).
+2. [x] Reviewer account: `test@scotdance.app` is an admin of Test Competition on ScotDance.app (Murray's invite
+   `-P7JgDucEnZrwkKThDsm`, accepted 25 November 2026). It has no inbox: find an invite link in
+   `competitions:data/{id}/invites` and open it while signed in as the account.
 3. Test Competition holds 542 entries: confirm the names are made up, not a copy of a real competition's dancers,
    before reviewers read them.
 4. Claude: submit at claude.ai/directory/manage with the copy below. Refresh tools, run every tool once (step 8).
@@ -116,5 +117,12 @@ Steps for the reviewer:
 
 ## 6. Submission status
 
+- ChatGPT: plugin `scotdance-organisers` 1.0.0 is a draft in the mur.bot OpenAI organization (25 November 2026).
+  Domain verified; scan connection authorized as the test account; 24 tools and the server instructions scanned, no
+  blocking findings (server instructions, `save_dancers` and `draft_dancers` flagged "needs further review"). Review
+  information complete: reviewer login (password entered by Murray), test cases from the ZIP, demo video
+  (`submission/scotdance-organisers-chatgpt-demo-2026-11-25.mp4` in the app's Storage, link in `plugin.json`).
+  Non-blocking: "Make sure your privacy policy website is accessible" (the policies page is rendered by JavaScript).
+  Not submitted.
+- Murray's ChatGPT has a custom MCP app "ScotDance.app for Organisers" connected as the test account (for the demo).
 - Claude: not submitted.
-- ChatGPT: not submitted.

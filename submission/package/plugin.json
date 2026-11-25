@@ -27,6 +27,7 @@
         "composerIcon": "./assets/icon.png"
       },
       "review": {
+        "demo_recording_url": "https://firebasestorage.googleapis.com/v0/b/firebase-scotdance.appspot.com/o/submission%2Fscotdance-organisers-chatgpt-demo-2026-11-25.mp4?alt=media&token=2e1d9582-0bf8-4d1b-bdc9-6ea3c956dea6",
         "prompts": [
           "Which of my competitions are coming up?",
           "What categories, age groups and dances does Test Competition have?",
